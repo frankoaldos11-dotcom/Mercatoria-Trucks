@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block barra %}
+Panel Operador
+{% endblock %}
+
+{% block contenido %}
+
+<div class="hero shadow-soft">
+    <h1>Bienvenido al Panel Operativo</h1>
+    <p>Gestiona solicitudes, viajes, transportistas y clientes desde un solo lugar.</p>
+</div>
+
+<div class="row mt-5 g-4">
+
+    <div class="col-md-4">
+        <a href="/nuevo-viaje" class="card card-action">
+            <div class="card-body text-center">
+                <h5 class="fw-bold">Nuevo Viaje</h5>
+                <p>Crear solicitud y propuesta</p>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4">
+        <a href="/viajes" class="card card-action">
+            <div class="card-body text-center">
+                <h5 class="fw-bold">Viajes Guardados</h5>
+                <p>Consulta y seguimiento</p>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4">
+        <a href="/clientes" class="card card-action">
+            <div class="card-body text-center">
+                <h5 class="fw-bold">Clientes</h5>
+                <p>Gestión de clientes</p>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

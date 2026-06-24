@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block barra %}
+Histórico
+{% endblock %}
+
+{% block contenido %}
+
+<h3 class="fw-bold mb-4">Histórico de Viajes</h3>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Ruta</th>
+            <th>Fecha</th>
+            <th>Valoración</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in viajes %}
+        <tr>
+            <td>{{ v.id }}</td>
+            <td>{{ v.ruta }}</td>
+            <td>{{ v.fecha }}</td>
+            <td>{{ v.valoracion }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

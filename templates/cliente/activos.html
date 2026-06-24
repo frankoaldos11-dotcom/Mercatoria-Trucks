@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block barra %}
+Envíos Activos
+{% endblock %}
+
+{% block contenido %}
+
+<h3 class="fw-bold mb-4">Envíos Activos</h3>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Ruta</th>
+            <th>Estado</th>
+            <th>Entrega</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in viajes %}
+        <tr>
+            <td>{{ v.id }}</td>
+            <td>{{ v.ruta }}</td>
+            <td>{{ v.estado }}</td>
+            <td>{{ v.entrega }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

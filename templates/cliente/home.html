@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block barra %}
+Panel del Cliente
+{% endblock %}
+
+{% block contenido %}
+
+<h2 class="fw-bold mb-4">Bienvenido, {{ cliente.nombre }}</h2>
+
+<div class="row g-4">
+
+    <div class="col-md-4">
+        <a href="/cliente/solicitar" class="card card-action">
+            <div class="card-body text-center">
+                <h5 class="fw-bold">Nueva Solicitud</h5>
+                <p>Solicita un transporte</p>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4">
+        <a href="/cliente/activos" class="card card-action">
+            <div class="card-body text-center">
+                <h5 class="fw-bold">Envíos Activos</h5>
+                <p>Seguimiento en tiempo real</p>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4">
+        <a href="/cliente/historico" class="card card-action">
+            <div class="card-body text-center">
+                <h5 class="fw-bold">Histórico</h5>
+                <p>Viajes anteriores</p>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block barra %}
+Gestión de viajes · Crear nueva operación
+{% endblock %}
+
+{% block contenido %}
+
+<h1>Crear Viaje</h1>
+
+<div class="main-card mt-4">
+
+    <form method="POST">
+
+        <div class="row">
+
+            <div class="col-md-4 mb-3">
+                <label>Cliente</label>
+                <input class="form-control" name="cliente" required>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label>Origen</label>
+                <input class="form-control" name="origen" required>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label>Destino</label>
+                <input class="form-control" name="destino" required>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label>Precio viaje USD</label>
+                <input type="number" step="0.01" class="form-control" name="precio" required>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label>Combustible USD</label>
+                <input type="number" step="0.01" class="form-control" name="combustible" required>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label>Pago camionero USD</label>
+                <input type="number" step="0.01" class="form-control" name="camionero" required>
+            </div>
+
+            <div class="col-md-12 mb-3">
+                <label>Observaciones</label>
+                <textarea class="form-control" name="observaciones"></textarea>
+            </div>
+
+        </div>
+
+        <button class="btn btn-warning btn-lg w-100">Guardar viaje</button>
+
+    </form>
+
+</div>
+
+{% endblock %}

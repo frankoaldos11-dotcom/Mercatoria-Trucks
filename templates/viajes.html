@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block barra %}
+Historial operativo · MVP v0.3
+{% endblock %}
+
+{% block contenido %} 
+
+<h1>Viajes</h1>
+
+<div class="main-card mt-4">
+
+    <table class="table table-hover align-middle">
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Ruta</th>
+                <th>Estado</th>
+                <th>Camionero</th>
+                <th>Precio</th>
+                <th>Beneficio</th>
+                <th>Observaciones</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for viaje in viajes %}
+            <tr>
+
+                <td>{{ viaje[0] }}</td>
+                <td>{{ viaje[1] }}</td>
+                <td>{{ viaje[2] }} → {{ viaje[3] }}</td>
+
+                <td>
+                    {% if viaje[9] == "Pendiente" %}
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                    {% elif viaje[9] == "Asignado" %}
+                        <span class="badge bg-primary">Asignado</span>
+                    {% elif viaje[9] == "En ruta" %}
+                        <span class="badge bg-info text-dark">En ruta</span>
+                    {% elif viaje[9] == "Entregado" %}
+                        <span class="badge bg-success">Entregado</span>
+                    {% else %}
+                        <span class="badge bg-danger">Cancelado</span>
+                    {% endif %}
+                </td>
+
+                <td>{{ viaje[10] or "-" }}</td>
+                <td>${{ "{:,.2f}".format(viaje[4]) }}</td>
+                <td><strong>${{ "{:,.2f}".format(viaje[8]) }}</strong></td>
+                <td>{{ viaje[11] or "-" }}</td>
+
+                <td>
+
+                    <div class="btn-group mb-1">
+                        <a href="/estado/{{ viaje[0] }}/Asignado" class="btn btn-sm btn-outline-primary">Asignado</a>
+                        <a href="/estado/{{ viaje[0] }}/En ruta" class="btn btn-sm btn-outline-info">En ruta</a>
+                        <a href="/estado/{{ viaje[0] }}/Entregado" class="btn btn-sm btn-outline-success">Entregado</a>
+                        <a href="/estado/{{ viaje[0] }}/Cancelado" class="btn btn-sm btn-outline-danger">Cancelar</a>
+                    </div>
+
+                    <div class="btn-group">
+                        <a href="/editar/{{ viaje[0] }}" class="btn btn-sm btn-warning">Editar</a>
+
+                        {% if rol == "MASTER" %}
+                            <a href="/eliminar/{{ viaje[0] }}" class="btn btn-sm btn-danger">Eliminar</a>
+                        {% endif %}
+                    </div>
+
+                </td>
+
+            </tr>
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

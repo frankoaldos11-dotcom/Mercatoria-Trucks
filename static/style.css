@@ -1,0 +1,60 @@
+/* ------------------------------------------------------ */
+/*   ESTILOS BASE MERCATORIA TRUCK                        */
+/* ------------------------------------------------------ */
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: #F5F5F5;
+    color: #1A1A1A;
+    margin: 0;
+    padding: 0;
+}
+
+/* ------------------------------------------------------ */
+/*   TOPBAR                                                */
+/* ------------------------------------------------------ */
+
+.topbar {
+    background: white;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.logo {
+    height: 32px;
+}
+
+.brand-text {
+    color: #1A1A1A;
+    font-weight: 700;
+}
+
+/* ------------------------------------------------------ */
+/*   BOTONES DE NAVEGACIÓN                                */
+/* ------------------------------------------------------ */
+
+.btn-nav {
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    color: #1A1A1A;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.btn-nav:hover {
+    background: #FF6B00;
+    color: white;
+}
+
+/* ------------------------------------------------------ */
+/*   BARRA NARANJA                                         */
+/* ------------------------------------------------------ */
+
+.orange-bar {
+    background: #FF6B00;
+    color: white;
+}
+
+/* ------------------------------------------------------ */
+/*   DRO
