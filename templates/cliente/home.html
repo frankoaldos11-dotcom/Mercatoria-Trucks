@@ -1,41 +1,60 @@
-{% extends "base.html" %}
-
-{% block barra %}
-Panel del Cliente
-{% endblock %}
+{% extends "cliente/base_cliente.html" %}
 
 {% block contenido %}
 
-<h2 class="fw-bold mb-4">Bienvenido, {{ cliente.nombre }}</h2>
+<link rel="stylesheet" href="/static/css/cliente.css">
 
-<div class="row g-4">
+<div class="contenedor">
 
-    <div class="col-md-4">
-        <a href="/cliente/solicitar" class="card card-action">
-            <div class="card-body text-center">
-                <h5 class="fw-bold">Nueva Solicitud</h5>
-                <p>Solicita un transporte</p>
-            </div>
+    <h2>Panel del Cliente</h2>
+
+    <div class="panel-grid">
+
+        <a href="/cliente/solicitar" class="card">
+            <h3>📦 Nueva Solicitud</h3>
+            <p>Crear un nuevo envío</p>
         </a>
+
+        <a href="/cliente/activos" class="card">
+            <h3>🚚 Estado de Envíos</h3>
+            <p>Seguimiento en tiempo real</p>
+        </a>
+
+        <a href="/cliente/historico" class="card">
+            <h3>📄 Historial</h3>
+            <p>Todos tus envíos anteriores</p>
+        </a>
+
     </div>
 
-    <div class="col-md-4">
-        <a href="/cliente/activos" class="card card-action">
-            <div class="card-body text-center">
-                <h5 class="fw-bold">Envíos Activos</h5>
-                <p>Seguimiento en tiempo real</p>
-            </div>
-        </a>
-    </div>
+    <h3 style="margin-top: 40px;">Últimos Envíos</h3>
 
-    <div class="col-md-4">
-        <a href="/cliente/historico" class="card card-action">
-            <div class="card-body text-center">
-                <h5 class="fw-bold">Histórico</h5>
-                <p>Viajes anteriores</p>
-            </div>
-        </a>
-    </div>
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if viajes %}
+                {% for v in viajes %}
+                <tr>
+                    <td>{{ v[0] }}</td>
+                    <td>{{ v[1] }}</td>
+                    <td>{{ v[2] }}</td>
+                    <td>{{ v[3] }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4">No tienes envíos recientes</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
 
 </div>
 
