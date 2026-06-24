@@ -1,0 +1,53 @@
+{% extends "base_cliente.html" %}
+
+{% block contenido %}
+
+<link rel="stylesheet" href="/static/css/cliente.css">
+
+<div class="contenedor">
+
+    <h2>Mi Perfil</h2>
+
+    {% if mensaje %}
+        <div style="background:#ddffdd; padding:12px; border-left:4px solid #34a853; margin-bottom:20px;">
+            {{ mensaje }}
+        </div>
+    {% endif %}
+
+    {% if error %}
+        <div style="background:#ffdddd; padding:12px; border-left:4px solid #d93025; margin-bottom:20px;">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <form method="POST" class="card" style="max-width:600px; margin:auto;">
+
+        <label>Nombre</label>
+        <input type="text" name="nombre" value="{{ datos[0] }}" class="input" required>
+
+        <label>Teléfono</label>
+        <input type="text" name="telefono" value="{{ datos[1] }}" class="input" required>
+
+        <label>Email (no editable)</label>
+        <input type="text" value="{{ datos[2] }}" class="input" disabled>
+
+        <hr style="margin:25px 0;">
+
+        <h3>Cambiar contraseña</h3>
+
+        <label>Contraseña actual</label>
+        <input type="password" name="actual" class="input">
+
+        <label>Nueva contraseña</label>
+        <input type="password" name="nueva" class="input">
+
+        <label>Confirmar nueva contraseña</label>
+        <input type="password" name="confirmar" class="input">
+
+        <button class="btn-principal" type="submit">Guardar cambios</button>
+
+    </form>
+
+</div>
+
+{% endblock %}
