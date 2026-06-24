@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <title>Mercatoria Truck - Panel Operador</title>
 
-    <link rel="stylesheet" href="/static/css/admin.css">
+<link rel="stylesheet" href="/static/css/variables.css">
+<link rel="stylesheet" href="/static/css/layout.css">
+<link rel="stylesheet" href="/static/css/components.css">
+<link rel="stylesheet" href="/static/css/admin.css">
 </head>
 
 <body>
@@ -13,15 +16,31 @@
 
         <!-- SIDEBAR -->
         <aside class="sidebar">
-            <div class="logo">🚛 Mercatoria<br><span>Operador</span></div>
+            <div class="brand">
+    <img src="/static/logo-mercatoria.jpg" alt="Mercatoria" class="brand-logo">
+    <div>
+        <strong>Mercatoria Truck</strong>
+        <span>Operator Panel</span>
+    </div>
+</div>
 
-            <nav>
-                <a href="/admin" class="item">📊 Dashboard</a>
-                <a href="/admin/viajes" class="item">🚚 Viajes</a>
-                <a href="/admin/camioneros" class="item">👷 Camioneros</a>
-                <a href="/admin/clientes" class="item">🧑‍💼 Clientes</a>
-                <a href="/logout" class="logout">Salir</a>
-            </nav>
+<nav>
+
+    <div class="menu-title">OPERACIONES</div>
+
+    <a href="/admin" class="item active">Dashboard</a>
+
+    <a href="/admin/viajes" class="item">Viajes</a>
+
+    <div class="menu-title">RECURSOS</div>
+
+    <a href="/admin/camioneros" class="item">Camioneros</a>
+
+    <a href="/admin/clientes" class="item">Clientes</a>
+
+    <a href="/logout" class="logout">Salir</a>
+
+</nav>
         </aside>
 
         <!-- CONTENIDO -->
