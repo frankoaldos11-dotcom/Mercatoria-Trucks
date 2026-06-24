@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect
 import sqlite3
-import flask
 
 from routes.home import home_bp
 from routes.dashboard import dashboard_bp
@@ -102,6 +101,7 @@ def login():
         usuario = request.form["usuario"]
         password = request.form["password"]
 
+        # Login simple
         if usuario == "admin" and password == "1234":
             return redirect("/dashboard")
         else:
