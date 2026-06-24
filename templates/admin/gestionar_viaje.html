@@ -1,0 +1,91 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<h1>Gestionar Viaje #{{ viaje[0] }}</h1>
+
+<div class="cards">
+
+    <div class="card">
+        <h3>Cliente</h3>
+        <p>{{ viaje[1] }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Origen</h3>
+        <p>{{ viaje[2] }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Destino</h3>
+        <p>{{ viaje[3] }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Estado</h3>
+        <p>{{ viaje[4] }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Camionero</h3>
+        <p>{{ viaje[5] if viaje[5] else "Sin asignar" }}</p>
+    </div>
+
+</div>
+
+<h2>Asignar Camionero</h2>
+
+<form method="POST" action="/admin/viaje/{{ viaje[0] }}/asignar" class="card" style="max-width:500px;">
+    <label>Seleccionar camionero</label>
+    <select name="camionero" class="input" required>
+        {% for c in camioneros %}
+        <option value="{{ c[0] }}">{{ c[0] }}</option>
+        {% endfor %}
+    </select>
+
+    <button class="btn-principal" type="submit">Asignar</button>
+</form>
+
+<h2>Cambiar Estado</h2>
+
+<form method="POST" action="/admin/viaje/{{ viaje[0] }}/estado" class="card" style="max-width:500px;">
+    <label>Nuevo estado</label>
+    <select name="estado" class="input" required>
+        <option value="Pendiente">Pendiente</option>
+        <option value="En curso">En curso</option>
+        <option value="Entregado">Entregado</option>
+    </select>
+
+    <button class="btn-principal" type="submit">Actualizar Estado</button>
+</form>
+
+<h2>Notas del Viaje</h2>
+
+<div class="card" style="max-width:600px;">
+    <p>{{ viaje[6] if viaje[6] else "Sin notas adicionales" }}</p>
+</div>
+
+<style>
+.input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    margin-bottom: 18px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+.btn-principal {
+    background: #1a73e8;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.btn-principal:hover {
+    background: #155fc0;
+}
+</style>
+
+{% endblock %}
