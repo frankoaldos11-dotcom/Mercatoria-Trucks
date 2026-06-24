@@ -1,5 +1,3 @@
-# Forzando redeploy para crear tabla usuarios
-
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
 from flask_bcrypt import Bcrypt
@@ -75,7 +73,6 @@ def crear_base_datos():
     agregar_columna(cursor, "viajes", "camionero_nombre", "TEXT")
     agregar_columna(cursor, "viajes", "observaciones", "TEXT")
 
-    # ---- TABLA USUARIOS ----
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,7 +82,6 @@ def crear_base_datos():
     )
     """)
 
-    # Usuario admin por defecto
     cursor.execute("SELECT COUNT(*) FROM usuarios")
     total = cursor.fetchone()[0]
     if total == 0:
@@ -100,7 +96,7 @@ def crear_base_datos():
 
 
 # -----------------------------
-# PROTECCIÓN DE RUTAS
+# PROTECCIÓN
 # -----------------------------
 def requiere_admin():
     return "usuario" in session and session.get("rol") == "admin"
@@ -167,7 +163,45 @@ def logout():
 
 
 # -----------------------------
-# ENDPOINT TEMPORAL PARA CREAR USUARIOS
+# REGISTRO PÚBLICO DE CLIENTES
+# -----------------------------
+@app.route("/registro", methods=["GET", "POST"])
+def registro():
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        telefono = request.form["telefono"]
+        email = request.form["email"]
+        password = request.form["password"]
+        confirmar = request.form["confirmar"]
+
+        if password != confirmar:
+            return render_template("registro.html", error="Las contraseñas no coinciden")
+
+        hash_pw = bcrypt.generate_password_hash(password).decode("utf-8")
+
+        conexion = conectar()
+        cursor = conexion.cursor()
+
+        cursor.execute("""
+        INSERT INTO usuarios (usuario, password, rol)
+        VALUES (?, ?, ?)
+        """, (email, hash_pw, "cliente"))
+
+        cursor.execute("""
+        INSERT INTO clientes (nombre, contacto, telefono, email)
+        VALUES (?, ?, ?, ?)
+        """, (nombre, nombre, telefono, email))
+
+        conexion.commit()
+        conexion.close()
+
+        return redirect("/login")
+
+    return render_template("registro.html")
+
+
+# -----------------------------
+# ENDPOINT OCULTO PARA TI: CREAR USUARIOS
 # -----------------------------
 @app.route("/crear_usuario", methods=["GET", "POST"])
 def crear_usuario():
