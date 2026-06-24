@@ -1,4 +1,5 @@
-# Forzar redeploy para crear tabla usuarios
+# Forzando redeploy para crear tabla usuarios
+
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
 from flask_bcrypt import Bcrypt
@@ -11,7 +12,7 @@ from routes.clientes import clientes_bp
 from routes.cliente import cliente_bp
 
 app = Flask(__name__)
-app.secret_key = "mercatoria-super-secreto"  # puedes cambiarlo luego
+app.secret_key = "mercatoria-super-secreto"
 bcrypt = Bcrypt(app)
 
 
@@ -74,7 +75,7 @@ def crear_base_datos():
     agregar_columna(cursor, "viajes", "camionero_nombre", "TEXT")
     agregar_columna(cursor, "viajes", "observaciones", "TEXT")
 
-    # ---- NUEVA TABLA USUARIOS ----
+    # ---- TABLA USUARIOS ----
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,14 +100,15 @@ def crear_base_datos():
 
 
 # -----------------------------
-# RUTAS PRINCIPALES (PROTEGIDAS)
+# PROTECCIÓN DE RUTAS
 # -----------------------------
 def requiere_admin():
-    if "usuario" not in session or session.get("rol") != "admin":
-        return False
-    return True
+    return "usuario" in session and session.get("rol") == "admin"
 
 
+# -----------------------------
+# RUTAS PRINCIPALES
+# -----------------------------
 @app.route("/")
 def home_publico():
     return render_template("home_publico.html")
@@ -150,12 +152,10 @@ def login():
 
                 if rol == "admin":
                     return redirect("/dashboard")
-                elif rol == "cliente":
+                else:
                     return redirect("/cliente")
-            else:
-                return render_template("login.html", error="Contraseña incorrecta")
-        else:
-            return render_template("login.html", error="Usuario no encontrado")
+
+        return render_template("login.html", error="Credenciales incorrectas")
 
     return render_template("login.html")
 
@@ -164,6 +164,45 @@ def login():
 def logout():
     session.clear()
     return redirect("/login")
+
+
+# -----------------------------
+# ENDPOINT TEMPORAL PARA CREAR USUARIOS
+# -----------------------------
+@app.route("/crear_usuario", methods=["GET", "POST"])
+def crear_usuario():
+    if request.method == "POST":
+        usuario = request.form["usuario"]
+        password = request.form["password"]
+        rol = request.form["rol"]
+
+        hash_pw = bcrypt.generate_password_hash(password).decode("utf-8")
+
+        conexion = conectar()
+        cursor = conexion.cursor()
+
+        cursor.execute("""
+        INSERT INTO usuarios (usuario, password, rol)
+        VALUES (?, ?, ?)
+        """, (usuario, hash_pw, rol))
+
+        conexion.commit()
+        conexion.close()
+
+        return "Usuario creado correctamente"
+
+    return """
+    <form method='POST'>
+        Usuario: <input name='usuario'><br>
+        Password: <input name='password' type='password'><br>
+        Rol: 
+        <select name='rol'>
+            <option value='cliente'>cliente</option>
+            <option value='admin'>admin</option>
+        </select><br>
+        <button type='submit'>Crear</button>
+    </form>
+    """
 
 
 # -----------------------------
