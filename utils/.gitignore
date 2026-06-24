@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# SQLite (opcional, según estrategia)
+# mercatoria.db
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
