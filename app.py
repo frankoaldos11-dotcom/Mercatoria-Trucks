@@ -1,3 +1,4 @@
+# Forzar redeploy para crear tabla usuarios
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
 from flask_bcrypt import Bcrypt
