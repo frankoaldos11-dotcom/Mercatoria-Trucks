@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session
 import sqlite3
+from flask_bcrypt import Bcrypt
 
 from routes.home import home_bp
 from routes.dashboard import dashboard_bp
@@ -9,6 +10,8 @@ from routes.clientes import clientes_bp
 from routes.cliente import cliente_bp
 
 app = Flask(__name__)
+app.secret_key = "mercatoria-super-secreto"  # puedes cambiarlo luego
+bcrypt = Bcrypt(app)
 
 
 # -----------------------------
@@ -70,13 +73,39 @@ def crear_base_datos():
     agregar_columna(cursor, "viajes", "camionero_nombre", "TEXT")
     agregar_columna(cursor, "viajes", "observaciones", "TEXT")
 
+    # ---- NUEVA TABLA USUARIOS ----
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        usuario TEXT UNIQUE,
+        password TEXT,
+        rol TEXT
+    )
+    """)
+
+    # Usuario admin por defecto
+    cursor.execute("SELECT COUNT(*) FROM usuarios")
+    total = cursor.fetchone()[0]
+    if total == 0:
+        hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")
+        cursor.execute("""
+        INSERT INTO usuarios (usuario, password, rol)
+        VALUES (?, ?, ?)
+        """, ("admin", hash_admin, "admin"))
+
     conexion.commit()
     conexion.close()
 
 
 # -----------------------------
-# RUTAS PRINCIPALES
+# RUTAS PRINCIPALES (PROTEGIDAS)
 # -----------------------------
+def requiere_admin():
+    if "usuario" not in session or session.get("rol") != "admin":
+        return False
+    return True
+
+
 @app.route("/")
 def home_publico():
     return render_template("home_publico.html")
@@ -84,11 +113,15 @@ def home_publico():
 
 @app.route("/dashboard")
 def dashboard():
+    if not requiere_admin():
+        return redirect("/login")
     return render_template("dashboard.html")
 
 
 @app.route("/cliente")
 def cliente_home():
+    if "usuario" not in session or session.get("rol") != "cliente":
+        return redirect("/login")
     return render_template("cliente_inicio.html")
 
 
@@ -101,17 +134,34 @@ def login():
         usuario = request.form["usuario"]
         password = request.form["password"]
 
-        # Login simple
-        if usuario == "admin" and password == "1234":
-            return redirect("/dashboard")
+        conexion = conectar()
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id, password, rol FROM usuarios WHERE usuario = ?", (usuario,))
+        fila = cursor.fetchone()
+        conexion.close()
+
+        if fila:
+            user_id, hash_guardado, rol = fila
+            if bcrypt.check_password_hash(hash_guardado, password):
+                session["usuario"] = usuario
+                session["rol"] = rol
+                session["user_id"] = user_id
+
+                if rol == "admin":
+                    return redirect("/dashboard")
+                elif rol == "cliente":
+                    return redirect("/cliente")
+            else:
+                return render_template("login.html", error="Contraseña incorrecta")
         else:
-            return render_template("login.html", error="Credenciales incorrectas")
+            return render_template("login.html", error="Usuario no encontrado")
 
     return render_template("login.html")
 
 
 @app.route("/logout")
 def logout():
+    session.clear()
     return redirect("/login")
 
 
