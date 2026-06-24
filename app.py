@@ -8,15 +8,13 @@ from routes.viajes import viajes_bp
 from routes.camioneros import camioneros_bp
 from routes.clientes import clientes_bp
 from routes.cliente import cliente_bp
+from routes.admin import admin_bp
 
 app = Flask(__name__)
 app.secret_key = "mercatoria-super-secreto"
 bcrypt = Bcrypt(app)
 
 
-# -----------------------------
-# BASE DE DATOS
-# -----------------------------
 def conectar():
     return sqlite3.connect("mercatoria.db")
 
@@ -60,18 +58,17 @@ def crear_base_datos():
         cliente TEXT,
         origen TEXT,
         destino TEXT,
-        precio REAL,
-        combustible REAL,
-        camionero REAL,
-        comision REAL,
-        beneficio REAL
+        precio REAL DEFAULT 0,
+        combustible REAL DEFAULT 0,
+        camionero REAL DEFAULT 0,
+        comision REAL DEFAULT 0,
+        beneficio REAL DEFAULT 0,
+        estado TEXT DEFAULT 'Pendiente',
+        camionero_id INTEGER,
+        camionero_nombre TEXT,
+        observaciones TEXT
     )
     """)
-
-    agregar_columna(cursor, "viajes", "estado", "TEXT DEFAULT 'Pendiente'")
-    agregar_columna(cursor, "viajes", "camionero_id", "INTEGER")
-    agregar_columna(cursor, "viajes", "camionero_nombre", "TEXT")
-    agregar_columna(cursor, "viajes", "observaciones", "TEXT")
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -82,73 +79,54 @@ def crear_base_datos():
     )
     """)
 
-    cursor.execute("SELECT COUNT(*) FROM usuarios")
-    total = cursor.fetchone()[0]
-    if total == 0:
-        hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")
-        cursor.execute("""
-        INSERT INTO usuarios (usuario, password, rol)
-        VALUES (?, ?, ?)
-        """, ("admin", hash_admin, "admin"))
+    agregar_columna(cursor, "viajes", "estado", "TEXT DEFAULT 'Pendiente'")
+    agregar_columna(cursor, "viajes", "camionero_id", "INTEGER")
+    agregar_columna(cursor, "viajes", "camionero_nombre", "TEXT")
+    agregar_columna(cursor, "viajes", "observaciones", "TEXT")
+
+cursor.execute("DELETE FROM usuarios WHERE usuario = ?", ("admin",))
+
+hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")
+
+cursor.execute("""
+INSERT INTO usuarios (usuario, password, rol)
+VALUES (?, ?, ?)
+""", ("admin", hash_admin, "admin"))
 
     conexion.commit()
     conexion.close()
 
 
-# -----------------------------
-# PROTECCIÓN
-# -----------------------------
-def requiere_admin():
-    return "usuario" in session and session.get("rol") == "admin"
-
-
-# -----------------------------
-# RUTAS PRINCIPALES
-# -----------------------------
-@app.route("/")
-def home_publico():
-    return render_template("home_publico.html")
-
-
-@app.route("/dashboard")
-def dashboard():
-    if not requiere_admin():
-        return redirect("/login")
-    return render_template("dashboard.html")
-
-
-@app.route("/cliente")
-def cliente_home():
-    if "usuario" not in session or session.get("rol") != "cliente":
-        return redirect("/login")
-    return render_template("cliente_inicio.html")
-
-
-# -----------------------------
-# LOGIN
-# -----------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        usuario = request.form["usuario"]
+        usuario = request.form["usuario"].strip()
         password = request.form["password"]
 
         conexion = conectar()
         cursor = conexion.cursor()
-        cursor.execute("SELECT id, password, rol FROM usuarios WHERE usuario = ?", (usuario,))
+
+        cursor.execute("""
+        SELECT id, password, rol
+        FROM usuarios
+        WHERE usuario = ?
+        """, (usuario,))
+
         fila = cursor.fetchone()
         conexion.close()
 
         if fila:
             user_id, hash_guardado, rol = fila
+
             if bcrypt.check_password_hash(hash_guardado, password):
                 session["usuario"] = usuario
                 session["rol"] = rol
                 session["user_id"] = user_id
 
-                if rol == "admin":
-                    return redirect("/dashboard")
-                else:
+                if rol in ["admin", "operador"]:
+                    return redirect("/admin")
+
+                if rol == "cliente":
                     return redirect("/cliente")
 
         return render_template("login.html", error="Credenciales incorrectas")
@@ -162,9 +140,6 @@ def logout():
     return redirect("/login")
 
 
-# -----------------------------
-# REGISTRO PÚBLICO DE CLIENTES
-# -----------------------------
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "POST":
@@ -210,67 +185,15 @@ def registro():
     return render_template("registro.html")
 
 
-# -----------------------------
-# ENDPOINT OCULTO PARA TI
-# -----------------------------
-@app.route("/crear_usuario", methods=["GET", "POST"])
-def crear_usuario():
-    if request.method == "POST":
-        usuario = request.form["usuario"]
-        password = request.form["password"]
-        rol = request.form["rol"]
-
-        hash_pw = bcrypt.generate_password_hash(password).decode("utf-8")
-
-        conexion = conectar()
-        cursor = conexion.cursor()
-
-        cursor.execute("""
-        INSERT INTO usuarios (usuario, password, rol)
-        VALUES (?, ?, ?)
-        """, (usuario, hash_pw, rol))
-
-        conexion.commit()
-        conexion.close()
-
-        return "Usuario creado correctamente"
-
-    return """
-    <form method='POST'>
-        Usuario: <input name='usuario'><br>
-        Password: <input name='password' type='password'><br>
-        Rol: 
-        <select name='rol'>
-            <option value='cliente'>cliente</option>
-            <option value='admin'>admin</option>
-        </select><br>
-        <button type='submit'>Crear</button>
-    </form>
-    """
-
-
-# -----------------------------
-# BLUEPRINTS
-# -----------------------------
 app.register_blueprint(home_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(viajes_bp)
 app.register_blueprint(camioneros_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(cliente_bp)
+app.register_blueprint(admin_bp)
 
-
-# -----------------------------
-# INICIALIZAR BD SIEMPRE (Render + local)
-# -----------------------------
 crear_base_datos()
 
-# -----------------------------
-# MAIN LOCAL
-# -----------------------------
-# Crear base de datos SIEMPRE (Render + local)
-crear_base_datos()
-
-# Ejecutar servidor solo en local
 if __name__ == "__main__":
     app.run(debug=True)

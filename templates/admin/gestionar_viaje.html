@@ -35,37 +35,54 @@
 
 <h2>Asignar Camionero</h2>
 
-<form method="POST" action="/admin/viaje/{{ viaje[0] }}/asignar" class="card" style="max-width:500px;">
-    <label>Seleccionar camionero</label>
+<form method="POST" action="/admin/viaje/{{ viaje[0] }}/asignar" class="card form-card">
+
+    <label>Seleccionar camionero disponible</label>
+
     <select name="camionero" class="input" required>
         {% for c in camioneros %}
-        <option value="{{ c[0] }}">{{ c[0] }}</option>
+            <option value="{{ c[0] }}">{{ c[1] }}</option>
         {% endfor %}
     </select>
 
-    <button class="btn-principal" type="submit">Asignar</button>
+    <button class="btn-principal" type="submit">
+        Asignar camionero
+    </button>
+
 </form>
 
 <h2>Cambiar Estado</h2>
 
-<form method="POST" action="/admin/viaje/{{ viaje[0] }}/estado" class="card" style="max-width:500px;">
+<form method="POST" action="/admin/viaje/{{ viaje[0] }}/estado" class="card form-card">
+
     <label>Nuevo estado</label>
+
     <select name="estado" class="input" required>
-        <option value="Pendiente">Pendiente</option>
-        <option value="En curso">En curso</option>
-        <option value="Entregado">Entregado</option>
+        <option value="Pendiente" {% if viaje[4] == "Pendiente" %}selected{% endif %}>Pendiente</option>
+        <option value="Asignado" {% if viaje[4] == "Asignado" %}selected{% endif %}>Asignado</option>
+        <option value="En ruta" {% if viaje[4] == "En ruta" %}selected{% endif %}>En ruta</option>
+        <option value="Entregado" {% if viaje[4] == "Entregado" %}selected{% endif %}>Entregado</option>
+        <option value="Cancelado" {% if viaje[4] == "Cancelado" %}selected{% endif %}>Cancelado</option>
     </select>
 
-    <button class="btn-principal" type="submit">Actualizar Estado</button>
+    <button class="btn-principal" type="submit">
+        Actualizar estado
+    </button>
+
 </form>
 
 <h2>Notas del Viaje</h2>
 
-<div class="card" style="max-width:600px;">
+<div class="card form-card">
     <p>{{ viaje[6] if viaje[6] else "Sin notas adicionales" }}</p>
 </div>
 
 <style>
+.form-card {
+    max-width: 600px;
+    margin-bottom: 30px;
+}
+
 .input {
     width: 100%;
     padding: 12px;
@@ -74,8 +91,9 @@
     border-radius: 8px;
     border: 1px solid #ccc;
 }
+
 .btn-principal {
-    background: #1a73e8;
+    background: #F36B21;
     color: white;
     padding: 12px 20px;
     border: none;
@@ -83,8 +101,9 @@
     font-size: 16px;
     cursor: pointer;
 }
+
 .btn-principal:hover {
-    background: #155fc0;
+    background: #d95714;
 }
 </style>
 
