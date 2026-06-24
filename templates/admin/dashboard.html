@@ -11,27 +11,27 @@
 
 <div class="cards">
 
-    <div class="card">
+    <div class="card kpi-card">
         <h3>Solicitudes pendientes</h3>
         <p>{{ pendientes }}</p>
     </div>
 
-    <div class="card">
+    <div class="card kpi-card">
         <h3>Viajes en curso</h3>
         <p>{{ en_curso }}</p>
     </div>
 
-    <div class="card">
+    <div class="card kpi-card">
         <h3>Entregados</h3>
         <p>{{ entregados }}</p>
     </div>
 
-    <div class="card">
+    <div class="card kpi-card">
         <h3>Camioneros activos</h3>
         <p>{{ camioneros }}</p>
     </div>
 
-    <div class="card">
+    <div class="card kpi-card">
         <h3>Clientes registrados</h3>
         <p>{{ clientes }}</p>
     </div>
@@ -66,6 +66,10 @@
                 <td>
                     <a class="btn-link" href="/admin/viaje/{{ v[0] }}">Gestionar</a>
                 </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="empty-state">No hay solicitudes pendientes.</td>
             </tr>
             {% endfor %}
         </tbody>
