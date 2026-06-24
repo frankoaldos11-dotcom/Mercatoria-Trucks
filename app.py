@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, session
-import sqlite3
-from flask_bcrypt import Bcrypt
+
+from extensions import bcrypt
+from database import conectar, crear_base_datos
+from utils.constants import ROLES
 
 from routes.home import home_bp
 from routes.dashboard import dashboard_bp
@@ -10,93 +12,11 @@ from routes.clientes import clientes_bp
 from routes.cliente import cliente_bp
 from routes.admin import admin_bp
 
+
 app = Flask(__name__)
 app.secret_key = "mercatoria-super-secreto"
-bcrypt = Bcrypt(app)
 
-
-def conectar():
-    return sqlite3.connect("mercatoria.db")
-
-
-def agregar_columna(cursor, tabla, columna, definicion):
-    try:
-        cursor.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {definicion}")
-    except:
-        pass
-
-
-def crear_base_datos():
-    conexion = conectar()
-    cursor = conexion.cursor()
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS clientes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT,
-        contacto TEXT,
-        telefono TEXT,
-        email TEXT
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS camioneros (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT,
-        telefono TEXT,
-        matricula TEXT,
-        tipo TEXT,
-        capacidad TEXT,
-        estado TEXT DEFAULT 'Disponible'
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS viajes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        cliente TEXT,
-        origen TEXT,
-        destino TEXT,
-        precio REAL DEFAULT 0,
-        combustible REAL DEFAULT 0,
-        camionero REAL DEFAULT 0,
-        comision REAL DEFAULT 0,
-        beneficio REAL DEFAULT 0,
-        estado TEXT DEFAULT 'Pendiente',
-        camionero_id INTEGER,
-        camionero_nombre TEXT,
-        observaciones TEXT
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS usuarios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        usuario TEXT UNIQUE,
-        password TEXT,
-        rol TEXT
-    )
-    """)
-
-
-
-    agregar_columna(cursor, "viajes", "estado", "TEXT DEFAULT 'Pendiente'")
-    agregar_columna(cursor, "viajes", "camionero_id", "INTEGER")
-    agregar_columna(cursor, "viajes", "camionero_nombre", "TEXT")
-    agregar_columna(cursor, "viajes", "observaciones", "TEXT")
-
-    cursor.execute("DELETE FROM usuarios WHERE usuario = ?", ("admin",))
-
-    hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")
-
-    cursor.execute("""
-    INSERT INTO usuarios (usuario, password, rol)
-    VALUES (?, ?, ?)
-    """, ("admin", hash_admin, "admin"))
-
-    conexion.commit()
-    conexion.close()
+bcrypt.init_app(app)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -125,10 +45,10 @@ def login():
                 session["rol"] = rol
                 session["user_id"] = user_id
 
-                if rol in ["admin", "operador"]:
+                if rol in [ROLES["ADMIN"], ROLES["OPERADOR"]]:
                     return redirect("/admin")
 
-                if rol == "cliente":
+                if rol == ROLES["CLIENTE"]:
                     return redirect("/cliente")
 
         return render_template("login.html", error="Credenciales incorrectas")
@@ -172,7 +92,7 @@ def registro():
         cursor.execute("""
         INSERT INTO usuarios (usuario, password, rol)
         VALUES (?, ?, ?)
-        """, (email, hash_pw, "cliente"))
+        """, (email, hash_pw, ROLES["CLIENTE"]))
 
         cursor.execute("""
         INSERT INTO clientes (nombre, contacto, telefono, email)
@@ -195,7 +115,8 @@ app.register_blueprint(clientes_bp)
 app.register_blueprint(cliente_bp)
 app.register_blueprint(admin_bp)
 
-crear_base_datos()
+crear_base_datos(bcrypt)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
