@@ -168,19 +168,29 @@ def logout():
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "POST":
-        nombre = request.form["nombre"]
-        telefono = request.form["telefono"]
-        email = request.form["email"]
+        nombre = request.form["nombre"].strip()
+        telefono = request.form["telefono"].strip()
+        email = request.form["email"].strip()
         password = request.form["password"]
         confirmar = request.form["confirmar"]
+
+        if email == "":
+            return render_template("registro.html", error="El correo no puede estar vacío")
 
         if password != confirmar:
             return render_template("registro.html", error="Las contraseñas no coinciden")
 
-        hash_pw = bcrypt.generate_password_hash(password).decode("utf-8")
-
         conexion = conectar()
         cursor = conexion.cursor()
+
+        cursor.execute("SELECT id FROM usuarios WHERE usuario = ?", (email,))
+        existe = cursor.fetchone()
+
+        if existe:
+            conexion.close()
+            return render_template("registro.html", error="Este correo ya está registrado")
+
+        hash_pw = bcrypt.generate_password_hash(password).decode("utf-8")
 
         cursor.execute("""
         INSERT INTO usuarios (usuario, password, rol)
@@ -201,7 +211,7 @@ def registro():
 
 
 # -----------------------------
-# ENDPOINT OCULTO PARA TI: CREAR USUARIOS
+# ENDPOINT OCULTO PARA TI
 # -----------------------------
 @app.route("/crear_usuario", methods=["GET", "POST"])
 def crear_usuario():
