@@ -261,8 +261,13 @@ app.register_blueprint(cliente_bp)
 
 
 # -----------------------------
-# MAIN
+# INICIALIZAR BD SIEMPRE (Render + local)
+# -----------------------------
+crear_base_datos()
+
+# -----------------------------
+# MAIN LOCAL
 # -----------------------------
 if __name__ == "__main__":
-    crear_base_datos()
     app.run(debug=True)
+
