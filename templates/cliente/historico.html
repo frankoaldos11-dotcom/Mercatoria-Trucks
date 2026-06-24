@@ -1,32 +1,42 @@
-{% extends "base.html" %}
-
-{% block barra %}
-Histórico
-{% endblock %}
+{% extends "base_cliente.html" %}
 
 {% block contenido %}
 
-<h3 class="fw-bold mb-4">Histórico de Viajes</h3>
+<link rel="stylesheet" href="/static/css/cliente.css">
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Ruta</th>
-            <th>Fecha</th>
-            <th>Valoración</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for v in viajes %}
-        <tr>
-            <td>{{ v.id }}</td>
-            <td>{{ v.ruta }}</td>
-            <td>{{ v.fecha }}</td>
-            <td>{{ v.valoracion }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="contenedor">
+
+    <h2>Historial de Envíos</h2>
+
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>Estado</th>
+                <th>Camionero</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if viajes %}
+                {% for v in viajes %}
+                <tr>
+                    <td>{{ v[0] }}</td>
+                    <td>{{ v[1] }}</td>
+                    <td>{{ v[2] }}</td>
+                    <td>{{ v[3] }}</td>
+                    <td>{{ v[4] if v[4] else "Sin asignar" }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5">No tienes envíos en el historial</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+</div>
 
 {% endblock %}
