@@ -75,9 +75,8 @@ def crear_base_datos():
 
 
 # -----------------------------
-# RUTAS PRINCIPALES (NUEVAS)
+# RUTAS PRINCIPALES
 # -----------------------------
-
 @app.route("/")
 def home_publico():
     return render_template("home_publico.html")
@@ -86,6 +85,11 @@ def home_publico():
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
+
+
+@app.route("/cliente")
+def cliente_home():
+    return render_template("cliente_inicio.html")
 
 
 # -----------------------------
