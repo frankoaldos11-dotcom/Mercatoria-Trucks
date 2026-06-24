@@ -1,5 +1,6 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 import sqlite3
+import flask
 
 from routes.home import home_bp
 from routes.dashboard import dashboard_bp
@@ -90,6 +91,28 @@ def dashboard():
 @app.route("/cliente")
 def cliente_home():
     return render_template("cliente_inicio.html")
+
+
+# -----------------------------
+# LOGIN
+# -----------------------------
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        usuario = request.form["usuario"]
+        password = request.form["password"]
+
+        if usuario == "admin" and password == "1234":
+            return redirect("/dashboard")
+        else:
+            return render_template("login.html", error="Credenciales incorrectas")
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    return redirect("/login")
 
 
 # -----------------------------
