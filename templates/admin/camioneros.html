@@ -1,0 +1,27 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<h1>Camioneros Registrados</h1>
+
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Teléfono</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for c in lista %}
+        <tr>
+            <td>{{ c[0] }}</td>
+            <td>{{ c[1] }}</td>
+            <td>{{ c[2] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
