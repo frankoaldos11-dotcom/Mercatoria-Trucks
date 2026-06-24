@@ -1,0 +1,61 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<h1>Dashboard</h1>
+
+<div class="cards">
+
+    <div class="card">
+        <h3>Solicitudes Pendientes</h3>
+        <p>{{ pendientes }}</p>
+    </div>
+
+    <div class="card">
+        <h3>En Curso</h3>
+        <p>{{ en_curso }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Entregados</h3>
+        <p>{{ entregados }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Camioneros Activos</h3>
+        <p>{{ camioneros }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Clientes Registrados</h3>
+        <p>{{ clientes }}</p>
+    </div>
+
+</div>
+
+<h2>Solicitudes Pendientes</h2>
+
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in lista %}
+        <tr>
+            <td>{{ v[0] }}</td>
+            <td>{{ v[1] }}</td>
+            <td>{{ v[2] }}</td>
+            <td>{{ v[3] }}</td>
+            <td><a href="/admin/viaje/{{ v[0] }}">Gestionar</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

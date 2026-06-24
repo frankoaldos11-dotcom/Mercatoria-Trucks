@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mercatoria Truck - Panel Operador</title>
+
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+
+<body>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">🚛 Mercatoria<br><span>Operador</span></div>
+
+            <nav>
+                <a href="/admin" class="item">📊 Dashboard</a>
+                <a href="/admin/viajes" class="item">🚚 Viajes</a>
+                <a href="/admin/camioneros" class="item">👷 Camioneros</a>
+                <a href="/admin/clientes" class="item">🧑‍💼 Clientes</a>
+                <a href="/logout" class="logout">Salir</a>
+            </nav>
+        </aside>
+
+        <!-- CONTENIDO -->
+        <main class="contenido">
+            {% block contenido %}{% endblock %}
+        </main>
+
+    </div>
+
+</body>
+</html>

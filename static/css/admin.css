@@ -1,0 +1,115 @@
+/* LAYOUT GENERAL */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f5f7fb;
+}
+
+.layout {
+    display: flex;
+    height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 240px;
+    background: #1a73e8;
+    color: white;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 40px;
+    line-height: 1.2;
+}
+
+.logo span {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.sidebar nav .item {
+    display: block;
+    padding: 12px 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.sidebar nav .item:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.logout {
+    margin-top: auto;
+    padding: 12px 10px;
+    background: #d93025;
+    border-radius: 6px;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+}
+
+/* CONTENIDO */
+.contenido {
+    flex: 1;
+    padding: 40px;
+}
+
+/* TARJETAS */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #1a73e8;
+}
+
+.card p {
+    margin-top: 8px;
+    font-size: 26px;
+    font-weight: bold;
+}
+
+/* TABLAS */
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.tabla th {
+    background: #1a73e8;
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
+
+.tabla td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.tabla tr:hover td {
+    background: #eef3fc;
+}
