@@ -1,37 +1,38 @@
 {% extends "base.html" %}
+
 {% block title %}Dashboard{% endblock %}
 
 {% block contenido %}
 
-<h2 class="fw-bold mb-4">Dashboard</h2>
+<h2 class="fw-bold mb-4">Dashboard General</h2>
 
 <div class="row g-4">
 
     <div class="col-md-3">
-        <div class="card p-3 shadow-sm">
-            <h5 class="fw-bold">Viajes Activos</h5>
-            <p class="display-6">{{ activos }}</p>
+        <div class="card p-4 text-center shadow-sm">
+            <h3 class="fw-bold">{{ total_viajes }}</h3>
+            <p class="text-muted">Viajes Totales</p>
         </div>
     </div>
 
     <div class="col-md-3">
-        <div class="card p-3 shadow-sm">
-            <h5 class="fw-bold">Pendientes</h5>
-            <p class="display-6">{{ pendientes }}</p>
+        <div class="card p-4 text-center shadow-sm">
+            <h3 class="fw-bold">{{ viajes_activos }}</h3>
+            <p class="text-muted">Viajes Activos</p>
         </div>
     </div>
 
     <div class="col-md-3">
-        <div class="card p-3 shadow-sm">
-            <h5 class="fw-bold">Completados</h5>
-            <p class="display-6">{{ completados }}</p>
+        <div class="card p-4 text-center shadow-sm">
+            <h3 class="fw-bold">{{ camioneros_disponibles }}</h3>
+            <p class="text-muted">Camioneros Disponibles</p>
         </div>
     </div>
 
     <div class="col-md-3">
-        <div class="card p-3 shadow-sm">
-            <h5 class="fw-bold">Camioneros</h5>
-            <p class="display-6">{{ camioneros }}</p>
+        <div class="card p-4 text-center shadow-sm">
+            <h3 class="fw-bold">{{ clientes_totales }}</h3>
+            <p class="text-muted">Clientes Registrados</p>
         </div>
     </div>
 
@@ -39,12 +40,43 @@
 
 <hr class="my-5">
 
-<h4 class="fw-bold mb-3">Acciones rápidas</h4>
+<h4 class="fw-bold mb-3">Últimos Viajes</h4>
 
-<div class="d-flex gap-3">
-    <a href="/nuevo-viaje" class="btn btn-primary btn-lg">Nuevo Viaje</a>
-    <a href="/viajes" class="btn btn-outline-primary btn-lg">Ver Viajes</a>
-    <a href="/clientes" class="btn btn-outline-primary btn-lg">Clientes</a>
+<div class="card p-4 shadow-sm">
+
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for v in ultimos %}
+            <tr>
+                <td>{{ v.id }}</td>
+                <td>{{ v.cliente }}</td>
+                <td>{{ v.origen }}</td>
+                <td>{{ v.destino }}</td>
+                <td>
+                    <span class="badge 
+                        {% if v.estado == 'Pendiente' %} bg-warning 
+                        {% elif v.estado == 'Activo' %} bg-primary 
+                        {% elif v.estado == 'Completado' %} bg-success 
+                        {% else %} bg-secondary {% endif %}">
+                        {{ v.estado }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
 </div>
 
 {% endblock %}

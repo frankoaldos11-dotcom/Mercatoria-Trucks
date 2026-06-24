@@ -9,17 +9,33 @@
     <link href="/static/style.css" rel="stylesheet">
 </head>
 
-<body class="text-center p-5">
+<body>
 
-    <img src="/static/logo-mercatoria.jpg" class="logo-big mb-4">
+<nav class="topbar py-3 shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center">
 
-    <h1 class="fw-bold mb-3">Mercatoria Truck</h1>
-    <p class="mb-5">Soluciones de transporte para tu negocio.</p>
+        <div class="d-flex align-items-center gap-2">
+            <img src="/static/logo-mercatoria.jpg" class="logo" alt="Mercatoria">
+            <span class="fs-4 fw-bold brand-text">Mercatoria Truck</span>
+        </div>
 
-    <div class="d-flex justify-content-center gap-4">
-        <a href="/dashboard" class="btn btn-primary btn-lg">Entrar como Operador</a>
-        <a href="/cliente" class="btn btn-outline-primary btn-lg">Entrar como Cliente</a>
+        <div class="d-flex gap-3">
+            <a href="/login" class="btn btn-primary">Ingresar</a>
+        </div>
+
     </div>
+</nav>
+
+<section class="container mt-5 text-center">
+
+    <h1 class="fw-bold mb-4">Soluciones de Transporte para Empresas</h1>
+    <p class="lead mb-4">
+        Gestión completa de envíos, flota y logística en un solo sistema.
+    </p>
+
+    <a href="/login" class="btn btn-lg btn-primary px-5">Acceder</a>
+
+</section>
 
 </body>
 </html>

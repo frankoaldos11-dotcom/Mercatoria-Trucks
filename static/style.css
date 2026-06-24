@@ -1,60 +1,101 @@
-/* ------------------------------------------------------ */
-/*   ESTILOS BASE MERCATORIA TRUCK                        */
-/* ------------------------------------------------------ */
-
+/* ------------------------------
+   ESTILOS GENERALES
+--------------------------------*/
 body {
     font-family: 'Montserrat', sans-serif;
-    background: #F5F5F5;
-    color: #1A1A1A;
-    margin: 0;
-    padding: 0;
+    background: #f5f6fa;
+    color: #333;
 }
 
-/* ------------------------------------------------------ */
-/*   TOPBAR                                                */
-/* ------------------------------------------------------ */
-
-.topbar {
-    background: white;
-    border-bottom: 1px solid #e5e5e5;
-}
-
-.logo {
-    height: 32px;
-}
-
-.brand-text {
-    color: #1A1A1A;
+h1, h2, h3, h4 {
     font-weight: 700;
 }
 
-/* ------------------------------------------------------ */
-/*   BOTONES DE NAVEGACIÓN                                */
-/* ------------------------------------------------------ */
+.card-btn {
+    transition: 0.2s ease;
+    cursor: pointer;
+}
 
-.btn-nav {
-    border: none;
-    background: transparent;
-    font-weight: 600;
-    color: #1A1A1A;
-    padding: 6px 14px;
+.card-btn:hover {
+    transform: translateY(-3px);
+    background: #f0f0f0;
+}
+
+/* ------------------------------
+   TOPBAR
+--------------------------------*/
+.topbar {
+    background: white;
+}
+
+.logo {
+    height: 45px;
     border-radius: 6px;
-    transition: 0.2s;
 }
 
-.btn-nav:hover {
-    background: #FF6B00;
-    color: white;
+.brand-text {
+    color: #0d6efd;
 }
 
-/* ------------------------------------------------------ */
-/*   BARRA NARANJA                                         */
-/* ------------------------------------------------------ */
-
-.orange-bar {
-    background: #FF6B00;
-    color: white;
+/* ------------------------------
+   NAV LINKS
+--------------------------------*/
+.nav-link {
+    color: #333;
+    text-decoration: none;
 }
 
-/* ------------------------------------------------------ */
-/*   DRO
+.nav-link:hover {
+    color: #0d6efd;
+}
+
+/* ------------------------------
+   TABLAS
+--------------------------------*/
+table th {
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.85rem;
+}
+
+/* ------------------------------
+   FORMULARIOS
+--------------------------------*/
+form .form-control,
+form .form-select {
+    border-radius: 6px;
+}
+
+button.btn-primary {
+    padding: 10px 25px;
+    font-weight: 600;
+}
+
+/* ------------------------------
+   CLIENTE
+--------------------------------*/
+.container-cliente {
+    max-width: 900px;
+}
+
+/* ------------------------------
+   CARDS
+--------------------------------*/
+.card {
+    border-radius: 10px;
+}
+
+.card:hover {
+    transition: 0.2s ease;
+}
+
+/* ------------------------------
+   LOGIN (si lo agregas luego)
+--------------------------------*/
+.login-box {
+    max-width: 450px;
+    margin: auto;
+    margin-top: 80px;
+}

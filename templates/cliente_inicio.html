@@ -1,10 +1,39 @@
-{% extends "base.html" %}
+{% extends "base_cliente.html" %}
 
-{% block title %}Viajes{% endblock %}
+{% block title %}Inicio Cliente{% endblock %}
 
 {% block contenido %}
 
-<h2 class="fw-bold mb-4">Listado de Viajes</h2>
+<h2 class="fw-bold mb-4">Panel del Cliente</h2>
+
+<div class="row g-4">
+
+    <div class="col-md-4">
+        <a href="/cliente/nueva" class="card card-btn p-4 text-center shadow-sm">
+            <h4 class="fw-bold mb-2">Nueva Solicitud</h4>
+            <p>Crear un nuevo envío</p>
+        </a>
+    </div>
+
+    <div class="col-md-4">
+        <a href="/cliente/estado" class="card card-btn p-4 text-center shadow-sm">
+            <h4 class="fw-bold mb-2">Estado de Envíos</h4>
+            <p>Seguimiento en tiempo real</p>
+        </a>
+    </div>
+
+    <div class="col-md-4">
+        <a href="/cliente/historial" class="card card-btn p-4 text-center shadow-sm">
+            <h4 class="fw-bold mb-2">Historial</h4>
+            <p>Todos tus envíos anteriores</p>
+        </a>
+    </div>
+
+</div>
+
+<hr class="my-5">
+
+<h4 class="fw-bold mb-3">Últimos Envíos</h4>
 
 <div class="card p-4 shadow-sm">
 
@@ -12,20 +41,16 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Cliente</th>
                 <th>Origen</th>
                 <th>Destino</th>
                 <th>Estado</th>
-                <th>Camionero</th>
-                <th>Acciones</th>
             </tr>
         </thead>
 
         <tbody>
-            {% for v in viajes %}
+            {% for v in ultimos %}
             <tr>
                 <td>{{ v.id }}</td>
-                <td>{{ v.cliente }}</td>
                 <td>{{ v.origen }}</td>
                 <td>{{ v.destino }}</td>
                 <td>
@@ -36,10 +61,6 @@
                         {% else %} bg-secondary {% endif %}">
                         {{ v.estado }}
                     </span>
-                </td>
-                <td>{{ v.camionero_nombre or "Sin asignar" }}</td>
-                <td>
-                    <a href="/viajes/editar/{{ v.id }}" class="btn btn-sm btn-outline-primary">Editar</a>
                 </td>
             </tr>
             {% endfor %}

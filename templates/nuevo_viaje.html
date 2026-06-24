@@ -1,60 +1,60 @@
 {% extends "base.html" %}
 
-{% block barra %}
-Gestión de viajes · Crear nueva operación
-{% endblock %}
+{% block title %}Nuevo Viaje{% endblock %}
 
 {% block contenido %}
 
-<h1>Crear Viaje</h1>
+<h2 class="fw-bold mb-4">Crear Nuevo Viaje</h2>
 
-<div class="main-card mt-4">
+<form action="/viajes/nuevo" method="POST" class="card p-4 shadow-sm">
 
-    <form method="POST">
+    <div class="mb-3">
+        <label class="form-label fw-bold">Cliente</label>
+        <select name="cliente" class="form-select" required>
+            {% for c in clientes %}
+            <option value="{{ c.nombre }}">{{ c.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
 
-        <div class="row">
-
-            <div class="col-md-4 mb-3">
-                <label>Cliente</label>
-                <input class="form-control" name="cliente" required>
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <label>Origen</label>
-                <input class="form-control" name="origen" required>
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <label>Destino</label>
-                <input class="form-control" name="destino" required>
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <label>Precio viaje USD</label>
-                <input type="number" step="0.01" class="form-control" name="precio" required>
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <label>Combustible USD</label>
-                <input type="number" step="0.01" class="form-control" name="combustible" required>
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <label>Pago camionero USD</label>
-                <input type="number" step="0.01" class="form-control" name="camionero" required>
-            </div>
-
-            <div class="col-md-12 mb-3">
-                <label>Observaciones</label>
-                <textarea class="form-control" name="observaciones"></textarea>
-            </div>
-
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Origen</label>
+            <input type="text" name="origen" class="form-control" required>
         </div>
 
-        <button class="btn btn-warning btn-lg w-100">Guardar viaje</button>
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Destino</label>
+            <input type="text" name="destino" class="form-control" required>
+        </div>
+    </div>
 
-    </form>
+    <div class="mb-3">
+        <label class="form-label fw-bold">Precio del Viaje</label>
+        <input type="number" name="precio" class="form-control" required>
+    </div>
 
-</div>
+    <div class="mb-3">
+        <label class="form-label fw-bold">Combustible Estimado</label>
+        <input type="number" name="combustible" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-bold">Camionero</label>
+        <select name="camionero" class="form-select" required>
+            {% for c in camioneros %}
+            <option value="{{ c.id }}">{{ c.nombre }} — {{ c.estado }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-bold">Observaciones</label>
+        <textarea name="observaciones" class="form-control" rows="3"></textarea>
+    </div>
+
+    <button class="btn btn-primary btn-lg mt-3">Crear Viaje</button>
+
+</form>
 
 {% endblock %}
