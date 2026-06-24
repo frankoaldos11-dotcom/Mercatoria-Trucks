@@ -79,19 +79,21 @@ def crear_base_datos():
     )
     """)
 
+
+
     agregar_columna(cursor, "viajes", "estado", "TEXT DEFAULT 'Pendiente'")
     agregar_columna(cursor, "viajes", "camionero_id", "INTEGER")
     agregar_columna(cursor, "viajes", "camionero_nombre", "TEXT")
     agregar_columna(cursor, "viajes", "observaciones", "TEXT")
 
-cursor.execute("DELETE FROM usuarios WHERE usuario = ?", ("admin",))
+    cursor.execute("DELETE FROM usuarios WHERE usuario = ?", ("admin",))
 
-hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")
+    hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")
 
-cursor.execute("""
-INSERT INTO usuarios (usuario, password, rol)
-VALUES (?, ?, ?)
-""", ("admin", hash_admin, "admin"))
+    cursor.execute("""
+    INSERT INTO usuarios (usuario, password, rol)
+    VALUES (?, ?, ?)
+    """, ("admin", hash_admin, "admin"))
 
     conexion.commit()
     conexion.close()
