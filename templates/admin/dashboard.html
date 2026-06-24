@@ -2,17 +2,22 @@
 
 {% block contenido %}
 
-<h1>Dashboard</h1>
+<div class="page-header">
+    <div>
+        <h1>Dashboard</h1>
+        <p>Resumen operativo de Mercatoria Truck</p>
+    </div>
+</div>
 
 <div class="cards">
 
     <div class="card">
-        <h3>Solicitudes Pendientes</h3>
+        <h3>Solicitudes pendientes</h3>
         <p>{{ pendientes }}</p>
     </div>
 
     <div class="card">
-        <h3>En Curso</h3>
+        <h3>Viajes en curso</h3>
         <p>{{ en_curso }}</p>
     </div>
 
@@ -22,40 +27,49 @@
     </div>
 
     <div class="card">
-        <h3>Camioneros Activos</h3>
+        <h3>Camioneros activos</h3>
         <p>{{ camioneros }}</p>
     </div>
 
     <div class="card">
-        <h3>Clientes Registrados</h3>
+        <h3>Clientes registrados</h3>
         <p>{{ clientes }}</p>
     </div>
 
 </div>
 
-<h2>Solicitudes Pendientes</h2>
+<div class="section-header">
+    <div>
+        <h2>Solicitudes pendientes</h2>
+        <p>Viajes que necesitan revisión o asignación del operador.</p>
+    </div>
+</div>
 
-<table class="tabla">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th>Origen</th>
-            <th>Destino</th>
-            <th>Acción</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for v in lista %}
-        <tr>
-            <td>{{ v[0] }}</td>
-            <td>{{ v[1] }}</td>
-            <td>{{ v[2] }}</td>
-            <td>{{ v[3] }}</td>
-            <td><a href="/admin/viaje/{{ v[0] }}">Gestionar</a></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-card">
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in lista %}
+            <tr>
+                <td>#{{ v[0] }}</td>
+                <td>{{ v[1] }}</td>
+                <td>{{ v[2] }}</td>
+                <td>{{ v[3] }}</td>
+                <td>
+                    <a class="btn-link" href="/admin/viaje/{{ v[0] }}">Gestionar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% endblock %}

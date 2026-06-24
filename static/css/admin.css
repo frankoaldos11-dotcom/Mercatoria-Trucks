@@ -180,3 +180,47 @@ body {
 .tabla tr:hover td {
     background: #f8fafc;
 }
+.page-header,
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.page-header {
+    margin-bottom: 28px;
+}
+
+.section-header {
+    margin: 36px 0 16px;
+}
+
+.page-header p,
+.section-header p {
+    margin: 4px 0 0;
+    color: var(--muted);
+}
+
+.table-card {
+    background: var(--panel);
+    border-radius: var(--radius);
+}
+
+.btn-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #eef4ff;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.btn-link:hover {
+    background: var(--primary);
+    color: white;
+}
