@@ -268,6 +268,9 @@ crear_base_datos()
 # -----------------------------
 # MAIN LOCAL
 # -----------------------------
+# Crear base de datos SIEMPRE (Render + local)
+crear_base_datos()
+
+# Ejecutar servidor solo en local
 if __name__ == "__main__":
     app.run(debug=True)
-
