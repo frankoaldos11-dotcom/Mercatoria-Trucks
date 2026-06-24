@@ -127,4 +127,48 @@ def historico():
 # -----------------------------------------
 # PERFIL DEL CLIENTE (VER + EDITAR)
 # -----------------------------------------
-@cliente_bp.route("/perfil", methods=["GET
+@cliente_bp.route("/perfil", methods=["GET", "POST"])
+def perfil():
+    if not requiere_cliente():
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    # Obtener datos actuales
+    cursor.execute("SELECT nombre, telefono, usuario, contrasena FROM usuarios WHERE usuario = ?", (session["usuario"],))
+    datos = cursor.fetchone()
+
+    if request.method == "POST":
+        nombre = request.form["nombre"].strip()
+        telefono = request.form["telefono"].strip()
+
+        actual = request.form["actual"].strip()
+        nueva = request.form["nueva"].strip()
+        confirmar = request.form["confirmar"].strip()
+
+        # Validación básica
+        if nombre == "" or telefono == "":
+            return render_template("cliente/perfil.html", datos=datos, error="Nombre y teléfono no pueden estar vacíos")
+
+        # Actualizar nombre y teléfono
+        cursor.execute("UPDATE usuarios SET nombre = ?, telefono = ? WHERE usuario = ?", (nombre, telefono, session["usuario"]))
+        conexion.commit()
+
+        # Cambio de contraseña (opcional)
+        if actual or nueva or confirmar:
+            if actual != datos[3]:
+                return render_template("cliente/perfil.html", datos=datos, error="La contraseña actual es incorrecta")
+
+            if nueva != confirmar:
+                return render_template("cliente/perfil.html", datos=datos, error="Las contraseñas nuevas no coinciden")
+
+            cursor.execute("UPDATE usuarios SET contrasena = ? WHERE usuario = ?", (nueva, session["usuario"]))
+            conexion.commit()
+
+        conexion.close()
+
+        return render_template("cliente/perfil.html", datos=[nombre, telefono, datos[2], datos[3]], mensaje="Datos actualizados correctamente")
+
+    conexion.close()
+    return render_template("cliente/perfil.html", datos=datos)
