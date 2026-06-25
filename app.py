@@ -11,6 +11,7 @@ from routes.camioneros import camioneros_bp
 from routes.clientes import clientes_bp
 from routes.cliente import cliente_bp
 from routes.admin import admin_bp
+from routes.vehiculos import vehiculos_bp
 
 
 app = Flask(__name__)
@@ -114,6 +115,7 @@ app.register_blueprint(camioneros_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(cliente_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(vehiculos_bp)
 
 crear_base_datos(bcrypt)
 
