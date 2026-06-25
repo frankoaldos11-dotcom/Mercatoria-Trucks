@@ -1,88 +1,111 @@
 {% extends "admin/base_admin.html" %}
+
 {% block contenido %}
+
 <div class="page-header">
-  <h1 class="page-title">Tarifas</h1>
-  <a href="/admin/comercial/cotizar" class="btn btn-primary">Nueva cotización</a>
+    <div>
+        <span class="eyebrow">Motor Comercial</span>
+        <h1>Tarifas</h1>
+        <p>Precios por ruta y tipo de vehículo para cotizar operaciones.</p>
+    </div>
+
+    <a href="/admin/comercial/cotizar" class="btn btn-soft">Nueva cotización</a>
 </div>
 
-<div class="card mb-4">
-  <div class="card-body">
-    <h6 class="fw-semibold mb-3">Nueva tarifa</h6>
-    <form method="POST" action="/admin/comercial/tarifas/nueva">
-      <div class="row g-2 align-items-end">
-        <div class="col-md-3">
-          <label class="form-label">Ruta</label>
-          <select name="ruta_id" class="form-select" required>
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Nueva tarifa</h2>
+            <p>Define precio cliente, pago camionero y combustible estimado.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="/admin/comercial/tarifas/nueva" class="form-grid">
+
+        <select name="ruta_id" required>
             <option value="">Seleccionar ruta</option>
             {% for r in rutas %}
-            <option value="{{ r.id }}">{{ r.origen }} → {{ r.destino }} ({{ r.km_oficiales }} km)</option>
+            <option value="{{ r['id'] }}">
+                {{ r['origen'] }} → {{ r['destino'] }} ({{ r['km_oficiales'] }} km)
+            </option>
             {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Tipo vehículo</label>
-          <select name="tipo_vehiculo_id" class="form-select" required>
-            <option value="">Seleccionar</option>
-            {% for t in tipos %}
-            <option value="{{ t.id }}">{{ t.nombre }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Precio cliente (€)</label>
-          <input name="precio_cliente" type="number" step="0.01" class="form-control" required>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Pago camionero (€)</label>
-          <input name="pago_camionero" type="number" step="0.01" class="form-control" required>
-        </div>
-        <div class="col-md-1">
-          <label class="form-label">Combustible (€)</label>
-          <input name="combustible_estimado" type="number" step="0.01" class="form-control">
-        </div>
-        <div class="col-md-1">
-          <label class="form-label">Desde</label>
-          <input name="vigencia_desde" type="date" class="form-control">
-        </div>
-        <div class="col-md-1">
-          <button class="btn btn-primary w-100">Guardar</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
+        </select>
 
-<div class="card">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          <th>Ruta</th><th>Km</th><th>Vehículo</th>
-          <th>€ Cliente</th><th>€/km</th>
-          <th>€ Camionero</th><th>Combustible</th>
-          <th>Beneficio</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for t in tarifas %}
-        {% set beneficio = t.precio_cliente - t.pago_camionero - (t.combustible_estimado or 0) %}
-        <tr>
-          <td>{{ t.origen }} → {{ t.destino }}</td>
-          <td>{{ t.km_oficiales }}</td>
-          <td>{{ t.tipo_vehiculo }}</td>
-          <td class="fw-semibold">{{ "%.2f"|format(t.precio_cliente) }} €</td>
-          <td class="text-muted">{{ "%.3f"|format(t.precio_cliente / t.km_oficiales) }}</td>
-          <td>{{ "%.2f"|format(t.pago_camionero) }} €</td>
-          <td>{{ "%.2f"|format(t.combustible_estimado or 0) }} €</td>
-          <td class="{% if beneficio > 0 %}text-success{% else %}text-danger{% endif %} fw-semibold">
-            {{ "%.2f"|format(beneficio) }} €
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="8" class="text-center text-muted py-4">Sin tarifas todavía</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+        <select name="tipo_vehiculo_id" required>
+            <option value="">Tipo de vehículo</option>
+            {% for t in tipos %}
+            <option value="{{ t['id'] }}">{{ t['nombre'] }}</option>
+            {% endfor %}
+        </select>
+
+        <input name="precio_cliente" type="number" step="0.01" placeholder="Precio cliente USD" required>
+
+        <input name="pago_camionero" type="number" step="0.01" placeholder="Pago camionero USD" required>
+
+        <input name="combustible_estimado" type="number" step="0.01" placeholder="Combustible estimado USD">
+
+        <input name="vigencia_desde" type="date">
+
+        <input name="vigencia_hasta" type="date">
+
+        <button type="submit" class="btn-submit">Guardar tarifa</button>
+
+    </form>
+</section>
+
+<section class="panel panel-spaced">
+    <div class="panel-header">
+        <div>
+            <h2>Tarifas registradas</h2>
+            <p>Listado de precios activos del motor comercial.</p>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ruta</th>
+                    <th>Km</th>
+                    <th>Vehículo</th>
+                    <th>Cliente</th>
+                    <th>USD/km</th>
+                    <th>Pago camionero</th>
+                    <th>Combustible</th>
+                    <th>Beneficio</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for t in tarifas %}
+                {% set combustible = t["combustible_estimado"] or 0 %}
+                {% set beneficio = t["precio_cliente"] - t["pago_camionero"] - combustible %}
+                {% set usd_km = t["precio_cliente"] / t["km_oficiales"] if t["km_oficiales"] else 0 %}
+
+                <tr>
+                    <td>#{{ t["id"] }}</td>
+                    <td>{{ t["origen"] }} → {{ t["destino"] }}</td>
+                    <td>{{ t["km_oficiales"] }}</td>
+                    <td>{{ t["tipo_vehiculo"] }}</td>
+                    <td><strong>{{ "%.2f"|format(t["precio_cliente"]) }} USD</strong></td>
+                    <td>{{ "%.3f"|format(usd_km) }}</td>
+                    <td>{{ "%.2f"|format(t["pago_camionero"]) }} USD</td>
+                    <td>{{ "%.2f"|format(combustible) }} USD</td>
+                    <td>
+                        <span class="badge">
+                            {{ "%.2f"|format(beneficio) }} USD
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="empty-state">No hay tarifas registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
 {% endblock %}
