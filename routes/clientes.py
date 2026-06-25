@@ -43,3 +43,11 @@ def clientes():
     conexion.close()
 
     return render_template("clientes.html", clientes=clientes_guardados)
+
+def get_all_clientes():
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT id, nombre FROM clientes ORDER BY nombre")
+    rows = cur.fetchall()
+    con.close()
+    return rows

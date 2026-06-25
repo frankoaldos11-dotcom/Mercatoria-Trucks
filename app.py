@@ -12,6 +12,7 @@ from routes.clientes import clientes_bp
 from routes.cliente import cliente_bp
 from routes.admin import admin_bp
 from routes.vehiculos import vehiculos_bp
+from routes.comercial import comercial_bp
 
 
 app = Flask(__name__)
@@ -116,9 +117,11 @@ app.register_blueprint(clientes_bp)
 app.register_blueprint(cliente_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(vehiculos_bp)
+app.register_blueprint(comercial_bp)
 
 crear_base_datos(bcrypt)
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+print(app.url_map)
