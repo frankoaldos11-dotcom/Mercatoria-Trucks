@@ -9,50 +9,42 @@ from services.comercial_service import (
 comercial_bp = Blueprint("comercial", __name__)
 
 
-def require_admin(f):
-    from functools import wraps
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if session.get("rol") not in ["admin", "operador"]:
-            return redirect("/login")
-        return f(*args, **kwargs)
-    return decorated
+def requiere_admin():
+    return "usuario" in session and session.get("rol") in ["admin", "operador"]
 
-
-# ── RUTAS ────────────────────────────────────────────────────────────────────
 
 @comercial_bp.route("/admin/comercial/rutas")
-@require_admin
 def rutas():
+    if not requiere_admin():
+        return redirect("/login")
     return render_template("admin/comercial/rutas.html", rutas=get_all_rutas())
 
 
 @comercial_bp.route("/admin/comercial/rutas/nueva", methods=["POST"])
-@require_admin
 def nueva_ruta():
+    if not requiere_admin():
+        return redirect("/login")
     origen  = request.form["origen"]
     destino = request.form["destino"]
     zona    = request.form.get("zona", "")
     km      = request.form["km"]
-
     if not ruta_existe(origen, destino):
         crear_ruta(origen, destino, zona, km)
-
     return redirect("/admin/comercial/rutas")
 
 
-# ── TIPOS DE VEHÍCULO ────────────────────────────────────────────────────────
-
 @comercial_bp.route("/admin/comercial/vehiculos")
-@require_admin
 def tipos_vehiculo():
+    if not requiere_admin():
+        return redirect("/login")
     return render_template("admin/comercial/tipos_vehiculo.html",
                            tipos=get_all_tipos_vehiculo())
 
 
 @comercial_bp.route("/admin/comercial/vehiculos/nuevo", methods=["POST"])
-@require_admin
 def nuevo_tipo_vehiculo():
+    if not requiere_admin():
+        return redirect("/login")
     nombre      = request.form["nombre"]
     descripcion = request.form.get("descripcion", "")
     capacidad   = request.form.get("capacidad_ton", "")
@@ -60,11 +52,10 @@ def nuevo_tipo_vehiculo():
     return redirect("/admin/comercial/vehiculos")
 
 
-# ── TARIFAS ──────────────────────────────────────────────────────────────────
-
 @comercial_bp.route("/admin/comercial/tarifas")
-@require_admin
 def tarifas():
+    if not requiere_admin():
+        return redirect("/login")
     return render_template("admin/comercial/tarifas.html",
                            tarifas=get_all_tarifas(),
                            rutas=get_all_rutas(),
@@ -72,26 +63,26 @@ def tarifas():
 
 
 @comercial_bp.route("/admin/comercial/tarifas/nueva", methods=["POST"])
-@require_admin
 def nueva_tarifa():
+    if not requiere_admin():
+        return redirect("/login")
     crear_tarifa(
-        ruta_id           = request.form["ruta_id"],
-        tipo_vehiculo_id  = request.form["tipo_vehiculo_id"],
-        precio_cliente    = request.form["precio_cliente"],
-        pago_camionero    = request.form["pago_camionero"],
+        ruta_id              = request.form["ruta_id"],
+        tipo_vehiculo_id     = request.form["tipo_vehiculo_id"],
+        precio_cliente       = request.form["precio_cliente"],
+        pago_camionero       = request.form["pago_camionero"],
         combustible_estimado = request.form.get("combustible_estimado", ""),
-        vigencia_desde    = request.form.get("vigencia_desde", ""),
-        vigencia_hasta    = request.form.get("vigencia_hasta", ""),
+        vigencia_desde       = request.form.get("vigencia_desde", ""),
+        vigencia_hasta       = request.form.get("vigencia_hasta", ""),
     )
     return redirect("/admin/comercial/tarifas")
 
 
-# ── COTIZACIÓN ───────────────────────────────────────────────────────────────
-
 @comercial_bp.route("/admin/comercial/cotizar")
-@require_admin
 def cotizar_view():
-    from routes.clientes import get_all_clientes  # evitar import circular
+    if not requiere_admin():
+        return redirect("/login")
+    from routes.clientes import get_all_clientes
     return render_template("admin/comercial/cotizar.html",
                            rutas=get_all_rutas(),
                            tipos=get_all_tipos_vehiculo(),
@@ -99,8 +90,9 @@ def cotizar_view():
 
 
 @comercial_bp.route("/admin/comercial/cotizar/calcular", methods=["POST"])
-@require_admin
 def calcular_cotizacion():
+    if not requiere_admin():
+        return redirect("/login")
     ruta_id          = request.form["ruta_id"]
     tipo_vehiculo_id = request.form["tipo_vehiculo_id"]
     resultado = cotizar(ruta_id, tipo_vehiculo_id)
@@ -110,17 +102,16 @@ def calcular_cotizacion():
 
 
 @comercial_bp.route("/admin/comercial/cotizar/guardar", methods=["POST"])
-@require_admin
 def guardar_cotizacion_view():
+    if not requiere_admin():
+        return redirect("/login")
     ruta_id          = request.form["ruta_id"]
     tipo_vehiculo_id = request.form["tipo_vehiculo_id"]
     cliente_id       = request.form.get("cliente_id")
     precio_override  = request.form.get("precio_final")
     motivo           = request.form.get("motivo")
-
     datos = cotizar(ruta_id, tipo_vehiculo_id)
     if not datos:
         return redirect("/admin/comercial/cotizar")
-
     guardar_cotizacion(datos, cliente_id, session["user_id"], precio_override, motivo)
     return redirect("/admin/comercial/tarifas")

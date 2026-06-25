@@ -1,0 +1,69 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Motor Comercial</span>
+        <h1>Rutas</h1>
+        <p>Rutas fijas con kilómetros oficiales para calcular tarifas logísticas.</p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Nueva ruta</h2>
+            <p>Registra una ruta operativa permanente.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="/admin/comercial/rutas/nueva" class="form-grid">
+        <input name="origen" placeholder="Origen" required>
+        <input name="destino" placeholder="Destino" required>
+        <input name="zona" placeholder="Zona">
+        <input name="km" type="number" step="0.1" placeholder="Km oficiales" required>
+
+        <button type="submit" class="btn-submit">Añadir ruta</button>
+    </form>
+</section>
+
+<section class="panel panel-spaced">
+    <div class="panel-header">
+        <div>
+            <h2>Rutas registradas</h2>
+            <p>Listado de rutas activas disponibles para cotización.</p>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Zona</th>
+                    <th>Km oficiales</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rutas %}
+                <tr>
+                    <td>#{{ r["id"] }}</td>
+                    <td>{{ r["origen"] }}</td>
+                    <td>{{ r["destino"] }}</td>
+                    <td>{{ r["zona"] or "—" }}</td>
+                    <td>{{ r["km_oficiales"] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="empty-state">Sin rutas todavía.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% endblock %}
