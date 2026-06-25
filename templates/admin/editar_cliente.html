@@ -1,0 +1,159 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Comercial</span>
+        <h1>Editar Cliente #{{ cliente["id"] }}</h1>
+        <p>Actualiza los datos del cliente o empresa.</p>
+    </div>
+    <a href="/admin/clientes" class="btn-volver">← Volver</a>
+</div>
+
+<section class="panel">
+    <div style="padding: 28px; max-width: 720px;">
+        <form method="POST" action="/admin/clientes/{{ cliente['id'] }}/editar">
+
+            <div class="edit-row">
+                <div class="edit-field">
+                    <label>Nombre *</label>
+                    <input type="text" name="nombre" class="input-crud"
+                           value="{{ cliente['nombre'] }}" required>
+                </div>
+                <div class="edit-field">
+                    <label>Empresa</label>
+                    <input type="text" name="empresa" class="input-crud"
+                           value="{{ cliente['empresa'] or '' }}">
+                </div>
+            </div>
+
+            <div class="edit-row">
+                <div class="edit-field">
+                    <label>Contacto</label>
+                    <input type="text" name="contacto" class="input-crud"
+                           value="{{ cliente['contacto'] or '' }}">
+                </div>
+                <div class="edit-field">
+                    <label>Teléfono</label>
+                    <input type="text" name="telefono" class="input-crud"
+                           value="{{ cliente['telefono'] or '' }}">
+                </div>
+            </div>
+
+            <div class="edit-row">
+                <div class="edit-field">
+                    <label>Email</label>
+                    <input type="email" name="email" class="input-crud"
+                           value="{{ cliente['email'] or '' }}">
+                </div>
+                <div class="edit-field">
+                    <label>Dirección</label>
+                    <input type="text" name="direccion" class="input-crud"
+                           value="{{ cliente['direccion'] or '' }}">
+                </div>
+            </div>
+
+            <div class="edit-actions">
+                <button type="submit" class="btn-crud-primary">Guardar cambios</button>
+                <a href="/admin/clientes" class="btn-crud-secondary">Cancelar</a>
+            </div>
+
+        </form>
+    </div>
+</section>
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.btn-volver {
+    color: #555;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f9f9f9;
+    white-space: nowrap;
+}
+
+.btn-volver:hover { background: #eee; }
+
+.edit-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.edit-field { margin-bottom: 18px; }
+
+.edit-field label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+}
+
+.input-crud {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #fafafa;
+}
+
+.input-crud:focus {
+    outline: none;
+    border-color: #F36B21;
+    background: #fff;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.btn-crud-primary {
+    background: #F36B21;
+    color: white;
+    padding: 11px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-crud-primary:hover { background: #d95714; }
+
+.btn-crud-secondary {
+    background: #f0f0f0;
+    color: #555;
+    padding: 11px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-crud-secondary:hover { background: #e0e0e0; }
+</style>
+
+{% endblock %}

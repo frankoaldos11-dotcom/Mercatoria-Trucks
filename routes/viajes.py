@@ -17,7 +17,7 @@ def calcular_finanzas(precio, combustible, pago_camionero):
 
 
 def liberar_camionero_si_corresponde(cursor, viaje_id, estado):
-    if estado not in ["Entregado", "Cancelado"]:
+    if estado.lower() not in ["entregado", "cancelado"]:
         return
 
     cursor.execute("SELECT camionero_id FROM viajes WHERE id=?", (viaje_id,))
@@ -26,6 +26,20 @@ def liberar_camionero_si_corresponde(cursor, viaje_id, estado):
     if resultado and resultado[0]:
         cursor.execute(
             "UPDATE camioneros SET estado='Disponible' WHERE id=?",
+            (resultado[0],)
+        )
+
+
+def liberar_vehiculo_si_corresponde(cursor, viaje_id, estado):
+    if estado.lower() not in ["entregado", "cancelado"]:
+        return
+
+    cursor.execute("SELECT vehiculo_id FROM viajes WHERE id=?", (viaje_id,))
+    resultado = cursor.fetchone()
+
+    if resultado and resultado[0]:
+        cursor.execute(
+            "UPDATE vehiculos SET estado='Disponible' WHERE id=?",
             (resultado[0],)
         )
 
@@ -78,25 +92,7 @@ def nuevo_viaje():
 
 @viajes_bp.route("/viajes")
 def viajes():
-    conexion = conectar()
-    cursor = conexion.cursor()
-
-    cursor.execute("""
-    SELECT id, cliente, origen, destino, precio, combustible, camionero,
-           comision, beneficio, estado, camionero_nombre, observaciones
-    FROM viajes
-    ORDER BY id DESC
-    """)
-
-    viajes_guardados = cursor.fetchall()
-    conexion.close()
-
-    return render_template(
-        "viajes.html",
-        viajes=viajes_guardados,
-        rol=CURRENT_ROLE,
-        estados=VIAJE_ESTADOS
-    )
+    return redirect("/admin/viajes")
 
 
 @viajes_bp.route("/editar/<int:id>", methods=["GET", "POST"])
@@ -143,6 +139,7 @@ def editar_viaje(id):
         ))
 
         liberar_camionero_si_corresponde(cursor, id, estado)
+        liberar_vehiculo_si_corresponde(cursor, id, estado)
 
         conexion.commit()
         conexion.close()
@@ -191,8 +188,41 @@ def cambiar_estado(id, estado):
     cursor.execute("UPDATE viajes SET estado=? WHERE id=?", (estado, id))
 
     liberar_camionero_si_corresponde(cursor, id, estado)
+    liberar_vehiculo_si_corresponde(cursor, id, estado)
 
     conexion.commit()
     conexion.close()
 
     return redirect("/viajes")
+
+
+@viajes_bp.route("/admin/viaje/<int:id>/orden-carga")
+@viajes_bp.route("/admin/viajes/<int:id>/orden-carga")
+def orden_carga(id):
+    conexion = conectar()
+    conexion.row_factory = None
+    cursor = conexion.cursor()
+
+    conexion.row_factory = None
+
+    cursor.execute("""
+        SELECT *
+        FROM viajes
+        WHERE id = ?
+    """, (id,))
+
+    fila = cursor.fetchone()
+
+    if not fila:
+        conexion.close()
+        return redirect("/admin/viajes")
+
+    columnas = [descripcion[0] for descripcion in cursor.description]
+    viaje = dict(zip(columnas, fila))
+
+    conexion.close()
+
+    return render_template(
+        "admin/orden_carga.html",
+        viaje=viaje
+    )

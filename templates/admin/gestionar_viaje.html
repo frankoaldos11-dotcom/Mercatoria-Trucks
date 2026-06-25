@@ -98,7 +98,7 @@
                 <div class="economia-item">
                     <span>Combustible</span>
                     <strong>
-                        ${{ "%.2f"|format(viaje["combustible"] or 0) }}
+                        ${{ "%.2f"|format(viaje["combustible"] or viaje["combustible_estimado"] or 0) }}
                     </strong>
                 </div>
 
@@ -112,7 +112,7 @@
                 <div class="economia-item beneficio">
                     <span>Beneficio estimado</span>
                     <strong>
-                        ${{ "%.2f"|format(viaje["beneficio"] or 0) }}
+                        ${{ "%.2f"|format(viaje["beneficio"] or viaje["beneficio_estimado"] or 0) }}
                     </strong>
                 </div>
             </div>
@@ -162,7 +162,7 @@
                     <option value="">Seleccionar vehículo</option>
                     {% for v in vehiculos %}
                         <option value="{{ v['id'] }}">
-                            {{ v['placa'] }}
+                            {{ v['matricula'] if v['matricula'] else v['placa'] if v['placa'] else "Vehículo #" ~ v['id'] }}
                             {% if v['marca'] %} - {{ v['marca'] }}{% endif %}
                             {% if v['modelo'] %} {{ v['modelo'] }}{% endif %}
                         </option>
@@ -175,8 +175,7 @@
 
             </form>
         </div>
-
-        <div class="card bloque">
+                <div class="card bloque">
             <h2>Cambiar estado</h2>
 
             <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/estado">
@@ -196,6 +195,23 @@
                 </button>
 
             </form>
+        </div>
+
+        <div class="card bloque operaciones-box">
+            <h2>Operaciones</h2>
+
+            <a href="/admin/viajes/{{ viaje['id'] }}/orden-carga"
+               class="btn-principal btn-link-operacion">
+                Generar Orden de Carga
+            </a>
+
+            <button class="btn-secundario" disabled>
+                Carta de Porte (Próximamente)
+            </button>
+
+            <button class="btn-secundario" disabled>
+                Liquidación (Próximamente)
+            </button>
         </div>
 
         <div class="card bloque whatsapp-box">
@@ -372,6 +388,15 @@
     font-size: 16px;
     cursor: not-allowed;
     font-weight: 700;
+    margin-top: 12px;
+}
+
+.btn-link-operacion {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
+    margin-bottom: 12px;
 }
 
 .whatsapp-box p {

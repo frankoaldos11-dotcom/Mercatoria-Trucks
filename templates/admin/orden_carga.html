@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Orden de Carga #{{ viaje["id"] }}</title>
+</head>
+<body>
+    <h1>Orden de Carga #{{ viaje["id"] }}</h1>
+
+    <p><strong>Cliente:</strong> {{ viaje["cliente"] or "Sin cliente" }}</p>
+    <p><strong>Origen:</strong> {{ viaje["origen"] }}</p>
+    <p><strong>Destino:</strong> {{ viaje["destino"] }}</p>
+    <p><strong>Camionero:</strong> {{ viaje["camionero_nombre"] or "Sin asignar" }}</p>
+    <p><strong>Estado:</strong> {{ viaje["estado"] }}</p>
+
+    <hr>
+
+    <p><strong>Precio final:</strong> ${{ "%.2f"|format(viaje["precio_final"] or viaje["precio"] or 0) }}</p>
+    <p><strong>Pago camionero:</strong> ${{ "%.2f"|format(viaje["pago_camionero"] or 0) }}</p>
+    <p><strong>Combustible:</strong> ${{ "%.2f"|format(viaje["combustible"] or viaje["combustible_estimado"] or 0) }}</p>
+
+    <hr>
+
+    <p><strong>Observaciones:</strong></p>
+    <p>{{ viaje["observaciones"] or "Sin observaciones." }}</p>
+</body>
+</html>

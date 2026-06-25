@@ -10,6 +10,46 @@
     </div>
 </div>
 
+<section class="panel" style="margin-bottom: 24px;">
+    <div class="panel-header">
+        <div>
+            <h2>Nuevo cliente</h2>
+            <p>Registra una empresa o persona de contacto en el sistema.</p>
+        </div>
+    </div>
+    <div style="padding: 24px;">
+        <form method="POST" action="/admin/clientes" class="form-crud-grid">
+            <div class="form-crud-field">
+                <label>Nombre *</label>
+                <input type="text" name="nombre" class="input-crud" required placeholder="Nombre completo">
+            </div>
+            <div class="form-crud-field">
+                <label>Empresa</label>
+                <input type="text" name="empresa" class="input-crud" placeholder="Razón social">
+            </div>
+            <div class="form-crud-field">
+                <label>Contacto</label>
+                <input type="text" name="contacto" class="input-crud" placeholder="Persona de contacto">
+            </div>
+            <div class="form-crud-field">
+                <label>Teléfono</label>
+                <input type="text" name="telefono" class="input-crud" placeholder="Teléfono">
+            </div>
+            <div class="form-crud-field">
+                <label>Email</label>
+                <input type="email" name="email" class="input-crud" placeholder="correo@empresa.com">
+            </div>
+            <div class="form-crud-field">
+                <label>Dirección</label>
+                <input type="text" name="direccion" class="input-crud" placeholder="Dirección fiscal">
+            </div>
+            <div class="form-crud-field form-crud-submit">
+                <button type="submit" class="btn-crud-primary">Registrar cliente</button>
+            </div>
+        </form>
+    </div>
+</section>
+
 <section class="panel">
     <div class="panel-header">
         <div>
@@ -24,27 +64,124 @@
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
+                    <th>Empresa</th>
+                    <th>Contacto</th>
                     <th>Teléfono</th>
                     <th>Email</th>
+                    <th>Dirección</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
 
             <tbody>
                 {% for c in lista %}
                 <tr>
-                    <td>#{{ c[0] }}</td>
-                    <td>{{ c[1] }}</td>
-                    <td>{{ c[2] }}</td>
-                    <td>{{ c[3] }}</td>
+                    <td>#{{ c["id"] }}</td>
+                    <td>{{ c["nombre"] }}</td>
+                    <td>{{ c["empresa"] or "—" }}</td>
+                    <td>{{ c["contacto"] or "—" }}</td>
+                    <td>{{ c["telefono"] or "—" }}</td>
+                    <td>{{ c["email"] or "—" }}</td>
+                    <td>{{ c["direccion"] or "—" }}</td>
+                    <td class="td-acciones">
+                        <a href="/admin/clientes/{{ c['id'] }}/editar" class="btn-accion-edit">Editar</a>
+                        <form method="POST" action="/admin/clientes/{{ c['id'] }}/eliminar"
+                              style="display:inline"
+                              onsubmit="return confirm('¿Confirmar eliminación?')">
+                            <button type="submit" class="btn-accion-del">Eliminar</button>
+                        </form>
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" class="empty-state">No hay clientes registrados.</td>
+                    <td colspan="8" class="empty-state">No hay clientes registrados.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </section>
+
+<style>
+.form-crud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.form-crud-field label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+}
+
+.input-crud {
+    width: 100%;
+    padding: 9px 13px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #fafafa;
+}
+
+.input-crud:focus {
+    outline: none;
+    border-color: #F36B21;
+    background: #fff;
+}
+
+.form-crud-submit {
+    display: flex;
+    align-items: flex-end;
+}
+
+.btn-crud-primary {
+    width: 100%;
+    background: #F36B21;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-crud-primary:hover { background: #d95714; }
+
+.td-acciones { white-space: nowrap; }
+
+.btn-accion-edit, .btn-accion-del {
+    display: inline-block;
+    padding: 4px 11px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    margin-right: 4px;
+}
+
+.btn-accion-edit {
+    background: #e8f4fd;
+    color: #1a6fa0;
+}
+
+.btn-accion-edit:hover { background: #cce4f7; }
+
+.btn-accion-del {
+    background: #fde8e8;
+    color: #c0392b;
+}
+
+.btn-accion-del:hover { background: #f7caca; }
+</style>
 
 {% endblock %}
