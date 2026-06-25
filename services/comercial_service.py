@@ -197,3 +197,60 @@ def guardar_cotizacion(datos, cliente_id, usuario_id,
     con.commit()
     con.close()
     return cotizacion_id
+
+def get_all_cotizaciones():
+    con = conectar()
+    cur = con.cursor()
+
+    cur.execute("""
+        SELECT
+            c.id,
+            cl.nombre AS cliente,
+            r.origen,
+            r.destino,
+            tv.nombre AS tipo_vehiculo,
+            c.precio_final,
+            c.beneficio_estimado,
+            c.estado
+        FROM cotizaciones c
+
+        LEFT JOIN clientes cl
+            ON cl.id = c.cliente_id
+
+        JOIN rutas r
+            ON r.id = c.ruta_id
+
+        JOIN tipos_vehiculo tv
+            ON tv.id = c.tipo_vehiculo_id
+
+        ORDER BY c.id DESC
+    """)
+
+    datos = cur.fetchall()
+
+    con.close()
+
+    return datos
+
+
+def get_cotizacion(id):
+
+    con = conectar()
+
+    cur = con.cursor()
+
+    cur.execute("""
+
+        SELECT *
+
+        FROM cotizaciones
+
+        WHERE id=?
+
+    """, (id,))
+
+    dato = cur.fetchone()
+
+    con.close()
+
+    return dato
