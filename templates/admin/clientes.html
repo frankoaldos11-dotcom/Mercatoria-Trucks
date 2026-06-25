@@ -2,28 +2,49 @@
 
 {% block contenido %}
 
-<h1>Clientes Registrados</h1>
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Comercial</span>
+        <h1>Clientes</h1>
+        <p>Empresas y usuarios registrados para solicitar servicios logísticos.</p>
+    </div>
+</div>
 
-<table class="tabla">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Teléfono</th>
-            <th>Email</th>
-        </tr>
-    </thead>
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Clientes registrados</h2>
+            <p>Base comercial vinculada a solicitudes y viajes.</p>
+        </div>
+    </div>
 
-    <tbody>
-        {% for c in lista %}
-        <tr>
-            <td>{{ c[0] }}</td>
-            <td>{{ c[1] }}</td>
-            <td>{{ c[2] }}</td>
-            <td>{{ c[3] }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for c in lista %}
+                <tr>
+                    <td>#{{ c[0] }}</td>
+                    <td>{{ c[1] }}</td>
+                    <td>{{ c[2] }}</td>
+                    <td>{{ c[3] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="empty-state">No hay clientes registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 
 {% endblock %}

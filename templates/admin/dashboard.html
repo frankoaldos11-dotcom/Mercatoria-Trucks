@@ -4,76 +4,104 @@
 
 <div class="page-header">
     <div>
+        <span class="eyebrow">Panel operativo</span>
         <h1>Dashboard</h1>
-        <p>Resumen operativo de Mercatoria Truck</p>
+        <p>Resumen general de solicitudes, viajes, clientes y recursos activos.</p>
     </div>
 </div>
 
-<div class="cards">
+<div class="kpi-grid">
 
-    <div class="card kpi-card">
-        <h3>Solicitudes pendientes</h3>
-        <p>{{ pendientes }}</p>
+    <div class="kpi-card">
+        <div class="kpi-icon warning">
+            <i class="bi bi-clock-history"></i>
+        </div>
+        <div>
+            <span>Solicitudes pendientes</span>
+            <strong>{{ pendientes }}</strong>
+        </div>
     </div>
 
-    <div class="card kpi-card">
-        <h3>Viajes en curso</h3>
-        <p>{{ en_curso }}</p>
+    <div class="kpi-card">
+        <div class="kpi-icon primary">
+            <i class="bi bi-truck-front"></i>
+        </div>
+        <div>
+            <span>Viajes en curso</span>
+            <strong>{{ en_curso }}</strong>
+        </div>
     </div>
 
-    <div class="card kpi-card">
-        <h3>Entregados</h3>
-        <p>{{ entregados }}</p>
+    <div class="kpi-card">
+        <div class="kpi-icon success">
+            <i class="bi bi-check2-circle"></i>
+        </div>
+        <div>
+            <span>Entregados</span>
+            <strong>{{ entregados }}</strong>
+        </div>
     </div>
 
-    <div class="card kpi-card">
-        <h3>Camioneros activos</h3>
-        <p>{{ camioneros }}</p>
+    <div class="kpi-card">
+        <div class="kpi-icon info">
+            <i class="bi bi-person-vcard"></i>
+        </div>
+        <div>
+            <span>Camioneros activos</span>
+            <strong>{{ camioneros }}</strong>
+        </div>
     </div>
 
-    <div class="card kpi-card">
-        <h3>Clientes registrados</h3>
-        <p>{{ clientes }}</p>
+    <div class="kpi-card">
+        <div class="kpi-icon neutral">
+            <i class="bi bi-buildings"></i>
+        </div>
+        <div>
+            <span>Clientes registrados</span>
+            <strong>{{ clientes }}</strong>
+        </div>
     </div>
 
 </div>
 
-<div class="section-header">
-    <div>
-        <h2>Solicitudes pendientes</h2>
-        <p>Viajes que necesitan revisión o asignación del operador.</p>
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Solicitudes pendientes</h2>
+            <p>Viajes que necesitan revisión o asignación.</p>
+        </div>
     </div>
-</div>
 
-<div class="table-card">
-    <table class="tabla">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Cliente</th>
-                <th>Origen</th>
-                <th>Destino</th>
-                <th>Acción</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for v in lista %}
-            <tr>
-                <td>#{{ v[0] }}</td>
-                <td>{{ v[1] }}</td>
-                <td>{{ v[2] }}</td>
-                <td>{{ v[3] }}</td>
-                <td>
-                    <a class="btn-link" href="/admin/viaje/{{ v[0] }}">Gestionar</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" class="empty-state">No hay solicitudes pendientes.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in lista %}
+                <tr>
+                    <td>#{{ v[0] }}</td>
+                    <td>{{ v[1] }}</td>
+                    <td>{{ v[2] }}</td>
+                    <td>{{ v[3] }}</td>
+                    <td>
+                        <a class="btn btn-soft" href="/admin/viaje/{{ v[0] }}">Gestionar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="empty-state">No hay solicitudes pendientes.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 
 {% endblock %}
