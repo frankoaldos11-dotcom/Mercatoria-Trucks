@@ -1,11 +1,9 @@
 from flask import Blueprint, render_template, request, redirect
-import sqlite3
+
+from database import conectar
+
 
 camioneros_bp = Blueprint("camioneros", __name__)
-
-
-def conectar():
-    return sqlite3.connect("mercatoria.db")
 
 
 @camioneros_bp.route("/camioneros", methods=["GET", "POST"])
@@ -14,12 +12,12 @@ def camioneros():
     cursor = conexion.cursor()
 
     if request.method == "POST":
-        nombre = request.form["nombre"]
-        telefono = request.form["telefono"]
-        matricula = request.form["matricula"]
-        tipo = request.form["tipo"]
-        capacidad = request.form["capacidad"]
-        estado = request.form["estado"]
+        nombre = request.form["nombre"].strip()
+        telefono = request.form["telefono"].strip()
+        matricula = request.form["matricula"].strip()
+        tipo = request.form["tipo"].strip()
+        capacidad = request.form["capacidad"].strip()
+        estado = request.form["estado"].strip()
 
         cursor.execute("""
         INSERT INTO camioneros
@@ -29,13 +27,17 @@ def camioneros():
 
         conexion.commit()
 
-    cursor.execute("SELECT * FROM camioneros ORDER BY id DESC")
+    cursor.execute("""
+    SELECT id, nombre, telefono, matricula, tipo, capacidad, estado
+    FROM camioneros
+    ORDER BY id DESC
+    """)
     camioneros_guardados = cursor.fetchall()
 
     cursor.execute("""
     SELECT id, cliente, origen, destino
     FROM viajes
-    WHERE estado IN ('Pendiente', 'Asignado')
+    WHERE estado IN ('Solicitado', 'Asignado')
     ORDER BY id DESC
     """)
     viajes_pendientes = cursor.fetchall()
@@ -54,7 +56,12 @@ def asignar_camionero(viaje_id, camionero_id):
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT nombre FROM camioneros WHERE id=?", (camionero_id,))
+    cursor.execute("""
+    SELECT nombre
+    FROM camioneros
+    WHERE id=? AND activo=1
+    """, (camionero_id,))
+
     camionero = cursor.fetchone()
 
     if camionero:
@@ -62,13 +69,16 @@ def asignar_camionero(viaje_id, camionero_id):
 
         cursor.execute("""
         UPDATE viajes
-        SET camionero_id=?, camionero_nombre=?, estado='Asignado'
+        SET camionero_id=?,
+            camionero_nombre=?,
+            estado='Asignado',
+            fecha_asignacion=CURRENT_TIMESTAMP
         WHERE id=?
         """, (camionero_id, camionero_nombre, viaje_id))
 
         cursor.execute("""
         UPDATE camioneros
-        SET estado='En viaje'
+        SET estado='Ocupado'
         WHERE id=?
         """, (camionero_id,))
 
