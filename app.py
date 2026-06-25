@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session
 
 from extensions import bcrypt
 from database import conectar, crear_base_datos
+from migraciones import ejecutar_migraciones
 from utils.constants import ROLES
 
 from routes.home import home_bp
@@ -120,6 +121,7 @@ app.register_blueprint(vehiculos_bp)
 app.register_blueprint(comercial_bp)
 
 crear_base_datos(bcrypt)
+ejecutar_migraciones()
 
 
 if __name__ == "__main__":

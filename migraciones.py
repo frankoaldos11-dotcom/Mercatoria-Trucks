@@ -1,0 +1,90 @@
+import sqlite3
+
+
+DATABASE_NAME = "mercatoria.db"
+
+
+def conectar():
+    conexion = sqlite3.connect(DATABASE_NAME)
+    conexion.row_factory = sqlite3.Row
+    return conexion
+
+
+def tabla_existe(cursor, tabla):
+    cursor.execute("""
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table'
+        AND name = ?
+    """, (tabla,))
+    return cursor.fetchone() is not None
+
+
+def columna_existe(cursor, tabla, columna):
+    cursor.execute(f"PRAGMA table_info({tabla})")
+    columnas = cursor.fetchall()
+    return any(col["name"] == columna for col in columnas)
+
+
+def agregar_columna(cursor, tabla, columna, definicion):
+    if tabla_existe(cursor, tabla) and not columna_existe(cursor, tabla, columna):
+        cursor.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {definicion}")
+
+
+def ejecutar_migraciones():
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    agregar_columna(cursor, "viajes", "cotizacion_id", "INTEGER")
+    agregar_columna(cursor, "viajes", "cliente", "TEXT")
+    agregar_columna(cursor, "viajes", "cliente_id", "INTEGER")
+    agregar_columna(cursor, "viajes", "ruta_id", "INTEGER")
+    agregar_columna(cursor, "viajes", "tarifa_id", "INTEGER")
+    agregar_columna(cursor, "viajes", "tipo_vehiculo_id", "INTEGER")
+    agregar_columna(cursor, "viajes", "origen", "TEXT")
+    agregar_columna(cursor, "viajes", "destino", "TEXT")
+    agregar_columna(cursor, "viajes", "km", "REAL")
+    agregar_columna(cursor, "viajes", "kilometros", "REAL")
+    agregar_columna(cursor, "viajes", "precio", "REAL")
+    agregar_columna(cursor, "viajes", "precio_cliente", "REAL")
+    agregar_columna(cursor, "viajes", "precio_calculado", "REAL")
+    agregar_columna(cursor, "viajes", "precio_final", "REAL")
+    agregar_columna(cursor, "viajes", "combustible", "REAL")
+    agregar_columna(cursor, "viajes", "combustible_estimado", "REAL")
+    agregar_columna(cursor, "viajes", "pago_camionero", "REAL")
+    agregar_columna(cursor, "viajes", "beneficio", "REAL")
+    agregar_columna(cursor, "viajes", "beneficio_estimado", "REAL")
+    agregar_columna(cursor, "viajes", "camionero_id", "INTEGER")
+    agregar_columna(cursor, "viajes", "camionero_nombre", "TEXT")
+    agregar_columna(cursor, "viajes", "vehiculo_id", "INTEGER")
+    agregar_columna(cursor, "viajes", "vehiculo_placa", "TEXT")
+    agregar_columna(cursor, "viajes", "estado", "TEXT DEFAULT 'Pendiente'")
+    agregar_columna(cursor, "viajes", "observaciones", "TEXT")
+
+    agregar_columna(cursor, "vehiculos", "tipo_vehiculo_id", "INTEGER")
+    agregar_columna(cursor, "vehiculos", "matricula", "TEXT")
+    agregar_columna(cursor, "vehiculos", "placa", "TEXT")
+    agregar_columna(cursor, "vehiculos", "marca", "TEXT")
+    agregar_columna(cursor, "vehiculos", "modelo", "TEXT")
+    agregar_columna(cursor, "vehiculos", "tipo", "TEXT")
+    agregar_columna(cursor, "vehiculos", "capacidad", "TEXT")
+    agregar_columna(cursor, "vehiculos", "combustible", "TEXT")
+    agregar_columna(cursor, "vehiculos", "estado", "TEXT DEFAULT 'Disponible'")
+    agregar_columna(cursor, "vehiculos", "activo", "INTEGER DEFAULT 1")
+
+    agregar_columna(cursor, "cotizaciones", "cliente_id", "INTEGER")
+    agregar_columna(cursor, "cotizaciones", "ruta_id", "INTEGER")
+    agregar_columna(cursor, "cotizaciones", "tipo_vehiculo_id", "INTEGER")
+    agregar_columna(cursor, "cotizaciones", "km", "REAL")
+    agregar_columna(cursor, "cotizaciones", "precio_calculado", "REAL")
+    agregar_columna(cursor, "cotizaciones", "precio_final", "REAL")
+    agregar_columna(cursor, "cotizaciones", "pago_camionero", "REAL")
+    agregar_columna(cursor, "cotizaciones", "combustible_estimado", "REAL")
+    agregar_columna(cursor, "cotizaciones", "beneficio_estimado", "REAL")
+    agregar_columna(cursor, "cotizaciones", "modificado_manualmente", "INTEGER DEFAULT 0")
+    agregar_columna(cursor, "cotizaciones", "motivo_modificacion", "TEXT")
+    agregar_columna(cursor, "cotizaciones", "usuario_modificacion", "INTEGER")
+    agregar_columna(cursor, "cotizaciones", "estado", "TEXT DEFAULT 'borrador'")
+
+    conexion.commit()
+    conexion.close()
