@@ -1,0 +1,131 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Motor Comercial</span>
+        <h1>Cotización #{{ cotizacion["id"] }}</h1>
+        <p>Detalle económico y operativo de la cotización.</p>
+    </div>
+
+    <div>
+        <a class="btn btn-soft" href="/admin/comercial/cotizaciones">Volver</a>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Información comercial</h2>
+            <p>Datos principales para convertir esta cotización en viaje.</p>
+        </div>
+    </div>
+
+    <div class="kpi-grid" style="padding:24px; margin-bottom:0;">
+
+        <div class="kpi-card">
+            <div>
+                <span>Cliente</span>
+                <strong>{{ cotizacion["cliente_nombre"] or "Sin cliente asignado" }}</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div>
+                <span>Ruta</span>
+                <strong>{{ cotizacion["ruta_origen"] }} → {{ cotizacion["ruta_destino"] }}</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div>
+                <span>Vehículo</span>
+                <strong>{{ cotizacion["tipo_vehiculo_nombre"] }}</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div>
+                <span>Kilómetros</span>
+                <strong>{{ cotizacion["km"] }} km</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div>
+                <span>Precio cliente</span>
+                <strong>{{ "%.2f"|format(cotizacion["precio_final"] or 0) }} USD</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div>
+                <span>Pago camionero</span>
+                <strong>{{ "%.2f"|format(cotizacion["pago_camionero"] or 0) }} USD</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div>
+                <span>Combustible</span>
+                <strong>{{ "%.2f"|format(cotizacion["combustible_estimado"] or 0) }} USD</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div>
+                <span>Beneficio</span>
+                <strong>{{ "%.2f"|format(cotizacion["beneficio_estimado"] or 0) }} USD</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div>
+                <span>Estado</span>
+                <strong>{{ cotizacion["estado"]|upper }}</strong>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<section class="panel panel-spaced">
+    <div class="panel-header">
+        <div>
+            <h2>Siguiente paso operativo</h2>
+            <p>Convierte esta cotización en un viaje operativo para asignar camionero y vehículo.</p>
+        </div>
+    </div>
+
+    {% if cotizacion["estado"] == "convertida" %}
+        <div class="accion-operativa">
+            <p class="empty-state">Esta cotización ya fue convertida en viaje.</p>
+
+            {% if viaje_id %}
+                <a href="/admin/viajes/{{ viaje_id }}/gestionar" class="btn btn-primary">
+                    Gestionar viaje
+                </a>
+            {% endif %}
+        </div>
+    {% else %}
+        <form method="POST" action="/admin/comercial/cotizacion/{{ cotizacion['id'] }}/convertir">
+            <button type="submit" class="btn btn-primary">
+                Convertir en viaje
+            </button>
+        </form>
+    {% endif %}
+</section>
+
+<style>
+.accion-operativa {
+    padding: 24px;
+    text-align: center;
+}
+
+.accion-operativa .empty-state {
+    margin-bottom: 18px;
+}
+</style>
+
+{% endblock %}

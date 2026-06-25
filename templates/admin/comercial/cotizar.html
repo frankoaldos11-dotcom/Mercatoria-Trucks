@@ -1,127 +1,188 @@
-{% extends "admin/base_admin.html" %}
+  esto {% extends "admin/base_admin.html" %}
+
 {% block contenido %}
+
 <div class="page-header">
-  <h1 class="page-title">Nueva cotización</h1>
+    <div>
+        <span class="eyebrow">Motor Comercial</span>
+        <h1>Nueva cotización</h1>
+        <p>Calcula precios desde rutas, tipos de vehículo y tarifas registradas.</p>
+    </div>
 </div>
 
-<div class="row g-4">
-  <div class="col-md-5">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="fw-semibold mb-3">Parámetros</h6>
-        <div class="mb-3">
-          <label class="form-label">Ruta</label>
-          <select id="ruta_id" class="form-select">
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Parámetros de cotización</h2>
+            <p>Selecciona cliente, ruta y tipo de vehículo.</p>
+        </div>
+    </div>
+
+    <div class="form-grid">
+
+        <select id="cliente_id">
+            <option value="">Cliente no asignado</option>
+            {% for c in clientes %}
+            <option value="{{ c['id'] }}">{{ c['nombre'] }}</option>
+            {% endfor %}
+        </select>
+
+        <select id="ruta_id" required>
             <option value="">Seleccionar ruta</option>
             {% for r in rutas %}
-            <option value="{{ r.id }}">{{ r.origen }} → {{ r.destino }} ({{ r.km_oficiales }} km)</option>
+            <option value="{{ r['id'] }}">
+                {{ r['origen'] }} → {{ r['destino'] }} · {{ r['km_oficiales'] }} km
+            </option>
             {% endfor %}
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Tipo de vehículo</label>
-          <select id="tipo_vehiculo_id" class="form-select">
-            <option value="">Seleccionar tipo</option>
+        </select>
+
+        <select id="tipo_vehiculo_id" required>
+            <option value="">Tipo de vehículo</option>
             {% for t in tipos %}
-            <option value="{{ t.id }}">{{ t.nombre }}</option>
+            <option value="{{ t['id'] }}">{{ t['nombre'] }}</option>
             {% endfor %}
-          </select>
-        </div>
-        <button id="btn-calcular" class="btn btn-primary w-100">Calcular</button>
-      </div>
-    </div>
-  </div>
+        </select>
 
-  <div class="col-md-7" id="resultado" style="display:none">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="fw-semibold mb-3">Resultado</h6>
-        <div class="row g-3 mb-3">
-          <div class="col-6">
-            <div class="p-3 rounded" style="background:var(--bg-secondary)">
-              <div class="text-muted small">Km oficiales</div>
-              <div class="fs-5 fw-bold" id="res-km">—</div>
+        <button id="btn-calcular" type="button" class="btn-submit">
+            Calcular cotización
+        </button>
+
+    </div>
+</section>
+
+<section id="resultado" class="panel panel-spaced" style="display:none;">
+
+    <div class="panel-header">
+        <div>
+            <h2>Resultado comercial</h2>
+            <p>Valores calculados automáticamente por el motor tarifario.</p>
+        </div>
+    </div>
+
+    <div class="kpi-grid" style="padding:24px; margin-bottom:0;">
+
+        <div class="kpi-card">
+            <div class="kpi-icon neutral">
+                <i class="bi bi-signpost-2"></i>
             </div>
-          </div>
-          <div class="col-6">
-            <div class="p-3 rounded" style="background:var(--bg-secondary)">
-              <div class="text-muted small">Precio calculado</div>
-              <div class="fs-5 fw-bold text-primary" id="res-precio">—</div>
+            <div>
+                <span>Km oficiales</span>
+                <strong id="res-km">—</strong>
             </div>
-          </div>
-          <div class="col-6">
-            <div class="p-3 rounded" style="background:var(--bg-secondary)">
-              <div class="text-muted small">Pago camionero</div>
-              <div class="fs-5 fw-bold" id="res-camionero">—</div>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="p-3 rounded" style="background:var(--bg-secondary)">
-              <div class="text-muted small">Beneficio estimado</div>
-              <div class="fs-5 fw-bold text-success" id="res-beneficio">—</div>
-            </div>
-          </div>
         </div>
 
-        <form method="POST" action="/admin/comercial/cotizar/guardar">
-          <input type="hidden" name="ruta_id" id="f-ruta">
-          <input type="hidden" name="tipo_vehiculo_id" id="f-tipo">
-          <div class="mb-3">
-            <label class="form-label">Cliente</label>
-            <select name="cliente_id" class="form-select">
-              <option value="">Sin cliente asignado</option>
-              {% for c in clientes %}
-              <option value="{{ c.id }}">{{ c.nombre }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Precio final</label>
-            <input name="precio_final" id="f-precio-final" type="number" step="0.01" class="form-control">
-          </div>
-          <div class="mb-3" id="campo-motivo" style="display:none">
-            <label class="form-label">Motivo de modificación</label>
-            <input name="motivo" class="form-control" placeholder="Requerido si modificas el precio">
-          </div>
-          <button type="submit" class="btn btn-success w-100">Guardar cotización</button>
-        </form>
-      </div>
+        <div class="kpi-card">
+            <div class="kpi-icon primary">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <div>
+                <span>Precio cliente</span>
+                <strong id="res-precio">—</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon info">
+                <i class="bi bi-person-vcard"></i>
+            </div>
+            <div>
+                <span>Pago camionero</span>
+                <strong id="res-camionero">—</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon warning">
+                <i class="bi bi-fuel-pump"></i>
+            </div>
+            <div>
+                <span>Combustible</span>
+                <strong id="res-combustible">—</strong>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon success">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div>
+                <span>Beneficio</span>
+                <strong id="res-beneficio">—</strong>
+            </div>
+        </div>
+
     </div>
-  </div>
-</div>
+
+    <form method="POST" action="/admin/comercial/cotizar/guardar" class="form-grid">
+
+        <input type="hidden" name="ruta_id" id="f-ruta">
+        <input type="hidden" name="tipo_vehiculo_id" id="f-tipo">
+        <input type="hidden" name="cliente_id" id="f-cliente">
+
+        <input
+            name="precio_final"
+            id="f-precio-final"
+            type="number"
+            step="0.01"
+            placeholder="Precio final USD">
+
+        <input
+            name="motivo"
+            id="f-motivo"
+            placeholder="Motivo de modificación si cambia el precio">
+
+        <button type="submit" class="btn-submit">
+            Guardar cotización
+        </button>
+
+    </form>
+
+</section>
 
 <script>
-document.getElementById("btn-calcular").addEventListener("click", async () => {
-  const ruta = document.getElementById("ruta_id").value;
-  const tipo = document.getElementById("tipo_vehiculo_id").value;
-  if (!ruta || !tipo) return;
+const btnCalcular = document.getElementById("btn-calcular");
+const resultado = document.getElementById("resultado");
 
-  const res = await fetch("/admin/comercial/cotizar/calcular", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `ruta_id=${ruta}&tipo_vehiculo_id=${tipo}`
-  });
+btnCalcular.addEventListener("click", async () => {
+    const cliente = document.getElementById("cliente_id").value;
+    const ruta = document.getElementById("ruta_id").value;
+    const tipo = document.getElementById("tipo_vehiculo_id").value;
 
-  if (!res.ok) {
-    alert("No existe tarifa para esa combinación.");
-    return;
-  }
+    if (!ruta || !tipo) {
+        alert("Selecciona ruta y tipo de vehículo.");
+        return;
+    }
 
-  const d = await res.json();
-  document.getElementById("res-km").textContent        = d.km + " km";
-  document.getElementById("res-precio").textContent    = d.precio_calculado.toFixed(2) + " €";
-  document.getElementById("res-camionero").textContent = d.pago_camionero.toFixed(2) + " €";
-  document.getElementById("res-beneficio").textContent = d.beneficio_estimado.toFixed(2) + " €";
-  document.getElementById("f-ruta").value              = d.ruta_id;
-  document.getElementById("f-tipo").value              = d.tipo_vehiculo_id;
-  document.getElementById("f-precio-final").value      = d.precio_calculado;
-  document.getElementById("resultado").style.display   = "block";
-});
+    const body = new URLSearchParams();
+    body.append("ruta_id", ruta);
+    body.append("tipo_vehiculo_id", tipo);
 
-document.getElementById("f-precio-final").addEventListener("input", function() {
-  const calculado = parseFloat(document.getElementById("res-precio").textContent);
-  const motivo = document.getElementById("campo-motivo");
-  motivo.style.display = (parseFloat(this.value) !== calculado) ? "block" : "none";
+    const res = await fetch("/admin/comercial/cotizar/calcular", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: body.toString()
+    });
+
+    if (!res.ok) {
+        alert("No existe tarifa para esa combinación.");
+        return;
+    }
+
+    const d = await res.json();
+
+    document.getElementById("res-km").textContent = d.km + " km";
+    document.getElementById("res-precio").textContent = Number(d.precio_calculado).toFixed(2) + " USD";
+    document.getElementById("res-camionero").textContent = Number(d.pago_camionero).toFixed(2) + " USD";
+    document.getElementById("res-combustible").textContent = Number(d.combustible_estimado).toFixed(2) + " USD";
+    document.getElementById("res-beneficio").textContent = Number(d.beneficio_estimado).toFixed(2) + " USD";
+
+    document.getElementById("f-ruta").value = d.ruta_id;
+    document.getElementById("f-tipo").value = d.tipo_vehiculo_id;
+    document.getElementById("f-cliente").value = cliente;
+    document.getElementById("f-precio-final").value = Number(d.precio_calculado).toFixed(2);
+
+    resultado.style.display = "block";
 });
 </script>
+
 {% endblock %}

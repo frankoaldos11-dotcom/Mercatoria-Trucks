@@ -2,85 +2,339 @@
 
 {% block contenido %}
 
-<h1>Gestionar Viaje #{{ viaje[0] }}</h1>
-
-<div class="cards">
-
-    <div class="card">
-        <h3>Cliente</h3>
-        <p>{{ viaje[1] }}</p>
+<div class="page-header">
+    <div>
+        <h1>Gestionar Viaje #{{ viaje["id"] }}</h1>
+        <p class="subtitulo">Centro operativo del viaje</p>
     </div>
 
-    <div class="card">
-        <h3>Origen</h3>
-        <p>{{ viaje[2] }}</p>
+    <div class="estado-badge">
+        {{ viaje["estado"] }}
+    </div>
+</div>
+
+<div class="grid-resumen">
+
+    <div class="card resumen-card">
+        <span>Cliente</span>
+        <strong>{{ viaje["cliente"] if viaje["cliente"] else "Sin cliente" }}</strong>
     </div>
 
-    <div class="card">
-        <h3>Destino</h3>
-        <p>{{ viaje[3] }}</p>
+    <div class="card resumen-card">
+        <span>Origen</span>
+        <strong>{{ viaje["origen"] if viaje["origen"] else "Sin origen" }}</strong>
     </div>
 
-    <div class="card">
-        <h3>Estado</h3>
-        <p>{{ viaje[4] }}</p>
+    <div class="card resumen-card">
+        <span>Destino</span>
+        <strong>{{ viaje["destino"] if viaje["destino"] else "Sin destino" }}</strong>
     </div>
 
-    <div class="card">
-        <h3>Camionero</h3>
-        <p>{{ viaje[5] if viaje[5] else "Sin asignar" }}</p>
+    <div class="card resumen-card">
+        <span>Camionero</span>
+        <strong>{{ viaje["camionero_nombre"] if viaje["camionero_nombre"] else "Sin asignar" }}</strong>
     </div>
 
 </div>
 
-<h2>Asignar Camionero</h2>
+<div class="layout-operacion">
 
-<form method="POST" action="/admin/viaje/{{ viaje[0] }}/asignar" class="card form-card">
+    <div class="columna-principal">
 
-    <label>Seleccionar camionero disponible</label>
+        <div class="card bloque">
+            <h2>Datos del viaje</h2>
 
-    <select name="camionero" class="input" required>
-        {% for c in camioneros %}
-            <option value="{{ c[0] }}">{{ c[1] }}</option>
-        {% endfor %}
-    </select>
+            <div class="detalle-grid">
+                <div>
+                    <label>ID viaje</label>
+                    <p>#{{ viaje["id"] }}</p>
+                </div>
 
-    <button class="btn-principal" type="submit">
-        Asignar camionero
-    </button>
+                <div>
+                    <label>Cliente ID</label>
+                    <p>{{ viaje["cliente_id"] if viaje["cliente_id"] else "—" }}</p>
+                </div>
 
-</form>
+                <div>
+                    <label>Ruta ID</label>
+                    <p>{{ viaje["ruta_id"] if viaje["ruta_id"] else "—" }}</p>
+                </div>
 
-<h2>Cambiar Estado</h2>
+                <div>
+                    <label>Tarifa ID</label>
+                    <p>{{ viaje["tarifa_id"] if viaje["tarifa_id"] else "—" }}</p>
+                </div>
 
-<form method="POST" action="/admin/viaje/{{ viaje[0] }}/estado" class="card form-card">
+                <div>
+                    <label>Tipo vehículo ID</label>
+                    <p>{{ viaje["tipo_vehiculo_id"] if viaje["tipo_vehiculo_id"] else "—" }}</p>
+                </div>
 
-    <label>Nuevo estado</label>
+                <div>
+                    <label>Cotización ID</label>
+                    <p>{{ viaje["cotizacion_id"] if viaje["cotizacion_id"] else "—" }}</p>
+                </div>
+            </div>
+        </div>
 
-    <select name="estado" class="input" required>
-        <option value="Pendiente" {% if viaje[4] == "Pendiente" %}selected{% endif %}>Pendiente</option>
-        <option value="Asignado" {% if viaje[4] == "Asignado" %}selected{% endif %}>Asignado</option>
-        <option value="En ruta" {% if viaje[4] == "En ruta" %}selected{% endif %}>En ruta</option>
-        <option value="Entregado" {% if viaje[4] == "Entregado" %}selected{% endif %}>Entregado</option>
-        <option value="Cancelado" {% if viaje[4] == "Cancelado" %}selected{% endif %}>Cancelado</option>
-    </select>
+        <div class="card bloque">
+            <h2>Economía del viaje</h2>
 
-    <button class="btn-principal" type="submit">
-        Actualizar estado
-    </button>
+            <div class="economia-grid">
+                <div class="economia-item">
+                    <span>Precio calculado</span>
+                    <strong>
+                        ${{ "%.2f"|format(viaje["precio_calculado"] or 0) }}
+                    </strong>
+                </div>
 
-</form>
+                <div class="economia-item">
+                    <span>Precio final</span>
+                    <strong>
+                        ${{ "%.2f"|format(viaje["precio_final"] or viaje["precio"] or 0) }}
+                    </strong>
+                </div>
 
-<h2>Notas del Viaje</h2>
+                <div class="economia-item">
+                    <span>Combustible</span>
+                    <strong>
+                        ${{ "%.2f"|format(viaje["combustible"] or 0) }}
+                    </strong>
+                </div>
 
-<div class="card form-card">
-    <p>{{ viaje[6] if viaje[6] else "Sin notas adicionales" }}</p>
+                <div class="economia-item">
+                    <span>Pago camionero</span>
+                    <strong>
+                        ${{ "%.2f"|format(viaje["pago_camionero"] or 0) }}
+                    </strong>
+                </div>
+
+                <div class="economia-item beneficio">
+                    <span>Beneficio estimado</span>
+                    <strong>
+                        ${{ "%.2f"|format(viaje["beneficio"] or 0) }}
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bloque">
+            <h2>Observaciones</h2>
+
+            <div class="observaciones">
+                {{ viaje["observaciones"] if viaje["observaciones"] else "Sin observaciones registradas." }}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="columna-lateral">
+
+        <div class="card bloque">
+            <h2>Asignar camionero</h2>
+
+            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/asignar">
+
+                <label>Camionero disponible</label>
+
+                <select name="camionero" class="input" required>
+                    <option value="">Seleccionar camionero</option>
+                    {% for c in camioneros %}
+                        <option value="{{ c['id'] }}">{{ c['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+
+                <button class="btn-principal" type="submit">
+                    Asignar camionero
+                </button>
+
+            </form>
+        </div>
+
+        <div class="card bloque">
+            <h2>Asignar vehículo</h2>
+
+            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/asignar-vehiculo">
+
+                <label>Vehículo</label>
+
+                <select name="vehiculo" class="input" required>
+                    <option value="">Seleccionar vehículo</option>
+                    {% for v in vehiculos %}
+                        <option value="{{ v['id'] }}">
+                            {{ v['placa'] }}
+                            {% if v['marca'] %} - {{ v['marca'] }}{% endif %}
+                            {% if v['modelo'] %} {{ v['modelo'] }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button class="btn-principal" type="submit">
+                    Asignar vehículo
+                </button>
+
+            </form>
+        </div>
+
+        <div class="card bloque">
+            <h2>Cambiar estado</h2>
+
+            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/estado">
+
+                <label>Nuevo estado</label>
+
+                <select name="estado" class="input" required>
+                    <option value="Pendiente" {% if viaje["estado"] in ["Pendiente", "pendiente"] %}selected{% endif %}>Pendiente</option>
+                    <option value="Asignado" {% if viaje["estado"] in ["Asignado", "asignado"] %}selected{% endif %}>Asignado</option>
+                    <option value="En ruta" {% if viaje["estado"] in ["En ruta", "en_ruta"] %}selected{% endif %}>En ruta</option>
+                    <option value="Entregado" {% if viaje["estado"] in ["Entregado", "entregado"] %}selected{% endif %}>Entregado</option>
+                    <option value="Cancelado" {% if viaje["estado"] in ["Cancelado", "cancelado"] %}selected{% endif %}>Cancelado</option>
+                </select>
+
+                <button class="btn-principal" type="submit">
+                    Actualizar estado
+                </button>
+
+            </form>
+        </div>
+
+        <div class="card bloque whatsapp-box">
+            <h2>WhatsApp</h2>
+            <p>Preparado para el próximo sprint.</p>
+
+            <button class="btn-secundario" disabled>
+                Enviar WhatsApp
+            </button>
+        </div>
+
+    </div>
+
 </div>
 
 <style>
-.form-card {
-    max-width: 600px;
-    margin-bottom: 30px;
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.page-header h1 {
+    margin: 0;
+}
+
+.subtitulo {
+    margin: 6px 0 0 0;
+    color: #777;
+}
+
+.estado-badge {
+    background: #F36B21;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+.grid-resumen {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.resumen-card {
+    padding: 22px;
+}
+
+.resumen-card span {
+    display: block;
+    color: #777;
+    font-size: 13px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.resumen-card strong {
+    font-size: 20px;
+}
+
+.layout-operacion {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+.bloque {
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.bloque h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.detalle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.detalle-grid label {
+    display: block;
+    color: #777;
+    font-size: 13px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.detalle-grid p {
+    margin: 0;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.economia-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.economia-item {
+    background: #f7f7f7;
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.economia-item span {
+    display: block;
+    color: #777;
+    font-size: 13px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.economia-item strong {
+    font-size: 24px;
+}
+
+.beneficio {
+    background: #fff3ec;
+    border: 1px solid #F36B21;
+}
+
+.observaciones {
+    background: #f7f7f7;
+    border-radius: 12px;
+    padding: 18px;
+    min-height: 90px;
+    line-height: 1.5;
 }
 
 .input {
@@ -93,6 +347,7 @@
 }
 
 .btn-principal {
+    width: 100%;
     background: #F36B21;
     color: white;
     padding: 12px 20px;
@@ -100,10 +355,54 @@
     border-radius: 8px;
     font-size: 16px;
     cursor: pointer;
+    font-weight: 700;
 }
 
 .btn-principal:hover {
     background: #d95714;
+}
+
+.btn-secundario {
+    width: 100%;
+    background: #e0e0e0;
+    color: #777;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: not-allowed;
+    font-weight: 700;
+}
+
+.whatsapp-box p {
+    color: #777;
+    margin-bottom: 18px;
+}
+
+@media (max-width: 1100px) {
+    .grid-resumen {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .layout-operacion {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .grid-resumen {
+        grid-template-columns: 1fr;
+    }
+
+    .detalle-grid,
+    .economia-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 

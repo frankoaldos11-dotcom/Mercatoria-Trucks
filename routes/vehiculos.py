@@ -22,9 +22,9 @@ def vehiculos():
         estado = request.form["estado"].strip()
 
         cursor.execute("""
-        INSERT INTO vehiculos
-        (camionero_id, matricula, marca, modelo, tipo, capacidad, combustible, estado)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO vehiculos
+            (camionero_id, matricula, marca, modelo, tipo, capacidad, combustible, estado)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             camionero_id,
             matricula,
@@ -38,29 +38,39 @@ def vehiculos():
 
         conexion.commit()
 
+        return redirect("/vehiculos")
+
     cursor.execute("""
-    SELECT id, nombre
-    FROM camioneros
-    WHERE activo=1
-    ORDER BY nombre ASC
+        SELECT id, nombre
+        FROM camioneros
+        WHERE activo = 1
+        ORDER BY nombre ASC
     """)
     camioneros = cursor.fetchall()
 
     cursor.execute("""
-    SELECT
-        v.id,
-        v.matricula,
-        v.marca,
-        v.modelo,
-        v.tipo,
-        v.capacidad,
-        v.combustible,
-        v.estado,
-        c.nombre
-    FROM vehiculos v
-    LEFT JOIN camioneros c ON c.id = v.camionero_id
-    WHERE v.activo=1
-    ORDER BY v.id DESC
+        SELECT nombre
+        FROM tipos_vehiculo
+        WHERE activo = 1
+        ORDER BY nombre ASC
+    """)
+    tipos_vehiculo = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT
+            v.id,
+            v.matricula,
+            v.marca,
+            v.modelo,
+            v.tipo,
+            v.capacidad,
+            v.combustible,
+            v.estado,
+            c.nombre
+        FROM vehiculos v
+        LEFT JOIN camioneros c ON c.id = v.camionero_id
+        WHERE v.activo = 1
+        ORDER BY v.id DESC
     """)
     vehiculos_guardados = cursor.fetchall()
 
@@ -69,5 +79,6 @@ def vehiculos():
     return render_template(
         "vehiculos.html",
         vehiculos=vehiculos_guardados,
-        camioneros=camioneros
+        camioneros=camioneros,
+        tipos_vehiculo=tipos_vehiculo
     )

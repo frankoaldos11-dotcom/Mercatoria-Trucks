@@ -1,7 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, session, jsonify
+from flask import Blueprint, render_template, request, redirect, jsonify, session
+import sqlite3
+
+from routes.admin import requiere_admin
 
 from services.comercial_service import (
     get_all_rutas,
+    get_ruta,
     crear_ruta,
     ruta_existe,
     get_all_tipos_vehiculo,
@@ -11,14 +15,35 @@ from services.comercial_service import (
     cotizar,
     guardar_cotizacion,
     get_all_cotizaciones,
-    get_cotizacion
+    get_cotizacion_detalle,
+    convertir_cotizacion_en_viaje
 )
 
 comercial_bp = Blueprint("comercial", __name__)
 
 
-def requiere_admin():
-    return "usuario" in session and session.get("rol") in ["admin", "operador"]
+def conectar_comercial():
+    conexion = sqlite3.connect("mercatoria.db")
+    conexion.row_factory = sqlite3.Row
+    return conexion
+
+
+def get_viaje_id_por_cotizacion(cotizacion_id):
+    conexion = conectar_comercial()
+    cursor = conexion.cursor()
+
+    cursor.execute("""
+        SELECT id
+        FROM viajes
+        WHERE cotizacion_id = ?
+        ORDER BY id DESC
+        LIMIT 1
+    """, (cotizacion_id,))
+
+    viaje = cursor.fetchone()
+    conexion.close()
+
+    return viaje["id"] if viaje else None
 
 
 @comercial_bp.route("/admin/comercial/rutas")
@@ -149,7 +174,7 @@ def guardar_cotizacion_view():
 
     guardar_cotizacion(
         datos,
-        cliente_id,
+        cliente_id if cliente_id else None,
         session["user_id"],
         precio_override,
         motivo
@@ -174,7 +199,28 @@ def ver_cotizacion(id):
     if not requiere_admin():
         return redirect("/login")
 
+    cotizacion = get_cotizacion_detalle(id)
+
+    if not cotizacion:
+        return redirect("/admin/comercial/cotizaciones")
+
+    viaje_id = get_viaje_id_por_cotizacion(id)
+
     return render_template(
         "admin/comercial/cotizacion_detalle.html",
-        cotizacion=get_cotizacion(id)
+        cotizacion=cotizacion,
+        viaje_id=viaje_id
     )
+
+
+@comercial_bp.route("/admin/comercial/cotizacion/<int:id>/convertir", methods=["POST"])
+def convertir_cotizacion(id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    viaje_id = convertir_cotizacion_en_viaje(id)
+
+    if not viaje_id:
+        return redirect(f"/admin/comercial/cotizacion/{id}")
+
+    return redirect(f"/admin/viajes/{viaje_id}/gestionar")

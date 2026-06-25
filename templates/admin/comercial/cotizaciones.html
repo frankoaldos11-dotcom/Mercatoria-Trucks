@@ -4,71 +4,21 @@
 
 <div class="page-header">
     <div>
-        <span class="eyebrow">Panel operativo</span>
-        <h1>Dashboard</h1>
-        <p>Resumen general de solicitudes, viajes, clientes y recursos activos.</p>
-    </div>
-</div>
-
-<div class="kpi-grid">
-
-    <div class="kpi-card">
-        <div class="kpi-icon warning">
-            <i class="bi bi-clock-history"></i>
-        </div>
-        <div>
-            <span>Solicitudes pendientes</span>
-            <strong>{{ pendientes }}</strong>
-        </div>
+        <span class="eyebrow">Motor Comercial</span>
+        <h1>Cotizaciones</h1>
+        <p>Listado de cotizaciones generadas por Mercatoria.</p>
     </div>
 
-    <div class="kpi-card">
-        <div class="kpi-icon primary">
-            <i class="bi bi-truck-front"></i>
-        </div>
-        <div>
-            <span>Viajes en curso</span>
-            <strong>{{ en_curso }}</strong>
-        </div>
+    <div>
+        <a class="btn btn-primary" href="/admin/comercial/cotizar">Nueva cotización</a>
     </div>
-
-    <div class="kpi-card">
-        <div class="kpi-icon success">
-            <i class="bi bi-check2-circle"></i>
-        </div>
-        <div>
-            <span>Entregados</span>
-            <strong>{{ entregados }}</strong>
-        </div>
-    </div>
-
-    <div class="kpi-card">
-        <div class="kpi-icon info">
-            <i class="bi bi-person-vcard"></i>
-        </div>
-        <div>
-            <span>Camioneros activos</span>
-            <strong>{{ camioneros }}</strong>
-        </div>
-    </div>
-
-    <div class="kpi-card">
-        <div class="kpi-icon neutral">
-            <i class="bi bi-buildings"></i>
-        </div>
-        <div>
-            <span>Clientes registrados</span>
-            <strong>{{ clientes }}</strong>
-        </div>
-    </div>
-
 </div>
 
 <section class="panel">
     <div class="panel-header">
         <div>
-            <h2>Solicitudes pendientes</h2>
-            <p>Viajes que necesitan revisión o asignación.</p>
+            <h2>Cotizaciones guardadas</h2>
+            <p>Revisa precios, beneficios y estado comercial.</p>
         </div>
     </div>
 
@@ -78,25 +28,36 @@
                 <tr>
                     <th>ID</th>
                     <th>Cliente</th>
-                    <th>Origen</th>
-                    <th>Destino</th>
+                    <th>Ruta</th>
+                    <th>Vehículo</th>
+                    <th>Precio cliente</th>
+                    <th>Beneficio</th>
+                    <th>Estado</th>
                     <th>Acción</th>
                 </tr>
             </thead>
+
             <tbody>
-                {% for v in lista %}
+                {% for c in cotizaciones %}
                 <tr>
-                    <td>#{{ v[0] }}</td>
-                    <td>{{ v[1] }}</td>
-                    <td>{{ v[2] }}</td>
-                    <td>{{ v[3] }}</td>
+                    <td>#{{ c[0] }}</td>
+                    <td>{{ c[1] if c[1] else "Sin cliente" }}</td>
+                    <td>{{ c[2] }} → {{ c[3] }}</td>
+                    <td>{{ c[4] }}</td>
+                    <td>${{ "%.2f"|format(c[5] or 0) }}</td>
+                    <td>${{ "%.2f"|format(c[6] or 0) }}</td>
+                    <td>{{ c[7] }}</td>
                     <td>
-                        <a class="btn btn-soft" href="/admin/viaje/{{ v[0] }}">Gestionar</a>
+                        <a class="btn btn-soft" href="/admin/comercial/cotizacion/{{ c[0] }}">
+                            Ver detalle
+                        </a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="empty-state">No hay solicitudes pendientes.</td>
+                    <td colspan="8" class="empty-state">
+                        No hay cotizaciones guardadas todavía.
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
