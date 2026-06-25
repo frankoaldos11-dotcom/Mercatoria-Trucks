@@ -202,7 +202,12 @@
 
             <a href="/admin/viajes/{{ viaje['id'] }}/orden-carga"
                class="btn-principal btn-link-operacion">
-                Generar Orden de Carga
+                Ver Orden de Carga
+            </a>
+
+            <a href="/admin/viaje/{{ viaje['id'] }}/pdf"
+               class="btn-pdf btn-link-operacion">
+                Descargar PDF
             </a>
 
             <button class="btn-secundario" disabled>
@@ -389,6 +394,22 @@
     cursor: not-allowed;
     font-weight: 700;
     margin-top: 12px;
+}
+
+.btn-pdf {
+    width: 100%;
+    background: #fff;
+    color: #F36B21;
+    border: 2px solid #F36B21;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.btn-pdf:hover {
+    background: #fff3ec;
 }
 
 .btn-link-operacion {

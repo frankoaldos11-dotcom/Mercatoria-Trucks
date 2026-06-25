@@ -203,12 +203,22 @@ def orden_carga(id):
     conexion.row_factory = None
     cursor = conexion.cursor()
 
-    conexion.row_factory = None
-
     cursor.execute("""
-        SELECT *
-        FROM viajes
-        WHERE id = ?
+        SELECT
+            v.*,
+            c.telefono  AS camionero_telefono,
+            c.licencia  AS camionero_licencia,
+            veh.matricula AS vehiculo_matricula,
+            veh.marca     AS vehiculo_marca,
+            veh.modelo    AS vehiculo_modelo,
+            cl.empresa    AS cliente_empresa,
+            cl.telefono   AS cliente_telefono,
+            cl.email      AS cliente_email
+        FROM viajes v
+        LEFT JOIN camioneros c   ON v.camionero_id = c.id
+        LEFT JOIN vehiculos  veh ON v.vehiculo_id  = veh.id
+        LEFT JOIN clientes   cl  ON v.cliente_id   = cl.id
+        WHERE v.id = ?
     """, (id,))
 
     fila = cursor.fetchone()

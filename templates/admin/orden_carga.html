@@ -2,26 +2,389 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Orden de Carga #{{ viaje["id"] }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden de Carga N° {{ '%04d' % viaje['id'] }} | Mercatoria Truck</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        /* ── Toolbar (solo pantalla) ── */
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #fff;
+            border-bottom: 2px solid #F36B21;
+            padding: 12px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+        .toolbar a.volver {
+            color: #F36B21;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .toolbar-acciones { display: flex; gap: 12px; }
+        .btn-imprimir {
+            background: #fff;
+            color: #F36B21;
+            border: 2px solid #F36B21;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-pdf {
+            background: #F36B21;
+            color: #fff;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-imprimir:hover { background: #fff3ec; }
+        .btn-pdf:hover { background: #d95714; }
+
+        /* ── Documento ── */
+        .documento {
+            max-width: 800px;
+            margin: 32px auto;
+            background: #fff;
+            padding: 48px 56px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.10);
+            border-radius: 4px;
+        }
+
+        /* Cabecera */
+        .cabecera {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 16px;
+        }
+        .cabecera img {
+            max-height: 70px;
+            max-width: 200px;
+            object-fit: contain;
+        }
+        .titulo-doc { text-align: right; }
+        .titulo-doc h1 {
+            font-size: 26px;
+            color: #F36B21;
+            letter-spacing: .04em;
+            font-weight: 900;
+        }
+        .titulo-doc .numero {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            margin-top: 4px;
+        }
+        .titulo-doc .fecha {
+            font-size: 13px;
+            color: #777;
+            margin-top: 2px;
+        }
+
+        .divisor { border: none; border-top: 2.5px solid #F36B21; margin: 16px 0 20px; }
+
+        /* Estado badge */
+        .estado-badge {
+            display: inline-block;
+            background: #F36B21;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            padding: 5px 14px;
+            border-radius: 999px;
+            margin-bottom: 24px;
+        }
+
+        /* Secciones */
+        .seccion { margin-bottom: 22px; }
+        .seccion-titulo {
+            background: #F36B21;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: 6px 12px;
+            border-radius: 4px;
+            margin-bottom: 14px;
+        }
+
+        /* Grids de campos */
+        .campos-grid {
+            display: grid;
+            gap: 6px 24px;
+        }
+        .campos-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .campos-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .campos-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+        .campo label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #999;
+            margin-bottom: 3px;
+        }
+        .campo p {
+            font-size: 14px;
+            font-weight: 700;
+            color: #222;
+            min-height: 20px;
+            border-bottom: 1px solid #e8e8e8;
+            padding-bottom: 6px;
+        }
+
+        /* Mercancía con líneas rellenables */
+        .campo-linea {
+            display: flex;
+            flex-direction: column;
+        }
+        .campo-linea label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #999;
+            margin-bottom: 3px;
+        }
+        .linea-relleno {
+            border: none;
+            border-bottom: 1.5px solid #aaa;
+            font-size: 14px;
+            font-weight: 600;
+            color: #222;
+            padding: 4px 0 6px;
+            min-height: 28px;
+            background: transparent;
+        }
+
+        /* Observaciones */
+        .observaciones-box {
+            background: #f7f7f7;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #444;
+            min-height: 60px;
+        }
+
+        /* Firmas */
+        .firmas-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 48px;
+        }
+        .firma-bloque { text-align: center; }
+        .firma-linea {
+            border-top: 1.5px solid #333;
+            margin-bottom: 8px;
+        }
+        .firma-bloque span {
+            font-size: 11px;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            display: block;
+        }
+
+        /* Pie */
+        .pie-documento {
+            margin-top: 36px;
+            padding-top: 12px;
+            border-top: 1px solid #e8e8e8;
+            font-size: 11px;
+            color: #aaa;
+            text-align: center;
+        }
+
+        /* ── Print ── */
+        @media print {
+            body { background: #fff; }
+            .toolbar { display: none !important; }
+            .documento {
+                margin: 0;
+                padding: 28px 32px;
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+            }
+            @page { margin: 1.5cm 2cm; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Orden de Carga #{{ viaje["id"] }}</h1>
 
-    <p><strong>Cliente:</strong> {{ viaje["cliente"] or "Sin cliente" }}</p>
-    <p><strong>Origen:</strong> {{ viaje["origen"] }}</p>
-    <p><strong>Destino:</strong> {{ viaje["destino"] }}</p>
-    <p><strong>Camionero:</strong> {{ viaje["camionero_nombre"] or "Sin asignar" }}</p>
-    <p><strong>Estado:</strong> {{ viaje["estado"] }}</p>
+<!-- Toolbar -->
+<div class="toolbar">
+    <a class="volver" href="/admin/viajes/{{ viaje['id'] }}/gestionar">← Volver al viaje</a>
+    <div class="toolbar-acciones">
+        <button class="btn-imprimir" onclick="window.print()">Imprimir</button>
+        <a class="btn-pdf" href="/admin/viaje/{{ viaje['id'] }}/pdf">Descargar PDF</a>
+    </div>
+</div>
 
-    <hr>
+<!-- Documento -->
+<div class="documento">
 
-    <p><strong>Precio final:</strong> ${{ "%.2f"|format(viaje["precio_final"] or viaje["precio"] or 0) }}</p>
-    <p><strong>Pago camionero:</strong> ${{ "%.2f"|format(viaje["pago_camionero"] or 0) }}</p>
-    <p><strong>Combustible:</strong> ${{ "%.2f"|format(viaje["combustible"] or viaje["combustible_estimado"] or 0) }}</p>
+    <!-- Cabecera -->
+    <div class="cabecera">
+        <img src="/static/logo-mercatoria.jpg" alt="Mercatoria Truck" />
+        <div class="titulo-doc">
+            <h1>ORDEN DE CARGA</h1>
+            <p class="numero">N° {{ '%04d' % viaje['id'] }}</p>
+            <p class="fecha">
+                Fecha:
+                {% if viaje.get('fecha_creacion') %}
+                    {{ viaje['fecha_creacion'][:10] }}
+                {% else %}
+                    Sin fecha
+                {% endif %}
+            </p>
+        </div>
+    </div>
 
-    <hr>
+    <hr class="divisor" />
 
-    <p><strong>Observaciones:</strong></p>
-    <p>{{ viaje["observaciones"] or "Sin observaciones." }}</p>
+    <span class="estado-badge">{{ viaje['estado'] or 'Sin estado' }}</span>
+
+    <!-- Datos del cliente -->
+    <div class="seccion">
+        <div class="seccion-titulo">Datos del cliente</div>
+        <div class="campos-grid cols-3">
+            <div class="campo">
+                <label>Cliente</label>
+                <p>{{ viaje['cliente'] or '—' }}</p>
+            </div>
+            <div class="campo">
+                <label>Empresa</label>
+                <p>{{ viaje.get('cliente_empresa') or '—' }}</p>
+            </div>
+            <div class="campo">
+                <label>Teléfono</label>
+                <p>{{ viaje.get('cliente_telefono') or '—' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trayecto -->
+    <div class="seccion">
+        <div class="seccion-titulo">Trayecto</div>
+        <div class="campos-grid cols-2">
+            <div class="campo">
+                <label>Origen</label>
+                <p>{{ viaje['origen'] or '—' }}</p>
+            </div>
+            <div class="campo">
+                <label>Destino</label>
+                <p>{{ viaje['destino'] or '—' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehículo y conductor -->
+    <div class="seccion">
+        <div class="seccion-titulo">Vehículo y conductor</div>
+        <div class="campos-grid cols-4">
+            <div class="campo">
+                <label>Conductor</label>
+                <p>{{ viaje['camionero_nombre'] or '—' }}</p>
+            </div>
+            <div class="campo">
+                <label>Teléfono</label>
+                <p>{{ viaje.get('camionero_telefono') or '—' }}</p>
+            </div>
+            <div class="campo">
+                <label>Vehículo</label>
+                <p>
+                    {% set marca = viaje.get('vehiculo_marca') or '' %}
+                    {% set modelo = viaje.get('vehiculo_modelo') or '' %}
+                    {% if marca or modelo %}
+                        {{ marca }} {{ modelo }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </p>
+            </div>
+            <div class="campo">
+                <label>Matrícula</label>
+                <p>
+                    {{ viaje.get('vehiculo_placa') or viaje.get('vehiculo_matricula') or '—' }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mercancía -->
+    <div class="seccion">
+        <div class="seccion-titulo">Mercancía</div>
+        <div class="campos-grid cols-2">
+            <div class="campo-linea">
+                <label>Descripción de la mercancía</label>
+                <div class="linea-relleno">{{ viaje.get('mercancia') or '' }}</div>
+            </div>
+            <div class="campo-linea">
+                <label>Peso / Capacidad</label>
+                <div class="linea-relleno">{{ viaje.get('peso') or '' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Observaciones -->
+    <div class="seccion">
+        <div class="seccion-titulo">Observaciones</div>
+        <div class="observaciones-box">
+            {{ viaje['observaciones'] or 'Sin observaciones registradas.' }}
+        </div>
+    </div>
+
+    <!-- Firmas -->
+    <div class="seccion">
+        <div class="seccion-titulo">Firmas y conformidad</div>
+        <div class="firmas-grid">
+            <div class="firma-bloque">
+                <div class="firma-linea"></div>
+                <span>Empresa / Expedidor</span>
+            </div>
+            <div class="firma-bloque">
+                <div class="firma-linea"></div>
+                <span>Conductor</span>
+            </div>
+            <div class="firma-bloque">
+                <div class="firma-linea"></div>
+                <span>Cliente / Receptor</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="pie-documento">
+        Mercatoria Truck &middot; Orden de Carga N° {{ '%04d' % viaje['id'] }}
+    </div>
+
+</div>
+
 </body>
 </html>

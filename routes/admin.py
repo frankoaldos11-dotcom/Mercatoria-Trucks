@@ -1,7 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, session
+import io
+
+from flask import Blueprint, render_template, request, redirect, send_file, session
 import sqlite3
 
 from services.comercial_service import convertir_cotizacion_en_viaje
+from services.pdf_service import generar_pdf_orden_carga
 from utils.constants import CAMIONERO_ESTADOS
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -251,6 +254,49 @@ def asignar_vehiculo(id):
     conexion.close()
 
     return redirect(f"/admin/viajes/{id}/gestionar")
+
+
+@admin_bp.route("/viaje/<int:id>/pdf")
+def descargar_pdf_orden_carga(id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("""
+        SELECT
+            v.*,
+            c.telefono  AS camionero_telefono,
+            c.licencia  AS camionero_licencia,
+            veh.matricula AS vehiculo_matricula,
+            veh.marca     AS vehiculo_marca,
+            veh.modelo    AS vehiculo_modelo,
+            cl.empresa    AS cliente_empresa,
+            cl.telefono   AS cliente_telefono,
+            cl.email      AS cliente_email
+        FROM viajes v
+        LEFT JOIN camioneros c   ON v.camionero_id = c.id
+        LEFT JOIN vehiculos  veh ON v.vehiculo_id  = veh.id
+        LEFT JOIN clientes   cl  ON v.cliente_id   = cl.id
+        WHERE v.id = ?
+    """, (id,))
+
+    fila = cursor.fetchone()
+    conexion.close()
+
+    if not fila:
+        return redirect("/admin/viajes")
+
+    viaje = dict(fila)
+    pdf_bytes = generar_pdf_orden_carga(viaje)
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"orden-carga-{id:04d}.pdf",
+    )
 
 
 @admin_bp.route("/cotizacion/<int:id>/convertir")
