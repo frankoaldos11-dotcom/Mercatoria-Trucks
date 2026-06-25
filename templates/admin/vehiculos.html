@@ -1,0 +1,364 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header-vehiculos">
+    <div>
+        <span class="eyebrow">Recursos</span>
+        <h1>Vehículos</h1>
+        <p>Flota de camiones y unidades de transporte registradas.</p>
+    </div>
+    <button class="btn-nuevo-vehiculo" data-bs-toggle="modal" data-bs-target="#modalNuevoVehiculo">
+        <i class="bi bi-plus-lg"></i> Nuevo vehículo
+    </button>
+</div>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Flota registrada</h2>
+            <p>Unidades activas vinculadas a la operación.</p>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Matrícula</th>
+                    <th>Tipo</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Capacidad</th>
+                    <th>Estado</th>
+                    <th>Camionero</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in lista %}
+                <tr>
+                    <td>#{{ v["id"] }}</td>
+                    <td><strong>{{ v["matricula"] }}</strong></td>
+                    <td>{{ v["tipo"] or "—" }}</td>
+                    <td>{{ v["marca"] or "—" }}</td>
+                    <td>{{ v["modelo"] or "—" }}</td>
+                    <td>{{ v["capacidad"] or "—" }}</td>
+                    <td>
+                        <span class="estado-pill estado-{{ v['estado']|lower|replace(' ', '-') }}">
+                            {{ v["estado"] or "—" }}
+                        </span>
+                    </td>
+                    <td>{{ v["camionero_nombre"] or "—" }}</td>
+                    <td class="td-acciones">
+                        <a href="/admin/vehiculos/{{ v['id'] }}/editar" class="btn-accion-edit">Editar</a>
+                        <form method="POST" action="/admin/vehiculos/{{ v['id'] }}/eliminar"
+                              style="display:inline"
+                              onsubmit="return confirm('¿Dar de baja este vehículo? La operación es reversible desde la base de datos.')">
+                            <button type="submit" class="btn-accion-del">Dar de baja</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="empty-state">No hay vehículos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Modal Nuevo Vehículo -->
+<div class="modal fade" id="modalNuevoVehiculo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-crud">
+            <div class="modal-header modal-crud-header">
+                <h5 class="modal-title">Nuevo vehículo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/admin/vehiculos">
+                <div class="modal-body p-4">
+                    <div class="form-crud-grid">
+                        <div class="form-crud-field">
+                            <label>Matrícula *</label>
+                            <input type="text" name="matricula" class="input-crud" required placeholder="Ej: 1234-ABC">
+                        </div>
+                        <div class="form-crud-field">
+                            <label>Tipo</label>
+                            <input type="text" name="tipo" class="input-crud" placeholder="Ej: Plataforma, Toldo">
+                        </div>
+                        <div class="form-crud-field">
+                            <label>Marca</label>
+                            <input type="text" name="marca" class="input-crud" placeholder="Ej: Volvo, MAN" data-ac="marca" autocomplete="off">
+                        </div>
+                        <div class="form-crud-field">
+                            <label>Modelo</label>
+                            <input type="text" name="modelo" class="input-crud" placeholder="Ej: FH16 2022" data-ac="modelo" autocomplete="off">
+                        </div>
+                        <div class="form-crud-field">
+                            <label>Capacidad</label>
+                            <input type="text" name="capacidad" class="input-crud" placeholder="Ej: 24 ton">
+                        </div>
+                        <div class="form-crud-field">
+                            <label>Camionero asignado</label>
+                            <select name="camionero_id" class="input-crud">
+                                <option value="">— Sin asignar —</option>
+                                {% for c in camioneros %}
+                                <option value="{{ c['id'] }}">{{ c['nombre'] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-crud-field">
+                            <label>Estado</label>
+                            <select name="estado" class="input-crud">
+                                {% for e in estados %}
+                                <option value="{{ e }}">{{ e }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-crud-footer">
+                    <button type="button" class="btn-cancelar-modal" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-crud-primary">Registrar vehículo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header-vehiculos {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+}
+
+.btn-nuevo-vehiculo {
+    background: #F36B21;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.btn-nuevo-vehiculo:hover { background: #d95714; }
+
+.form-crud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.form-crud-field label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+}
+
+.input-crud {
+    width: 100%;
+    padding: 9px 13px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #fafafa;
+}
+
+.input-crud:focus {
+    outline: none;
+    border-color: #F36B21;
+    background: #fff;
+}
+
+.btn-crud-primary {
+    background: #F36B21;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-crud-primary:hover { background: #d95714; }
+
+.btn-cancelar-modal {
+    background: #f0f0f0;
+    color: #555;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-cancelar-modal:hover { background: #e0e0e0; }
+
+.modal-crud { border-radius: 12px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,.12); }
+.modal-crud-header { border-bottom: 1px solid #f0f0f0; padding: 20px 24px; }
+.modal-crud-header .modal-title { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+.modal-crud-footer { border-top: 1px solid #f0f0f0; padding: 16px 24px; gap: 8px; }
+
+.td-acciones { white-space: nowrap; }
+
+.btn-accion-edit, .btn-accion-del {
+    display: inline-block;
+    padding: 4px 11px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    margin-right: 4px;
+}
+
+.btn-accion-edit { background: #e8f4fd; color: #1a6fa0; }
+.btn-accion-edit:hover { background: #cce4f7; }
+
+.btn-accion-del { background: #fde8e8; color: #c0392b; }
+.btn-accion-del:hover { background: #f7caca; }
+
+.estado-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eee;
+    color: #555;
+}
+
+.estado-pill.estado-disponible { background: #e6f7ee; color: #1a7a45; }
+.estado-pill.estado-en-viaje   { background: #fff3e0; color: #b35a00; }
+.estado-pill.estado-inactivo   { background: #f0f0f0; color: #888; }
+</style>
+
+{% block scripts %}
+<style>
+.ac-wrapper { position: relative; }
+.ac-list {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.1);
+    z-index: 1055;
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    display: none;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.ac-item {
+    padding: 8px 13px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ac-item:hover, .ac-item.ac-active {
+    background: #fff3ec;
+    color: #F36B21;
+}
+</style>
+<script>
+function initAutocomplete(inputEl) {
+    const field = inputEl.closest('.form-crud-field');
+    field.classList.add('ac-wrapper');
+
+    const list = document.createElement('ul');
+    list.className = 'ac-list';
+    field.appendChild(list);
+
+    let timer;
+    let activeIdx = -1;
+
+    function renderList(items) {
+        list.innerHTML = '';
+        activeIdx = -1;
+        if (!items.length) { list.style.display = 'none'; return; }
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'ac-item';
+            li.textContent = item;
+            li.addEventListener('mousedown', e => {
+                e.preventDefault();
+                inputEl.value = item;
+                list.style.display = 'none';
+            });
+            list.appendChild(li);
+        });
+        list.style.display = 'block';
+    }
+
+    inputEl.addEventListener('input', () => {
+        clearTimeout(timer);
+        const q = inputEl.value.trim();
+        if (!q) { list.style.display = 'none'; return; }
+        timer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/admin/vehiculos/sugerencias?campo=${inputEl.dataset.ac}&q=${encodeURIComponent(q)}`);
+                renderList(await res.json());
+            } catch (_) {}
+        }, 200);
+    });
+
+    inputEl.addEventListener('keydown', e => {
+        const items = list.querySelectorAll('.ac-item');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIdx = Math.min(activeIdx + 1, items.length - 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIdx = Math.max(activeIdx - 1, -1);
+        } else if (e.key === 'Enter' && activeIdx >= 0) {
+            e.preventDefault();
+            inputEl.value = items[activeIdx].textContent;
+            list.style.display = 'none';
+            activeIdx = -1;
+            return;
+        } else if (e.key === 'Escape') {
+            list.style.display = 'none';
+            activeIdx = -1;
+            return;
+        }
+        items.forEach((el, i) => el.classList.toggle('ac-active', i === activeIdx));
+    });
+
+    document.addEventListener('click', e => {
+        if (!field.contains(e.target)) list.style.display = 'none';
+    });
+}
+
+document.querySelectorAll('[data-ac]').forEach(initAutocomplete);
+</script>
+{% endblock %}
+
+{% endblock %}

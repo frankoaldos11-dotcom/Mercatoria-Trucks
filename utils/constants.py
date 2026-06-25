@@ -21,3 +21,9 @@ CAMIONERO_ESTADOS = [
     "Inactivo",
     "Pendiente de validación"
 ]
+
+VEHICULO_ESTADOS = [
+    "Disponible",
+    "En viaje",
+    "Inactivo",
+]

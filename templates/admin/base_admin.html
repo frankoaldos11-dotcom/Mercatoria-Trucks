@@ -15,11 +15,21 @@
     <aside class="sidebar">
 
         <div class="brand">
-            <img src="/static/logo-mercatoria.jpg" alt="Mercatoria" class="brand-logo">
-            <div>
-                <strong>Mercatoria Truck</strong>
-                <span>Operator Panel</span>
-            </div>
+            <svg class="brand-logo" width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <clipPath id="logo-clip">
+                        <rect width="36" height="36" rx="8"/>
+                    </clipPath>
+                </defs>
+                <rect width="36" height="36" rx="8" fill="#0f172a"/>
+                <g clip-path="url(#logo-clip)">
+                    <path d="M0 0 L18 0 L0 18 Z" fill="#F47B20"/>
+                    <path d="M18 0 L36 0 L36 18 Z" fill="#F5A623"/>
+                    <path d="M0 18 L0 36 L18 36 Z" fill="#F5A623"/>
+                    <path d="M36 18 L36 36 L18 36 Z" fill="#F47B20"/>
+                </g>
+            </svg>
+            <strong>Mercatoria Truck</strong>
         </div>
 
         <nav class="sidebar-nav">
@@ -70,7 +80,7 @@
                 <span>Camioneros</span>
             </a>
 
-            <a href="/vehiculos" class="nav-item">
+            <a href="/admin/vehiculos" class="nav-item">
                 <i class="bi bi-truck-front"></i>
                 <span>Vehículos</span>
             </a>
@@ -98,5 +108,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

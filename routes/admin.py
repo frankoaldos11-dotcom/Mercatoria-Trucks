@@ -1,11 +1,11 @@
 import io
 
-from flask import Blueprint, render_template, request, redirect, send_file, session
+from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 import sqlite3
 
 from services.comercial_service import convertir_cotizacion_en_viaje
 from services.pdf_service import generar_pdf_orden_carga
-from utils.constants import CAMIONERO_ESTADOS
+from utils.constants import CAMIONERO_ESTADOS, VEHICULO_ESTADOS
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -501,3 +501,140 @@ def eliminar_cliente(id):
     conexion.close()
 
     return redirect("/admin/clientes")
+
+
+# ── Vehículos CRUD ──────────────────────────────────────────────────────────
+
+@admin_bp.route("/vehiculos", methods=["GET", "POST"])
+def admin_vehiculos():
+    if not requiere_admin():
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    if request.method == "POST":
+        matricula = request.form["matricula"].strip()
+        tipo = request.form.get("tipo", "").strip()
+        marca = request.form.get("marca", "").strip()
+        modelo = request.form.get("modelo", "").strip()
+        capacidad = request.form.get("capacidad", "").strip()
+        camionero_id = request.form.get("camionero_id") or None
+        estado = request.form.get("estado", "Disponible").strip()
+
+        cursor.execute("""
+            INSERT INTO vehiculos (matricula, tipo, marca, modelo, capacidad, camionero_id, estado)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (matricula, tipo, marca, modelo, capacidad, camionero_id, estado))
+        conexion.commit()
+
+    cursor.execute("""
+        SELECT v.id, v.matricula, v.tipo, v.marca, v.modelo, v.capacidad, v.estado,
+               c.nombre AS camionero_nombre
+        FROM vehiculos v
+        LEFT JOIN camioneros c ON v.camionero_id = c.id
+        WHERE v.activo = 1
+        ORDER BY v.id DESC
+    """)
+    lista = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre FROM camioneros WHERE activo = 1 ORDER BY nombre")
+    camioneros = cursor.fetchall()
+
+    conexion.close()
+
+    return render_template(
+        "admin/vehiculos.html",
+        lista=lista,
+        camioneros=camioneros,
+        estados=VEHICULO_ESTADOS
+    )
+
+
+@admin_bp.route("/vehiculos/<int:id>/editar", methods=["GET", "POST"])
+def editar_vehiculo(id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    if request.method == "POST":
+        matricula = request.form["matricula"].strip()
+        tipo = request.form.get("tipo", "").strip()
+        marca = request.form.get("marca", "").strip()
+        modelo = request.form.get("modelo", "").strip()
+        capacidad = request.form.get("capacidad", "").strip()
+        camionero_id = request.form.get("camionero_id") or None
+        estado = request.form.get("estado", "Disponible").strip()
+
+        cursor.execute("""
+            UPDATE vehiculos
+            SET matricula = ?, tipo = ?, marca = ?, modelo = ?,
+                capacidad = ?, camionero_id = ?, estado = ?
+            WHERE id = ?
+        """, (matricula, tipo, marca, modelo, capacidad, camionero_id, estado, id))
+        conexion.commit()
+        conexion.close()
+        return redirect("/admin/vehiculos")
+
+    cursor.execute("""
+        SELECT id, matricula, tipo, marca, modelo, capacidad, camionero_id, estado
+        FROM vehiculos
+        WHERE id = ? AND activo = 1
+    """, (id,))
+    vehiculo = cursor.fetchone()
+
+    cursor.execute("SELECT id, nombre FROM camioneros WHERE activo = 1 ORDER BY nombre")
+    camioneros = cursor.fetchall()
+
+    conexion.close()
+
+    if not vehiculo:
+        return redirect("/admin/vehiculos")
+
+    return render_template(
+        "admin/editar_vehiculo.html",
+        vehiculo=vehiculo,
+        camioneros=camioneros,
+        estados=VEHICULO_ESTADOS
+    )
+
+
+@admin_bp.route("/vehiculos/sugerencias")
+def sugerencias_vehiculos():
+    if not requiere_admin():
+        return jsonify([]), 403
+
+    campo = request.args.get("campo", "")
+    q = request.args.get("q", "").strip()
+
+    if campo not in ("marca", "modelo"):
+        return jsonify([]), 400
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute(
+        f"SELECT DISTINCT {campo} FROM vehiculos"
+        f" WHERE {campo} LIKE ? AND activo = 1 AND {campo} != ''"
+        f" ORDER BY {campo} LIMIT 10",
+        (f"%{q}%",)
+    )
+    resultados = [row[0] for row in cursor.fetchall() if row[0]]
+    conexion.close()
+
+    return jsonify(resultados)
+
+
+@admin_bp.route("/vehiculos/<int:id>/eliminar", methods=["POST"])
+def eliminar_vehiculo(id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("UPDATE vehiculos SET activo = 0 WHERE id = ?", (id,))
+    conexion.commit()
+    conexion.close()
+
+    return redirect("/admin/vehiculos")
