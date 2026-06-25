@@ -1,90 +1,127 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Tarifas{% endblock %}
-
-{% block content %}
+{% block contenido %}
 <div class="page-header">
-  <h1 class="page-title">Tarifas</h1>
-  <a href="/admin/comercial/cotizar" class="btn btn-primary">Nueva cotización</a>
+  <h1 class="page-title">Nueva cotización</h1>
 </div>
 
-<div class="card mb-4">
-  <div class="card-body">
-    <h6 class="fw-semibold mb-3">Nueva tarifa</h6>
-    <form method="POST" action="/admin/comercial/tarifas/nueva">
-      <div class="row g-2 align-items-end">
-        <div class="col-md-3">
+<div class="row g-4">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="fw-semibold mb-3">Parámetros</h6>
+        <div class="mb-3">
           <label class="form-label">Ruta</label>
-          <select name="ruta_id" class="form-select" required>
+          <select id="ruta_id" class="form-select">
             <option value="">Seleccionar ruta</option>
             {% for r in rutas %}
             <option value="{{ r.id }}">{{ r.origen }} → {{ r.destino }} ({{ r.km_oficiales }} km)</option>
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-2">
-          <label class="form-label">Tipo vehículo</label>
-          <select name="tipo_vehiculo_id" class="form-select" required>
-            <option value="">Seleccionar</option>
+        <div class="mb-3">
+          <label class="form-label">Tipo de vehículo</label>
+          <select id="tipo_vehiculo_id" class="form-select">
+            <option value="">Seleccionar tipo</option>
             {% for t in tipos %}
             <option value="{{ t.id }}">{{ t.nombre }}</option>
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-2">
-          <label class="form-label">Precio cliente (€)</label>
-          <input name="precio_cliente" type="number" step="0.01" class="form-control" required>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Pago camionero (€)</label>
-          <input name="pago_camionero" type="number" step="0.01" class="form-control" required>
-        </div>
-        <div class="col-md-1">
-          <label class="form-label">Combustible (€)</label>
-          <input name="combustible_estimado" type="number" step="0.01" class="form-control">
-        </div>
-        <div class="col-md-1">
-          <label class="form-label">Desde</label>
-          <input name="vigencia_desde" type="date" class="form-control">
-        </div>
-        <div class="col-md-1">
-          <button class="btn btn-primary w-100">Guardar</button>
-        </div>
+        <button id="btn-calcular" class="btn btn-primary w-100">Calcular</button>
       </div>
-    </form>
+    </div>
+  </div>
+
+  <div class="col-md-7" id="resultado" style="display:none">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="fw-semibold mb-3">Resultado</h6>
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <div class="p-3 rounded" style="background:var(--bg-secondary)">
+              <div class="text-muted small">Km oficiales</div>
+              <div class="fs-5 fw-bold" id="res-km">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 rounded" style="background:var(--bg-secondary)">
+              <div class="text-muted small">Precio calculado</div>
+              <div class="fs-5 fw-bold text-primary" id="res-precio">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 rounded" style="background:var(--bg-secondary)">
+              <div class="text-muted small">Pago camionero</div>
+              <div class="fs-5 fw-bold" id="res-camionero">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 rounded" style="background:var(--bg-secondary)">
+              <div class="text-muted small">Beneficio estimado</div>
+              <div class="fs-5 fw-bold text-success" id="res-beneficio">—</div>
+            </div>
+          </div>
+        </div>
+
+        <form method="POST" action="/admin/comercial/cotizar/guardar">
+          <input type="hidden" name="ruta_id" id="f-ruta">
+          <input type="hidden" name="tipo_vehiculo_id" id="f-tipo">
+          <div class="mb-3">
+            <label class="form-label">Cliente</label>
+            <select name="cliente_id" class="form-select">
+              <option value="">Sin cliente asignado</option>
+              {% for c in clientes %}
+              <option value="{{ c.id }}">{{ c.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Precio final</label>
+            <input name="precio_final" id="f-precio-final" type="number" step="0.01" class="form-control">
+          </div>
+          <div class="mb-3" id="campo-motivo" style="display:none">
+            <label class="form-label">Motivo de modificación</label>
+            <input name="motivo" class="form-control" placeholder="Requerido si modificas el precio">
+          </div>
+          <button type="submit" class="btn btn-success w-100">Guardar cotización</button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          <th>Ruta</th><th>Km</th><th>Vehículo</th>
-          <th>€ Cliente</th><th>€/km</th>
-          <th>€ Camionero</th><th>Combustible</th>
-          <th>Beneficio</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for t in tarifas %}
-        {% set beneficio = t.precio_cliente - t.pago_camionero - (t.combustible_estimado or 0) %}
-        <tr>
-          <td>{{ t.origen }} → {{ t.destino }}</td>
-          <td>{{ t.km_oficiales }}</td>
-          <td>{{ t.tipo_vehiculo }}</td>
-          <td class="fw-semibold">{{ "%.2f"|format(t.precio_cliente) }} €</td>
-          <td class="text-muted">{{ "%.3f"|format(t.precio_cliente / t.km_oficiales) }}</td>
-          <td>{{ "%.2f"|format(t.pago_camionero) }} €</td>
-          <td>{{ "%.2f"|format(t.combustible_estimado or 0) }} €</td>
-          <td class="{% if beneficio > 0 %}text-success{% else %}text-danger{% endif %} fw-semibold">
-            {{ "%.2f"|format(beneficio) }} €
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="8" class="text-center text-muted py-4">Sin tarifas todavía</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+<script>
+document.getElementById("btn-calcular").addEventListener("click", async () => {
+  const ruta = document.getElementById("ruta_id").value;
+  const tipo = document.getElementById("tipo_vehiculo_id").value;
+  if (!ruta || !tipo) return;
+
+  const res = await fetch("/admin/comercial/cotizar/calcular", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `ruta_id=${ruta}&tipo_vehiculo_id=${tipo}`
+  });
+
+  if (!res.ok) {
+    alert("No existe tarifa para esa combinación.");
+    return;
+  }
+
+  const d = await res.json();
+  document.getElementById("res-km").textContent        = d.km + " km";
+  document.getElementById("res-precio").textContent    = d.precio_calculado.toFixed(2) + " €";
+  document.getElementById("res-camionero").textContent = d.pago_camionero.toFixed(2) + " €";
+  document.getElementById("res-beneficio").textContent = d.beneficio_estimado.toFixed(2) + " €";
+  document.getElementById("f-ruta").value              = d.ruta_id;
+  document.getElementById("f-tipo").value              = d.tipo_vehiculo_id;
+  document.getElementById("f-precio-final").value      = d.precio_calculado;
+  document.getElementById("resultado").style.display   = "block";
+});
+
+document.getElementById("f-precio-final").addEventListener("input", function() {
+  const calculado = parseFloat(document.getElementById("res-precio").textContent);
+  const motivo = document.getElementById("campo-motivo");
+  motivo.style.display = (parseFloat(this.value) !== calculado) ? "block" : "none";
+});
+</script>
 {% endblock %}
