@@ -1,49 +1,95 @@
 {% extends "admin/base_admin.html" %}
+
 {% block contenido %}
+
 <div class="page-header">
-  <h1 class="page-title">Tipos de vehículo</h1>
+    <div>
+        <span class="eyebrow">Motor Comercial</span>
+        <h1>Tipos de vehículo</h1>
+        <p>Categorías de vehículos utilizadas por el motor tarifario.</p>
+    </div>
 </div>
 
-<div class="card mb-4" style="max-width:480px">
-  <div class="card-body">
-    <h6 class="fw-semibold mb-3">Nuevo tipo</h6>
-    <form method="POST" action="/admin/comercial/vehiculos/nuevo">
-      <div class="row g-2">
-        <div class="col-12">
-          <input name="nombre" class="form-control" placeholder="Nombre (ej: Camión 3.5T)" required>
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Nuevo tipo de vehículo</h2>
+            <p>Cada tipo podrá tener tarifas diferentes para una misma ruta.</p>
         </div>
-        <div class="col-8">
-          <input name="descripcion" class="form-control" placeholder="Descripción">
-        </div>
-        <div class="col-4">
-          <input name="capacidad_ton" type="number" step="0.1" class="form-control" placeholder="Ton">
-        </div>
-        <div class="col-12">
-          <button class="btn btn-primary w-100">Añadir</button>
-        </div>
-      </div>
+    </div>
+
+    <form method="POST" action="/admin/comercial/vehiculos/nuevo" class="form-grid">
+
+        <input
+            name="nombre"
+            placeholder="Nombre (Ej. Camión 3.5T)"
+            required>
+
+        <input
+            name="descripcion"
+            placeholder="Descripción">
+
+        <input
+            name="capacidad_ton"
+            type="number"
+            step="0.1"
+            placeholder="Capacidad (Toneladas)">
+
+        <button
+            type="submit"
+            class="btn-submit">
+            Añadir tipo
+        </button>
+
     </form>
-  </div>
-</div>
 
-<div class="card">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr><th>Nombre</th><th>Descripción</th><th>Capacidad (T)</th></tr>
-      </thead>
-      <tbody>
-        {% for t in tipos %}
-        <tr>
-          <td>{{ t.nombre }}</td>
-          <td>{{ t.descripcion or "—" }}</td>
-          <td>{{ t.capacidad_ton or "—" }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="3" class="text-center text-muted py-4">Sin tipos todavía</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+</section>
+
+<section class="panel panel-spaced">
+
+    <div class="panel-header">
+        <div>
+            <h2>Tipos registrados</h2>
+            <p>Vehículos disponibles para el motor comercial.</p>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+
+        <table class="data-table">
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Capacidad</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for t in tipos %}
+                <tr>
+                    <td>#{{ t["id"] }}</td>
+                    <td>{{ t["nombre"] }}</td>
+                    <td>{{ t["descripcion"] or "—" }}</td>
+                    <td>{{ t["capacidad_ton"] or "—" }} T</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="empty-state">
+                        No existen tipos de vehículo.
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
 {% endblock %}
