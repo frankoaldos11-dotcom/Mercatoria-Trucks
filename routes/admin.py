@@ -135,9 +135,11 @@ def gestionar_viaje(id):
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT v.*, v.camionero_id as cam_id
-        FROM viajes v
-        WHERE v.id = ?
+        SELECT id, cliente, cliente_id, ruta_id, origen, destino, estado, precio,
+               precio_cliente, precio_final, precio_calculado, camionero_id,
+               camionero_nombre, vehiculo_id, observaciones, tipo_vehiculo_id,
+               fecha_creacion, fecha_asignacion, fecha_recogida, fecha_entrega
+        FROM viajes WHERE id = ?
     """, (id,))
     viaje = cursor.fetchone()
 
@@ -146,15 +148,10 @@ def gestionar_viaje(id):
         return redirect("/admin/viajes")
 
     cursor.execute("""
-        SELECT c.id, c.nombre,
-               v.id AS vehiculo_id,
-               COALESCE(v.matricula, '') AS vehiculo_matricula,
-               COALESCE(v.marca, '') AS vehiculo_marca,
-               COALESCE(v.modelo, '') AS vehiculo_modelo
-        FROM camioneros c
-        LEFT JOIN vehiculos v ON v.camionero_id = c.id AND v.activo = 1
-        WHERE LOWER(c.estado) = 'disponible'
-        ORDER BY c.nombre
+        SELECT id, nombre, telefono, estado
+        FROM camioneros
+        WHERE activo = 1 OR activo IS NULL
+        ORDER BY nombre
     """)
     camioneros = cursor.fetchall()
     vehiculos = []
@@ -1124,7 +1121,7 @@ def lista_usuarios():
     lista = cursor.fetchall()
     conexion.close()
 
-    return render_template("admin/usuarios.html", lista=lista)
+    return render_template("admin/usuarios.html", usuarios=lista)
 
 
 @admin_bp.route("/usuarios/crear", methods=["POST"])

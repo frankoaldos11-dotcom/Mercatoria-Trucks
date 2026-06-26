@@ -29,7 +29,7 @@
         <form method="POST" action="/admin/usuarios/crear" class="form-crud-grid">
             <div class="form-crud-field">
                 <label>Email *</label>
-                <input type="email" name="email" class="input-crud" required placeholder="usuario@empresa.com">
+                <input type="email" name="usuario" class="input-crud" required placeholder="usuario@empresa.com">
             </div>
             <div class="form-crud-field">
                 <label>Contraseña *</label>
@@ -74,7 +74,7 @@
                 {% for u in usuarios %}
                 <tr>
                     <td>#{{ u["id"] }}</td>
-                    <td>{{ u["email"] }}</td>
+                    <td>{{ u["usuario"] }}</td>
                     <td>
                         {% if u["rol"] == "admin" %}
                         <span class="badge-rol badge-admin">Admin</span>
@@ -93,7 +93,7 @@
                     </td>
                     <td>{{ u["fecha_creacion"] or "—" }}</td>
                     <td class="td-acciones">
-                        {% if u["email"] != session.get('usuario') %}
+                        {% if u["usuario"] != session.get('usuario') %}
                         <form method="POST" action="/admin/usuarios/{{ u['id'] }}/rol" style="display:inline-flex;align-items:center;gap:6px;">
                             <select name="rol" class="select-accion">
                                 <option value="admin" {% if u["rol"]=="admin" %}selected{% endif %}>Admin</option>
