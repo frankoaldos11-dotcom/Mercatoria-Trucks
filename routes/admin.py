@@ -149,16 +149,22 @@ def viajes():
 
     if filtro:
         cursor.execute("""
-            SELECT id, cliente, origen, destino, estado, camionero_nombre
-            FROM viajes
-            WHERE LOWER(estado) = ?
-            ORDER BY id DESC
+            SELECT v.id,
+                   COALESCE(cl.nombre, v.cliente, 'Sin cliente') as cliente,
+                   v.origen, v.destino, v.estado, v.camionero_nombre
+            FROM viajes v
+            LEFT JOIN clientes cl ON v.cliente_id = cl.id
+            WHERE LOWER(v.estado) = ?
+            ORDER BY v.id DESC
         """, (filtro,))
     else:
         cursor.execute("""
-            SELECT id, cliente, origen, destino, estado, camionero_nombre
-            FROM viajes
-            ORDER BY id DESC
+            SELECT v.id,
+                   COALESCE(cl.nombre, v.cliente, 'Sin cliente') as cliente,
+                   v.origen, v.destino, v.estado, v.camionero_nombre
+            FROM viajes v
+            LEFT JOIN clientes cl ON v.cliente_id = cl.id
+            ORDER BY v.id DESC
         """)
     lista = cursor.fetchall()
 
