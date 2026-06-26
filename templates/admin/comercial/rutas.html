@@ -26,15 +26,25 @@
     </div>
 
     <form method="POST" action="/admin/comercial/rutas/nueva" class="form-grid">
-        <input name="origen" placeholder="Origen" required>
-        <input name="destino" placeholder="Destino" required>
+        <input id="ruta-origen" name="origen" placeholder="Origen" required
+               onblur="calcularKmSiCompleto()">
+        <input id="ruta-destino" name="destino" placeholder="Destino" required
+               onblur="calcularKmSiCompleto()">
         <select name="zona" class="input">
             <option value="">— Zona —</option>
             <option value="Occidente">Occidente</option>
             <option value="Centro">Centro</option>
             <option value="Oriente">Oriente</option>
         </select>
-        <input name="km" type="number" step="0.1" placeholder="Km oficiales" required>
+        <div style="display:flex;gap:6px;align-items:center;">
+            <input id="ruta-km" name="km" type="number" step="0.1" placeholder="Km oficiales" required
+                   style="flex:1;min-width:0;">
+            <button type="button" id="btn-recalcular" onclick="calcularKm()"
+                    title="Recalcular distancia desde origen y destino"
+                    style="padding:8px 12px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;color:#555;cursor:pointer;white-space:nowrap;">
+                ↺ km
+            </button>
+        </div>
         <button type="submit" class="btn-submit">Añadir ruta</button>
     </form>
 </section>
@@ -317,6 +327,63 @@
 </style>
 
 <script>
+/* ── Cálculo automático de km via Nominatim + OSRM ── */
+async function calcularKm() {
+    const origen  = document.getElementById('ruta-origen').value.trim();
+    const destino = document.getElementById('ruta-destino').value.trim();
+    const kmInput = document.getElementById('ruta-km');
+    const btnRec  = document.getElementById('btn-recalcular');
+
+    if (!origen || !destino) return;
+
+    kmInput.disabled = true;
+    kmInput.value = '';
+    kmInput.placeholder = 'Calculando…';
+    btnRec.textContent = '…';
+    btnRec.disabled = true;
+
+    try {
+        const geocode = async (lugar) => {
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(lugar + ', Cuba')}&format=json&limit=1`;
+            const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+            const data = await res.json();
+            if (!data.length) throw new Error(`No se encontró: ${lugar}`);
+            return { lat: data[0].lat, lon: data[0].lon };
+        };
+
+        const [g1, g2] = await Promise.all([geocode(origen), geocode(destino)]);
+
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${g1.lon},${g1.lat};${g2.lon},${g2.lat}?overview=false`;
+        const routeRes = await fetch(osrmUrl);
+        const routeData = await routeRes.json();
+
+        if (routeData.code !== 'Ok' || !routeData.routes || !routeData.routes.length) {
+            throw new Error('OSRM no encontró ruta');
+        }
+
+        const km = (routeData.routes[0].distance / 1000).toFixed(1);
+        kmInput.value = km;
+        kmInput.placeholder = 'Km oficiales';
+    } catch (err) {
+        kmInput.placeholder = 'Error — ingresa manualmente';
+        console.warn('[OSRM]', err.message);
+    } finally {
+        kmInput.disabled = false;
+        kmInput.focus();
+        btnRec.textContent = '↺ km';
+        btnRec.disabled = false;
+    }
+}
+
+function calcularKmSiCompleto() {
+    const origen  = document.getElementById('ruta-origen').value.trim();
+    const destino = document.getElementById('ruta-destino').value.trim();
+    const kmInput = document.getElementById('ruta-km');
+    if (origen && destino && !kmInput.value) {
+        calcularKm();
+    }
+}
+
 function startEdit(id) {
     document.getElementById('disp-' + id).style.display = 'none';
     document.getElementById('btn-e-' + id).style.display = 'none';
