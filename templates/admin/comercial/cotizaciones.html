@@ -8,23 +8,13 @@
         <h1>Cotizaciones</h1>
         <p>Listado de cotizaciones generadas por Mercatoria.</p>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <a href="/admin/comercial/cotizaciones/plantilla"
-           class="btn btn-soft" style="font-size:0.82rem;">
-            <i class="bi bi-file-earmark-excel me-1"></i> Descargar plantilla
+    <div style="display:flex;gap:8px;align-items:center;">
+        <a href="/admin/comercial/cotizaciones/plantilla" class="btn btn-soft" style="font-size:0.82rem;">
+            <i class="bi bi-file-earmark-excel me-1"></i> Plantilla Excel
         </a>
-        <form method="POST" action="/admin/comercial/cotizaciones/importar"
-              enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;">
-            <label for="archivoExcel" class="btn btn-soft" style="font-size:0.82rem;cursor:pointer;margin:0;">
-                <i class="bi bi-file-earmark-arrow-up me-1"></i> Seleccionar Excel
-            </label>
-            <input type="file" id="archivoExcel" name="archivo" accept=".xlsx" style="display:none;"
-                   onchange="document.getElementById('nombreArchivo').textContent = this.files[0]?.name || 'Ninguno'">
-            <span id="nombreArchivo" style="font-size:0.78rem;color:#6B7280;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Ninguno</span>
-            <button type="submit" class="btn btn-soft" style="font-size:0.82rem;">
-                <i class="bi bi-upload me-1"></i> Importar
-            </button>
-        </form>
+        <button onclick="document.getElementById('modalImportar').style.display='flex'" class="btn btn-soft" style="font-size:0.82rem;">
+            <i class="bi bi-upload me-1"></i> Importar Excel
+        </button>
         <a href="/admin/comercial/cotizar" class="btn btn-primary" style="font-size:0.82rem;">
             <i class="bi bi-plus-circle me-1"></i> Nueva cotización
         </a>
@@ -87,5 +77,18 @@
         </table>
     </div>
 </section>
+
+<div id="modalImportar" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:2rem;width:400px;max-width:90%;">
+        <h3 style="margin:0 0 1rem;font-size:1.1rem;">Importar cotizaciones</h3>
+        <form method="POST" action="/admin/comercial/cotizaciones/importar" enctype="multipart/form-data">
+            <input type="file" name="archivo" accept=".xlsx" class="form-control mb-3" required>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button type="button" onclick="document.getElementById('modalImportar').style.display='none'" class="btn btn-soft">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Importar</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 {% endblock %}
