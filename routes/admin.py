@@ -26,18 +26,22 @@ def conectar():
 
 
 def registrar_auditoria(accion, categoria, entidad=None, entidad_id=None, detalle=None):
-    conexion = conectar()
-    cursor = conexion.cursor()
-    cursor.execute("""
-        INSERT INTO auditoria (usuario, rol, accion, categoria, entidad, entidad_id, detalle)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        session.get("usuario", "sistema"),
-        session.get("rol", ""),
-        accion, categoria, entidad, entidad_id, detalle
-    ))
-    conexion.commit()
-    conexion.close()
+    try:
+        conexion = conectar()
+        cursor = conexion.cursor()
+        cursor.execute("""
+            INSERT INTO auditoria (usuario, rol, accion, categoria, entidad, entidad_id, detalle)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            session.get("usuario", "sistema"),
+            session.get("rol", ""),
+            accion, categoria, entidad, entidad_id, detalle
+        ))
+        conexion.commit()
+        conexion.close()
+        print(f"AUDITORIA OK: {accion} | {categoria} | {entidad} #{entidad_id}")
+    except Exception as e:
+        print(f"AUDITORIA ERROR: {e}")
 
 
 def notificar_cliente_estado(viaje_id, nuevo_estado, email_cliente):
@@ -316,10 +320,12 @@ def asignar_camionero(id):
         """, (camionero_id, fila["nombre"], id))
 
     conexion.commit()
+
+    nombre_camionero = fila['nombre'] if fila else "desconocido"
+
     conexion.close()
 
-    if fila:
-        registrar_auditoria(f"Asignó camionero {fila['nombre']}", "Viajes", "viaje", id, f"Camionero ID: {camionero_id}")
+    registrar_auditoria(f"Asignó camionero {nombre_camionero}", "Viajes", "viaje", id, f"Camionero ID: {camionero_id}")
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
