@@ -14,6 +14,27 @@ from reportlab.platypus import (
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _LOGO_PATH = os.path.join(_BASE_DIR, "static", "logo-mercatoria.jpg")
+_LOGO_SVG_PATH = os.path.join(_BASE_DIR, "static", "logo-mercatoria.svg")
+
+
+def _cargar_logo(width=2.2*cm, height=2.2*cm):
+    if os.path.exists(_LOGO_PATH):
+        return Image(_LOGO_PATH, width=width, height=height)
+    try:
+        from svglib.svglib import svg2rlg
+        from reportlab.graphics import renderPDF
+        if os.path.exists(_LOGO_SVG_PATH):
+            drawing = svg2rlg(_LOGO_SVG_PATH)
+            if drawing:
+                sx = width / drawing.width
+                sy = height / drawing.height
+                drawing.width = width
+                drawing.height = height
+                drawing.transform = (sx, 0, 0, sy, 0, 0)
+                return drawing
+    except ImportError:
+        pass
+    return ""
 
 NARANJA = colors.HexColor("#F36B21")
 GRIS_TEXTO = colors.HexColor("#333333")
@@ -106,9 +127,7 @@ def generar_pdf_orden_carga(viaje: dict) -> bytes:
     elems = []
 
     # ── Cabecera ──────────────────────────────────────────────────────────────
-    logo_cell = ""
-    if os.path.exists(_LOGO_PATH):
-        logo_cell = Image(_LOGO_PATH, width=5 * cm, height=2.5 * cm, kind="proportional")
+    logo_cell = _cargar_logo(width=5 * cm, height=2.5 * cm)
 
     orden_id = viaje.get("id") or 0
     right_col = Table(
@@ -323,9 +342,7 @@ def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
     liq_num = v.get("id", 0)
 
     # ── Cabecera ──────────────────────────────────────────────────────────────
-    logo_cell = ""
-    if os.path.exists(_LOGO_PATH):
-        logo_cell = Image(_LOGO_PATH, width=5 * cm, height=2.5 * cm, kind="proportional")
+    logo_cell = _cargar_logo(width=5 * cm, height=2.5 * cm)
 
     right_col = Table(
         [
@@ -535,9 +552,7 @@ def generar_pdf_carta_porte(viaje_id: int) -> bytes:
     fecha_emision = datetime.now().strftime("%d/%m/%Y")
 
     # ── Cabecera ──────────────────────────────────────────────────────────────
-    logo_cell = ""
-    if os.path.exists(_LOGO_PATH):
-        logo_cell = Image(_LOGO_PATH, width=5 * cm, height=2.5 * cm, kind="proportional")
+    logo_cell = _cargar_logo(width=5 * cm, height=2.5 * cm)
 
     right_col = Table(
         [
@@ -826,9 +841,7 @@ def _construir_pdf_factura(v: dict, precio: float) -> bytes:
     fecha_emision = datetime.now().strftime("%d/%m/%Y")
 
     # ── Cabecera ──────────────────────────────────────────────────────────────
-    logo_cell = ""
-    if os.path.exists(_LOGO_PATH):
-        logo_cell = Image(_LOGO_PATH, width=5 * cm, height=2.5 * cm, kind="proportional")
+    logo_cell = _cargar_logo(width=5 * cm, height=2.5 * cm)
 
     right_col = Table(
         [
