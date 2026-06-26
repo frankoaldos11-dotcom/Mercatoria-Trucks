@@ -254,6 +254,13 @@ def crear_base_datos(bcrypt):
     agregar_columna(cursor, "viajes", "observaciones", "TEXT")
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS configuracion_texto (
+        clave TEXT PRIMARY KEY,
+        valor TEXT NOT NULL
+    )
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS auditoria (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         fecha TEXT DEFAULT CURRENT_TIMESTAMP,

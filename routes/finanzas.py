@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, session
 
+from database import conectar
 from services.finanzas_service import get_configuracion, guardar_configuracion
 
 finanzas_bp = Blueprint("finanzas", __name__, url_prefix="/admin")
@@ -31,10 +32,28 @@ def configuracion():
                 parametros[clave] = float(request.form[clave])
             except (KeyError, ValueError):
                 pass
-
         guardar_configuracion(parametros)
+
+        claves_texto = ["mail_username", "mail_password"]
+        con = conectar()
+        cur = con.cursor()
+        for clave in claves_texto:
+            valor = request.form.get(clave, "").strip()
+            cur.execute(
+                "INSERT OR REPLACE INTO configuracion_texto (clave, valor) VALUES (?, ?)",
+                (clave, valor)
+            )
+        con.commit()
+        con.close()
+
         mensaje = "Configuración guardada correctamente."
 
     config = get_configuracion()
 
-    return render_template("admin/configuracion.html", config=config, mensaje=mensaje)
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT clave, valor FROM configuracion_texto")
+    config_texto = {r["clave"]: r["valor"] for r in cur.fetchall()}
+    con.close()
+
+    return render_template("admin/configuracion.html", config=config, config_texto=config_texto, mensaje=mensaje)

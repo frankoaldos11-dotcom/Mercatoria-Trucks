@@ -494,3 +494,32 @@ body {
     .col-md-5 { flex: 0 0 calc(41.666% - 12px); max-width: calc(41.666% - 12px); padding: 6px; }
     .col-md-7 { flex: 0 0 calc(58.333% - 12px); max-width: calc(58.333% - 12px); padding: 6px; }
 }
+
+/* ── Botones Excel ── */
+.btn-excel-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 14px;
+    background: #1D6F42;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.btn-excel-export:hover { background: #155233; }
+
+.btn-excel-import {
+    padding: 8px 14px;
+    background: #2563EB;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-excel-import:hover { background: #1D4ED8; }
