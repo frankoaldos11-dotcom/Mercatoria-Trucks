@@ -1,0 +1,319 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <h1>Configuración financiera</h1>
+        <p class="subtitulo">Parámetros globales de liquidación</p>
+    </div>
+</div>
+
+{% if mensaje %}
+<div class="alerta-exito">{{ mensaje }}</div>
+{% endif %}
+
+<div class="config-layout">
+
+    <form method="POST" action="/admin/configuracion" class="card config-form">
+
+        <div class="config-grupo">
+            <label class="config-label">
+                Tarifa por km (USD/km)
+                <span class="config-hint">{{ config.get('tarifa_km', 1.5) }} USD — base para calcular pago al camionero</span>
+            </label>
+            <input
+                type="number"
+                name="tarifa_km"
+                step="0.01"
+                min="0"
+                value="{{ config.get('tarifa_km', 1.5) }}"
+                class="config-input"
+                required
+            >
+        </div>
+
+        <div class="config-grupo">
+            <label class="config-label">
+                Divisor combustible
+                <span class="config-hint">combustible = pago_camionero / divisor — default 2</span>
+            </label>
+            <input
+                type="number"
+                name="margen_combustible_divisor"
+                step="0.01"
+                min="0.1"
+                value="{{ config.get('margen_combustible_divisor', 2.0) }}"
+                class="config-input"
+                required
+            >
+        </div>
+
+        <div class="config-grupo">
+            <label class="config-label">
+                Multiplicador precio cliente
+                <span class="config-hint">precio_cliente = pago_camionero × multiplicador (cuando no hay precio registrado)</span>
+            </label>
+            <input
+                type="number"
+                name="multiplicador_pago_camionero"
+                step="0.01"
+                min="1"
+                value="{{ config.get('multiplicador_pago_camionero', 2.5) }}"
+                class="config-input"
+                required
+            >
+        </div>
+
+        <div class="config-grupo">
+            <label class="config-label">
+                Km mínimo garantizado
+                <span class="config-hint">Si el viaje tiene menos km, se liquida este mínimo</span>
+            </label>
+            <input
+                type="number"
+                name="minimo_km_garantizado"
+                step="1"
+                min="0"
+                value="{{ config.get('minimo_km_garantizado', 120) }}"
+                class="config-input"
+                required
+            >
+        </div>
+
+        <div class="config-grupo">
+            <label class="config-label">
+                Pago mínimo al camionero (USD)
+                <span class="config-hint">Garantía mínima independientemente de los km</span>
+            </label>
+            <input
+                type="number"
+                name="minimo_pago_usd"
+                step="0.01"
+                min="0"
+                value="{{ config.get('minimo_pago_usd', 150.0) }}"
+                class="config-input"
+                required
+            >
+        </div>
+
+        <div class="config-grupo">
+            <label class="config-label">
+                Comisión Mercatoria (%)
+                <span class="config-hint">Porcentaje sobre el precio cliente destinado a Mercatoria</span>
+            </label>
+            <input
+                type="number"
+                name="comision_mercatoria_porcentaje"
+                step="0.1"
+                min="0"
+                max="100"
+                value="{{ config.get('comision_mercatoria_porcentaje', 20.0) }}"
+                class="config-input"
+                required
+            >
+        </div>
+
+        <div class="config-acciones">
+            <button type="submit" class="btn-guardar">
+                Guardar configuración
+            </button>
+        </div>
+
+    </form>
+
+    <div class="card config-preview">
+        <h3>Vista previa de liquidación ejemplo</h3>
+        <p class="preview-nota">Con 150 km recorridos y precio cliente registrado de $500 USD</p>
+
+        <div class="preview-fila">
+            <span>Km real</span>
+            <strong>150 km</strong>
+        </div>
+        <div class="preview-fila">
+            <span>Km liquidable</span>
+            <strong id="prev-km-liq">—</strong>
+        </div>
+        <div class="preview-fila">
+            <span>Pago camionero</span>
+            <strong id="prev-pago">—</strong>
+        </div>
+        <div class="preview-fila">
+            <span>Combustible</span>
+            <strong id="prev-comb">—</strong>
+        </div>
+        <div class="preview-fila">
+            <span>Precio cliente</span>
+            <strong id="prev-precio">$500.00</strong>
+        </div>
+        <div class="preview-fila">
+            <span>Comisión Mercatoria</span>
+            <strong id="prev-comision">—</strong>
+        </div>
+        <div class="preview-fila utilidad">
+            <span>Utilidad neta</span>
+            <strong id="prev-utilidad">—</strong>
+        </div>
+    </div>
+
+</div>
+
+<style>
+.page-header {
+    margin-bottom: 28px;
+}
+.page-header h1 { margin: 0; }
+.subtitulo { margin: 6px 0 0; color: #777; }
+
+.alerta-exito {
+    background: #e6f7ee;
+    border: 1px solid #2ecc71;
+    color: #1a7a45;
+    padding: 14px 20px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    font-weight: 600;
+}
+
+.config-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 28px;
+    align-items: start;
+}
+
+.config-form {
+    padding: 32px;
+}
+
+.config-grupo {
+    margin-bottom: 26px;
+}
+
+.config-label {
+    display: block;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 6px;
+    color: #1a1a1a;
+}
+
+.config-hint {
+    display: block;
+    font-weight: 400;
+    font-size: 13px;
+    color: #888;
+    margin-top: 3px;
+}
+
+.config-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-top: 6px;
+    box-sizing: border-box;
+    transition: border-color .2s;
+}
+
+.config-input:focus {
+    outline: none;
+    border-color: #F36B21;
+}
+
+.config-acciones {
+    margin-top: 8px;
+}
+
+.btn-guardar {
+    background: #F36B21;
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+}
+
+.btn-guardar:hover { background: #d95714; }
+
+.config-preview {
+    padding: 28px;
+    position: sticky;
+    top: 24px;
+}
+
+.config-preview h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+}
+
+.preview-nota {
+    font-size: 13px;
+    color: #888;
+    margin: 0 0 20px;
+}
+
+.preview-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 15px;
+}
+
+.preview-fila span { color: #666; }
+
+.preview-fila.utilidad {
+    border-bottom: none;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 2px solid #F36B21;
+}
+
+.preview-fila.utilidad strong {
+    font-size: 20px;
+    color: #F36B21;
+}
+
+@media (max-width: 900px) {
+    .config-layout { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+const KM_EJEMPLO = 150;
+const PRECIO_CLIENTE_EJEMPLO = 500;
+
+function recalcular() {
+    const tarifa    = parseFloat(document.querySelector('[name=tarifa_km]').value) || 0;
+    const divisor   = parseFloat(document.querySelector('[name=margen_combustible_divisor]').value) || 1;
+    const mult      = parseFloat(document.querySelector('[name=multiplicador_pago_camionero]').value) || 1;
+    const minKm     = parseFloat(document.querySelector('[name=minimo_km_garantizado]').value) || 0;
+    const minPago   = parseFloat(document.querySelector('[name=minimo_pago_usd]').value) || 0;
+    const comPct    = parseFloat(document.querySelector('[name=comision_mercatoria_porcentaje]').value) || 0;
+
+    const kmLiq     = Math.max(KM_EJEMPLO, minKm);
+    const pagoCalc  = kmLiq * tarifa;
+    const pago      = Math.max(pagoCalc, minPago);
+    const comb      = divisor ? pago / divisor : 0;
+    const precio    = PRECIO_CLIENTE_EJEMPLO;
+    const comision  = precio * comPct / 100;
+    const utilidad  = precio - pago - comb - comision;
+
+    document.getElementById('prev-km-liq').textContent   = kmLiq.toFixed(0) + ' km';
+    document.getElementById('prev-pago').textContent     = '$' + pago.toFixed(2);
+    document.getElementById('prev-comb').textContent     = '$' + comb.toFixed(2);
+    document.getElementById('prev-comision').textContent = '$' + comision.toFixed(2);
+    document.getElementById('prev-utilidad').textContent = '$' + utilidad.toFixed(2);
+}
+
+document.querySelectorAll('.config-input').forEach(el => el.addEventListener('input', recalcular));
+recalcular();
+</script>
+
+{% endblock %}

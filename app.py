@@ -14,6 +14,7 @@ from routes.cliente import cliente_bp
 from routes.admin import admin_bp
 from routes.vehiculos import vehiculos_bp
 from routes.comercial import comercial_bp
+from routes.finanzas import finanzas_bp
 
 
 app = Flask(__name__)
@@ -119,6 +120,7 @@ app.register_blueprint(cliente_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(vehiculos_bp)
 app.register_blueprint(comercial_bp)
+app.register_blueprint(finanzas_bp)
 
 crear_base_datos(bcrypt)
 ejecutar_migraciones()

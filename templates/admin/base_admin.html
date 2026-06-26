@@ -92,6 +92,13 @@
 
             <div class="nav-section">Sistema</div>
 
+            {% if session.get('rol') == 'admin' %}
+            <a href="/admin/configuracion" class="nav-item">
+                <i class="bi bi-sliders"></i>
+                <span>Configuración</span>
+            </a>
+            {% endif %}
+
             <a href="/logout" class="nav-item logout">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Salir</span>

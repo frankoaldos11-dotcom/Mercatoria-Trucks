@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, request, redirect, send_file, sess
 import sqlite3
 
 from services.comercial_service import convertir_cotizacion_en_viaje
+from services.finanzas_service import calcular_liquidacion
 from services.pdf_service import generar_pdf_orden_carga
 from utils.constants import CAMIONERO_ESTADOS, VEHICULO_ESTADOS
 
@@ -132,11 +133,14 @@ def gestionar_viaje(id):
 
     conexion.close()
 
+    liquidacion = calcular_liquidacion(id)
+
     return render_template(
         "admin/gestionar_viaje.html",
         viaje=viaje,
         camioneros=camioneros,
-        vehiculos=vehiculos
+        vehiculos=vehiculos,
+        liquidacion=liquidacion,
     )
 
 

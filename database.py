@@ -186,6 +186,28 @@ def crear_base_datos(bcrypt):
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS configuracion (
+        clave TEXT PRIMARY KEY,
+        valor REAL NOT NULL,
+        descripcion TEXT
+    )
+    """)
+
+    defaults = [
+        ("tarifa_km",                    1.5,  "Tarifa por km cobrada al camionero (USD/km)"),
+        ("margen_combustible_divisor",   2.0,  "Divisor para calcular combustible: pago_camionero / divisor"),
+        ("multiplicador_pago_camionero", 2.5,  "Multiplicador para estimar precio cliente desde pago camionero"),
+        ("minimo_km_garantizado",      120.0,  "Km mínimo garantizado para liquidación"),
+        ("minimo_pago_usd",            150.0,  "Pago mínimo garantizado al camionero en USD"),
+        ("comision_mercatoria_porcentaje", 20.0, "Porcentaje de comisión de Mercatoria sobre precio cliente"),
+    ]
+    for clave, valor, desc in defaults:
+        cursor.execute(
+            "INSERT OR IGNORE INTO configuracion (clave, valor, descripcion) VALUES (?, ?, ?)",
+            (clave, valor, desc)
+        )
+
     agregar_columna(cursor, "usuarios", "activo", "INTEGER DEFAULT 1")
     agregar_columna(cursor, "usuarios", "fecha_creacion", "TEXT DEFAULT CURRENT_TIMESTAMP")
     agregar_columna(cursor, "clientes", "usuario_id", "INTEGER")

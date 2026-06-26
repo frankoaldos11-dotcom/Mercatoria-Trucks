@@ -78,44 +78,52 @@
         </div>
 
         <div class="card bloque">
-            <h2>Economía del viaje</h2>
+            <h2>Liquidación financiera</h2>
+
+            {% if liquidacion %}
+
+            {% if liquidacion.minimo_aplicado %}
+            <div class="liq-aviso">
+                <i class="bi bi-info-circle"></i>
+                Km mínimo garantizado aplicado ({{ liquidacion.km_liquidable|int }} km en lugar de {{ liquidacion.km_real|int }} km reales)
+            </div>
+            {% endif %}
 
             <div class="economia-grid">
                 <div class="economia-item">
-                    <span>Precio calculado</span>
-                    <strong>
-                        ${{ "%.2f"|format(viaje["precio_calculado"] or 0) }}
-                    </strong>
+                    <span>Km liquidables</span>
+                    <strong>{{ liquidacion.km_liquidable|int }} km</strong>
                 </div>
 
                 <div class="economia-item">
-                    <span>Precio final</span>
-                    <strong>
-                        ${{ "%.2f"|format(viaje["precio_final"] or viaje["precio"] or 0) }}
-                    </strong>
+                    <span>Precio cliente</span>
+                    <strong>${{ "%.2f"|format(liquidacion.precio_cliente) }}</strong>
                 </div>
 
                 <div class="economia-item">
                     <span>Combustible</span>
-                    <strong>
-                        ${{ "%.2f"|format(viaje["combustible"] or viaje["combustible_estimado"] or 0) }}
-                    </strong>
+                    <strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong>
                 </div>
 
                 <div class="economia-item">
                     <span>Pago camionero</span>
-                    <strong>
-                        ${{ "%.2f"|format(viaje["pago_camionero"] or 0) }}
-                    </strong>
+                    <strong>${{ "%.2f"|format(liquidacion.pago_camionero) }}</strong>
+                </div>
+
+                <div class="economia-item">
+                    <span>Comisión Mercatoria ({{ liquidacion.config.comision_mercatoria_porcentaje|int }}%)</span>
+                    <strong>${{ "%.2f"|format(liquidacion.comision_mercatoria) }}</strong>
                 </div>
 
                 <div class="economia-item beneficio">
-                    <span>Beneficio estimado</span>
-                    <strong>
-                        ${{ "%.2f"|format(viaje["beneficio"] or viaje["beneficio_estimado"] or 0) }}
-                    </strong>
+                    <span>Utilidad Mercatoria</span>
+                    <strong>${{ "%.2f"|format(liquidacion.utilidad_mercatoria) }}</strong>
                 </div>
             </div>
+
+            {% else %}
+            <p class="sin-datos">No se pudo calcular la liquidación para este viaje.</p>
+            {% endif %}
         </div>
 
         <div class="card bloque">
@@ -348,6 +356,24 @@
 .beneficio {
     background: #fff3ec;
     border: 1px solid #F36B21;
+}
+
+.liq-aviso {
+    background: #fff8e6;
+    border: 1px solid #f5a623;
+    color: #7a5800;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sin-datos {
+    color: #999;
+    font-style: italic;
 }
 
 .observaciones {
