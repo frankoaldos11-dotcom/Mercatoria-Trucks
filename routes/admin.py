@@ -134,7 +134,11 @@ def gestionar_viaje(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT * FROM viajes WHERE id = ?", (id,))
+    cursor.execute("""
+        SELECT v.*, v.camionero_id as cam_id
+        FROM viajes v
+        WHERE v.id = ?
+    """, (id,))
     viaje = cursor.fetchone()
 
     if not viaje:
