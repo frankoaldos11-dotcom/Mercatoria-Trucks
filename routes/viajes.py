@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect
+from flask import Blueprint, render_template, request, redirect, session
 
 from database import conectar
 from utils.constants import VIAJE_ESTADOS
@@ -46,6 +46,8 @@ def liberar_vehiculo_si_corresponde(cursor, viaje_id, estado):
 
 @viajes_bp.route("/nuevo-viaje", methods=["GET", "POST"])
 def nuevo_viaje():
+    if "usuario" not in session:
+        return redirect("/login")
     if request.method == "POST":
         cliente = request.form["cliente"].strip()
         origen = request.form["origen"].strip()
@@ -92,11 +94,15 @@ def nuevo_viaje():
 
 @viajes_bp.route("/viajes")
 def viajes():
+    if "usuario" not in session:
+        return redirect("/login")
     return redirect("/admin/viajes")
 
 
 @viajes_bp.route("/editar/<int:id>", methods=["GET", "POST"])
 def editar_viaje(id):
+    if "usuario" not in session:
+        return redirect("/login")
     conexion = conectar()
     cursor = conexion.cursor()
 
@@ -165,6 +171,8 @@ def editar_viaje(id):
 
 @viajes_bp.route("/eliminar/<int:id>")
 def eliminar_viaje(id):
+    if "usuario" not in session:
+        return redirect("/login")
     if CURRENT_ROLE != "MASTER":
         return redirect("/viajes")
 
@@ -179,6 +187,8 @@ def eliminar_viaje(id):
 
 @viajes_bp.route("/estado/<int:id>/<estado>")
 def cambiar_estado(id, estado):
+    if "usuario" not in session:
+        return redirect("/login")
     if estado not in VIAJE_ESTADOS:
         return redirect("/viajes")
 
@@ -199,6 +209,8 @@ def cambiar_estado(id, estado):
 @viajes_bp.route("/admin/viaje/<int:id>/orden-carga")
 @viajes_bp.route("/admin/viajes/<int:id>/orden-carga")
 def orden_carga(id):
+    if "usuario" not in session:
+        return redirect("/login")
     conexion = conectar()
     conexion.row_factory = None
     cursor = conexion.cursor()
