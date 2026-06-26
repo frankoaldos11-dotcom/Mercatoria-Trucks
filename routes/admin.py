@@ -7,6 +7,7 @@ from urllib.parse import quote_plus
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 import sqlite3
 
+from extensions import bcrypt
 from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_por_camionero
 from services.finanzas_service import calcular_liquidacion
 from services.pdf_service import generar_factura_cliente, generar_pdf_orden_carga
@@ -191,8 +192,8 @@ def gestionar_viaje(id):
         "asignado":   ["En ruta", "Cancelado"],
         "en ruta":    ["Entregado", "Cancelado"],
         "en_ruta":    ["Entregado", "Cancelado"],
-        "entregado":  [],
-        "cancelado":  [],
+        "entregado":  ["En ruta", "Cancelado"],
+        "cancelado":  ["Solicitado"],
     }
     estado_norm = (viaje["estado"] or "").lower()
     estados_validos = _transiciones.get(estado_norm, ["Asignado", "En ruta", "Entregado", "Cancelado"])
@@ -291,13 +292,15 @@ def cambiar_estado(id):
             conexion.close()
             return redirect(f"/admin/viajes/{id}/gestionar?error=No+se+puede+poner+En+ruta+sin+precio+cliente+confirmado")
 
-    if estado == "Entregado":
-        estado_actual = (viaje["estado"] or "").lower().replace("_", " ") if viaje else ""
-        if estado_actual != "en ruta":
-            conexion.close()
-            return redirect(f"/admin/viajes/{id}/gestionar?error=Solo+se+puede+marcar+como+Entregado+cuando+el+viaje+est%C3%A1+En+ruta")
-
     cursor.execute("UPDATE viajes SET estado = ? WHERE id = ?", (estado, id))
+
+    ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if estado == "Asignado":
+        cursor.execute("UPDATE viajes SET fecha_asignacion = ? WHERE id = ?", (ahora, id))
+    elif estado in ["En ruta", "Carga recogida"]:
+        cursor.execute("UPDATE viajes SET fecha_recogida = ? WHERE id = ?", (ahora, id))
+    elif estado == "Entregado":
+        cursor.execute("UPDATE viajes SET fecha_entrega = ? WHERE id = ?", (ahora, id))
 
     if estado.lower() in ["entregado", "cancelado"]:
         if viaje and viaje["camionero_id"]:
@@ -961,8 +964,8 @@ def _calcular_financieros_periodo(fecha_desde, fecha_hasta):
 
 @admin_bp.route("/reportes")
 def reportes():
-    if not requiere_admin():
-        return redirect("/login")
+    if not (session.get("usuario") and session.get("rol") == "admin"):
+        return redirect("/admin?access_error=Solo+administradores+pueden+ver+reportes")
 
     hoy = date.today()
     fecha_desde = request.args.get("fecha_desde", hoy.replace(day=1).isoformat())
@@ -1037,8 +1040,8 @@ def reportes():
 
 @admin_bp.route("/reportes/exportar")
 def exportar_reportes_csv():
-    if not requiere_admin():
-        return redirect("/login")
+    if not (session.get("usuario") and session.get("rol") == "admin"):
+        return redirect("/admin?access_error=Solo+administradores+pueden+ver+reportes")
 
     hoy = date.today()
     fecha_desde = request.args.get("fecha_desde", hoy.replace(day=1).isoformat())
@@ -1070,3 +1073,100 @@ def exportar_reportes_csv():
         as_attachment=True,
         download_name=nombre,
     )
+
+
+# ── Usuarios CRUD ─────────────────────────────────────────────────────────────
+
+@admin_bp.route("/usuarios")
+def admin_usuarios():
+    if session.get("rol") != "admin":
+        return redirect("/admin")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("""
+        SELECT id, usuario, rol, activo, fecha_creacion
+        FROM usuarios
+        ORDER BY id DESC
+    """)
+    lista = cursor.fetchall()
+    conexion.close()
+
+    return render_template("admin/usuarios.html", lista=lista)
+
+
+@admin_bp.route("/usuarios/crear", methods=["POST"])
+def crear_usuario():
+    if session.get("rol") != "admin":
+        return redirect("/admin")
+
+    usuario = request.form.get("usuario", "").strip()
+    password = request.form.get("password", "").strip()
+    rol = request.form.get("rol", "").strip()
+
+    if not usuario or not password or rol not in ("admin", "operador", "cliente"):
+        return redirect("/admin/usuarios?error=Datos+inv%C3%A1lidos")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT id FROM usuarios WHERE usuario = ?", (usuario,))
+    if cursor.fetchone():
+        conexion.close()
+        return redirect("/admin/usuarios?error=El+usuario+ya+existe")
+
+    hash_pw = bcrypt.generate_password_hash(password).decode("utf-8")
+    cursor.execute(
+        "INSERT INTO usuarios (usuario, password, rol) VALUES (?, ?, ?)",
+        (usuario, hash_pw, rol)
+    )
+    conexion.commit()
+    conexion.close()
+
+    return redirect("/admin/usuarios")
+
+
+@admin_bp.route("/usuarios/<int:id>/rol", methods=["POST"])
+def cambiar_rol_usuario(id):
+    if session.get("rol") != "admin":
+        return redirect("/admin")
+
+    rol = request.form.get("rol", "").strip()
+    if rol not in ("admin", "operador", "cliente"):
+        return redirect("/admin/usuarios?error=Rol+inv%C3%A1lido")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT usuario FROM usuarios WHERE id = ?", (id,))
+    row = cursor.fetchone()
+    if row and row["usuario"] == session.get("usuario"):
+        conexion.close()
+        return redirect("/admin/usuarios?error=No+puedes+cambiar+tu+propio+rol")
+
+    cursor.execute("UPDATE usuarios SET rol = ? WHERE id = ?", (rol, id))
+    conexion.commit()
+    conexion.close()
+
+    return redirect("/admin/usuarios")
+
+
+@admin_bp.route("/usuarios/<int:id>/toggle", methods=["POST"])
+def toggle_usuario(id):
+    if session.get("rol") != "admin":
+        return redirect("/admin")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT usuario FROM usuarios WHERE id = ?", (id,))
+    row = cursor.fetchone()
+    if row and row["usuario"] == session.get("usuario"):
+        conexion.close()
+        return redirect("/admin/usuarios?error=No+puedes+desactivarte+a+ti+mismo")
+
+    cursor.execute(
+        "UPDATE usuarios SET activo = CASE WHEN activo = 1 THEN 0 ELSE 1 END WHERE id = ?",
+        (id,)
+    )
+    conexion.commit()
+    conexion.close()
+
+    return redirect("/admin/usuarios")
