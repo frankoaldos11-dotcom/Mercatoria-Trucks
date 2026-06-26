@@ -253,6 +253,20 @@ def crear_base_datos(bcrypt):
     agregar_columna(cursor, "viajes", "fecha_entrega", "TEXT")
     agregar_columna(cursor, "viajes", "observaciones", "TEXT")
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS auditoria (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fecha TEXT DEFAULT CURRENT_TIMESTAMP,
+        usuario TEXT,
+        rol TEXT,
+        accion TEXT,
+        categoria TEXT,
+        entidad TEXT,
+        entidad_id INTEGER,
+        detalle TEXT
+    )
+    """)
+
     cursor.execute("SELECT id FROM usuarios WHERE usuario = ?", ("admin",))
     if not cursor.fetchone():
         hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")

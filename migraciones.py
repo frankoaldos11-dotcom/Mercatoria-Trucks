@@ -131,5 +131,20 @@ def ejecutar_migraciones():
         )
         """)
 
+    if not tabla_existe(cursor, "auditoria"):
+        cursor.execute("""
+        CREATE TABLE auditoria (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fecha TEXT DEFAULT CURRENT_TIMESTAMP,
+            usuario TEXT,
+            rol TEXT,
+            accion TEXT,
+            categoria TEXT,
+            entidad TEXT,
+            entidad_id INTEGER,
+            detalle TEXT
+        )
+        """)
+
     conexion.commit()
     conexion.close()

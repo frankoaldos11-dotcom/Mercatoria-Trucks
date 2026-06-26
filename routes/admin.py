@@ -24,6 +24,21 @@ def conectar():
     return conexion
 
 
+def registrar_auditoria(accion, categoria, entidad=None, entidad_id=None, detalle=None):
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("""
+        INSERT INTO auditoria (usuario, rol, accion, categoria, entidad, entidad_id, detalle)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        session.get("usuario", "sistema"),
+        session.get("rol", ""),
+        accion, categoria, entidad, entidad_id, detalle
+    ))
+    conexion.commit()
+    conexion.close()
+
+
 def requiere_admin():
     return "usuario" in session and session.get("rol") in ["admin", "operador"]
 
@@ -265,6 +280,9 @@ def asignar_camionero(id):
     conexion.commit()
     conexion.close()
 
+    if fila:
+        registrar_auditoria(f"Asignó camionero {fila['nombre']}", "Viajes", "viaje", id)
+
     return redirect(f"/admin/viajes/{id}/gestionar")
 
 
@@ -331,6 +349,11 @@ def cambiar_estado(id):
 
     conexion.commit()
     conexion.close()
+
+    registrar_auditoria(
+        f"Cambió estado a {estado}", "Viajes", "viaje", id,
+        f"Estado anterior: {viaje['estado']}" if viaje else None
+    )
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -559,6 +582,8 @@ def confirmar_precio(id):
     cursor.execute("UPDATE viajes SET precio_cliente = ? WHERE id = ?", (precio, id))
     conexion.commit()
     conexion.close()
+
+    registrar_auditoria(f"Confirmó precio ${precio}", "Viajes", "viaje", id)
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -1155,6 +1180,8 @@ def crear_usuario():
     conexion.commit()
     conexion.close()
 
+    registrar_auditoria(f"Creó usuario {usuario} con rol {rol}", "Usuarios", "usuario")
+
     return redirect("/admin/usuarios")
 
 
@@ -1179,6 +1206,8 @@ def cambiar_rol_usuario(id):
     conexion.commit()
     conexion.close()
 
+    registrar_auditoria(f"Cambió rol de usuario #{id} a {rol}", "Usuarios", "usuario", id)
+
     return redirect("/admin/usuarios")
 
 
@@ -1201,6 +1230,8 @@ def toggle_usuario(id):
     )
     conexion.commit()
     conexion.close()
+
+    registrar_auditoria(f"Cambió estado de usuario #{id}", "Usuarios", "usuario", id)
 
     return redirect("/admin/usuarios")
 
@@ -1268,6 +1299,8 @@ def exportar_excel(tabla):
     wb.save(buf)
     buf.seek(0)
 
+    registrar_auditoria(f"Exportó Excel de {tabla}", "Datos", tabla)
+
     return send_file(
         buf,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -1316,4 +1349,74 @@ def importar_excel(tabla):
     conexion.commit()
     conexion.close()
 
+    registrar_auditoria(f"Importó Excel a {tabla} ({importados} registros)", "Datos", tabla)
+
     return redirect(f"{cfg['redirect']}?importado={importados}+registros")
+
+
+# ── Auditoría ──────────────────────────────────────────────────────────────────
+
+@admin_bp.route("/auditoria", methods=["GET"])
+def ver_auditoria():
+    if not requiere_admin():
+        return redirect("/login")
+
+    categoria = request.args.get("categoria", "").strip()
+    usuario_f = request.args.get("usuario", "").strip()
+    fecha_desde = request.args.get("fecha_desde", "").strip()
+    fecha_hasta = request.args.get("fecha_hasta", "").strip()
+    buscar = request.args.get("buscar", "").strip()
+    pagina = max(1, int(request.args.get("pagina", 1) or 1))
+    por_pagina = 50
+
+    condiciones = []
+    params = []
+
+    if categoria:
+        condiciones.append("categoria = ?")
+        params.append(categoria)
+    if usuario_f:
+        condiciones.append("usuario LIKE ?")
+        params.append(f"%{usuario_f}%")
+    if fecha_desde:
+        condiciones.append("DATE(fecha) >= ?")
+        params.append(fecha_desde)
+    if fecha_hasta:
+        condiciones.append("DATE(fecha) <= ?")
+        params.append(fecha_hasta)
+    if buscar:
+        condiciones.append("(accion LIKE ? OR detalle LIKE ? OR usuario LIKE ?)")
+        params.extend([f"%{buscar}%", f"%{buscar}%", f"%{buscar}%"])
+
+    where = ("WHERE " + " AND ".join(condiciones)) if condiciones else ""
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute(f"SELECT COUNT(*) as total FROM auditoria {where}", params)
+    total = cursor.fetchone()["total"]
+
+    offset = (pagina - 1) * por_pagina
+    cursor.execute(
+        f"SELECT * FROM auditoria {where} ORDER BY id DESC LIMIT ? OFFSET ?",
+        params + [por_pagina, offset]
+    )
+    registros = cursor.fetchall()
+    conexion.close()
+
+    total_paginas = (total + por_pagina - 1) // por_pagina
+
+    return render_template(
+        "admin/auditoria.html",
+        registros=registros,
+        pagina=pagina,
+        total_paginas=total_paginas,
+        total=total,
+        filtros=dict(
+            categoria=categoria,
+            usuario=usuario_f,
+            fecha_desde=fecha_desde,
+            fecha_hasta=fecha_hasta,
+            buscar=buscar,
+        ),
+    )

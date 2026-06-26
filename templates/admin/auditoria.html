@@ -1,0 +1,161 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Sistema</span>
+        <h1>Registro de auditoría</h1>
+        <p>Historial completo de acciones realizadas por los usuarios del sistema.</p>
+    </div>
+</div>
+
+<section class="panel" style="margin-bottom: 20px;">
+    <div style="padding: 18px 24px;">
+        <form method="GET" action="/admin/auditoria" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;">Buscar</label>
+                <input type="text" name="buscar" value="{{ filtros.buscar }}"
+                       placeholder="Acción, detalle o usuario..."
+                       style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;width:220px;">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;">Categoría</label>
+                <select name="categoria" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+                    <option value="">Todas</option>
+                    <option value="Viajes" {% if filtros.categoria == 'Viajes' %}selected{% endif %}>Viajes</option>
+                    <option value="Usuarios" {% if filtros.categoria == 'Usuarios' %}selected{% endif %}>Usuarios</option>
+                    <option value="Datos" {% if filtros.categoria == 'Datos' %}selected{% endif %}>Datos</option>
+                </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;">Usuario</label>
+                <input type="text" name="usuario" value="{{ filtros.usuario }}"
+                       placeholder="Nombre de usuario..."
+                       style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;width:160px;">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;">Desde</label>
+                <input type="date" name="fecha_desde" value="{{ filtros.fecha_desde }}"
+                       style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;">Hasta</label>
+                <input type="date" name="fecha_hasta" value="{{ filtros.fecha_hasta }}"
+                       style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+            </div>
+            <button type="submit" style="padding:8px 18px;background:#F36B21;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                Filtrar
+            </button>
+            <a href="/admin/auditoria" style="padding:8px 14px;background:#f0f0f0;color:#555;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">
+                Limpiar
+            </a>
+        </form>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Eventos registrados</h2>
+            <p>{{ total }} registro{% if total != 1 %}s{% endif %} encontrado{% if total != 1 %}s{% endif %}</p>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Categoría</th>
+                    <th>Acción</th>
+                    <th>Entidad</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in registros %}
+                <tr>
+                    <td style="white-space:nowrap;font-size:12px;color:#666;">{{ r["fecha"] or "—" }}</td>
+                    <td style="font-weight:600;font-size:13px;">{{ r["usuario"] or "—" }}</td>
+                    <td style="font-size:12px;color:#888;">{{ r["rol"] or "—" }}</td>
+                    <td>
+                        {% if r["categoria"] == "Viajes" %}
+                        <span class="badge-audit badge-audit-viajes">Viajes</span>
+                        {% elif r["categoria"] == "Usuarios" %}
+                        <span class="badge-audit badge-audit-usuarios">Usuarios</span>
+                        {% elif r["categoria"] == "Datos" %}
+                        <span class="badge-audit badge-audit-datos">Datos</span>
+                        {% else %}
+                        <span class="badge-audit badge-audit-otros">{{ r["categoria"] or "—" }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:13px;">{{ r["accion"] or "—" }}</td>
+                    <td style="font-size:12px;color:#666;">
+                        {% if r["entidad"] and r["entidad_id"] %}
+                            {{ r["entidad"] }} #{{ r["entidad_id"] }}
+                        {% elif r["entidad"] %}
+                            {{ r["entidad"] }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td style="font-size:12px;color:#888;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ r['detalle'] or '' }}">
+                        {{ r["detalle"] or "—" }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="empty-state">No hay eventos registrados con los filtros actuales.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if total_paginas > 1 %}
+    <div style="display:flex;justify-content:center;align-items:center;gap:8px;padding:20px;">
+        {% if pagina > 1 %}
+        <a href="?{{ filtros | urlencode }}&pagina={{ pagina - 1 }}" class="pag-btn">&#8592; Anterior</a>
+        {% endif %}
+
+        <span style="font-size:13px;color:#666;">
+            Página {{ pagina }} de {{ total_paginas }}
+        </span>
+
+        {% if pagina < total_paginas %}
+        <a href="?{{ filtros | urlencode }}&pagina={{ pagina + 1 }}" class="pag-btn">Siguiente &#8594;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+
+<style>
+.badge-audit {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .03em;
+}
+.badge-audit-viajes   { background: #fff0e6; color: #d95714; }
+.badge-audit-usuarios { background: #e8f4fd; color: #1a6fa0; }
+.badge-audit-datos    { background: #e6f7ee; color: #1a7a45; }
+.badge-audit-otros    { background: #f5f5f5; color: #666; }
+
+.pag-btn {
+    padding: 6px 14px;
+    background: #f0f0f0;
+    color: #444;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.pag-btn:hover { background: #e0e0e0; }
+</style>
+
+{% endblock %}
