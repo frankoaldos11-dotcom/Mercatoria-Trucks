@@ -1226,17 +1226,46 @@ def lista_usuarios():
     if session.get("rol") != "admin":
         return redirect("/login")
 
+    filtro_rol = request.args.get("rol", "").strip().lower()
+
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("""
-        SELECT id, usuario, rol, activo, fecha_creacion
-        FROM usuarios
-        ORDER BY id DESC
-    """)
+
+    if filtro_rol:
+        cursor.execute("""
+            SELECT id, usuario, rol, activo, fecha_creacion
+            FROM usuarios
+            WHERE rol = ?
+            ORDER BY id DESC
+        """, (filtro_rol,))
+    else:
+        cursor.execute("""
+            SELECT id, usuario, rol, activo, fecha_creacion
+            FROM usuarios
+            ORDER BY id DESC
+        """)
     lista = cursor.fetchall()
+
+    cursor.execute("SELECT COUNT(*) FROM usuarios")
+    total = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'admin'")
+    total_admin = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'operador'")
+    total_operador = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'cliente'")
+    total_cliente = cursor.fetchone()[0]
+
     conexion.close()
 
-    return render_template("admin/usuarios.html", usuarios=lista)
+    return render_template(
+        "admin/usuarios.html",
+        usuarios=lista,
+        filtro_rol=filtro_rol,
+        total=total,
+        total_admin=total_admin,
+        total_operador=total_operador,
+        total_cliente=total_cliente,
+    )
 
 
 @admin_bp.route("/usuarios/crear", methods=["POST"])
