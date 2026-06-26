@@ -8,16 +8,22 @@
         <h1>Cotizaciones</h1>
         <p>Listado de cotizaciones generadas por Mercatoria.</p>
     </div>
-
-    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <a class="btn btn-soft" href="/admin/comercial/cotizaciones/plantilla">Descargar plantilla</a>
-
-        <form method="post" action="/admin/comercial/cotizaciones/importar" enctype="multipart/form-data" style="display:flex; gap:0.5rem; align-items:center;">
-            <input type="file" name="archivo" accept=".xlsx" required style="font-size:0.85rem;">
-            <button type="submit" class="btn btn-soft">Importar Excel</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <a href="/admin/comercial/cotizaciones/plantilla"
+           class="btn btn-soft" style="font-size:0.82rem;">
+            <i class="bi bi-file-earmark-excel me-1"></i> Descargar plantilla
+        </a>
+        <form method="POST" action="/admin/comercial/cotizaciones/importar"
+              enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;">
+            <input type="file" name="archivo" accept=".xlsx"
+                   class="btn btn-soft" style="font-size:0.82rem;padding:4px 8px;">
+            <button type="submit" class="btn btn-soft" style="font-size:0.82rem;">
+                <i class="bi bi-upload me-1"></i> Importar Excel
+            </button>
         </form>
-
-        <a class="btn btn-primary" href="/admin/comercial/cotizar">Nueva cotización</a>
+        <a href="/admin/comercial/cotizar" class="btn btn-primary" style="font-size:0.82rem;">
+            <i class="bi bi-plus-circle me-1"></i> Nueva cotización
+        </a>
     </div>
 </div>
 
