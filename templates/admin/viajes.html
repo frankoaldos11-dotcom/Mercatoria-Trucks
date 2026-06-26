@@ -2,36 +2,105 @@
 
 {% block contenido %}
 
-<h1>Gestión de Viajes</h1>
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Operaciones</span>
+        <h1>Viajes</h1>
+        <p>Seguimiento y gestión de todos los viajes registrados.</p>
+    </div>
+</div>
 
-<table class="tabla">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th>Origen</th>
-            <th>Destino</th>
-            <th>Estado</th>
-            <th>Camionero</th>
-            <th>Acción</th>
-        </tr>
-    </thead>
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Listado de viajes</h2>
+            <p>Todos los viajes del sistema ordenados por ID.</p>
+        </div>
+    </div>
 
-    <tbody>
-        {% for v in lista %}
-        <tr>
-            <td>{{ v[0] }}</td>
-            <td>{{ v[1] }}</td>
-            <td>{{ v[2] }}</td>
-            <td>{{ v[3] }}</td>
-            <td>{{ v[4] }}</td>
-            <td>{{ v[5] if v[5] else "Sin asignar" }}</td>
-            <td>
-                <a href="/admin/viaje/{{ v[0] }}">Gestionar</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Estado</th>
+                    <th>Camionero</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for v in lista %}
+                <tr>
+                    <td>#{{ v[0] }}</td>
+                    <td>{{ v[1] }}</td>
+                    <td>{{ v[2] }}</td>
+                    <td>{{ v[3] }}</td>
+                    <td>
+                        <span class="estado-pill estado-{{ v[4]|lower|replace(' ', '-') }}">
+                            {{ v[4] }}
+                        </span>
+                    </td>
+                    <td>{{ v[5] if v[5] else "Sin asignar" }}</td>
+                    <td class="td-acciones">
+                        <a href="/admin/viaje/{{ v[0] }}"
+                           class="btn-accion-icon"
+                           title="Gestionar viaje #{{ v[0] }}">
+                            <i class="bi bi-sliders"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="empty-state">No hay viajes registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<style>
+.estado-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eee;
+    color: #555;
+}
+
+.estado-pill.estado-solicitado { background: #e8f0fe; color: #1a5fb4; }
+.estado-pill.estado-pendiente  { background: #fff3e0; color: #b35a00; }
+.estado-pill.estado-asignado   { background: #f3e8ff; color: #6b21a8; }
+.estado-pill.estado-en-ruta    { background: #e6f7ee; color: #1a7a45; }
+.estado-pill.estado-entregado  { background: #e0f5ee; color: #0d5c32; }
+.estado-pill.estado-cancelado  { background: #fde8e8; color: #c0392b; }
+
+.td-acciones { white-space: nowrap; }
+
+.btn-accion-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: #e8f4fd;
+    color: #1a6fa0;
+    text-decoration: none;
+    font-size: 15px;
+    transition: background .15s;
+}
+
+.btn-accion-icon:hover {
+    background: #cce4f7;
+    color: #1a6fa0;
+}
+</style>
 
 {% endblock %}

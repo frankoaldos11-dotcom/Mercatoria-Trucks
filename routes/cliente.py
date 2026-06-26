@@ -40,6 +40,7 @@ def login():
         con.close()
 
         if fila and bcrypt.check_password_hash(fila["password"], password):
+            session.permanent = True
             session["usuario"] = email
             session["rol"] = fila["rol"]
             session["user_id"] = fila["id"]

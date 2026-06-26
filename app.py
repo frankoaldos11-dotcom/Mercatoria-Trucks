@@ -1,3 +1,4 @@
+from datetime import timedelta
 from flask import Flask, render_template, request, redirect, session
 
 from extensions import bcrypt
@@ -19,8 +20,32 @@ from routes.finanzas import finanzas_bp
 
 app = Flask(__name__)
 app.secret_key = "mercatoria-super-secreto"
+app.permanent_session_lifetime = timedelta(hours=8)
 
 bcrypt.init_app(app)
+
+
+@app.context_processor
+def sidebar_badges():
+    try:
+        conexion = conectar()
+        cursor = conexion.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM viajes WHERE estado IN ('Pendiente', 'Solicitado')"
+        )
+        viajes_urgentes = cursor.fetchone()[0]
+        cursor.execute(
+            "SELECT COUNT(*) FROM viajes WHERE estado = 'Solicitado'"
+        )
+        dashboard_urgentes = cursor.fetchone()[0]
+        conexion.close()
+    except Exception:
+        viajes_urgentes = 0
+        dashboard_urgentes = 0
+    return dict(
+        sidebar_viajes_urgentes=viajes_urgentes,
+        sidebar_dashboard_urgentes=dashboard_urgentes,
+    )
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -45,6 +70,7 @@ def login():
             user_id, hash_guardado, rol = fila
 
             if bcrypt.check_password_hash(hash_guardado, password):
+                session.permanent = True
                 session["usuario"] = usuario
                 session["rol"] = rol
                 session["user_id"] = user_id
