@@ -1108,7 +1108,7 @@ def exportar_reportes_csv():
 @admin_bp.route("/usuarios", methods=["GET"])
 def lista_usuarios():
     if session.get("rol") != "admin":
-        return redirect("/admin")
+        return redirect("/login")
 
     conexion = conectar()
     cursor = conexion.cursor()
