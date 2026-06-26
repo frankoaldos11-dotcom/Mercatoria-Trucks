@@ -112,6 +112,12 @@ def ejecutar_migraciones():
 
     agregar_columna(cursor, "rutas", "tarifa_km", "REAL")
 
+    # Sprint 10: portal cliente — datos de perfil en tabla usuarios
+    agregar_columna(cursor, "usuarios", "nombre", "TEXT")
+    agregar_columna(cursor, "usuarios", "apellidos", "TEXT")
+    agregar_columna(cursor, "usuarios", "telefono", "TEXT")
+    agregar_columna(cursor, "usuarios", "empresa", "TEXT")
+
     if not tabla_existe(cursor, "camionero_ruta"):
         cursor.execute("""
         CREATE TABLE camionero_ruta (

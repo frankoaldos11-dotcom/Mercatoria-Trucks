@@ -29,11 +29,11 @@ def dashboard():
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM viajes WHERE LOWER(estado) = 'pendiente'")
+    cursor.execute("SELECT COUNT(*) FROM viajes WHERE LOWER(estado) IN ('pendiente', 'solicitado')")
     pendientes = cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM viajes WHERE LOWER(estado) IN ('en ruta', 'en_ruta')")
-    en_ruta = cursor.fetchone()[0]
+    en_curso = cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM viajes WHERE LOWER(estado) = 'entregado'")
     entregados = cursor.fetchone()[0]
@@ -51,9 +51,9 @@ def dashboard():
     clientes = cursor.fetchone()[0]
 
     cursor.execute("""
-        SELECT id, cliente, origen, destino
+        SELECT id, cliente, origen, destino, estado
         FROM viajes
-        WHERE LOWER(estado) = 'pendiente'
+        WHERE LOWER(estado) IN ('pendiente', 'solicitado')
         ORDER BY id DESC
     """)
     lista = cursor.fetchall()
@@ -63,7 +63,7 @@ def dashboard():
     return render_template(
         "admin/dashboard.html",
         pendientes=pendientes,
-        en_ruta=en_ruta,
+        en_curso=en_curso,
         entregados=entregados,
         asignados=asignados,
         cancelados=cancelados,
@@ -131,9 +131,28 @@ def gestionar_viaje(id):
     """, (viaje["tipo_vehiculo_id"], viaje["tipo_vehiculo_id"]))
     vehiculos = cursor.fetchall()
 
+    tipo_vehiculo_nombre = None
+    if viaje["tipo_vehiculo_id"]:
+        cursor.execute("SELECT nombre FROM tipos_vehiculo WHERE id = ?", (viaje["tipo_vehiculo_id"],))
+        row = cursor.fetchone()
+        tipo_vehiculo_nombre = row["nombre"] if row else None
+
+    tarifa_info = None
+    if viaje["tarifa_id"]:
+        cursor.execute("""
+            SELECT t.precio_cliente, tv.nombre AS tipo_nombre
+            FROM tarifas t
+            LEFT JOIN tipos_vehiculo tv ON t.tipo_vehiculo_id = tv.id
+            WHERE t.id = ?
+        """, (viaje["tarifa_id"],))
+        row = cursor.fetchone()
+        if row:
+            tarifa_info = f"#{viaje['tarifa_id']} — {row['tipo_nombre'] or 'N/A'} · ${row['precio_cliente']:.2f}/km"
+
     conexion.close()
 
     liquidacion = calcular_liquidacion(id)
+    error = request.args.get("error")
 
     return render_template(
         "admin/gestionar_viaje.html",
@@ -141,6 +160,9 @@ def gestionar_viaje(id):
         camioneros=camioneros,
         vehiculos=vehiculos,
         liquidacion=liquidacion,
+        tipo_vehiculo_nombre=tipo_vehiculo_nombre,
+        tarifa_info=tarifa_info,
+        error=error,
     )
 
 
@@ -182,8 +204,26 @@ def cambiar_estado(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT camionero_id, vehiculo_id FROM viajes WHERE id = ?", (id,))
+    cursor.execute("""
+        SELECT camionero_id, vehiculo_id, precio_final, precio_cliente, precio
+        FROM viajes WHERE id = ?
+    """, (id,))
     viaje = cursor.fetchone()
+
+    if estado == "Asignado":
+        if not viaje or not viaje["camionero_id"] or not viaje["vehiculo_id"]:
+            conexion.close()
+            return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+Asignado+debes+asignar+un+camionero+y+un+veh%C3%ADculo")
+
+    if estado == "En ruta":
+        precio_ok = (
+            float(viaje["precio_final"] or 0) > 0
+            or float(viaje["precio_cliente"] or 0) > 0
+            or float(viaje["precio"] or 0) > 0
+        ) if viaje else False
+        if not precio_ok:
+            conexion.close()
+            return redirect(f"/admin/viajes/{id}/gestionar?error=No+se+puede+poner+En+ruta+sin+precio+cliente+confirmado")
 
     cursor.execute("UPDATE viajes SET estado = ? WHERE id = ?", (estado, id))
 

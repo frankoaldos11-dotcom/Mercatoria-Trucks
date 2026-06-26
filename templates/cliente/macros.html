@@ -1,0 +1,17 @@
+{% macro badge_estado(estado) %}
+{% if estado in ('Solicitado', 'Pendiente') %}
+<span class="badge rounded-pill bg-warning text-dark">{{ estado }}</span>
+{% elif estado in ('Asignado',) %}
+<span class="badge rounded-pill bg-info text-dark">{{ estado }}</span>
+{% elif estado in ('Pendiente de pago', 'Confirmado') %}
+<span class="badge rounded-pill" style="background:#7C3AED;color:#fff;">{{ estado }}</span>
+{% elif estado in ('Carga recogida', 'En ruta') %}
+<span class="badge rounded-pill bg-primary">{{ estado }}</span>
+{% elif estado == 'Entregado' %}
+<span class="badge rounded-pill bg-success">{{ estado }}</span>
+{% elif estado == 'Cancelado' %}
+<span class="badge rounded-pill bg-danger">{{ estado }}</span>
+{% else %}
+<span class="badge rounded-pill bg-secondary">{{ estado }}</span>
+{% endif %}
+{% endmacro %}

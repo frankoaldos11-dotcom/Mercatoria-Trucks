@@ -1,41 +1,326 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mercatoria Truck — Logística de Carga</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-{% block title %}Inicio Operador{% endblock %}
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
 
-{% block contenido %}
+        /* NAV */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 48px;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+        }
 
-<h2 class="fw-bold mb-4">Panel del Operador</h2>
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
 
-<div class="row g-4">
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: #F36B21;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
 
-    <div class="col-md-3">
-        <a href="/viajes" class="card card-btn p-4 text-center shadow-sm">
-            <h4 class="fw-bold mb-2">Viajes</h4>
-            <p>Gestión completa</p>
+        .brand-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: #f1f5f9;
+            letter-spacing: -.3px;
+        }
+
+        .brand-name span { color: #F36B21; }
+
+        .nav-acceso {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-ghost {
+            padding: 10px 20px;
+            border: 1.5px solid rgba(255,255,255,.25);
+            border-radius: 8px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: border-color .2s, color .2s;
+        }
+
+        .btn-ghost:hover {
+            border-color: #F36B21;
+            color: #F36B21;
+        }
+
+        .btn-orange {
+            padding: 10px 22px;
+            background: #F36B21;
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            transition: background .2s;
+        }
+
+        .btn-orange:hover { background: #d95714; color: #fff; }
+
+        /* HERO */
+        .hero {
+            max-width: 900px;
+            margin: 100px auto 80px;
+            padding: 0 24px;
+            text-align: center;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            background: rgba(243,107,33,.15);
+            color: #F36B21;
+            border: 1px solid rgba(243,107,33,.35);
+            border-radius: 999px;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            margin-bottom: 28px;
+        }
+
+        .hero h1 {
+            font-size: clamp(36px, 6vw, 62px);
+            font-weight: 800;
+            line-height: 1.12;
+            letter-spacing: -.5px;
+            margin-bottom: 24px;
+            color: #f8fafc;
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: #F36B21;
+        }
+
+        .hero p {
+            font-size: 18px;
+            line-height: 1.7;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto 48px;
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            background: #F36B21;
+            color: #fff;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 700;
+            transition: background .2s, transform .15s;
+        }
+
+        .btn-hero-primary:hover {
+            background: #d95714;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .btn-hero-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            background: rgba(255,255,255,.06);
+            border: 1.5px solid rgba(255,255,255,.18);
+            color: #e2e8f0;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 700;
+            transition: background .2s, border-color .2s, transform .15s;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255,255,255,.11);
+            border-color: rgba(255,255,255,.35);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* FEATURES */
+        .features {
+            max-width: 1100px;
+            margin: 0 auto 100px;
+            padding: 0 24px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 16px;
+            padding: 32px 28px;
+            transition: border-color .2s;
+        }
+
+        .feature-card:hover { border-color: rgba(243,107,33,.4); }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(243,107,33,.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #F36B21;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            line-height: 1.65;
+            color: #94a3b8;
+        }
+
+        /* DIVIDER */
+        .divider {
+            height: 1px;
+            background: rgba(255,255,255,.07);
+            max-width: 1100px;
+            margin: 0 auto 60px;
+        }
+
+        /* FOOTER */
+        footer {
+            text-align: center;
+            padding: 32px 24px;
+            color: #475569;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 16px 20px; }
+            .nav-acceso .btn-ghost { display: none; }
+            .features-grid { grid-template-columns: 1fr; }
+            .hero { margin-top: 60px; }
+        }
+
+        @media (max-width: 500px) {
+            .hero-ctas { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="brand" href="/">
+        <div class="brand-icon">🚛</div>
+        <span class="brand-name">Mercatoria <em>Truck</em></span>
+    </a>
+    <div class="nav-acceso">
+        <a class="btn-ghost" href="/login">Acceso operadores</a>
+        <a class="btn-orange" href="/cliente/login">Portal clientes</a>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="hero-tag"><i class="bi bi-lightning-charge-fill"></i> Logística de carga en ruta</div>
+
+    <h1>Tu mercancía, <em>entregada</em><br>donde la necesitas</h1>
+
+    <p>
+        Mercatoria Truck conecta a clientes con transportistas confiables.
+        Solicita un envío, sigue tu carga en tiempo real y recibe confirmación
+        cuando llegue a destino — todo desde un solo portal.
+    </p>
+
+    <div class="hero-ctas">
+        <a class="btn-hero-primary" href="/cliente/login">
+            <i class="bi bi-box-seam"></i>
+            Soy cliente — entrar a mi portal
+        </a>
+        <a class="btn-hero-secondary" href="/cliente/registro">
+            <i class="bi bi-person-plus"></i>
+            Crear cuenta gratuita
         </a>
     </div>
+</section>
 
-    <div class="col-md-3">
-        <a href="/viajes/nuevo" class="card card-btn p-4 text-center shadow-sm">
-            <h4 class="fw-bold mb-2">Nuevo Viaje</h4>
-            <p>Crear transporte</p>
-        </a>
+<section class="features">
+    <div class="features-grid">
+
+        <div class="feature-card">
+            <div class="feature-icon"><i class="bi bi-map"></i></div>
+            <h3>Rutas establecidas</h3>
+            <p>Selecciona entre rutas verificadas y obtén un precio estimado al instante, sin sorpresas.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon"><i class="bi bi-truck-front"></i></div>
+            <h3>Flota propia y verificada</h3>
+            <p>Trabajamos con camioneros y vehículos registrados. Cada envío queda asignado a un responsable.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon"><i class="bi bi-bell-fill"></i></div>
+            <h3>Seguimiento en tiempo real</h3>
+            <p>Revisa el estado de tu envío — desde Solicitado hasta Entregado — en cualquier momento desde tu portal.</p>
+        </div>
+
     </div>
+</section>
 
-    <div class="col-md-3">
-        <a href="/camioneros" class="card card-btn p-4 text-center shadow-sm">
-            <h4 class="fw-bold mb-2">Camioneros</h4>
-            <p>Flota y estado</p>
-        </a>
-    </div>
+<div class="divider"></div>
 
-    <div class="col-md-3">
-        <a href="/clientes" class="card card-btn p-4 text-center shadow-sm">
-            <h4 class="fw-bold mb-2">Clientes</h4>
-            <p>Empresas y contactos</p>
-        </a>
-    </div>
+<footer>
+    &copy; {{ 2025 }} Mercatoria Truck · <a href="/login" style="color:#475569">Acceso operadores</a>
+</footer>
 
-</div>
-
-{% endblock %}
+</body>
+</html>

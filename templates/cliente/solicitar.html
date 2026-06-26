@@ -1,63 +1,103 @@
 {% extends "base_cliente.html" %}
 
+{% block title %}Nueva Solicitud{% endblock %}
+
 {% block contenido %}
 
-<link rel="stylesheet" href="/static/css/cliente.css">
-
-<div class="contenedor">
-
-    <h2>Nueva Solicitud de Envío</h2>
-
-    {% if error %}
-        <div style="background:#ffdddd; padding:12px; border-left:4px solid #d93025; margin-bottom:20px;">
-            {{ error }}
-        </div>
-    {% endif %}
-
-    <form method="POST" class="card" style="max-width:600px; margin:auto;">
-
-        <label>Origen</label>
-        <input type="text" name="origen" required class="input">
-
-        <label>Destino</label>
-        <input type="text" name="destino" required class="input">
-
-        <label>Tipo de carga</label>
-        <input type="text" name="tipo" required class="input">
-
-        <label>Peso / Volumen</label>
-        <input type="text" name="peso" required class="input">
-
-        <label>Notas adicionales</label>
-        <textarea name="notas" class="input" rows="4"></textarea>
-
-        <button class="btn-principal" type="submit">Enviar Solicitud</button>
-
-    </form>
-
+<div class="mt-page-header">
+    <h1><i class="bi bi-plus-circle me-2" style="color:#E86A2C;"></i>Nueva Solicitud de Envío</h1>
 </div>
 
-<style>
-.input {
-    width: 100%;
-    padding: 12px;
-    margin-top: 6px;
-    margin-bottom: 18px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-}
-.btn-principal {
-    background: #1a73e8;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-}
-.btn-principal:hover {
-    background: #155fc0;
-}
-</style>
+{% if error %}
+<div class="mt-alert-error">
+    <i class="bi bi-exclamation-circle me-1"></i> {{ error }}
+</div>
+{% endif %}
 
+<div class="mt-card p-4" style="max-width:640px;">
+
+    <form method="POST" action="/cliente/solicitar" id="formSolicitar">
+
+        <!-- Ruta -->
+        <div class="mb-4">
+            <label class="mt-label">Ruta <span style="color:#DC2626;">*</span></label>
+            <select name="ruta_id" id="rutaSelect" class="form-select mt-input" required>
+                <option value="">— Selecciona la ruta —</option>
+                {% for r in rutas %}
+                <option value="{{ r.id }}"
+                        data-origen="{{ r.origen }}"
+                        data-destino="{{ r.destino }}">
+                    {% if r.nombre %}{{ r.nombre }} — {% endif %}{{ r.origen }} → {{ r.destino }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Preview ruta seleccionada -->
+        <div id="rutaPreview" class="mb-4" style="display:none;">
+            <div class="d-flex align-items-center gap-3 p-3 rounded-3"
+                 style="background:#FFF3EC;border:1.5px solid #E86A2C;">
+                <i class="bi bi-geo-alt-fill" style="color:#E86A2C;font-size:1.2rem;"></i>
+                <div style="font-size:0.9rem;font-weight:600;color:#7C2D12;">
+                    <span id="previewOrigen"></span>
+                    <span style="color:#E86A2C;margin:0 8px;">→</span>
+                    <span id="previewDestino"></span>
+                </div>
+            </div>
+        </div>
+
+        {% if not rutas %}
+        <div class="mt-alert-info mb-4">
+            <i class="bi bi-info-circle me-1"></i>
+            No hay rutas disponibles en este momento. Por favor contacta con nosotros.
+        </div>
+        {% endif %}
+
+        <!-- Tipo de carga -->
+        <div class="mb-3">
+            <label class="mt-label">Tipo de carga <span style="color:#DC2626;">*</span></label>
+            <input type="text" name="tipo" class="mt-input form-control"
+                   placeholder="Ej: Mercancía general, Palets, Frigo..." required>
+        </div>
+
+        <!-- Peso -->
+        <div class="mb-3">
+            <label class="mt-label">Peso aproximado <span style="color:#DC2626;">*</span></label>
+            <input type="text" name="peso" class="mt-input form-control"
+                   placeholder="Ej: 500 kg, 2 toneladas..." required>
+        </div>
+
+        <!-- Notas -->
+        <div class="mb-4">
+            <label class="mt-label">Descripción adicional</label>
+            <textarea name="notas" class="mt-input form-control" rows="3"
+                      placeholder="Instrucciones especiales, fragilidad, temperatura, etc. (opcional)"></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn-mt" {% if not rutas %}disabled{% endif %}>
+                <i class="bi bi-send me-1"></i> Enviar Solicitud
+            </button>
+            <a href="/cliente/viajes" class="btn-mt-outline">Cancelar</a>
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('rutaSelect').addEventListener('change', function() {
+    var opt = this.options[this.selectedIndex];
+    var preview = document.getElementById('rutaPreview');
+    if (this.value) {
+        document.getElementById('previewOrigen').textContent = opt.dataset.origen;
+        document.getElementById('previewDestino').textContent = opt.dataset.destino;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+});
+</script>
 {% endblock %}

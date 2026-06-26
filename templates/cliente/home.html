@@ -1,61 +1,113 @@
 {% extends "base_cliente.html" %}
+{% from 'cliente/macros.html' import badge_estado %}
+
+{% block title %}Inicio{% endblock %}
 
 {% block contenido %}
 
-<link rel="stylesheet" href="/static/css/cliente.css">
+<div class="mt-page-header">
+    <div>
+        <h1>Hola, {{ nombre }} 👋</h1>
+        <p class="text-muted mb-0" style="font-size:0.85rem;">Bienvenido a tu panel de envíos</p>
+    </div>
+    <a href="/cliente/solicitar" class="btn-mt">
+        <i class="bi bi-plus-circle me-1"></i> Nueva Solicitud
+    </a>
+</div>
 
-<div class="contenedor">
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+    <div class="col-4">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div class="stat-icon" style="background:#FFF3EC;">
+                <i class="bi bi-truck text-warning" style="color:#E86A2C !important;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ activos }}</div>
+                <div class="stat-label">En curso</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div class="stat-icon" style="background:#ECFDF5;">
+                <i class="bi bi-check-circle" style="color:#059669;font-size:1.25rem;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ entregados }}</div>
+                <div class="stat-label">Entregados</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div class="stat-icon" style="background:#EFF6FF;">
+                <i class="bi bi-box-seam" style="color:#2563EB;font-size:1.25rem;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total }}</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <h2>Panel del Cliente</h2>
-
-    <div class="panel-grid">
-
-        <a href="/cliente/solicitar" class="card">
-            <h3>📦 Nueva Solicitud</h3>
-            <p>Crear un nuevo envío</p>
+<!-- Últimos viajes -->
+<div class="mt-card">
+    <div class="d-flex align-items-center justify-content-between px-3 py-2"
+         style="border-bottom:1px solid #E5E7EB;">
+        <span style="font-size:0.85rem;font-weight:700;color:#374151;">
+            <i class="bi bi-clock-history me-1 text-muted"></i> Últimos viajes
+        </span>
+        <a href="/cliente/viajes" style="font-size:0.8rem;color:#E86A2C;text-decoration:none;font-weight:600;">
+            Ver todos <i class="bi bi-arrow-right"></i>
         </a>
-
-        <a href="/cliente/activos" class="card">
-            <h3>🚚 Estado de Envíos</h3>
-            <p>Seguimiento en tiempo real</p>
-        </a>
-
-        <a href="/cliente/historico" class="card">
-            <h3>📄 Historial</h3>
-            <p>Todos tus envíos anteriores</p>
-        </a>
-
     </div>
 
-    <h3 style="margin-top: 40px;">Últimos Envíos</h3>
-
-    <table class="tabla">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Origen</th>
-                <th>Destino</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if viajes %}
-                {% for v in viajes %}
+    {% if recientes %}
+    <div class="overflow-auto">
+        <table class="mt-table">
+            <thead>
                 <tr>
-                    <td>{{ v[0] }}</td>
-                    <td>{{ v[1] }}</td>
-                    <td>{{ v[2] }}</td>
-                    <td>{{ v[3] }}</td>
+                    <th>#</th>
+                    <th>Ruta</th>
+                    <th>Estado</th>
+                    <th>Camionero</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in recientes %}
+                <tr>
+                    <td><span style="color:#9CA3AF;font-size:0.8rem;">#{{ v.id }}</span></td>
+                    <td>
+                        <span class="fw-semibold">{{ v.origen }}</span>
+                        <i class="bi bi-arrow-right" style="color:#E86A2C;font-size:0.75rem;margin:0 4px;"></i>
+                        <span class="fw-semibold">{{ v.destino }}</span>
+                    </td>
+                    <td>{{ badge_estado(v.estado) }}</td>
+                    <td style="color:#6B7280;font-size:0.82rem;">
+                        {{ v.camionero_nombre or '—' }}
+                    </td>
+                    <td>
+                        <a href="/cliente/viaje/{{ v.id }}"
+                           style="font-size:0.8rem;color:#E86A2C;text-decoration:none;">
+                            Ver <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="4">No tienes envíos recientes</td>
-                </tr>
-            {% endif %}
-        </tbody>
-    </table>
-
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>No tienes viajes aún.<br>
+           <a href="/cliente/solicitar" style="color:#E86A2C;font-weight:600;">Crea tu primera solicitud</a>
+        </p>
+    </div>
+    {% endif %}
 </div>
 
 {% endblock %}

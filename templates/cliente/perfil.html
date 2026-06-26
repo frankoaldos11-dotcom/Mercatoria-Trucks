@@ -1,53 +1,96 @@
 {% extends "base_cliente.html" %}
 
+{% block title %}Mi Perfil{% endblock %}
+
 {% block contenido %}
 
-<link rel="stylesheet" href="/static/css/cliente.css">
-
-<div class="contenedor">
-
-    <h2>Mi Perfil</h2>
-
-    {% if mensaje %}
-        <div style="background:#ddffdd; padding:12px; border-left:4px solid #34a853; margin-bottom:20px;">
-            {{ mensaje }}
-        </div>
-    {% endif %}
-
-    {% if error %}
-        <div style="background:#ffdddd; padding:12px; border-left:4px solid #d93025; margin-bottom:20px;">
-            {{ error }}
-        </div>
-    {% endif %}
-
-    <form method="POST" class="card" style="max-width:600px; margin:auto;">
-
-        <label>Nombre</label>
-        <input type="text" name="nombre" value="{{ datos[0] }}" class="input" required>
-
-        <label>Teléfono</label>
-        <input type="text" name="telefono" value="{{ datos[1] }}" class="input" required>
-
-        <label>Email (no editable)</label>
-        <input type="text" value="{{ datos[2] }}" class="input" disabled>
-
-        <hr style="margin:25px 0;">
-
-        <h3>Cambiar contraseña</h3>
-
-        <label>Contraseña actual</label>
-        <input type="password" name="actual" class="input">
-
-        <label>Nueva contraseña</label>
-        <input type="password" name="nueva" class="input">
-
-        <label>Confirmar nueva contraseña</label>
-        <input type="password" name="confirmar" class="input">
-
-        <button class="btn-principal" type="submit">Guardar cambios</button>
-
-    </form>
-
+<div class="mt-page-header">
+    <h1><i class="bi bi-person-circle me-2" style="color:#E86A2C;"></i>Mi Perfil</h1>
 </div>
+
+{% if mensaje %}
+<div class="mt-alert-success">
+    <i class="bi bi-check-circle me-1"></i> {{ mensaje }}
+</div>
+{% endif %}
+
+{% if error %}
+<div class="mt-alert-error">
+    <i class="bi bi-exclamation-circle me-1"></i> {{ error }}
+</div>
+{% endif %}
+
+<form method="POST" action="/cliente/perfil" style="max-width:600px;">
+
+    <!-- Datos personales -->
+    <div class="mt-card p-4 mb-3">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9CA3AF;margin-bottom:1rem;">
+            <i class="bi bi-person me-1"></i> Datos personales
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+                <label class="mt-label">Nombre <span style="color:#DC2626;">*</span></label>
+                <input type="text" name="nombre" class="form-control mt-input"
+                       value="{{ datos.nombre or '' }}" required>
+            </div>
+            <div class="col-sm-6">
+                <label class="mt-label">Apellidos</label>
+                <input type="text" name="apellidos" class="form-control mt-input"
+                       value="{{ datos.apellidos or '' }}">
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+                <label class="mt-label">Teléfono</label>
+                <input type="tel" name="telefono" class="form-control mt-input"
+                       value="{{ datos.telefono or '' }}" placeholder="+34 600 000 000">
+            </div>
+            <div class="col-sm-6">
+                <label class="mt-label">Empresa</label>
+                <input type="text" name="empresa" class="form-control mt-input"
+                       value="{{ datos.empresa or '' }}">
+            </div>
+        </div>
+
+        <div>
+            <label class="mt-label">Correo electrónico</label>
+            <input type="email" class="form-control mt-input" value="{{ datos.usuario }}" disabled>
+            <div style="font-size:0.75rem;color:#9CA3AF;margin-top:4px;">El correo no se puede modificar</div>
+        </div>
+    </div>
+
+    <!-- Cambiar contraseña -->
+    <div class="mt-card p-4 mb-4">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9CA3AF;margin-bottom:1rem;">
+            <i class="bi bi-lock me-1"></i> Cambiar contraseña
+        </div>
+        <p style="font-size:0.82rem;color:#6B7280;margin-bottom:1rem;">
+            Deja estos campos en blanco si no quieres cambiar tu contraseña.
+        </p>
+
+        <div class="mb-3">
+            <label class="mt-label">Contraseña actual</label>
+            <input type="password" name="actual" class="form-control mt-input" placeholder="••••••••">
+        </div>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label class="mt-label">Nueva contraseña</label>
+                <input type="password" name="nueva" class="form-control mt-input"
+                       placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="col-sm-6">
+                <label class="mt-label">Confirmar nueva</label>
+                <input type="password" name="confirmar_pw" class="form-control mt-input" placeholder="••••••••">
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn-mt">
+        <i class="bi bi-floppy me-1"></i> Guardar cambios
+    </button>
+
+</form>
 
 {% endblock %}

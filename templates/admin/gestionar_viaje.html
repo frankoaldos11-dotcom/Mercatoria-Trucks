@@ -41,6 +41,13 @@
 
     <div class="columna-principal">
 
+        {% if error %}
+        <div class="alerta-error">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+
         <div class="card bloque">
             <h2>Datos del viaje</h2>
 
@@ -51,28 +58,34 @@
                 </div>
 
                 <div>
-                    <label>Cliente ID</label>
-                    <p>{{ viaje["cliente_id"] if viaje["cliente_id"] else "—" }}</p>
-                </div>
-
-                <div>
-                    <label>Ruta ID</label>
+                    <label>Ruta</label>
                     <p>{{ viaje["ruta_id"] if viaje["ruta_id"] else "—" }}</p>
                 </div>
 
                 <div>
-                    <label>Tarifa ID</label>
-                    <p>{{ viaje["tarifa_id"] if viaje["tarifa_id"] else "—" }}</p>
+                    <label>Tipo de vehículo</label>
+                    <p>{{ tipo_vehiculo_nombre if tipo_vehiculo_nombre else "—" }}</p>
                 </div>
 
                 <div>
-                    <label>Tipo vehículo ID</label>
-                    <p>{{ viaje["tipo_vehiculo_id"] if viaje["tipo_vehiculo_id"] else "—" }}</p>
+                    <label>Tarifa</label>
+                    <p>{{ tarifa_info if tarifa_info else "Sin tarifa asignada" }}</p>
                 </div>
 
                 <div>
-                    <label>Cotización ID</label>
-                    <p>{{ viaje["cotizacion_id"] if viaje["cotizacion_id"] else "—" }}</p>
+                    <label>Cotización</label>
+                    <p>{% if viaje["cotizacion_id"] %}#{{ viaje["cotizacion_id"] }}{% else %}Sin cotización{% endif %}</p>
+                </div>
+
+                <div>
+                    <label>Precio cliente</label>
+                    <p>{% if viaje["precio_final"] and viaje["precio_final"]|float > 0 %}
+                        ${{ "%.2f"|format(viaje["precio_final"]|float) }}
+                    {% elif viaje["precio"] and viaje["precio"]|float > 0 %}
+                        ${{ "%.2f"|format(viaje["precio"]|float) }}
+                    {% else %}
+                        <span style="color:#e74c3c">Sin precio confirmado</span>
+                    {% endif %}</p>
                 </div>
             </div>
         </div>
@@ -191,9 +204,10 @@
                 <label>Nuevo estado</label>
 
                 <select name="estado" class="input" required>
+                    <option value="Solicitado" {% if viaje["estado"] in ["Solicitado", "solicitado"] %}selected{% endif %}>Solicitado</option>
                     <option value="Pendiente" {% if viaje["estado"] in ["Pendiente", "pendiente"] %}selected{% endif %}>Pendiente</option>
-                    <option value="Asignado" {% if viaje["estado"] in ["Asignado", "asignado"] %}selected{% endif %}>Asignado</option>
-                    <option value="En ruta" {% if viaje["estado"] in ["En ruta", "en_ruta"] %}selected{% endif %}>En ruta</option>
+                    <option value="Asignado" {% if viaje["estado"] in ["Asignado", "asignado"] %}selected{% endif %}>Asignado ⚠ requiere camionero + vehículo</option>
+                    <option value="En ruta" {% if viaje["estado"] in ["En ruta", "en_ruta"] %}selected{% endif %}>En ruta ⚠ requiere precio confirmado</option>
                     <option value="Entregado" {% if viaje["estado"] in ["Entregado", "entregado"] %}selected{% endif %}>Entregado</option>
                     <option value="Cancelado" {% if viaje["estado"] in ["Cancelado", "cancelado"] %}selected{% endif %}>Cancelado</option>
                 </select>
@@ -444,6 +458,19 @@
     text-decoration: none;
     box-sizing: border-box;
     margin-bottom: 12px;
+}
+
+.alerta-error {
+    background: #fdf0f0;
+    border: 1px solid #e74c3c;
+    color: #c0392b;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
 }
 
 .whatsapp-box p {

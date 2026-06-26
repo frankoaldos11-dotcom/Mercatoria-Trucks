@@ -64,6 +64,12 @@
 
 </div>
 
+<style>
+.badge-estado { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.badge-solicitado { background: #fff3e0; color: #e65100; }
+.badge-pendiente  { background: #fff8e1; color: #f57f17; }
+</style>
+
 <section class="panel">
     <div class="panel-header">
         <div>
@@ -80,6 +86,7 @@
                     <th>Cliente</th>
                     <th>Origen</th>
                     <th>Destino</th>
+                    <th>Estado</th>
                     <th>Acción</th>
                 </tr>
             </thead>
@@ -91,12 +98,17 @@
                     <td>{{ v[2] }}</td>
                     <td>{{ v[3] }}</td>
                     <td>
+                        <span class="badge-estado badge-{{ v[4]|lower|replace(' ', '-') }}">
+                            {{ v[4] }}
+                        </span>
+                    </td>
+                    <td>
                         <a class="btn btn-soft" href="/admin/viaje/{{ v[0] }}">Gestionar</a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="empty-state">No hay solicitudes pendientes.</td>
+                    <td colspan="6" class="empty-state">No hay solicitudes pendientes.</td>
                 </tr>
                 {% endfor %}
             </tbody>

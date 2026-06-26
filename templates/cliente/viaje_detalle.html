@@ -1,0 +1,156 @@
+{% extends "base_cliente.html" %}
+{% from 'cliente/macros.html' import badge_estado %}
+
+{% block title %}Viaje #{{ viaje.id }}{% endblock %}
+
+{% block contenido %}
+
+<div class="mb-3">
+    <a href="/cliente/viajes" style="color:#6B7280;font-size:0.85rem;text-decoration:none;">
+        <i class="bi bi-arrow-left me-1"></i> Volver a Mis Viajes
+    </a>
+</div>
+
+<!-- Header card -->
+<div class="mt-card p-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+        <div style="font-size:0.75rem;color:#9CA3AF;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
+            Viaje #{{ viaje.id }}
+        </div>
+        <div style="font-size:1.2rem;font-weight:700;color:#1F2937;margin-top:2px;">
+            {{ viaje.origen }}
+            <span style="color:#E86A2C;margin:0 8px;">→</span>
+            {{ viaje.destino }}
+        </div>
+        {% if viaje.ruta_nombre %}
+        <div style="font-size:0.8rem;color:#6B7280;margin-top:2px;">
+            <i class="bi bi-map me-1"></i>{{ viaje.ruta_nombre }}
+            {% if viaje.km_ruta %} · {{ viaje.km_ruta|int }} km{% endif %}
+        </div>
+        {% endif %}
+    </div>
+    <div>{{ badge_estado(viaje.estado) }}</div>
+</div>
+
+<!-- Progress steps -->
+{% if viaje.estado != 'Cancelado' %}
+<div class="mt-card p-3 mb-3">
+    <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9CA3AF;margin-bottom:0.75rem;">
+        Estado del envío
+    </div>
+    <div class="steps">
+        {% set pasos = [
+            (0, 'bi-send', 'Solicitado'),
+            (1, 'bi-person-check', 'Asignado'),
+            (2, 'bi-truck', 'En camino'),
+            (3, 'bi-check-circle', 'Entregado')
+        ] %}
+        {% for idx, icon, label in pasos %}
+        <div class="step {% if paso_actual > idx %}done{% elif paso_actual == idx %}active{% endif %}">
+            <div class="step-dot">
+                <i class="bi {{ icon }}" style="font-size:0.8rem;"></i>
+            </div>
+            <span class="step-label">{{ label }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="mt-alert-error mb-3">
+    <i class="bi bi-x-circle me-1"></i> Este viaje ha sido cancelado.
+</div>
+{% endif %}
+
+<!-- Info grid -->
+<div class="row g-3 mb-3">
+
+    <div class="col-md-6">
+        <div class="mt-card p-3 h-100">
+            <div class="section-title">
+                <i class="bi bi-calendar3 me-1" style="color:#E86A2C;"></i> Fechas
+            </div>
+            <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
+                <tr>
+                    <td style="color:#9CA3AF;padding:6px 0;width:50%;">Solicitud</td>
+                    <td style="font-weight:600;color:#1F2937;">
+                        {{ viaje.fecha_creacion[:10] if viaje.fecha_creacion else '—' }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="color:#9CA3AF;padding:6px 0;">Asignación</td>
+                    <td style="font-weight:600;color:#1F2937;">
+                        {{ viaje.fecha_asignacion[:10] if viaje.fecha_asignacion else '—' }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="color:#9CA3AF;padding:6px 0;">Recogida</td>
+                    <td style="font-weight:600;color:#1F2937;">
+                        {{ viaje.fecha_recogida[:10] if viaje.fecha_recogida else '—' }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="color:#9CA3AF;padding:6px 0;">Entrega</td>
+                    <td style="font-weight:600;color:#1F2937;">
+                        {{ viaje.fecha_entrega[:10] if viaje.fecha_entrega else '—' }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="mt-card p-3 h-100">
+            <div class="section-title">
+                <i class="bi bi-person-badge me-1" style="color:#E86A2C;"></i> Transporte
+            </div>
+            <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
+                <tr>
+                    <td style="color:#9CA3AF;padding:6px 0;width:50%;">Camionero</td>
+                    <td style="font-weight:600;color:#1F2937;">
+                        {{ viaje.camionero_nombre or 'Sin asignar' }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="color:#9CA3AF;padding:6px 0;">Vehículo</td>
+                    <td style="font-weight:600;color:#1F2937;">
+                        {% if viaje.vehiculo_marca %}
+                            {{ viaje.vehiculo_marca }} {{ viaje.vehiculo_modelo }}
+                        {% else %}
+                            Sin asignar
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if viaje.vehiculo_placa %}
+                <tr>
+                    <td style="color:#9CA3AF;padding:6px 0;">Matrícula</td>
+                    <td style="font-weight:600;color:#1F2937;">{{ viaje.vehiculo_placa }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Observaciones -->
+{% if viaje.observaciones %}
+<div class="mt-card p-3">
+    <div class="section-title mb-2">
+        <i class="bi bi-chat-text me-1" style="color:#E86A2C;"></i> Detalles de la carga
+    </div>
+    <p style="font-size:0.875rem;color:#374151;margin:0;white-space:pre-line;">{{ viaje.observaciones }}</p>
+</div>
+{% endif %}
+
+<style>
+.section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6B7280;
+    margin-bottom: 0.6rem;
+}
+</style>
+
+{% endblock %}

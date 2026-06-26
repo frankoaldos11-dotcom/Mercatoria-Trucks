@@ -66,7 +66,12 @@ def logout():
     return redirect("/login")
 
 
-@app.route("/registro", methods=["GET", "POST"])
+@app.route("/registro")
+def registro_redirect():
+    return redirect("/cliente/registro")
+
+
+@app.route("/registro_legacy", methods=["GET", "POST"])
 def registro():
     if request.method == "POST":
         nombre = request.form["nombre"].strip()

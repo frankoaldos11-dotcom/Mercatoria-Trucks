@@ -1,0 +1,124 @@
+{% extends "base_cliente.html" %}
+{% from 'cliente/macros.html' import badge_estado %}
+
+{% block title %}Mis Viajes{% endblock %}
+
+{% block contenido %}
+
+<div class="mt-page-header">
+    <h1><i class="bi bi-list-ul me-2" style="color:#E86A2C;"></i>Mis Viajes</h1>
+    <a href="/cliente/solicitar" class="btn-mt">
+        <i class="bi bi-plus-circle me-1"></i> Nueva Solicitud
+    </a>
+</div>
+
+{% if nuevo %}
+<div class="mt-alert-success">
+    <i class="bi bi-check-circle me-1"></i>
+    Solicitud enviada correctamente. Pronto un operador la revisará.
+</div>
+{% endif %}
+
+<!-- Filtros -->
+<div class="d-flex gap-2 mb-4 flex-wrap">
+    <a href="/cliente/viajes"
+       class="btn btn-sm {% if filtro == 'todos' %}btn-dark{% else %}btn-outline-secondary{% endif %} rounded-pill">
+        Todos
+    </a>
+    <a href="/cliente/viajes?estado=activos"
+       class="btn btn-sm {% if filtro == 'activos' %}btn-dark{% else %}btn-outline-secondary{% endif %} rounded-pill">
+        <i class="bi bi-truck me-1"></i> En curso
+    </a>
+    <a href="/cliente/viajes?estado=entregados"
+       class="btn btn-sm {% if filtro == 'entregados' %}btn-dark{% else %}btn-outline-secondary{% endif %} rounded-pill">
+        <i class="bi bi-check-circle me-1"></i> Entregados
+    </a>
+</div>
+
+{% if viajes %}
+
+<!-- Desktop: table -->
+<div class="mt-card d-none d-md-block overflow-auto">
+    <table class="mt-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>Estado</th>
+                <th>Camionero</th>
+                <th>Fecha</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in viajes %}
+            <tr>
+                <td><span style="color:#9CA3AF;font-size:0.8rem;">#{{ v.id }}</span></td>
+                <td class="fw-semibold">{{ v.origen }}</td>
+                <td class="fw-semibold">{{ v.destino }}</td>
+                <td>{{ badge_estado(v.estado) }}</td>
+                <td style="color:#6B7280;font-size:0.82rem;">{{ v.camionero_nombre or '—' }}</td>
+                <td style="color:#9CA3AF;font-size:0.8rem;">
+                    {{ v.fecha_creacion[:10] if v.fecha_creacion else '—' }}
+                </td>
+                <td>
+                    <a href="/cliente/viaje/{{ v.id }}"
+                       class="btn btn-sm btn-outline-secondary rounded-pill"
+                       style="font-size:0.78rem;">
+                        Ver detalle
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Mobile: cards -->
+<div class="d-md-none">
+    {% for v in viajes %}
+    <a href="/cliente/viaje/{{ v.id }}" class="viaje-card">
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="ruta">
+                {{ v.origen }}
+                <span class="ruta-arrow mx-1">→</span>
+                {{ v.destino }}
+            </div>
+            {{ badge_estado(v.estado) }}
+        </div>
+        <div class="meta">
+            <span>#{{ v.id }}</span>
+            {% if v.camionero_nombre %}
+            <span class="mx-2">·</span>
+            <i class="bi bi-person me-1"></i>{{ v.camionero_nombre }}
+            {% endif %}
+            {% if v.fecha_creacion %}
+            <span class="mx-2">·</span>
+            {{ v.fecha_creacion[:10] }}
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="mt-card">
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>
+            {% if filtro == 'activos' %}No tienes envíos en curso.
+            {% elif filtro == 'entregados' %}No tienes envíos entregados aún.
+            {% else %}No tienes viajes registrados.
+            {% endif %}
+        </p>
+        {% if filtro == 'todos' %}
+        <a href="/cliente/solicitar" class="btn-mt">
+            <i class="bi bi-plus-circle me-1"></i> Crear primera solicitud
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
