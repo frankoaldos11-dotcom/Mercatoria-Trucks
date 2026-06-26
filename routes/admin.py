@@ -319,7 +319,7 @@ def asignar_camionero(id):
     conexion.close()
 
     if fila:
-        registrar_auditoria(f"Asignó camionero {fila['nombre']}", "Viajes", "viaje", id)
+        registrar_auditoria(f"Asignó camionero {fila['nombre']}", "Viajes", "viaje", id, f"Camionero ID: {camionero_id}")
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 

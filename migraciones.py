@@ -131,6 +131,14 @@ def ejecutar_migraciones():
         )
         """)
 
+    if not tabla_existe(cursor, "configuracion_texto"):
+        cursor.execute("""
+        CREATE TABLE configuracion_texto (
+            clave TEXT PRIMARY KEY,
+            valor TEXT NOT NULL
+        )
+        """)
+
     if not tabla_existe(cursor, "auditoria"):
         cursor.execute("""
         CREATE TABLE auditoria (
