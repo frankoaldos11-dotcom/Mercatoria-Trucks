@@ -12,6 +12,7 @@
 
 <div class="kpi-grid">
 
+    <a href="/admin/viajes?estado=solicitado" style="text-decoration:none;color:inherit;display:block;">
     <div class="kpi-card">
         <div class="kpi-icon warning">
             <i class="bi bi-clock-history"></i>
@@ -21,7 +22,9 @@
             <strong>{{ pendientes }}</strong>
         </div>
     </div>
+    </a>
 
+    <a href="/admin/viajes?estado=en+ruta" style="text-decoration:none;color:inherit;display:block;">
     <div class="kpi-card">
         <div class="kpi-icon primary">
             <i class="bi bi-truck-front"></i>
@@ -31,7 +34,9 @@
             <strong>{{ en_curso }}</strong>
         </div>
     </div>
+    </a>
 
+    <a href="/admin/viajes?estado=entregado" style="text-decoration:none;color:inherit;display:block;">
     <div class="kpi-card">
         <div class="kpi-icon success">
             <i class="bi bi-check2-circle"></i>
@@ -41,7 +46,9 @@
             <strong>{{ entregados }}</strong>
         </div>
     </div>
+    </a>
 
+    <a href="/admin/camioneros" style="text-decoration:none;color:inherit;display:block;">
     <div class="kpi-card">
         <div class="kpi-icon info">
             <i class="bi bi-person-vcard"></i>
@@ -51,7 +58,9 @@
             <strong>{{ camioneros }}</strong>
         </div>
     </div>
+    </a>
 
+    <a href="/admin/clientes" style="text-decoration:none;color:inherit;display:block;">
     <div class="kpi-card">
         <div class="kpi-icon neutral">
             <i class="bi bi-buildings"></i>
@@ -61,6 +70,7 @@
             <strong>{{ clientes }}</strong>
         </div>
     </div>
+    </a>
 
 </div>
 
@@ -68,6 +78,8 @@
 .badge-estado { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 .badge-solicitado { background: #fff3e0; color: #e65100; }
 .badge-pendiente  { background: #fff8e1; color: #f57f17; }
+.kpi-card { cursor:pointer; transition:transform 0.15s; }
+.kpi-card:hover { transform:translateY(-2px); }
 </style>
 
 <section class="panel">

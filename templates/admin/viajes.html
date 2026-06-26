@@ -19,6 +19,15 @@
     </div>
 </div>
 
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+    <a href="/admin/viajes" class="badge {% if not filtro %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Todos</a>
+    <a href="/admin/viajes?estado=solicitado" class="badge {% if filtro=='solicitado' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Solicitados</a>
+    <a href="/admin/viajes?estado=asignado" class="badge {% if filtro=='asignado' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Asignados</a>
+    <a href="/admin/viajes?estado=en+ruta" class="badge {% if filtro=='en ruta' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">En ruta</a>
+    <a href="/admin/viajes?estado=entregado" class="badge {% if filtro=='entregado' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Entregados</a>
+    <a href="/admin/viajes?estado=cancelado" class="badge {% if filtro=='cancelado' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Cancelados</a>
+</div>
+
 <section class="panel">
     <div class="panel-header">
         <div>

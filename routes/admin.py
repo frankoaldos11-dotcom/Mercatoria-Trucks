@@ -83,19 +83,29 @@ def viajes():
     if not requiere_admin():
         return redirect("/login")
 
+    filtro = request.args.get("estado", "").strip().lower()
+
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("""
-        SELECT id, cliente, origen, destino, estado, camionero_nombre
-        FROM viajes
-        ORDER BY id DESC
-    """)
+    if filtro:
+        cursor.execute("""
+            SELECT id, cliente, origen, destino, estado, camionero_nombre
+            FROM viajes
+            WHERE LOWER(estado) = ?
+            ORDER BY id DESC
+        """, (filtro,))
+    else:
+        cursor.execute("""
+            SELECT id, cliente, origen, destino, estado, camionero_nombre
+            FROM viajes
+            ORDER BY id DESC
+        """)
     lista = cursor.fetchall()
 
     conexion.close()
 
-    return render_template("admin/viajes.html", lista=lista)
+    return render_template("admin/viajes.html", lista=lista, filtro=filtro)
 
 
 def _parsear_observaciones(obs):
