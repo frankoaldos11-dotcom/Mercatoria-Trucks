@@ -7,7 +7,7 @@
 
 <div class="mt-page-header">
     <div>
-        <h1>Hola, {{ nombre }} 👋</h1>
+        <h1>Hola, {{ session.get('nombre', nombre) }} 👋</h1>
         <p class="text-muted mb-0" style="font-size:0.85rem;">Bienvenido a tu panel de envíos</p>
     </div>
     <a href="/cliente/solicitar" class="btn-mt">
@@ -16,39 +16,48 @@
 </div>
 
 <!-- Stat cards -->
+<style>
+.stat-link:hover { transform: translateY(-2px); }
+</style>
 <div class="row g-3 mb-4">
     <div class="col-4">
-        <div class="stat-card d-flex align-items-center gap-3">
-            <div class="stat-icon" style="background:#FFF3EC;">
-                <i class="bi bi-truck text-warning" style="color:#E86A2C !important;"></i>
+        <a href="/cliente/viajes?estado=activos" class="stat-link" style="text-decoration:none;color:inherit;display:block;transition:transform 0.15s;cursor:pointer;">
+            <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#FFF3EC;">
+                    <i class="bi bi-truck text-warning" style="color:#E86A2C !important;"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ activos }}</div>
+                    <div class="stat-label">En curso</div>
+                </div>
             </div>
-            <div>
-                <div class="stat-value">{{ activos }}</div>
-                <div class="stat-label">En curso</div>
-            </div>
-        </div>
+        </a>
     </div>
     <div class="col-4">
-        <div class="stat-card d-flex align-items-center gap-3">
-            <div class="stat-icon" style="background:#ECFDF5;">
-                <i class="bi bi-check-circle" style="color:#059669;font-size:1.25rem;"></i>
+        <a href="/cliente/viajes?estado=entregados" class="stat-link" style="text-decoration:none;color:inherit;display:block;transition:transform 0.15s;cursor:pointer;">
+            <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#ECFDF5;">
+                    <i class="bi bi-check-circle" style="color:#059669;font-size:1.25rem;"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ entregados }}</div>
+                    <div class="stat-label">Entregados</div>
+                </div>
             </div>
-            <div>
-                <div class="stat-value">{{ entregados }}</div>
-                <div class="stat-label">Entregados</div>
-            </div>
-        </div>
+        </a>
     </div>
     <div class="col-4">
-        <div class="stat-card d-flex align-items-center gap-3">
-            <div class="stat-icon" style="background:#EFF6FF;">
-                <i class="bi bi-box-seam" style="color:#2563EB;font-size:1.25rem;"></i>
+        <a href="/cliente/viajes" class="stat-link" style="text-decoration:none;color:inherit;display:block;transition:transform 0.15s;cursor:pointer;">
+            <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#EFF6FF;">
+                    <i class="bi bi-box-seam" style="color:#2563EB;font-size:1.25rem;"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total }}</div>
+                    <div class="stat-label">Total</div>
+                </div>
             </div>
-            <div>
-                <div class="stat-value">{{ total }}</div>
-                <div class="stat-label">Total</div>
-            </div>
-        </div>
+        </a>
     </div>
 </div>
 

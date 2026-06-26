@@ -330,6 +330,11 @@
                 </li>
             </ul>
             <ul class="navbar-nav ms-lg-2 mt-2 mt-lg-0 mb-2 mb-lg-0">
+                <li class="nav-item d-flex align-items-center me-2">
+                    <span style="font-size:0.82rem;color:rgba(255,255,255,0.7);">
+                        <i class="bi bi-person-circle me-1"></i>{{ session.get('nombre', '') }}
+                    </span>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link btn-logout" href="/logout">
                         <i class="bi bi-box-arrow-right me-1"></i> Salir

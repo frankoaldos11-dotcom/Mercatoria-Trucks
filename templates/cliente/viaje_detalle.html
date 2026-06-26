@@ -70,6 +70,26 @@
 </div>
 {% endif %}
 
+{% if viaje.precio_confirmado and viaje.precio_confirmado > 0 %}
+<div class="mt-card p-3 mb-3 d-flex align-items-center justify-content-between">
+    <div>
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9CA3AF;">
+            Precio confirmado
+        </div>
+        <div style="font-size:1.5rem;font-weight:800;color:#E86A2C;margin-top:2px;">
+            USD ${{ "%.2f"|format(viaje.precio_confirmado|float) }}
+        </div>
+    </div>
+    <i class="bi bi-check-circle-fill" style="font-size:2rem;color:#E86A2C;opacity:0.3;"></i>
+</div>
+{% else %}
+<div class="mt-card p-3 mb-3">
+    <span style="font-size:0.85rem;color:#9CA3AF;">
+        <i class="bi bi-clock me-1"></i> Precio pendiente de confirmación por el operador
+    </span>
+</div>
+{% endif %}
+
 <style>
 .tl-wrap {
     display: flex;
