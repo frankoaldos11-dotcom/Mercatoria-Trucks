@@ -114,10 +114,16 @@ def desasociar_camionero_ruta(ruta_id, camionero_id):
     return redirect("/admin/comercial/rutas")
 
 
+def _solo_admin():
+    return "usuario" in session and session.get("rol") == "admin"
+
+
 @comercial_bp.route("/admin/comercial/vehiculos")
 def tipos_vehiculo():
     if not requiere_admin():
         return redirect("/login")
+    if not _solo_admin():
+        return redirect("/admin/viajes?access_error=Sin+permisos+para+acceder+a+Tipos+de+vehículo")
 
     return render_template(
         "admin/comercial/tipos_vehiculo.html",
@@ -129,6 +135,8 @@ def tipos_vehiculo():
 def nuevo_tipo_vehiculo():
     if not requiere_admin():
         return redirect("/login")
+    if not _solo_admin():
+        return redirect("/admin/viajes?access_error=Sin+permisos")
 
     nombre = request.form["nombre"]
     descripcion = request.form.get("descripcion", "")
@@ -143,6 +151,8 @@ def nuevo_tipo_vehiculo():
 def tarifas():
     if not requiere_admin():
         return redirect("/login")
+    if not _solo_admin():
+        return redirect("/admin/viajes?access_error=Sin+permisos+para+acceder+a+Tarifas")
 
     return render_template(
         "admin/comercial/tarifas.html",
@@ -156,6 +166,8 @@ def tarifas():
 def nueva_tarifa():
     if not requiere_admin():
         return redirect("/login")
+    if not _solo_admin():
+        return redirect("/admin/viajes?access_error=Sin+permisos")
 
     crear_tarifa(
         ruta_id=request.form["ruta_id"],

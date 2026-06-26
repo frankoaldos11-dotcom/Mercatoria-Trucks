@@ -32,25 +32,34 @@
     <div>{{ badge_estado(viaje.estado) }}</div>
 </div>
 
-<!-- Progress steps -->
+<!-- Timeline de estados -->
 {% if viaje.estado != 'Cancelado' %}
 <div class="mt-card p-3 mb-3">
-    <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9CA3AF;margin-bottom:0.75rem;">
+    <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9CA3AF;margin-bottom:1rem;">
         Estado del envío
     </div>
-    <div class="steps">
-        {% set pasos = [
-            (0, 'bi-send', 'Solicitado'),
-            (1, 'bi-person-check', 'Asignado'),
-            (2, 'bi-truck', 'En camino'),
-            (3, 'bi-check-circle', 'Entregado')
-        ] %}
+
+    {% set pasos = [
+        (0, 'bi-send-fill', 'Solicitado'),
+        (1, 'bi-person-check-fill', 'Asignado'),
+        (2, 'bi-truck-front-fill', 'En ruta'),
+        (3, 'bi-check-circle-fill', 'Entregado')
+    ] %}
+
+    <div class="tl-wrap">
         {% for idx, icon, label in pasos %}
-        <div class="step {% if paso_actual > idx %}done{% elif paso_actual == idx %}active{% endif %}">
-            <div class="step-dot">
-                <i class="bi {{ icon }}" style="font-size:0.8rem;"></i>
+        {% set estado_paso = 'done' if paso_actual > idx else ('active' if paso_actual == idx else '') %}
+        <div class="tl-step {{ estado_paso }}">
+            <div class="tl-line-before"></div>
+            <div class="tl-dot">
+                {% if estado_paso == 'done' %}
+                <i class="bi bi-check-lg"></i>
+                {% else %}
+                <i class="bi {{ icon }}"></i>
+                {% endif %}
             </div>
-            <span class="step-label">{{ label }}</span>
+            <div class="tl-line-after"></div>
+            <span class="tl-label">{{ label }}</span>
         </div>
         {% endfor %}
     </div>
@@ -60,6 +69,70 @@
     <i class="bi bi-x-circle me-1"></i> Este viaje ha sido cancelado.
 </div>
 {% endif %}
+
+<style>
+.tl-wrap {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+}
+.tl-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+.tl-line-before,
+.tl-line-after {
+    height: 3px;
+    flex: 1;
+    background: #E5E7EB;
+    align-self: center;
+    width: 100%;
+}
+.tl-step:first-child .tl-line-before { background: transparent; }
+.tl-step:last-child .tl-line-after { background: transparent; }
+.tl-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #E5E7EB;
+    border: 2px solid #D1D5DB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: #9CA3AF;
+    flex-shrink: 0;
+    z-index: 1;
+    transition: all 0.2s;
+}
+.tl-step.done .tl-dot {
+    background: #6B7280;
+    border-color: #6B7280;
+    color: #fff;
+}
+.tl-step.done .tl-line-after {
+    background: #6B7280;
+}
+.tl-step.active .tl-dot {
+    background: #E86A2C;
+    border-color: #E86A2C;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(232,106,44,0.2);
+}
+.tl-label {
+    font-size: 0.68rem;
+    color: #9CA3AF;
+    margin-top: 7px;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+}
+.tl-step.done .tl-label { color: #6B7280; font-weight: 600; }
+.tl-step.active .tl-label { color: #E86A2C; font-weight: 700; }
+</style>
 
 <!-- Info grid -->
 <div class="row g-3 mb-3">

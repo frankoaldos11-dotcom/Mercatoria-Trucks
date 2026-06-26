@@ -25,6 +25,9 @@ def login():
     if _requiere_cliente():
         return redirect(url_for("cliente.cliente_home"))
 
+    if request.method == "GET":
+        return redirect("/login")
+
     error = None
     if request.method == "POST":
         email = request.form["email"].strip().lower()

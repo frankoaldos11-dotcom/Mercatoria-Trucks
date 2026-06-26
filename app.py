@@ -52,7 +52,7 @@ def sidebar_badges():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        usuario = request.form["usuario"].strip()
+        usuario = request.form["usuario"].strip().lower()
         password = request.form["password"]
 
         conexion = conectar()

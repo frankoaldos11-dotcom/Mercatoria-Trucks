@@ -83,6 +83,7 @@
                 <span>Rutas</span>
             </a>
 
+            {% if session.get('rol') == 'admin' %}
             <a href="/admin/comercial/vehiculos" class="nav-item">
                 <i class="bi bi-truck-front"></i>
                 <span>Tipos de vehículo</span>
@@ -92,6 +93,7 @@
                 <i class="bi bi-table"></i>
                 <span>Tarifas</span>
             </a>
+            {% endif %}
 
             <a href="/admin/comercial/cotizar" class="nav-item">
                 <i class="bi bi-calculator"></i>
@@ -138,6 +140,12 @@
     </aside>
 
     <main class="main-content">
+        {% if request.args.get('access_error') %}
+        <div style="background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b;border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;">
+            <i class="bi bi-shield-exclamation"></i>
+            {{ request.args.get('access_error') }}
+        </div>
+        {% endif %}
         {% block contenido %}{% endblock %}
     </main>
 

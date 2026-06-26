@@ -97,6 +97,23 @@ def viajes():
     return render_template("admin/viajes.html", lista=lista)
 
 
+def _parsear_observaciones(obs):
+    """Extrae tipo_carga, peso y notas del texto de observaciones."""
+    resultado = {"tipo_carga": "", "peso": "", "notas": "", "crudo": obs or ""}
+    if not obs:
+        return resultado
+    for linea in obs.split("\n"):
+        linea = linea.strip()
+        if linea.startswith("Tipo de carga:"):
+            partes = linea.split("|")
+            resultado["tipo_carga"] = partes[0].replace("Tipo de carga:", "").strip()
+            if len(partes) > 1:
+                resultado["peso"] = partes[1].replace("Peso aprox.:", "").strip()
+        elif linea.startswith("Notas:"):
+            resultado["notas"] = linea.replace("Notas:", "").strip()
+    return resultado
+
+
 @admin_bp.route("/viaje/<int:id>")
 @admin_bp.route("/viajes/<int:id>/gestionar")
 def gestionar_viaje(id):
@@ -145,10 +162,28 @@ def gestionar_viaje(id):
         if row:
             tarifa_info = f"#{viaje['tarifa_id']} — {row['tipo_nombre'] or 'N/A'} · ${row['precio_cliente']:.2f}/km"
 
+    # Datos enriquecidos del cliente
+    cliente_info = None
+    if viaje["cliente_id"]:
+        cursor.execute(
+            "SELECT nombre, telefono, empresa, email FROM clientes WHERE id = ?",
+            (viaje["cliente_id"],)
+        )
+        cliente_info = cursor.fetchone()
+
+    # Nombre legible de la ruta
+    ruta_display = None
+    if viaje["ruta_id"]:
+        cursor.execute("SELECT origen, destino FROM rutas WHERE id = ?", (viaje["ruta_id"],))
+        ruta_row = cursor.fetchone()
+        if ruta_row:
+            ruta_display = f"{ruta_row['origen']} → {ruta_row['destino']}"
+
     conexion.close()
 
     liquidacion = calcular_liquidacion(id)
     error = request.args.get("error")
+    obs_parsed = _parsear_observaciones(viaje["observaciones"])
 
     _transiciones = {
         "solicitado": ["Asignado", "Cancelado"],
@@ -188,6 +223,9 @@ def gestionar_viaje(id):
         estados_validos=estados_validos,
         orden_carga_ok=orden_carga_ok,
         orden_carga_tooltip=orden_carga_tooltip,
+        cliente_info=cliente_info,
+        ruta_display=ruta_display,
+        obs_parsed=obs_parsed,
     )
 
 
