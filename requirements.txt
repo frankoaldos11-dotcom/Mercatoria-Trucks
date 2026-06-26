@@ -4,3 +4,5 @@ flask-bcrypt
 reportlab
 openpyxl
 flask-mail
+flask-limiter
+flask-wtf

@@ -1,6 +1,9 @@
 import os
 from datetime import timedelta
 from flask import Flask, render_template, request, redirect, session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect
 
 from extensions import bcrypt, mail
 from database import conectar, crear_base_datos
@@ -20,9 +23,10 @@ from routes.finanzas import finanzas_bp
 
 
 app = Flask(__name__)
-app.secret_key = "mercatoria-super-secreto"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-cambiar-en-produccion")
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
+app.config["WTF_CSRF_ENABLED"] = False
 
 app.config["MAIL_SERVER"]         = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
 app.config["MAIL_PORT"]           = int(os.environ.get("MAIL_PORT", 587))
@@ -33,6 +37,22 @@ app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_DEFAULT_SENDER", "norep
 
 bcrypt.init_app(app)
 mail.init_app(app)
+csrf = CSRFProtect(app)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://",
+)
+
+
+@app.after_request
+def set_security_headers(response):
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
 
 
 @app.context_processor
@@ -59,6 +79,7 @@ def sidebar_badges():
 
 
 @app.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
 def login():
     if request.method == "POST":
         usuario = request.form["usuario"].strip().lower()
@@ -165,6 +186,16 @@ app.register_blueprint(finanzas_bp)
 
 crear_base_datos(bcrypt)
 ejecutar_migraciones()
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("404.html"), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template("500.html"), 500
 
 
 if __name__ == "__main__":
