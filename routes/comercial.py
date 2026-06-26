@@ -99,6 +99,24 @@ def actualizar_tarifa_ruta(ruta_id):
     return redirect("/admin/comercial/rutas")
 
 
+@comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/editar", methods=["POST"])
+def editar_ruta(ruta_id):
+    if not requiere_admin():
+        return redirect("/login")
+    origen = request.form["origen"].strip()
+    destino = request.form["destino"].strip()
+    zona = request.form.get("zona", "").strip()
+    km_oficiales = request.form.get("km_oficiales", "").strip()
+    con = conectar_comercial()
+    con.execute(
+        "UPDATE rutas SET origen=?, destino=?, zona=?, km_oficiales=? WHERE id=?",
+        (origen, destino, zona or None, km_oficiales or None, ruta_id)
+    )
+    con.commit()
+    con.close()
+    return redirect("/admin/comercial/rutas")
+
+
 @comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/camioneros/asignar", methods=["POST"])
 def asignar_camionero_ruta(ruta_id):
     if not requiere_admin():
