@@ -40,14 +40,24 @@ def login():
             (email,)
         )
         fila = cur.fetchone()
-        con.close()
 
         if fila and bcrypt.check_password_hash(fila["password"], password):
+            cur.execute("SELECT nombre, apellidos FROM usuarios WHERE id = ?", (fila["id"],))
+            u = cur.fetchone()
+            nombre = ""
+            if u:
+                nombre = f"{u['nombre'] or ''} {u['apellidos'] or ''}".strip()
+            if not nombre:
+                nombre = email.split("@")[0]
+            session["nombre"] = nombre
+            con.close()
             session.permanent = True
             session["usuario"] = email
             session["rol"] = fila["rol"]
             session["user_id"] = fila["id"]
             return redirect(url_for("cliente.cliente_home"))
+
+        con.close()
 
         error = "Correo o contraseña incorrectos"
 
@@ -198,6 +208,7 @@ def detalle_viaje(viaje_id):
         SELECT v.id, v.origen, v.destino, v.estado, v.camionero_nombre,
                v.fecha_creacion, v.fecha_asignacion, v.fecha_recogida, v.fecha_entrega,
                v.observaciones,
+               COALESCE(v.precio_final, v.precio_cliente, v.precio, 0) as precio_confirmado,
                COALESCE(veh.marca, '') as vehiculo_marca,
                COALESCE(veh.modelo, '') as vehiculo_modelo,
                COALESCE(veh.matricula, veh.placa, '') as vehiculo_placa,
