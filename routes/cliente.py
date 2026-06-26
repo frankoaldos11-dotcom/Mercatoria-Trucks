@@ -1,10 +1,34 @@
 import secrets
+import threading
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, request, session, redirect, url_for
+from flask import Blueprint, render_template, request, session, redirect, url_for, current_app
 from flask_mail import Message
 from database import conectar
 from extensions import bcrypt, mail
+
+
+def enviar_bienvenida(app, email, nombre):
+    with app.app_context():
+        try:
+            from flask_mail import Message
+            from extensions import mail
+            msg = Message(
+                subject="Bienvenido a Mercatoria Truck",
+                recipients=[email]
+            )
+            msg.body = f"""Hola {nombre},
+
+Tu cuenta en Mercatoria Truck ha sido creada exitosamente.
+
+Accede a tu portal en:
+https://mercatoria-trucks.onrender.com/cliente
+
+— Mercatoria Truck
+"""
+            mail.send(msg)
+        except Exception as e:
+            print(f"Error enviando email bienvenida: {e}")
 
 cliente_bp = Blueprint("cliente", __name__, url_prefix="/cliente")
 
@@ -124,23 +148,9 @@ def registro():
         con.commit()
         con.close()
 
-        try:
-            msg = Message(
-                subject="Bienvenido a Mercatoria Truck",
-                recipients=[email]
-            )
-            msg.body = f"""Hola {nombre},
-
-Tu cuenta en Mercatoria Truck ha sido creada exitosamente.
-
-Accede a tu portal en:
-https://mercatoria-trucks.onrender.com/cliente
-
-— Mercatoria Truck
-"""
-            mail.send(msg)
-        except Exception as e:
-            print(f"Error enviando email bienvenida: {e}")
+        t = threading.Thread(target=enviar_bienvenida, args=(current_app._get_current_object(), email, nombre))
+        t.daemon = True
+        t.start()
 
         return redirect(url_for("cliente.login") + "?registrado=1")
 
