@@ -397,6 +397,8 @@ def cambiar_estado(id):
         cli = cursor.fetchone()
         email_cliente = cli["email"] if cli else None
 
+    estado_anterior = viaje["estado"] if viaje else None
+
     conexion.commit()
     conexion.close()
 
@@ -405,7 +407,7 @@ def cambiar_estado(id):
 
     registrar_auditoria(
         f"Cambió estado a {estado}", "Viajes", "viaje", id,
-        f"Estado anterior: {viaje['estado']}" if viaje else None
+        f"Estado anterior: {estado_anterior}"
     )
 
     return redirect(f"/admin/viajes/{id}/gestionar")
