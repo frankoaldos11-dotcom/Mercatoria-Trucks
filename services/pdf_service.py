@@ -483,6 +483,260 @@ def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
     return buffer.read()
 
 
+def generar_pdf_carta_porte(viaje_id: int) -> bytes:
+    db_path = os.path.join(_BASE_DIR, "mercatoria.db")
+    con = sqlite3.connect(db_path)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute("""
+        SELECT
+            v.*,
+            c.nombre     AS cam_nombre,
+            c.telefono   AS cam_telefono,
+            c.licencia   AS cam_licencia,
+            cl.nombre    AS cli_nombre,
+            cl.telefono  AS cli_telefono,
+            cl.empresa   AS cli_empresa,
+            cl.email     AS cli_email,
+            veh.marca    AS veh_marca,
+            veh.modelo   AS veh_modelo,
+            veh.matricula AS veh_matricula,
+            veh.tipo     AS veh_tipo,
+            r.nombre     AS ruta_nombre,
+            r.km_oficiales AS ruta_km
+        FROM viajes v
+        LEFT JOIN camioneros c   ON v.camionero_id = c.id
+        LEFT JOIN clientes   cl  ON v.cliente_id   = cl.id
+        LEFT JOIN vehiculos  veh ON v.vehiculo_id  = veh.id
+        LEFT JOIN rutas      r   ON v.ruta_id      = r.id
+        WHERE v.id = ?
+    """, (viaje_id,))
+    row = cur.fetchone()
+    con.close()
+
+    if not row:
+        raise ValueError(f"Viaje #{viaje_id} no encontrado.")
+    v = dict(row)
+    if not v.get("camionero_id"):
+        raise ValueError("El viaje no tiene camionero asignado.")
+    if not v.get("vehiculo_id"):
+        raise ValueError("El viaje no tiene vehículo asignado.")
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        rightMargin=2 * cm, leftMargin=2 * cm,
+        topMargin=2 * cm, bottomMargin=2 * cm,
+    )
+    es = _estilos()
+    elems = []
+
+    cp_num = v.get("id", 0)
+    fecha_emision = datetime.now().strftime("%d/%m/%Y")
+
+    # ── Cabecera ──────────────────────────────────────────────────────────────
+    logo_cell = ""
+    if os.path.exists(_LOGO_PATH):
+        logo_cell = Image(_LOGO_PATH, width=5 * cm, height=2.5 * cm, kind="proportional")
+
+    right_col = Table(
+        [
+            [Paragraph("CARTA DE PORTE", es["titulo"])],
+            [Paragraph(f"CP-{cp_num:04d}", es["numero"])],
+            [Paragraph(f"Fecha de emisión: {fecha_emision}", es["fecha"])],
+        ],
+        colWidths=[8 * cm],
+    )
+    right_col.setStyle(TableStyle([
+        ("ALIGN",         (0, 0), (-1, -1), "RIGHT"),
+        ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING",    (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
+    ]))
+    cabecera = Table([[logo_cell, right_col]], colWidths=[9 * cm, 8 * cm])
+    cabecera.setStyle(TableStyle([
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING",    (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    elems.append(cabecera)
+    elems.append(HRFlowable(width="100%", thickness=2, color=NARANJA, spaceAfter=10))
+
+    # ── Datos del remitente ───────────────────────────────────────────────────
+    elems.append(_seccion("DATOS DEL REMITENTE", es["seccion"]))
+    elems.append(Spacer(1, 8))
+
+    nombre_cli   = v.get("cli_nombre")   or v.get("cliente") or "—"
+    empresa_cli  = v.get("cli_empresa")  or "—"
+    telefono_cli = v.get("cli_telefono") or "—"
+    email_cli    = v.get("cli_email")    or "—"
+
+    t = Table(
+        [
+            [Paragraph("NOMBRE", es["label"]),     Paragraph("EMPRESA", es["label"]),
+             Paragraph("TELÉFONO", es["label"]),   Paragraph("EMAIL", es["label"])],
+            [Paragraph(nombre_cli,   es["valor"]), Paragraph(empresa_cli,  es["valor"]),
+             Paragraph(telefono_cli, es["valor"]), Paragraph(email_cli,    es["valor"])],
+        ],
+        colWidths=[4 * cm, 4.5 * cm, 3.5 * cm, 5 * cm],
+    )
+    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2)]))
+    elems.append(t)
+    elems.append(Spacer(1, 12))
+
+    # ── Datos del transporte ──────────────────────────────────────────────────
+    elems.append(_seccion("DATOS DEL TRANSPORTE", es["seccion"]))
+    elems.append(Spacer(1, 8))
+
+    marca_modelo = " ".join(filter(None, [v.get("veh_marca"), v.get("veh_modelo")])) or "—"
+
+    t = Table(
+        [
+            [Paragraph("CONDUCTOR",  es["label"]),           Paragraph("LICENCIA", es["label"]),
+             Paragraph("TELÉFONO",   es["label"]),           Paragraph("VEHÍCULO", es["label"]),
+             Paragraph("MATRÍCULA",  es["label"]),           Paragraph("TIPO", es["label"])],
+            [Paragraph(str(v.get("cam_nombre")    or "—"), es["valor"]),
+             Paragraph(str(v.get("cam_licencia")  or "—"), es["valor"]),
+             Paragraph(str(v.get("cam_telefono")  or "—"), es["valor"]),
+             Paragraph(marca_modelo,                         es["valor"]),
+             Paragraph(str(v.get("veh_matricula") or "—"), es["valor"]),
+             Paragraph(str(v.get("veh_tipo")      or "—"), es["valor"])],
+        ],
+        colWidths=[3.5 * cm, 2.8 * cm, 2.8 * cm, 3.5 * cm, 2.5 * cm, 1.9 * cm],
+    )
+    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2)]))
+    elems.append(t)
+    elems.append(Spacer(1, 12))
+
+    # ── Descripción de la carga ───────────────────────────────────────────────
+    elems.append(_seccion("DESCRIPCIÓN DE LA CARGA", es["seccion"]))
+    elems.append(Spacer(1, 8))
+
+    obs_raw = str(v.get("observaciones") or "")
+    tipo_carga = peso = notas = ""
+    for linea in obs_raw.splitlines():
+        low = linea.lower()
+        if "tipo" in low and not tipo_carga:
+            tipo_carga = linea.split(":", 1)[-1].strip()
+        elif "peso" in low and not peso:
+            peso = linea.split(":", 1)[-1].strip()
+        elif linea.strip():
+            notas += linea.strip() + " "
+    if not tipo_carga and not peso:
+        notas = obs_raw or "Sin descripción."
+
+    t = Table(
+        [
+            [Paragraph("TIPO DE CARGA", es["label"]), Paragraph("PESO APROXIMADO", es["label"])],
+            [Paragraph(tipo_carga or "—",             es["valor"]), Paragraph(peso or "—", es["valor"])],
+        ],
+        colWidths=[8.5 * cm, 8.5 * cm],
+    )
+    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    elems.append(t)
+    elems.append(Spacer(1, 6))
+
+    t_notas = Table(
+        [[Paragraph(notas.strip() or "Sin notas adicionales.", es["obs"])]],
+        colWidths=[17 * cm],
+    )
+    t_notas.setStyle(TableStyle([
+        ("BACKGROUND",    (0, 0), (-1, -1), GRIS_FONDO),
+        ("TOPPADDING",    (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
+    ]))
+    elems.append(t_notas)
+    elems.append(Spacer(1, 12))
+
+    # ── Ruta ──────────────────────────────────────────────────────────────────
+    elems.append(_seccion("RUTA", es["seccion"]))
+    elems.append(Spacer(1, 8))
+
+    km_texto = f"{int(v['ruta_km'])} km" if v.get("ruta_km") else "—"
+    ruta_nombre = v.get("ruta_nombre") or "—"
+
+    t = Table(
+        [
+            [Paragraph("ORIGEN",       es["label"]), Paragraph("DESTINO",    es["label"]),
+             Paragraph("KM OFICIALES", es["label"]), Paragraph("NOMBRE RUTA", es["label"])],
+            [Paragraph(str(v.get("origen")  or "—"), es["valor"]),
+             Paragraph(str(v.get("destino") or "—"), es["valor"]),
+             Paragraph(km_texto,                      es["valor"]),
+             Paragraph(ruta_nombre,                   es["valor"])],
+        ],
+        colWidths=[4.5 * cm, 4.5 * cm, 3 * cm, 5 * cm],
+    )
+    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    elems.append(t)
+    elems.append(Spacer(1, 12))
+
+    # ── Condiciones ───────────────────────────────────────────────────────────
+    elems.append(_seccion("CONDICIONES DE TRANSPORTE", es["seccion"]))
+    elems.append(Spacer(1, 8))
+
+    estilo_cond = ParagraphStyle(
+        "Cond", parent=es["obs"],
+        fontSize=10, textColor=GRIS_TEXTO, leading=16,
+    )
+    t_cond = Table(
+        [[Paragraph(
+            "La mercancía viaja bajo responsabilidad del transportista desde la recogida hasta "
+            "la entrega. Mercatoria Truck actúa como intermediario logístico.",
+            estilo_cond,
+        )]],
+        colWidths=[17 * cm],
+    )
+    t_cond.setStyle(TableStyle([
+        ("BACKGROUND",    (0, 0), (-1, -1), GRIS_FONDO),
+        ("TOPPADDING",    (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 12),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 12),
+    ]))
+    elems.append(t_cond)
+    elems.append(Spacer(1, 20))
+
+    # ── Firmas ────────────────────────────────────────────────────────────────
+    elems.append(_seccion("FIRMAS", es["seccion"]))
+    elems.append(Spacer(1, 32))
+
+    linea = "_" * 26
+    firma_t = Table(
+        [
+            [linea, linea, linea],
+            [
+                Paragraph("Remitente", es["firma_label"]),
+                Paragraph("Transportista", es["firma_label"]),
+                Paragraph("Receptor", es["firma_label"]),
+            ],
+        ],
+        colWidths=[5.5 * cm, 5.5 * cm, 5.5 * cm],
+        hAlign="CENTER",
+    )
+    firma_t.setStyle(TableStyle([
+        ("ALIGN",     (0, 0), (-1, -1), "CENTER"),
+        ("FONTSIZE",  (0, 0), (-1, 0),  10),
+        ("TEXTCOLOR", (0, 0), (-1, 0),  GRIS_TEXTO),
+    ]))
+    elems.append(firma_t)
+
+    # ── Pie ───────────────────────────────────────────────────────────────────
+    elems.append(Spacer(1, 20))
+    elems.append(HRFlowable(width="100%", thickness=1, color=GRIS_FONDO, spaceAfter=6))
+    elems.append(Paragraph(
+        f"Mercatoria Truck · Carta de Porte N° CP-{cp_num:04d} · Emitida el {fecha_emision}",
+        es["pie"],
+    ))
+
+    doc.build(elems)
+    buffer.seek(0)
+    return buffer.read()
+
+
 def generar_factura_cliente(viaje_id: int) -> bytes:
     db_path = os.path.join(_BASE_DIR, "mercatoria.db")
     con = sqlite3.connect(db_path)

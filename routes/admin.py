@@ -575,6 +575,25 @@ def descargar_pdf_orden_carga(id):
     )
 
 
+@admin_bp.route("/viaje/<int:id>/carta-porte")
+def descargar_carta_porte(id):
+    if not requiere_admin():
+        return redirect("/login")
+    try:
+        from services.pdf_service import generar_pdf_carta_porte
+        pdf_bytes = generar_pdf_carta_porte(id)
+        registrar_auditoria("Descargó Carta de Porte", "Viajes", "viaje", id)
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=f"carta-porte-{id:04d}.pdf",
+        )
+    except ValueError as e:
+        msg = quote_plus(str(e))
+        return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
+
+
 @admin_bp.route("/viaje/<int:id>/liquidacion")
 def descargar_liquidacion(id):
     if not requiere_admin():

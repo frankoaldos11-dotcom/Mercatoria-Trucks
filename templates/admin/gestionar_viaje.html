@@ -323,9 +323,11 @@
             </button>
             {% endif %}
 
-            <button class="btn-secundario" disabled>
-                Carta de Porte (Próximamente)
-            </button>
+            <a href="/admin/viaje/{{ viaje['id'] }}/carta-porte"
+               class="btn-factura btn-link-operacion"
+               style="background:#2563EB;border-color:#2563EB;">
+                Descargar Carta de Porte
+            </a>
 
             <a href="/admin/viaje/{{ viaje['id'] }}/liquidacion"
                class="btn-factura btn-link-operacion">
