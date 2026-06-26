@@ -1,5 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, jsonify, session
+from flask import Blueprint, render_template, request, redirect, jsonify, session, send_file
 import sqlite3
+import io
+import openpyxl
+from openpyxl.styles import PatternFill, Font
 
 from routes.admin import requiere_admin
 
@@ -252,6 +255,99 @@ def cotizaciones():
         "admin/comercial/cotizaciones.html",
         cotizaciones=get_all_cotizaciones()
     )
+
+
+@comercial_bp.route("/admin/comercial/cotizaciones/plantilla")
+def plantilla_cotizaciones():
+    if not requiere_admin():
+        return redirect("/login")
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Cotizaciones"
+
+    headers = ["cliente", "ruta_id", "tipo_vehiculo_id", "precio_cliente", "pago_camionero", "observaciones"]
+    fill = PatternFill(start_color="E86A2C", end_color="E86A2C", fill_type="solid")
+    font = Font(color="FFFFFF", bold=True)
+
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.fill = fill
+        cell.font = font
+
+    ws.append(["cliente@email.com", 1, 1, 500.00, 200.00, "Observaciones opcionales"])
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name="plantilla_cotizaciones.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+
+@comercial_bp.route("/admin/comercial/cotizaciones/importar", methods=["POST"])
+def importar_cotizaciones():
+    if not requiere_admin():
+        return redirect("/login")
+
+    archivo = request.files.get("archivo")
+    if not archivo:
+        return redirect("/admin/comercial/cotizaciones")
+
+    wb = openpyxl.load_workbook(archivo)
+    ws = wb.active
+
+    con = conectar_comercial()
+    cur = con.cursor()
+    insertados = 0
+
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if not any(row):
+            continue
+
+        cliente_email, ruta_id, tipo_vehiculo_id, precio_cliente, pago_camionero, observaciones = (
+            row[0], row[1], row[2], row[3], row[4], row[5] if len(row) > 5 else None
+        )
+
+        cliente_id = None
+        if cliente_email:
+            cur.execute("SELECT id FROM clientes WHERE email = ?", (str(cliente_email).strip(),))
+            resultado = cur.fetchone()
+            if resultado:
+                cliente_id = resultado["id"]
+
+        cur.execute("SELECT km_oficiales FROM rutas WHERE id = ?", (ruta_id,))
+        ruta = cur.fetchone()
+        if not ruta:
+            continue
+
+        km = ruta["km_oficiales"] or 0
+        precio_cliente = float(precio_cliente or 0)
+        pago_camionero_val = float(pago_camionero or 0)
+        beneficio = round(precio_cliente - pago_camionero_val, 2)
+
+        cur.execute("""
+            INSERT INTO cotizaciones (
+                cliente_id, ruta_id, tipo_vehiculo_id, km,
+                precio_calculado, precio_final, pago_camionero,
+                combustible_estimado, beneficio_estimado,
+                modificado_manualmente, motivo_modificacion, estado
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, 'borrador')
+        """, (
+            cliente_id, ruta_id, tipo_vehiculo_id, km,
+            precio_cliente, precio_cliente, pago_camionero_val,
+            beneficio, str(observaciones) if observaciones else None
+        ))
+        insertados += 1
+
+    con.commit()
+    con.close()
+
+    return redirect(f"/admin/comercial/cotizaciones?importado={insertados}")
 
 
 @comercial_bp.route("/admin/comercial/cotizacion/<int:id>")

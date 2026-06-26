@@ -9,10 +9,23 @@
         <p>Listado de cotizaciones generadas por Mercatoria.</p>
     </div>
 
-    <div>
+    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        <a class="btn btn-soft" href="/admin/comercial/cotizaciones/plantilla">Descargar plantilla</a>
+
+        <form method="post" action="/admin/comercial/cotizaciones/importar" enctype="multipart/form-data" style="display:flex; gap:0.5rem; align-items:center;">
+            <input type="file" name="archivo" accept=".xlsx" required style="font-size:0.85rem;">
+            <button type="submit" class="btn btn-soft">Importar Excel</button>
+        </form>
+
         <a class="btn btn-primary" href="/admin/comercial/cotizar">Nueva cotización</a>
     </div>
 </div>
+
+{% if request.args.get('importado') %}
+<div class="alert alert-success" style="margin-bottom:1rem; padding:0.75rem 1rem; background:#d4edda; color:#155724; border:1px solid #c3e6cb; border-radius:6px;">
+    Se importaron <strong>{{ request.args.get('importado') }}</strong> cotizaciones correctamente.
+</div>
+{% endif %}
 
 <section class="panel">
     <div class="panel-header">
