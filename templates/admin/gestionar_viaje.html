@@ -364,12 +364,35 @@
         {% endif %}
 
         <div class="card bloque whatsapp-box">
-            <h2>WhatsApp</h2>
-            <p>Preparado para el próximo sprint.</p>
+            <h2><i class="bi bi-whatsapp" style="color:#25D366;margin-right:6px;"></i>WhatsApp</h2>
 
-            <button class="btn-secundario" disabled>
-                Enviar WhatsApp
-            </button>
+            {% if viaje["camionero_nombre"] and viaje["camionero_telefono"] %}
+            {% set tel_camionero = viaje["camionero_telefono"]|replace(" ","")|replace("-","") %}
+            {% set msg_camionero = "Hola " ~ viaje["camionero_nombre"] ~ ", tienes asignado el viaje #" ~ viaje["id"] ~ " de " ~ viaje["origen"] ~ " a " ~ viaje["destino"] ~ ". Por favor confirma recepción. — Mercatoria Truck" %}
+            <a href="https://wa.me/53{{ tel_camionero }}?text={{ msg_camionero|urlencode }}"
+               target="_blank"
+               class="btn-principal btn-link-operacion"
+               style="background:#25D366;border-color:#25D366;">
+                <i class="bi bi-whatsapp me-1"></i> Escribir al camionero
+            </a>
+            {% else %}
+            <p style="font-size:12px;color:#9CA3AF;">Sin camionero asignado o sin teléfono registrado.</p>
+            {% endif %}
+
+            {% if viaje["cliente"] %}
+            {% set tel_cliente = viaje["cliente_telefono"]|default("")|replace(" ","")|replace("-","") if viaje["cliente_telefono"] else "" %}
+            {% if tel_cliente %}
+            {% set msg_cliente = "Hola, le informamos que su viaje #" ~ viaje["id"] ~ " de " ~ viaje["origen"] ~ " a " ~ viaje["destino"] ~ " está en estado: " ~ viaje["estado"] ~ ". — Mercatoria Truck" %}
+            <a href="https://wa.me/53{{ tel_cliente }}?text={{ msg_cliente|urlencode }}"
+               target="_blank"
+               class="btn-secundario btn-link-operacion"
+               style="margin-top:8px;">
+                <i class="bi bi-whatsapp me-1"></i> Escribir al cliente
+            </a>
+            {% else %}
+            <p style="font-size:12px;color:#9CA3AF;margin-top:8px;">Cliente sin teléfono registrado.</p>
+            {% endif %}
+            {% endif %}
         </div>
 
     </div>
