@@ -1,6 +1,8 @@
 import csv
 import io
 import json
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import date, datetime
 from urllib.parse import quote_plus
 
@@ -1201,3 +1203,117 @@ def toggle_usuario(id):
     conexion.close()
 
     return redirect("/admin/usuarios")
+
+
+# ── Exportar / Importar Excel ──────────────────────────────────────────────────
+
+_EXCEL_CONFIG = {
+    "rutas": {
+        "columnas": ["id", "nombre", "origen", "destino", "zona", "km_oficiales"],
+        "tabla": "rutas",
+        "redirect": "/admin/comercial/rutas",
+    },
+    "camioneros": {
+        "columnas": ["id", "nombre", "telefono", "licencia", "estado"],
+        "tabla": "camioneros",
+        "redirect": "/admin/camioneros",
+    },
+    "clientes": {
+        "columnas": ["id", "nombre", "contacto", "telefono", "email", "empresa"],
+        "tabla": "clientes",
+        "redirect": "/admin/clientes",
+    },
+    "vehiculos": {
+        "columnas": ["id", "nombre", "marca", "modelo", "matricula", "tipo", "capacidad", "estado"],
+        "tabla": "vehiculos",
+        "redirect": "/admin/vehiculos",
+    },
+}
+
+_HEADER_FILL = PatternFill("solid", fgColor="E86A2C")
+_HEADER_FONT = Font(bold=True, color="FFFFFF")
+
+
+@admin_bp.route("/exportar/<string:tabla>", methods=["GET"])
+def exportar_excel(tabla):
+    if not requiere_admin():
+        return redirect("/login")
+
+    cfg = _EXCEL_CONFIG.get(tabla)
+    if not cfg:
+        return redirect("/admin"), 404
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cols = ", ".join(cfg["columnas"])
+    cursor.execute(f"SELECT {cols} FROM {cfg['tabla']}")
+    filas = cursor.fetchall()
+    conexion.close()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = tabla.capitalize()
+
+    for col_idx, col_name in enumerate(cfg["columnas"], start=1):
+        cell = ws.cell(row=1, column=col_idx, value=col_name.upper())
+        cell.fill = _HEADER_FILL
+        cell.font = _HEADER_FONT
+        cell.alignment = Alignment(horizontal="center")
+
+    for row_idx, fila in enumerate(filas, start=2):
+        for col_idx, valor in enumerate(fila, start=1):
+            ws.cell(row=row_idx, column=col_idx, value=valor)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=f"{tabla}.xlsx",
+    )
+
+
+@admin_bp.route("/importar/<string:tabla>", methods=["POST"])
+def importar_excel(tabla):
+    if not requiere_admin():
+        return redirect("/login")
+
+    cfg = _EXCEL_CONFIG.get(tabla)
+    if not cfg:
+        return redirect("/admin"), 404
+
+    archivo = request.files.get("archivo")
+    if not archivo:
+        return redirect(cfg["redirect"] + "?error=No+se+recibió+archivo")
+
+    wb = openpyxl.load_workbook(archivo, read_only=True, data_only=True)
+    ws = wb.active
+
+    columnas = cfg["columnas"]
+    placeholders = ", ".join(["?"] * len(columnas))
+    cols_str = ", ".join(columnas)
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    importados = 0
+
+    for fila in ws.iter_rows(min_row=2, values_only=True):
+        valores = list(fila[: len(columnas)])
+        if not any(v is not None for v in valores):
+            continue
+        try:
+            cursor.execute(
+                f"INSERT OR IGNORE INTO {cfg['tabla']} ({cols_str}) VALUES ({placeholders})",
+                valores,
+            )
+            importados += cursor.rowcount
+        except Exception:
+            pass
+
+    conexion.commit()
+    conexion.close()
+
+    return redirect(f"{cfg['redirect']}?importado={importados}+registros")

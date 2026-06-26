@@ -8,6 +8,13 @@
         <h1>Camioneros</h1>
         <p>Registro operativo de transportistas disponibles para asignaciones.</p>
     </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+        <a href="/admin/exportar/camioneros" class="btn-excel-export">⬇ Exportar Excel</a>
+        <form method="POST" action="/admin/importar/camioneros" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;">
+            <input type="file" name="archivo" accept=".xlsx" required style="font-size:12px;">
+            <button type="submit" class="btn-excel-import">⬆ Importar</button>
+        </form>
+    </div>
 </div>
 
 <section class="panel" style="margin-bottom: 24px;">

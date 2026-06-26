@@ -8,9 +8,16 @@
         <h1>Vehículos</h1>
         <p>Flota de camiones y unidades de transporte registradas.</p>
     </div>
-    <button class="btn-nuevo-vehiculo" data-bs-toggle="modal" data-bs-target="#modalNuevoVehiculo">
-        <i class="bi bi-plus-lg"></i> Nuevo vehículo
-    </button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn-nuevo-vehiculo" data-bs-toggle="modal" data-bs-target="#modalNuevoVehiculo">
+            <i class="bi bi-plus-lg"></i> Nuevo vehículo
+        </button>
+        <a href="/admin/exportar/vehiculos" class="btn-excel-export">⬇ Exportar Excel</a>
+        <form method="POST" action="/admin/importar/vehiculos" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;">
+            <input type="file" name="archivo" accept=".xlsx" required style="font-size:12px;">
+            <button type="submit" class="btn-excel-import">⬆ Importar</button>
+        </form>
+    </div>
 </div>
 
 <section class="panel">
