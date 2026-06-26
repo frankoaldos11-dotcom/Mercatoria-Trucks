@@ -176,38 +176,47 @@
         </div>
 
         <div class="card bloque">
-            <h2>Asignar camionero y vehículo</h2>
+            <h2>Asignar camionero</h2>
 
             <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/asignar-todo">
 
                 <label>Camionero disponible</label>
 
-                <select name="camionero" class="input" required>
+                <select name="camionero" id="sel-camionero" class="input" required>
                     <option value="">Seleccionar camionero</option>
                     {% for c in camioneros %}
-                        <option value="{{ c['id'] }}">{{ c['nombre'] }}</option>
-                    {% endfor %}
-                </select>
-
-                <label>Vehículo</label>
-
-                <select name="vehiculo" class="input" required>
-                    <option value="">Seleccionar vehículo</option>
-                    {% for v in vehiculos %}
-                        <option value="{{ v['id'] }}">
-                            {{ v['matricula'] if v['matricula'] else v['placa'] if v['placa'] else "Vehículo #" ~ v['id'] }}
-                            {% if v['marca'] %} - {{ v['marca'] }}{% endif %}
-                            {% if v['modelo'] %} {{ v['modelo'] }}{% endif %}
+                        <option value="{{ c['id'] }}"
+                                data-vehiculo-id="{{ c['vehiculo_id'] or '' }}"
+                                data-vehiculo-info="{{ (c['vehiculo_matricula'] ~ ((' – ' ~ c['vehiculo_marca']) if c['vehiculo_marca'] else '') ~ ((' ' ~ c['vehiculo_modelo']) if c['vehiculo_modelo'] else ''))|trim if c['vehiculo_id'] else 'Sin vehículo asignado' }}">
+                            {{ c['nombre'] }}
                         </option>
                     {% endfor %}
                 </select>
 
+                <div id="vehiculo-asignado-box" style="display:none; margin-bottom:10px; padding:8px 10px; background:#f0f7ff; border:1px solid #b3d4f5; border-radius:8px; font-size:12px; color:#1a6fa0;">
+                    <strong>Vehículo:</strong> <span id="vehiculo-asignado-texto"></span>
+                </div>
+
                 <button class="btn-principal" type="submit">
-                    Asignar camionero y vehículo
+                    Asignar
                 </button>
 
             </form>
         </div>
+
+        <script>
+        document.getElementById('sel-camionero').addEventListener('change', function () {
+            var opt = this.options[this.selectedIndex];
+            var box = document.getElementById('vehiculo-asignado-box');
+            var texto = document.getElementById('vehiculo-asignado-texto');
+            if (opt.value) {
+                texto.textContent = opt.dataset.vehiculoInfo || 'Sin vehículo asignado';
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        });
+        </script>
 
         <div class="card bloque operaciones-box">
             <h2>Operaciones</h2>

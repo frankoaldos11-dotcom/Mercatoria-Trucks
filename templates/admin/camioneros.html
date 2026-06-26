@@ -51,6 +51,17 @@
                     {% endfor %}
                 </select>
             </div>
+            <div class="form-crud-field">
+                <label>Vehículo asignado</label>
+                <select name="vehiculo_id" class="input-crud">
+                    <option value="">Sin vehículo</option>
+                    {% for v in vehiculos_disponibles %}
+                    <option value="{{ v['id'] }}">
+                        {{ v['matricula'] or ('Veh. #' ~ v['id']) }}{% if v['marca'] %} – {{ v['marca'] }}{% endif %}{% if v['modelo'] %} {{ v['modelo'] }}{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="form-crud-field form-crud-submit">
                 <button type="submit" class="btn-crud-primary">Registrar camionero</button>
             </div>

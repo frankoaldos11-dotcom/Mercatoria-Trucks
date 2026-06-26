@@ -110,26 +110,18 @@ def gestionar_viaje(id):
         return redirect("/admin/viajes")
 
     cursor.execute("""
-        SELECT id, nombre
-        FROM camioneros
-        WHERE LOWER(estado) = 'disponible'
-        ORDER BY nombre
+        SELECT c.id, c.nombre,
+               v.id AS vehiculo_id,
+               COALESCE(v.matricula, '') AS vehiculo_matricula,
+               COALESCE(v.marca, '') AS vehiculo_marca,
+               COALESCE(v.modelo, '') AS vehiculo_modelo
+        FROM camioneros c
+        LEFT JOIN vehiculos v ON v.camionero_id = c.id AND v.activo = 1
+        WHERE LOWER(c.estado) = 'disponible'
+        ORDER BY c.nombre
     """)
     camioneros = cursor.fetchall()
-
-    cursor.execute("""
-        SELECT v.id, v.matricula, v.marca, v.modelo, v.capacidad, v.tipo, v.estado
-        FROM vehiculos v
-        WHERE
-            v.activo = 1
-            AND LOWER(v.estado) = 'disponible'
-            AND (
-                v.tipo_vehiculo_id = ?
-                OR v.tipo = (SELECT nombre FROM tipos_vehiculo WHERE id = ?)
-            )
-        ORDER BY v.matricula ASC
-    """, (viaje["tipo_vehiculo_id"], viaje["tipo_vehiculo_id"]))
-    vehiculos = cursor.fetchall()
+    vehiculos = []
 
     tipo_vehiculo_nombre = None
     if viaje["tipo_vehiculo_id"]:
@@ -306,10 +298,9 @@ def asignar_camionero_vehiculo(id):
         return redirect("/login")
 
     camionero_id = request.form.get("camionero", "").strip()
-    vehiculo_id = request.form.get("vehiculo", "").strip()
 
-    if not camionero_id or not vehiculo_id:
-        return redirect(f"/admin/viajes/{id}/gestionar?error=Selecciona+un+camionero+y+un+veh%C3%ADculo")
+    if not camionero_id:
+        return redirect(f"/admin/viajes/{id}/gestionar?error=Selecciona+un+camionero")
 
     conexion = conectar()
     cursor = conexion.cursor()
@@ -324,14 +315,11 @@ def asignar_camionero_vehiculo(id):
     camionero = cursor.fetchone()
 
     cursor.execute("""
-        SELECT v.id, v.matricula, v.tipo_vehiculo_id, v.tipo, v.estado
-        FROM vehiculos v
-        WHERE v.id = ? AND v.activo = 1 AND LOWER(v.estado) = 'disponible'
-        AND (
-            v.tipo_vehiculo_id = ?
-            OR v.tipo = (SELECT nombre FROM tipos_vehiculo WHERE id = ?)
-        )
-    """, (vehiculo_id, viaje["tipo_vehiculo_id"], viaje["tipo_vehiculo_id"]))
+        SELECT id, COALESCE(matricula, '') AS matricula
+        FROM vehiculos
+        WHERE camionero_id = ? AND activo = 1
+        LIMIT 1
+    """, (camionero_id,))
     vehiculo = cursor.fetchone()
 
     if camionero:
@@ -351,7 +339,7 @@ def asignar_camionero_vehiculo(id):
             cursor.execute("UPDATE viajes SET vehiculo_id = ? WHERE id = ?", (vehiculo["id"], id))
         cursor.execute("UPDATE vehiculos SET estado = 'En viaje' WHERE id = ?", (vehiculo["id"],))
 
-    if camionero and vehiculo:
+    if camionero:
         cursor.execute("UPDATE viajes SET estado = 'Asignado' WHERE id = ?", (id,))
 
     conexion.commit()
@@ -435,11 +423,19 @@ def admin_camioneros():
         tipo = request.form.get("tipo", "").strip()
         capacidad = request.form.get("capacidad", "").strip()
         estado = request.form.get("estado", "Disponible").strip()
+        vehiculo_id = request.form.get("vehiculo_id") or None
 
         cursor.execute("""
             INSERT INTO camioneros (nombre, telefono, licencia, matricula, tipo, capacidad, estado)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (nombre, telefono, licencia, matricula, tipo, capacidad, estado))
+
+        nuevo_id = cursor.lastrowid
+        if vehiculo_id:
+            cursor.execute(
+                "UPDATE vehiculos SET camionero_id = ? WHERE id = ? AND activo = 1",
+                (nuevo_id, vehiculo_id)
+            )
 
         conexion.commit()
 
@@ -450,6 +446,15 @@ def admin_camioneros():
     """)
     lista = cursor.fetchall()
 
+    cursor.execute("""
+        SELECT id, COALESCE(matricula, '') AS matricula,
+               COALESCE(marca, '') AS marca, COALESCE(modelo, '') AS modelo
+        FROM vehiculos
+        WHERE activo = 1 AND camionero_id IS NULL
+        ORDER BY matricula
+    """)
+    vehiculos_disponibles = cursor.fetchall()
+
     conexion.close()
 
     rutas_por_camionero = {c["id"]: get_rutas_por_camionero(c["id"]) for c in lista}
@@ -459,6 +464,7 @@ def admin_camioneros():
         lista=lista,
         estados=CAMIONERO_ESTADOS,
         rutas_por_camionero=rutas_por_camionero,
+        vehiculos_disponibles=vehiculos_disponibles,
     )
 
 
