@@ -325,7 +325,9 @@ def asignar_camionero(id):
 
     conexion.close()
 
+    print(f"=== ANTES AUDITORIA: usuario={session.get('usuario')} rol={session.get('rol')} ===")
     registrar_auditoria(f"Asignó camionero {nombre_camionero}", "Viajes", "viaje", id, f"Camionero ID: {camionero_id}")
+    print(f"=== DESPUES AUDITORIA ===")
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -491,7 +493,8 @@ def asignar_camionero_vehiculo(id):
     camionero = cursor.fetchone()
 
     cursor.execute("""
-        SELECT id, COALESCE(matricula, '') AS matricula
+        SELECT id, COALESCE(matricula, '') AS matricula,
+               COALESCE(marca, '') AS marca, COALESCE(modelo, '') AS modelo
         FROM vehiculos
         WHERE camionero_id = ? AND activo = 1
         LIMIT 1
@@ -518,8 +521,17 @@ def asignar_camionero_vehiculo(id):
     if camionero:
         cursor.execute("UPDATE viajes SET estado = 'Asignado' WHERE id = ?", (id,))
 
+    nombre_cam = camionero["nombre"] if camionero else "desconocido"
+    nombre_veh = f"{vehiculo['marca']} {vehiculo['modelo']} ({vehiculo['matricula']})" if vehiculo else "desconocido"
+
     conexion.commit()
     conexion.close()
+
+    registrar_auditoria(
+        f"Asignó camionero {nombre_cam} y vehículo {nombre_veh}",
+        "Viajes", "viaje", id,
+        f"Camionero y vehículo asignados juntos"
+    )
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
