@@ -135,11 +135,10 @@ def gestionar_viaje(id):
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT id, cliente, cliente_id, ruta_id, origen, destino, estado, precio,
-               precio_cliente, precio_final, precio_calculado, camionero_id,
-               camionero_nombre, vehiculo_id, observaciones, tipo_vehiculo_id,
-               fecha_creacion, fecha_asignacion, fecha_recogida, fecha_entrega
-        FROM viajes WHERE id = ?
+        SELECT v.*,
+               v.camionero_id as camionero_id
+        FROM viajes v
+        WHERE v.id = ?
     """, (id,))
     viaje = cursor.fetchone()
 
