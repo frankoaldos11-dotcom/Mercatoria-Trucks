@@ -300,6 +300,66 @@ def asignar_vehiculo(id):
     return redirect(f"/admin/viajes/{id}/gestionar")
 
 
+@admin_bp.route("/viaje/<int:id>/asignar-todo", methods=["POST"])
+def asignar_camionero_vehiculo(id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    camionero_id = request.form.get("camionero", "").strip()
+    vehiculo_id = request.form.get("vehiculo", "").strip()
+
+    if not camionero_id or not vehiculo_id:
+        return redirect(f"/admin/viajes/{id}/gestionar?error=Selecciona+un+camionero+y+un+veh%C3%ADculo")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM viajes WHERE id = ?", (id,))
+    viaje = cursor.fetchone()
+    if not viaje:
+        conexion.close()
+        return redirect("/admin/viajes")
+
+    cursor.execute("SELECT nombre FROM camioneros WHERE id = ?", (camionero_id,))
+    camionero = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT v.id, v.matricula, v.tipo_vehiculo_id, v.tipo, v.estado
+        FROM vehiculos v
+        WHERE v.id = ? AND v.activo = 1 AND LOWER(v.estado) = 'disponible'
+        AND (
+            v.tipo_vehiculo_id = ?
+            OR v.tipo = (SELECT nombre FROM tipos_vehiculo WHERE id = ?)
+        )
+    """, (vehiculo_id, viaje["tipo_vehiculo_id"], viaje["tipo_vehiculo_id"]))
+    vehiculo = cursor.fetchone()
+
+    if camionero:
+        cursor.execute("""
+            UPDATE viajes SET camionero_id = ?, camionero_nombre = ? WHERE id = ?
+        """, (camionero_id, camionero["nombre"], id))
+        cursor.execute("UPDATE camioneros SET estado = 'En viaje' WHERE id = ?", (camionero_id,))
+
+    if vehiculo:
+        cur_cols = cursor.execute("PRAGMA table_info(viajes)")
+        columnas_viajes = [col["name"] for col in cur_cols.fetchall()]
+        if "vehiculo_placa" in columnas_viajes:
+            cursor.execute("""
+                UPDATE viajes SET vehiculo_id = ?, vehiculo_placa = ? WHERE id = ?
+            """, (vehiculo["id"], vehiculo["matricula"], id))
+        else:
+            cursor.execute("UPDATE viajes SET vehiculo_id = ? WHERE id = ?", (vehiculo["id"], id))
+        cursor.execute("UPDATE vehiculos SET estado = 'En viaje' WHERE id = ?", (vehiculo["id"],))
+
+    if camionero and vehiculo:
+        cursor.execute("UPDATE viajes SET estado = 'Asignado' WHERE id = ?", (id,))
+
+    conexion.commit()
+    conexion.close()
+
+    return redirect(f"/admin/viajes/{id}/gestionar")
+
+
 @admin_bp.route("/viaje/<int:id>/pdf")
 def descargar_pdf_orden_carga(id):
     if not requiere_admin():

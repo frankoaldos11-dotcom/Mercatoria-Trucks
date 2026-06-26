@@ -4,6 +4,7 @@
 
 <div class="page-header">
     <div>
+        <a href="/admin/viajes" class="btn-volver">← Volver a viajes</a>
         <h1>Gestionar Viaje #{{ viaje["id"] }}</h1>
         <p class="subtitulo">Centro operativo del viaje</p>
     </div>
@@ -151,10 +152,33 @@
 
     <div class="columna-lateral">
 
-        <div class="card bloque">
-            <h2>Asignar camionero</h2>
+        <div class="card bloque estado-bloque">
+            <h2 class="estado-titulo">Cambiar estado</h2>
 
-            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/asignar">
+            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/estado">
+
+                <label>Nuevo estado</label>
+
+                <select name="estado" class="input input-estado" required>
+                    <option value="Solicitado" {% if viaje["estado"] in ["Solicitado", "solicitado"] %}selected{% endif %}>Solicitado</option>
+                    <option value="Pendiente" {% if viaje["estado"] in ["Pendiente", "pendiente"] %}selected{% endif %}>Pendiente</option>
+                    <option value="Asignado" {% if viaje["estado"] in ["Asignado", "asignado"] %}selected{% endif %}>Asignado ⚠ requiere camionero + vehículo</option>
+                    <option value="En ruta" {% if viaje["estado"] in ["En ruta", "en_ruta"] %}selected{% endif %}>En ruta ⚠ requiere precio confirmado</option>
+                    <option value="Entregado" {% if viaje["estado"] in ["Entregado", "entregado"] %}selected{% endif %}>Entregado</option>
+                    <option value="Cancelado" {% if viaje["estado"] in ["Cancelado", "cancelado"] %}selected{% endif %}>Cancelado</option>
+                </select>
+
+                <button class="btn-estado" type="submit">
+                    Actualizar estado
+                </button>
+
+            </form>
+        </div>
+
+        <div class="card bloque">
+            <h2>Asignar camionero y vehículo</h2>
+
+            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/asignar-todo">
 
                 <label>Camionero disponible</label>
 
@@ -164,18 +188,6 @@
                         <option value="{{ c['id'] }}">{{ c['nombre'] }}</option>
                     {% endfor %}
                 </select>
-
-                <button class="btn-principal" type="submit">
-                    Asignar camionero
-                </button>
-
-            </form>
-        </div>
-
-        <div class="card bloque">
-            <h2>Asignar vehículo</h2>
-
-            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/asignar-vehiculo">
 
                 <label>Vehículo</label>
 
@@ -191,29 +203,7 @@
                 </select>
 
                 <button class="btn-principal" type="submit">
-                    Asignar vehículo
-                </button>
-
-            </form>
-        </div>
-                <div class="card bloque">
-            <h2>Cambiar estado</h2>
-
-            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/estado">
-
-                <label>Nuevo estado</label>
-
-                <select name="estado" class="input" required>
-                    <option value="Solicitado" {% if viaje["estado"] in ["Solicitado", "solicitado"] %}selected{% endif %}>Solicitado</option>
-                    <option value="Pendiente" {% if viaje["estado"] in ["Pendiente", "pendiente"] %}selected{% endif %}>Pendiente</option>
-                    <option value="Asignado" {% if viaje["estado"] in ["Asignado", "asignado"] %}selected{% endif %}>Asignado ⚠ requiere camionero + vehículo</option>
-                    <option value="En ruta" {% if viaje["estado"] in ["En ruta", "en_ruta"] %}selected{% endif %}>En ruta ⚠ requiere precio confirmado</option>
-                    <option value="Entregado" {% if viaje["estado"] in ["Entregado", "entregado"] %}selected{% endif %}>Entregado</option>
-                    <option value="Cancelado" {% if viaje["estado"] in ["Cancelado", "cancelado"] %}selected{% endif %}>Cancelado</option>
-                </select>
-
-                <button class="btn-principal" type="submit">
-                    Actualizar estado
+                    Asignar camionero y vehículo
                 </button>
 
             </form>
@@ -255,6 +245,19 @@
 </div>
 
 <style>
+.btn-volver {
+    display: inline-block;
+    font-size: 12px;
+    color: #F36B21;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.btn-volver:hover {
+    text-decoration: underline;
+}
+
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -477,6 +480,41 @@
     gap: 7px;
     font-weight: 600;
     font-size: 13px;
+}
+
+.estado-bloque {
+    background: #fff3ec;
+    border: 2px solid #F36B21;
+}
+
+.estado-titulo {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: #d95714;
+    margin-bottom: 12px !important;
+}
+
+.input-estado {
+    font-size: 15px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+
+.btn-estado {
+    width: 100%;
+    background: #F36B21;
+    color: white;
+    padding: 13px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 800;
+    letter-spacing: .01em;
+}
+
+.btn-estado:hover {
+    background: #d95714;
 }
 
 .whatsapp-box p {
