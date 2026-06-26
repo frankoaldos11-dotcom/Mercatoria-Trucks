@@ -1,0 +1,402 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Sistema</span>
+        <h1>Acciones por lote</h1>
+        <p>Aplica cambios masivos a múltiples viajes de forma simultánea.</p>
+    </div>
+</div>
+
+<div class="alerta-warning">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>Atención:</strong> Las acciones por lote son irreversibles. Verifica los filtros antes de aplicar.
+</div>
+
+{% if resultado %}
+<div class="alerta-exito" style="margin-bottom:20px;">
+    <i class="bi bi-check-circle-fill"></i> {{ resultado }}
+</div>
+{% endif %}
+
+<!-- ── Sección 1: Precios masivos ── -->
+<section class="panel" style="margin-bottom:20px;">
+    <div class="panel-header">
+        <div>
+            <h2>Actualizar precios masivamente</h2>
+            <p>Aplica un precio cliente a un conjunto de viajes según criterio.</p>
+        </div>
+    </div>
+    <div style="padding:24px;">
+        <form method="POST" action="/admin/lote/precios" id="form-precios">
+            <div class="lote-grid">
+                <div class="lote-field">
+                    <label class="lote-label">Criterio</label>
+                    <select name="criterio" id="criterio-precio" class="lote-input" onchange="onCriterioChange()">
+                        <option value="sin_precio">Todos sin precio</option>
+                        <option value="estado">Por estado</option>
+                        <option value="ruta">Por ruta</option>
+                    </select>
+                </div>
+
+                <div class="lote-field" id="campo-estado-precio" style="display:none;">
+                    <label class="lote-label">Estado</label>
+                    <select name="valor_criterio" id="val-estado" class="lote-input" onchange="actualizarPreview()">
+                        {% for e in estados %}
+                        <option value="{{ e }}">{{ e }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="lote-field" id="campo-ruta-precio" style="display:none;">
+                    <label class="lote-label">Ruta</label>
+                    <select name="valor_criterio" id="val-ruta" class="lote-input" onchange="actualizarPreview()">
+                        {% for r in rutas %}
+                        <option value="{{ r['id'] }}">{{ r['nombre'] or (r['origen'] + ' → ' + r['destino']) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="lote-field">
+                    <label class="lote-label">Precio nuevo (USD)</label>
+                    <input type="number" name="precio_nuevo" step="0.01" min="0.01"
+                           class="lote-input" placeholder="0.00" required>
+                </div>
+
+                <div class="lote-field" style="flex:2;">
+                    <label class="lote-label">Motivo (obligatorio)</label>
+                    <input type="text" name="motivo" class="lote-input"
+                           placeholder="Ej: Ajuste tarifario Q2" required>
+                </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:16px;margin-top:16px;">
+                <button type="submit" class="btn-lote-primary">
+                    <i class="bi bi-currency-dollar"></i> Aplicar precios
+                </button>
+                <span class="lote-preview" id="preview-count">
+                    Cargando…
+                </span>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- ── Sección 2: Cambio de estados ── -->
+<section class="panel" style="margin-bottom:20px;">
+    <div class="panel-header">
+        <div>
+            <h2>Cambiar estados masivamente</h2>
+            <p>Mueve todos los viajes de un estado a otro de forma simultánea.</p>
+        </div>
+    </div>
+    <div style="padding:24px;">
+        <form method="POST" action="/admin/lote/estados">
+            <div class="lote-grid">
+                <div class="lote-field">
+                    <label class="lote-label">Estado origen (filtro)</label>
+                    <select name="estado_origen" class="lote-input" required>
+                        {% for e in estados %}
+                        <option value="{{ e }}">{{ e }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="lote-field" style="display:flex;align-items:flex-end;font-size:20px;padding-bottom:8px;color:#aaa;">
+                    →
+                </div>
+                <div class="lote-field">
+                    <label class="lote-label">Estado destino (nuevo)</label>
+                    <select name="estado_destino" class="lote-input" required>
+                        {% for e in estados %}
+                        <option value="{{ e }}">{{ e }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="lote-field" style="flex:2;">
+                    <label class="lote-label">Motivo</label>
+                    <input type="text" name="motivo" class="lote-input"
+                           placeholder="Ej: Revisión operativa" required>
+                </div>
+            </div>
+            <div style="margin-top:16px;">
+                <button type="submit" class="btn-lote-secondary">
+                    <i class="bi bi-arrow-repeat"></i> Cambiar estados
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- ── Sección 3: Selección manual ── -->
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Selección manual</h2>
+            <p>Selecciona viajes individualmente y aplica una acción sobre ellos.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="/admin/lote/viajes-seleccionados" id="form-manual">
+        <div style="padding:16px 24px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid #f0f0f0;">
+            <div class="lote-field">
+                <label class="lote-label">Acción</label>
+                <select name="accion" id="accion-manual" class="lote-input" onchange="toggleAccionManual()">
+                    <option value="precio">Actualizar precio (USD)</option>
+                    <option value="estado">Cambiar estado</option>
+                </select>
+            </div>
+            <div class="lote-field" id="campo-precio-manual">
+                <label class="lote-label">Precio nuevo</label>
+                <input type="number" name="valor" id="val-precio-manual"
+                       step="0.01" min="0.01" class="lote-input" placeholder="0.00">
+            </div>
+            <div class="lote-field" id="campo-estado-manual" style="display:none;">
+                <label class="lote-label">Nuevo estado</label>
+                <select name="valor" id="val-estado-manual" class="lote-input" disabled>
+                    {% for e in estados %}
+                    <option value="{{ e }}">{{ e }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="lote-field" style="flex:2;">
+                <label class="lote-label">Motivo</label>
+                <input type="text" name="motivo" class="lote-input" placeholder="Motivo" required>
+            </div>
+            <button type="submit" class="btn-lote-primary" onclick="return confirmarSeleccion()">
+                <i class="bi bi-check2-square"></i> Aplicar a seleccionados
+            </button>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:36px;">
+                            <input type="checkbox" id="check-all" onchange="toggleAll(this)">
+                        </th>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Origen</th>
+                        <th>Destino</th>
+                        <th>Estado</th>
+                        <th>Precio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in viajes_activos %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="ids[]" value="{{ v['id'] }}" class="chk-viaje">
+                        </td>
+                        <td style="font-weight:600;">#{{ v['id'] }}</td>
+                        <td>{{ v['cliente'] or '—' }}</td>
+                        <td style="font-size:12px;">{{ v['origen'] or '—' }}</td>
+                        <td style="font-size:12px;">{{ v['destino'] or '—' }}</td>
+                        <td>
+                            <span class="badge-estado-lote estado-{{ v['estado']|lower|replace(' ', '-') }}">
+                                {{ v['estado'] }}
+                            </span>
+                        </td>
+                        <td style="font-weight:600;">
+                            {% if v['precio'] and v['precio'] > 0 %}
+                                ${{ "%.2f"|format(v['precio']|float) }}
+                            {% else %}
+                                <span style="color:#bbb;">Sin precio</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="empty-state">No hay viajes activos.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+</section>
+
+<style>
+.alerta-warning {
+    background: #fff8e6;
+    border: 1px solid #f59e0b;
+    color: #92400e;
+    padding: 14px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alerta-exito {
+    background: #e6f7ee;
+    border: 1px solid #2ecc71;
+    color: #1a7a45;
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lote-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.lote-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 160px;
+}
+
+.lote-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.lote-input {
+    padding: 9px 13px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fafafa;
+    box-sizing: border-box;
+}
+.lote-input:focus { outline: none; border-color: #F36B21; background: #fff; }
+
+.btn-lote-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: #F36B21;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-lote-primary:hover { background: #d95714; }
+
+.btn-lote-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: #2563EB;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-lote-secondary:hover { background: #1D4ED8; }
+
+.lote-preview {
+    font-size: 13px;
+    font-weight: 600;
+    color: #F36B21;
+    background: #fff0e6;
+    padding: 6px 14px;
+    border-radius: 8px;
+}
+
+.badge-estado-lote {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.estado-solicitado    { background:#fff0e6; color:#d95714; }
+.estado-pendiente     { background:#fef9c3; color:#854d0e; }
+.estado-asignado      { background:#e8f4fd; color:#1a6fa0; }
+.estado-en-ruta       { background:#f0fdf4; color:#15803d; }
+.estado-carga-recogida{ background:#ede9fe; color:#5b21b6; }
+.estado-entregado     { background:#e6f7ee; color:#1a7a45; }
+.estado-cancelado     { background:#f5f5f5; color:#999; }
+</style>
+
+<script>
+function onCriterioChange() {
+    const criterio = document.getElementById('criterio-precio').value;
+    document.getElementById('campo-estado-precio').style.display = criterio === 'estado' ? '' : 'none';
+    document.getElementById('campo-ruta-precio').style.display   = criterio === 'ruta'   ? '' : 'none';
+    actualizarPreview();
+}
+
+function actualizarPreview() {
+    const criterio = document.getElementById('criterio-precio').value;
+    let valor = '';
+    if (criterio === 'estado') {
+        valor = document.getElementById('val-estado').value;
+    } else if (criterio === 'ruta') {
+        valor = document.getElementById('val-ruta').value;
+    }
+    const url = `/admin/lote/preview?criterio=${encodeURIComponent(criterio)}&valor=${encodeURIComponent(valor)}`;
+    fetch(url)
+        .then(r => r.json())
+        .then(d => {
+            document.getElementById('preview-count').textContent =
+                `Se aplicará a ${d.count} viaje${d.count !== 1 ? 's' : ''}`;
+        })
+        .catch(() => {
+            document.getElementById('preview-count').textContent = '— viajes';
+        });
+}
+
+function toggleAccionManual() {
+    const accion = document.getElementById('accion-manual').value;
+    const precioDiv  = document.getElementById('campo-precio-manual');
+    const estadoDiv  = document.getElementById('campo-estado-manual');
+    const precioInp  = document.getElementById('val-precio-manual');
+    const estadoSel  = document.getElementById('val-estado-manual');
+
+    if (accion === 'precio') {
+        precioDiv.style.display  = '';
+        estadoDiv.style.display  = 'none';
+        precioInp.disabled = false;
+        estadoSel.disabled = true;
+        precioInp.name = 'valor';
+        estadoSel.name = '';
+    } else {
+        precioDiv.style.display  = 'none';
+        estadoDiv.style.display  = '';
+        precioInp.disabled = true;
+        estadoSel.disabled = false;
+        precioInp.name = '';
+        estadoSel.name = 'valor';
+    }
+}
+
+function toggleAll(cb) {
+    document.querySelectorAll('.chk-viaje').forEach(c => c.checked = cb.checked);
+}
+
+function confirmarSeleccion() {
+    const sel = document.querySelectorAll('.chk-viaje:checked').length;
+    if (sel === 0) { alert('Selecciona al menos un viaje.'); return false; }
+    return confirm(`¿Aplicar acción a ${sel} viaje${sel !== 1 ? 's' : ''} seleccionado${sel !== 1 ? 's' : ''}?`);
+}
+
+// Init
+onCriterioChange();
+</script>
+
+{% endblock %}

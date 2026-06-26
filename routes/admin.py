@@ -1486,3 +1486,224 @@ def ver_auditoria():
             buscar=buscar,
         ),
     )
+
+
+# ── Acciones por lote ──────────────────────────────────────────────────────────
+
+_ESTADOS_VIAJE = [
+    "Solicitado", "Pendiente", "Asignado", "En ruta",
+    "Carga recogida", "Entregado", "Cancelado",
+]
+
+
+@admin_bp.route("/lote", methods=["GET"])
+def panel_lote():
+    if not requiere_admin():
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("""
+        SELECT id, nombre, origen, destino
+        FROM rutas ORDER BY COALESCE(nombre, origen)
+    """)
+    rutas = cursor.fetchall()
+    cursor.execute("""
+        SELECT id, cliente, origen, destino, estado,
+               COALESCE(precio_cliente, precio_final, precio, 0) AS precio
+        FROM viajes
+        WHERE LOWER(estado) NOT IN ('entregado', 'cancelado')
+        ORDER BY id DESC
+    """)
+    viajes_activos = cursor.fetchall()
+    conexion.close()
+
+    resultado = request.args.get("resultado", "")
+    return render_template(
+        "admin/lote.html",
+        rutas=rutas,
+        viajes_activos=viajes_activos,
+        estados=_ESTADOS_VIAJE,
+        resultado=resultado,
+    )
+
+
+@admin_bp.route("/lote/preview", methods=["GET"])
+def lote_preview():
+    if not requiere_admin():
+        return jsonify({"count": 0})
+
+    criterio = request.args.get("criterio", "")
+    valor = request.args.get("valor", "").strip()
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    try:
+        if criterio == "sin_precio":
+            cursor.execute("""
+                SELECT COUNT(*) FROM viajes
+                WHERE LOWER(estado) NOT IN ('entregado','cancelado')
+                  AND (precio_cliente IS NULL OR precio_cliente = 0)
+                  AND (precio_final   IS NULL OR precio_final   = 0)
+                  AND (precio         IS NULL OR precio         = 0)
+            """)
+        elif criterio == "estado" and valor:
+            cursor.execute(
+                "SELECT COUNT(*) FROM viajes WHERE LOWER(estado) = LOWER(?)", (valor,)
+            )
+        elif criterio == "ruta" and valor:
+            cursor.execute(
+                "SELECT COUNT(*) FROM viajes WHERE ruta_id = ?", (valor,)
+            )
+        else:
+            cursor.execute(
+                "SELECT COUNT(*) FROM viajes WHERE LOWER(estado) NOT IN ('entregado','cancelado')"
+            )
+        count = cursor.fetchone()[0]
+    except Exception:
+        count = 0
+    finally:
+        conexion.close()
+
+    return jsonify({"count": count})
+
+
+@admin_bp.route("/lote/precios", methods=["POST"])
+def lote_precios():
+    if not requiere_admin():
+        return redirect("/login")
+
+    criterio = request.form.get("criterio", "").strip()
+    valor_criterio = request.form.get("valor_criterio", "").strip()
+    motivo = request.form.get("motivo", "").strip()
+
+    try:
+        precio_nuevo = float(request.form.get("precio_nuevo", 0))
+        if precio_nuevo <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return redirect("/admin/lote?resultado=Error:+precio+inválido")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    if criterio == "sin_precio":
+        cursor.execute("""
+            UPDATE viajes SET precio_cliente = ?, precio_final = ?
+            WHERE LOWER(estado) NOT IN ('entregado','cancelado')
+              AND (precio_cliente IS NULL OR precio_cliente = 0)
+              AND (precio_final   IS NULL OR precio_final   = 0)
+              AND (precio         IS NULL OR precio         = 0)
+        """, (precio_nuevo, precio_nuevo))
+    elif criterio == "estado" and valor_criterio:
+        cursor.execute("""
+            UPDATE viajes SET precio_cliente = ?, precio_final = ?
+            WHERE LOWER(estado) = LOWER(?)
+        """, (precio_nuevo, precio_nuevo, valor_criterio))
+    elif criterio == "ruta" and valor_criterio:
+        cursor.execute("""
+            UPDATE viajes SET precio_cliente = ?, precio_final = ?
+            WHERE ruta_id = ?
+        """, (precio_nuevo, precio_nuevo, valor_criterio))
+    else:
+        cursor.execute("""
+            UPDATE viajes SET precio_cliente = ?, precio_final = ?
+            WHERE LOWER(estado) NOT IN ('entregado','cancelado')
+        """, (precio_nuevo, precio_nuevo))
+
+    n = cursor.rowcount
+    conexion.commit()
+    conexion.close()
+
+    registrar_auditoria(
+        f"Precio masivo ${precio_nuevo} aplicado a {n} viajes. Motivo: {motivo}",
+        "Viajes", "viajes"
+    )
+    from urllib.parse import quote_plus as qp
+    return redirect(f"/admin/lote?resultado={qp(str(n) + ' viajes actualizados con precio $' + str(precio_nuevo))}")
+
+
+@admin_bp.route("/lote/estados", methods=["POST"])
+def lote_estados():
+    if not requiere_admin():
+        return redirect("/login")
+
+    estado_origen = request.form.get("estado_origen", "").strip()
+    estado_destino = request.form.get("estado_destino", "").strip()
+    motivo = request.form.get("motivo", "").strip()
+
+    if not estado_origen or not estado_destino:
+        return redirect("/admin/lote?resultado=Error:+faltan+estados")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute(
+        "UPDATE viajes SET estado = ? WHERE LOWER(estado) = LOWER(?)",
+        (estado_destino, estado_origen)
+    )
+    n = cursor.rowcount
+    conexion.commit()
+    conexion.close()
+
+    registrar_auditoria(
+        f"Cambio masivo de estado: {estado_origen} → {estado_destino} ({n} viajes). Motivo: {motivo}",
+        "Viajes", "viajes"
+    )
+    from urllib.parse import quote_plus as qp
+    return redirect(f"/admin/lote?resultado={qp(str(n) + ' viajes cambiados a ' + estado_destino)}")
+
+
+@admin_bp.route("/lote/viajes-seleccionados", methods=["POST"])
+def lote_seleccionados():
+    if not requiere_admin():
+        return redirect("/login")
+
+    ids_raw = request.form.getlist("ids[]")
+    accion = request.form.get("accion", "").strip()
+    valor = request.form.get("valor", "").strip()
+    motivo = request.form.get("motivo", "").strip()
+
+    try:
+        ids = [int(i) for i in ids_raw if i.isdigit()]
+    except Exception:
+        ids = []
+
+    if not ids:
+        return redirect("/admin/lote?resultado=Error:+no+se+seleccionaron+viajes")
+
+    placeholders = ",".join("?" * len(ids))
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    if accion == "precio":
+        try:
+            precio = float(valor)
+        except (ValueError, TypeError):
+            conexion.close()
+            return redirect("/admin/lote?resultado=Error:+precio+inválido")
+        cursor.execute(
+            f"UPDATE viajes SET precio_cliente = ?, precio_final = ? WHERE id IN ({placeholders})",
+            [precio, precio] + ids
+        )
+        detalle = f"precio ${precio}"
+    elif accion == "estado":
+        cursor.execute(
+            f"UPDATE viajes SET estado = ? WHERE id IN ({placeholders})",
+            [valor] + ids
+        )
+        detalle = f"estado '{valor}'"
+    else:
+        conexion.close()
+        return redirect("/admin/lote?resultado=Error:+acción+desconocida")
+
+    n = cursor.rowcount
+    conexion.commit()
+    conexion.close()
+
+    registrar_auditoria(
+        f"Acción manual por lote sobre {n} viajes: {detalle}. Motivo: {motivo}",
+        "Viajes", "viajes"
+    )
+    from urllib.parse import quote_plus as qp
+    return redirect(f"/admin/lote?resultado={qp(str(n) + ' viajes actualizados (' + detalle + ')')}")
