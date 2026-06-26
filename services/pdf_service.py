@@ -279,6 +279,210 @@ def generar_pdf_orden_carga(viaje: dict) -> bytes:
     return buffer.read()
 
 
+def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
+    from services.finanzas_service import calcular_liquidacion
+
+    db_path = os.path.join(_BASE_DIR, "mercatoria.db")
+    con = sqlite3.connect(db_path)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute("""
+        SELECT
+            v.*,
+            c.nombre   AS cam_nombre,
+            c.telefono AS cam_telefono,
+            c.licencia AS cam_licencia,
+            r.nombre   AS ruta_nombre,
+            r.km_oficiales
+        FROM viajes v
+        LEFT JOIN camioneros c ON v.camionero_id = c.id
+        LEFT JOIN rutas      r ON v.ruta_id      = r.id
+        WHERE v.id = ?
+    """, (viaje_id,))
+    row = cur.fetchone()
+    con.close()
+
+    if not row:
+        raise ValueError(f"Viaje #{viaje_id} no encontrado.")
+    v = dict(row)
+    if not v.get("camionero_id"):
+        raise ValueError("El viaje no tiene camionero asignado.")
+
+    liq = calcular_liquidacion(viaje_id)
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        rightMargin=2 * cm, leftMargin=2 * cm,
+        topMargin=2 * cm, bottomMargin=2 * cm,
+    )
+    es = _estilos()
+    elems = []
+
+    fecha_emision = datetime.now().strftime("%d/%m/%Y")
+    liq_num = v.get("id", 0)
+
+    # ── Cabecera ──────────────────────────────────────────────────────────────
+    logo_cell = ""
+    if os.path.exists(_LOGO_PATH):
+        logo_cell = Image(_LOGO_PATH, width=5 * cm, height=2.5 * cm, kind="proportional")
+
+    right_col = Table(
+        [
+            [Paragraph("LIQUIDACION DE CAMIONERO", es["titulo"])],
+            [Paragraph(f"LIQ-{liq_num:04d}", es["numero"])],
+            [Paragraph(f"Fecha de emision: {fecha_emision}", es["fecha"])],
+        ],
+        colWidths=[8 * cm],
+    )
+    right_col.setStyle(TableStyle([
+        ("ALIGN",         (0, 0), (-1, -1), "RIGHT"),
+        ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING",    (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
+    ]))
+    cabecera = Table([[logo_cell, right_col]], colWidths=[9 * cm, 8 * cm])
+    cabecera.setStyle(TableStyle([
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING",    (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    elems.append(cabecera)
+    elems.append(HRFlowable(width="100%", thickness=2, color=NARANJA, spaceAfter=10))
+
+    # ── Datos del camionero ───────────────────────────────────────────────────
+    elems.append(_seccion("DATOS DEL CAMIONERO", es["seccion"]))
+    elems.append(Spacer(1, 8))
+    t = Table(
+        [
+            [Paragraph("NOMBRE", es["label"]), Paragraph("TELEFONO", es["label"]), Paragraph("LICENCIA", es["label"])],
+            [
+                Paragraph(str(v.get("cam_nombre") or "---"), es["valor"]),
+                Paragraph(str(v.get("cam_telefono") or "---"), es["valor"]),
+                Paragraph(str(v.get("cam_licencia") or "---"), es["valor"]),
+            ],
+        ],
+        colWidths=[7 * cm, 5 * cm, 5 * cm],
+    )
+    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2)]))
+    elems.append(t)
+    elems.append(Spacer(1, 12))
+
+    # ── Detalle del viaje ─────────────────────────────────────────────────────
+    elems.append(_seccion("DETALLE DEL VIAJE", es["seccion"]))
+    elems.append(Spacer(1, 8))
+    ruta_texto = v.get("ruta_nombre") or f"{v.get('origen') or '---'} > {v.get('destino') or '---'}"
+    km_of = v.get("km_oficiales")
+    km_of_texto = f"{int(km_of)} km" if km_of else "---"
+    km_liq = liq["km_liquidable"] if liq else 0
+    t = Table(
+        [
+            [Paragraph("RUTA", es["label"]), Paragraph("KM OFICIALES", es["label"]), Paragraph("KM LIQUIDABLES", es["label"])],
+            [
+                Paragraph(ruta_texto, es["valor"]),
+                Paragraph(km_of_texto, es["valor"]),
+                Paragraph(f"{int(km_liq)} km", es["valor"]),
+            ],
+        ],
+        colWidths=[7 * cm, 5 * cm, 5 * cm],
+    )
+    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    elems.append(t)
+    elems.append(Spacer(1, 12))
+
+    # ── Resumen financiero ────────────────────────────────────────────────────
+    elems.append(_seccion("RESUMEN FINANCIERO", es["seccion"]))
+    elems.append(Spacer(1, 8))
+
+    th = ParagraphStyle("LiqTH", parent=es["seccion"], leftIndent=0, fontSize=9,
+                        fontName="Helvetica-Bold", textColor=colors.white)
+    td = ParagraphStyle("LiqTD", parent=es["obs"], fontSize=11, textColor=GRIS_TEXTO)
+    td_r = ParagraphStyle("LiqTDR", parent=td, alignment=TA_RIGHT)
+    td_neg = ParagraphStyle("LiqTDNeg", parent=td_r, textColor=colors.HexColor("#c0392b"))
+    td_total = ParagraphStyle("LiqTotal", parent=td_r, fontSize=13,
+                              fontName="Helvetica-Bold", textColor=NARANJA)
+
+    pago_base = liq["pago_camionero"] if liq else 0
+    combustible = liq["combustible"] if liq else 0
+    total_neto = pago_base - combustible
+
+    tabla_data = [
+        [Paragraph("CONCEPTO", th), Paragraph("MONTO (USD)", th)],
+        [Paragraph("Pago base camionero", td), Paragraph(f"${pago_base:,.2f}", td_r)],
+        [Paragraph("Combustible descontado", td), Paragraph(f"-${combustible:,.2f}", td_neg)],
+        [Paragraph("TOTAL NETO A COBRAR", td), Paragraph(f"${total_neto:,.2f}", td_total)],
+    ]
+    tabla = Table(tabla_data, colWidths=[13 * cm, 4 * cm])
+    tabla.setStyle(TableStyle([
+        ("BACKGROUND",    (0, 0), (-1, 0),  NARANJA),
+        ("TOPPADDING",    (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 8),
+        ("LINEBELOW",     (0, 1), (-1, 2),  0.5, colors.HexColor("#dddddd")),
+        ("BACKGROUND",    (0, 3), (-1, 3),  GRIS_FONDO),
+        ("ALIGN",         (1, 0), (1, -1),  "RIGHT"),
+    ]))
+    elems.append(tabla)
+    elems.append(Spacer(1, 10))
+
+    if liq and liq.get("minimo_aplicado"):
+        nota = Table(
+            [[Paragraph(
+                f"Km minimo garantizado aplicado ({int(liq['km_liquidable'])} km en lugar de {int(liq['km_real'])} km reales).",
+                ParagraphStyle("Nota", parent=es["obs"], fontSize=10,
+                               textColor=colors.HexColor("#7a5800")),
+            )]],
+            colWidths=[17 * cm],
+        )
+        nota.setStyle(TableStyle([
+            ("BACKGROUND",    (0, 0), (-1, -1), colors.HexColor("#fff8e6")),
+            ("TOPPADDING",    (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 10),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
+        ]))
+        elems.append(nota)
+        elems.append(Spacer(1, 10))
+
+    # ── Firmas ────────────────────────────────────────────────────────────────
+    elems.append(_seccion("CONFORMIDAD Y FIRMA", es["seccion"]))
+    elems.append(Spacer(1, 32))
+
+    linea = "_" * 28
+    firma_t = Table(
+        [
+            [linea, linea],
+            [
+                Paragraph(str(v.get("cam_nombre") or "Camionero"), es["firma_label"]),
+                Paragraph("Mercatoria Truck", es["firma_label"]),
+            ],
+        ],
+        colWidths=[8 * cm, 8 * cm],
+        hAlign="CENTER",
+    )
+    firma_t.setStyle(TableStyle([
+        ("ALIGN",     (0, 0), (-1, -1), "CENTER"),
+        ("FONTSIZE",  (0, 0), (-1, 0),  10),
+        ("TEXTCOLOR", (0, 0), (-1, 0),  GRIS_TEXTO),
+    ]))
+    elems.append(firma_t)
+
+    # ── Pie ───────────────────────────────────────────────────────────────────
+    elems.append(Spacer(1, 20))
+    elems.append(HRFlowable(width="100%", thickness=1, color=GRIS_FONDO, spaceAfter=6))
+    elems.append(Paragraph(
+        f"Mercatoria Truck - Liquidacion LIQ-{liq_num:04d} - Emitida el {fecha_emision}",
+        es["pie"],
+    ))
+
+    doc.build(elems)
+    buffer.seek(0)
+    return buffer.read()
+
+
 def generar_factura_cliente(viaje_id: int) -> bytes:
     db_path = os.path.join(_BASE_DIR, "mercatoria.db")
     con = sqlite3.connect(db_path)

@@ -327,9 +327,16 @@
                 Carta de Porte (Próximamente)
             </button>
 
-            <button class="btn-secundario" disabled>
-                Liquidación (Próximamente)
+            {% if viaje["camionero_id"] %}
+            <a href="/admin/viaje/{{ viaje['id'] }}/liquidacion"
+               class="btn-secundario btn-link-operacion">
+                Descargar Liquidación Camionero
+            </a>
+            {% else %}
+            <button class="btn-secundario" disabled title="Requiere camionero asignado">
+                Descargar Liquidación Camionero
             </button>
+            {% endif %}
         </div>
 
         {% if cliente_info %}
