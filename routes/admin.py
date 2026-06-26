@@ -1105,8 +1105,8 @@ def exportar_reportes_csv():
 
 # ── Usuarios CRUD ─────────────────────────────────────────────────────────────
 
-@admin_bp.route("/usuarios")
-def admin_usuarios():
+@admin_bp.route("/usuarios", methods=["GET"])
+def lista_usuarios():
     if session.get("rol") != "admin":
         return redirect("/admin")
 
