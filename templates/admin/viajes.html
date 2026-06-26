@@ -2,6 +2,15 @@
 
 {% block contenido %}
 
+{% set bc = {
+    'solicitado': 'badge-warn',
+    'pendiente':  'badge-warn',
+    'asignado':   'badge-active',
+    'en ruta':    'badge-info',
+    'entregado':  'badge-ok',
+    'cancelado':  'badge-danger'
+} %}
+
 <div class="page-header">
     <div>
         <span class="eyebrow">Operaciones</span>
@@ -40,14 +49,12 @@
                     <td>{{ v[2] }}</td>
                     <td>{{ v[3] }}</td>
                     <td>
-                        <span class="estado-pill estado-{{ v[4]|lower|replace(' ', '-') }}">
-                            {{ v[4] }}
-                        </span>
+                        <span class="badge {{ bc.get(v[4]|lower, '') }}">{{ v[4] }}</span>
                     </td>
                     <td>{{ v[5] if v[5] else "Sin asignar" }}</td>
-                    <td class="td-acciones">
+                    <td>
                         <a href="/admin/viaje/{{ v[0] }}"
-                           class="btn-accion-icon"
+                           class="btn-icon-action"
                            title="Gestionar viaje #{{ v[0] }}">
                             <i class="bi bi-sliders"></i>
                         </a>
@@ -64,42 +71,22 @@
 </section>
 
 <style>
-.estado-pill {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    background: #eee;
-    color: #555;
-}
-
-.estado-pill.estado-solicitado { background: #e8f0fe; color: #1a5fb4; }
-.estado-pill.estado-pendiente  { background: #fff3e0; color: #b35a00; }
-.estado-pill.estado-asignado   { background: #f3e8ff; color: #6b21a8; }
-.estado-pill.estado-en-ruta    { background: #e6f7ee; color: #1a7a45; }
-.estado-pill.estado-entregado  { background: #e0f5ee; color: #0d5c32; }
-.estado-pill.estado-cancelado  { background: #fde8e8; color: #c0392b; }
-
-.td-acciones { white-space: nowrap; }
-
-.btn-accion-icon {
+.btn-icon-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 30px;
     height: 30px;
-    border-radius: 6px;
-    background: #e8f4fd;
-    color: #1a6fa0;
+    border-radius: 8px;
+    background: #eef4ff;
+    color: #1d4ed8;
     text-decoration: none;
     font-size: 15px;
     transition: background .15s;
 }
-
-.btn-accion-icon:hover {
-    background: #cce4f7;
-    color: #1a6fa0;
+.btn-icon-action:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
 }
 </style>
 

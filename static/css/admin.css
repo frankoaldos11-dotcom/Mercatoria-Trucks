@@ -400,14 +400,20 @@ body {
 .badge {
     display: inline-flex;
     align-items: center;
-    padding: 6px 10px;
+    padding: 4px 10px;
     border-radius: 999px;
     background: #eef2ff;
     color: #3730a3;
     font-size: 12px;
-    font-weight: 850;
+    font-weight: 700;
     white-space: nowrap;
 }
+
+.badge-warn   { background: #FEF3C7; color: #92400E; }
+.badge-active { background: #EDE9FE; color: #5B21B6; }
+.badge-ok     { background: #D1FAE5; color: #065F46; }
+.badge-danger { background: #FEE2E2; color: #991B1B; }
+.badge-info   { background: #DBEAFE; color: #1E40AF; }
 
 /* LEGACY */
 
