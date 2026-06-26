@@ -20,7 +20,8 @@ from routes.finanzas import finanzas_bp
 
 app = Flask(__name__)
 app.secret_key = "mercatoria-super-secreto"
-app.permanent_session_lifetime = timedelta(hours=8)
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 
 bcrypt.init_app(app)
 

@@ -93,16 +93,32 @@
                         {% endif %}
                     {% else %}
                     <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/confirmar-precio" style="margin:0;margin-top:4px;">
+                        {% if liquidacion and liquidacion.precio_cliente > 0 %}
+                        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                            <input type="number" name="precio_cliente" id="precio-inp-{{ viaje['id'] }}"
+                                   value="{{ '%.2f'|format(liquidacion.precio_cliente) }}"
+                                   step="0.01" min="0.01" readonly
+                                   style="width:85px;padding:5px 8px;border:2px solid #F36B21;border-radius:6px;font-size:13px;font-weight:700;background:#fff8f5;color:#222;"
+                                   required>
+                            <button type="submit"
+                                    style="padding:5px 10px;background:#F36B21;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+                                Confirmar precio calculado
+                            </button>
+                            <a href="#" onclick="editarPrecioViaje('{{ viaje['id'] }}');return false;"
+                               style="font-size:11px;color:#aaa;text-decoration:underline;">Modificar</a>
+                        </div>
+                        {% else %}
                         <div style="display:flex;gap:6px;align-items:center;">
                             <input type="number" name="precio_cliente" step="0.01" min="0.01"
                                    placeholder="0.00"
-                                   style="width:90px;padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;"
+                                   style="width:85px;padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;"
                                    required>
                             <button type="submit"
                                     style="padding:5px 10px;background:#F36B21;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
                                 Confirmar
                             </button>
                         </div>
+                        {% endif %}
                         <span style="color:#e74c3c;font-size:11px;">Sin precio confirmado</span>
                     </form>
                     {% endif %}
@@ -224,6 +240,16 @@
         </div>
 
         <script>
+        function editarPrecioViaje(id) {
+            var inp = document.getElementById('precio-inp-' + id);
+            inp.readOnly = false;
+            inp.style.border = '1px solid #ccc';
+            inp.style.background = '#fff';
+            inp.style.fontWeight = 'normal';
+            inp.focus();
+            inp.select();
+        }
+
         document.getElementById('sel-camionero').addEventListener('change', function () {
             var opt = this.options[this.selectedIndex];
             var box = document.getElementById('vehiculo-asignado-box');
