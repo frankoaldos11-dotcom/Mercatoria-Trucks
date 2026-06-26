@@ -260,8 +260,6 @@ def asignar_camionero(id):
             WHERE id = ?
         """, (camionero_id, fila["nombre"], id))
 
-        cursor.execute("UPDATE camioneros SET estado = 'En viaje' WHERE id = ?", (camionero_id,))
-
     conexion.commit()
     conexion.close()
 
@@ -301,6 +299,16 @@ def cambiar_estado(id):
         if not precio_ok:
             conexion.close()
             return redirect(f"/admin/viajes/{id}/gestionar?error=No+se+puede+poner+En+ruta+sin+precio+cliente+confirmado")
+        cursor.execute("""
+            SELECT id FROM viajes
+            WHERE camionero_id = ?
+              AND id != ?
+              AND estado = 'En ruta'
+              AND DATE(fecha_recogida) = DATE('now')
+        """, (viaje["camionero_id"], id))
+        if cursor.fetchone():
+            conexion.close()
+            return redirect(f"/admin/viajes/{id}/gestionar?error=El+camionero+ya+tiene+otro+viaje+En+ruta+hoy.+Verifica+antes+de+continuar.")
 
     cursor.execute("UPDATE viajes SET estado = ? WHERE id = ?", (estado, id))
 
@@ -313,11 +321,6 @@ def cambiar_estado(id):
         cursor.execute("UPDATE viajes SET fecha_entrega = ? WHERE id = ?", (ahora, id))
 
     if estado.lower() in ["entregado", "cancelado"]:
-        if viaje and viaje["camionero_id"]:
-            cursor.execute(
-                "UPDATE camioneros SET estado = 'Disponible' WHERE id = ?",
-                (viaje["camionero_id"],)
-            )
         if viaje and viaje["vehiculo_id"]:
             cursor.execute(
                 "UPDATE vehiculos SET estado = 'Disponible' WHERE id = ?",
