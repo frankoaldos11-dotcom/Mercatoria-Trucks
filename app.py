@@ -1,7 +1,8 @@
+import os
 from datetime import timedelta
 from flask import Flask, render_template, request, redirect, session
 
-from extensions import bcrypt
+from extensions import bcrypt, mail
 from database import conectar, crear_base_datos
 from migraciones import ejecutar_migraciones
 from utils.constants import ROLES
@@ -23,7 +24,15 @@ app.secret_key = "mercatoria-super-secreto"
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 
+app.config["MAIL_SERVER"]         = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+app.config["MAIL_PORT"]           = int(os.environ.get("MAIL_PORT", 587))
+app.config["MAIL_USE_TLS"]        = True
+app.config["MAIL_USERNAME"]       = os.environ.get("MAIL_USERNAME", "")
+app.config["MAIL_PASSWORD"]       = os.environ.get("MAIL_PASSWORD", "")
+app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@mercatoriatruck.com")
+
 bcrypt.init_app(app)
+mail.init_app(app)
 
 
 @app.context_processor

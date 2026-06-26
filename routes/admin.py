@@ -9,7 +9,8 @@ from urllib.parse import quote_plus
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 import sqlite3
 
-from extensions import bcrypt
+from extensions import bcrypt, mail
+from flask_mail import Message
 from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_por_camionero
 from services.finanzas_service import calcular_liquidacion
 from services.pdf_service import generar_factura_cliente, generar_pdf_orden_carga
@@ -37,6 +38,43 @@ def registrar_auditoria(accion, categoria, entidad=None, entidad_id=None, detall
     ))
     conexion.commit()
     conexion.close()
+
+
+def notificar_cliente_estado(viaje_id, nuevo_estado, email_cliente):
+    if not email_cliente or "@" not in email_cliente:
+        return
+    try:
+        from flask import current_app
+        conexion = conectar()
+        cursor = conexion.cursor()
+        cursor.execute("SELECT clave, valor FROM configuracion_texto")
+        txt = {r["clave"]: r["valor"] for r in cursor.fetchall()}
+        conexion.close()
+        if txt.get("mail_username"):
+            current_app.config["MAIL_USERNAME"] = txt["mail_username"]
+        if txt.get("mail_password"):
+            current_app.config["MAIL_PASSWORD"] = txt["mail_password"]
+
+        emojis = {
+            "Asignado": "🚛", "En ruta": "📍", "Entregado": "✅",
+            "Cancelado": "❌", "Carga recogida": "📦",
+        }
+        emoji = emojis.get(nuevo_estado, "📋")
+        msg = Message(
+            subject=f"{emoji} Tu envío #{viaje_id} está: {nuevo_estado} — Mercatoria Truck",
+            recipients=[email_cliente],
+        )
+        msg.body = (
+            f"Hola,\n\n"
+            f"Tu envío #{viaje_id} ha cambiado de estado.\n\n"
+            f"Estado actual: {nuevo_estado}\n\n"
+            f"Puedes ver el detalle completo en tu portal:\n"
+            f"https://mercatoria-trucks.onrender.com/cliente/viajes/{viaje_id}\n\n"
+            f"— Mercatoria Truck\n"
+        )
+        mail.send(msg)
+    except Exception as e:
+        print(f"Error enviando email: {e}")
 
 
 def requiere_admin():
@@ -297,7 +335,7 @@ def cambiar_estado(id):
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT camionero_id, vehiculo_id, precio_final, precio_cliente, precio, estado
+        SELECT camionero_id, vehiculo_id, precio_final, precio_cliente, precio, estado, cliente_id
         FROM viajes WHERE id = ?
     """, (id,))
     viaje = cursor.fetchone()
@@ -347,8 +385,17 @@ def cambiar_estado(id):
                 (viaje["vehiculo_id"],)
             )
 
+    email_cliente = None
+    if viaje and viaje["cliente_id"]:
+        cursor.execute("SELECT email FROM clientes WHERE id = ?", (viaje["cliente_id"],))
+        cli = cursor.fetchone()
+        email_cliente = cli["email"] if cli else None
+
     conexion.commit()
     conexion.close()
+
+    if estado in ["Asignado", "En ruta", "Carga recogida", "Entregado", "Cancelado"]:
+        notificar_cliente_estado(id, estado, email_cliente)
 
     registrar_auditoria(
         f"Cambió estado a {estado}", "Viajes", "viaje", id,

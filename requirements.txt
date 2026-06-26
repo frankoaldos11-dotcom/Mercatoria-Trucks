@@ -3,3 +3,4 @@ gunicorn
 flask-bcrypt
 reportlab
 openpyxl
+flask-mail
