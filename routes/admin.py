@@ -8,7 +8,7 @@ import sqlite3
 
 from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_por_camionero
 from services.finanzas_service import calcular_liquidacion
-from services.pdf_service import generar_pdf_orden_carga
+from services.pdf_service import generar_factura_cliente, generar_pdf_orden_carga
 from utils.constants import CAMIONERO_ESTADOS, VEHICULO_ESTADOS
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -391,6 +391,24 @@ def descargar_pdf_orden_carga(id):
         mimetype="application/pdf",
         as_attachment=True,
         download_name=f"orden-carga-{id:04d}.pdf",
+    )
+
+
+@admin_bp.route("/viaje/<int:id>/factura")
+def descargar_factura_cliente(id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    try:
+        pdf_bytes = generar_factura_cliente(id)
+    except ValueError as e:
+        return redirect(f"/admin/viajes/{id}/gestionar?error={e}")
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"factura-{id:04d}.pdf",
     )
 
 

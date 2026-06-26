@@ -228,8 +228,22 @@
 
             <a href="/admin/viaje/{{ viaje['id'] }}/pdf"
                class="btn-pdf btn-link-operacion">
-                Descargar PDF
+                Descargar PDF Orden de Carga
             </a>
+
+            {% set _precio_ok = (viaje["precio_final"] and viaje["precio_final"]|float > 0)
+                              or (viaje["precio_cliente"] and viaje["precio_cliente"]|float > 0)
+                              or (viaje["precio"] and viaje["precio"]|float > 0) %}
+            {% if viaje["cliente"] and _precio_ok and viaje["estado"]|lower != "cancelado" %}
+            <a href="/admin/viaje/{{ viaje['id'] }}/factura"
+               class="btn-factura btn-link-operacion">
+                Descargar Factura Cliente
+            </a>
+            {% else %}
+            <button class="btn-secundario" disabled title="Requiere cliente, precio confirmado y estado no cancelado">
+                Descargar Factura Cliente
+            </button>
+            {% endif %}
 
             <button class="btn-secundario" disabled>
                 Carta de Porte (Próximamente)
@@ -475,6 +489,21 @@
     text-decoration: none;
     box-sizing: border-box;
     margin-bottom: 8px;
+}
+
+.btn-factura {
+    width: 100%;
+    background: #27ae60;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.btn-factura:hover {
+    background: #219150;
+    color: white;
 }
 
 .alerta-error {
