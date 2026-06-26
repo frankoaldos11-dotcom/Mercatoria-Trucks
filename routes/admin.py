@@ -256,13 +256,16 @@ def gestionar_viaje(id):
     obs_parsed = _parsear_observaciones(viaje["observaciones"])
 
     _transiciones = {
-        "solicitado": ["Asignado", "Cancelado"],
-        "pendiente":  ["Asignado", "Cancelado"],
-        "asignado":   ["En ruta", "Cancelado"],
-        "en ruta":    ["Entregado", "Cancelado"],
-        "en_ruta":    ["Entregado", "Cancelado"],
-        "entregado":  ["En ruta", "Cancelado"],
-        "cancelado":  ["Solicitado"],
+        "solicitado":         ["Asignado", "En ruta", "Carga recogida", "Entregado", "Cancelado"],
+        "pendiente":          ["Asignado", "En ruta", "Carga recogida", "Entregado", "Cancelado"],
+        "asignado":           ["En ruta", "Carga recogida", "Entregado", "Cancelado"],
+        "en ruta":            ["Carga recogida", "Entregado", "Asignado", "Cancelado"],
+        "en_ruta":            ["Carga recogida", "Entregado", "Asignado", "Cancelado"],
+        "carga recogida":     ["En ruta", "Entregado", "Cancelado"],
+        "pendiente de pago":  ["Confirmado", "Entregado", "Cancelado"],
+        "confirmado":         ["En ruta", "Carga recogida", "Entregado", "Cancelado"],
+        "entregado":          ["En ruta", "Asignado", "Cancelado"],
+        "cancelado":          ["Solicitado", "Asignado"],
     }
     estado_norm = (viaje["estado"] or "").lower()
     estados_validos = _transiciones.get(estado_norm, ["Asignado", "En ruta", "Entregado", "Cancelado"])
@@ -352,29 +355,6 @@ def cambiar_estado(id):
         if not viaje or not viaje["camionero_id"] or not viaje["vehiculo_id"]:
             conexion.close()
             return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+Asignado+debes+asignar+un+camionero+y+un+veh%C3%ADculo")
-
-    if estado == "En ruta":
-        if not viaje or not viaje["camionero_id"] or not viaje["vehiculo_id"]:
-            conexion.close()
-            return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+En+ruta+se+requiere+camionero+y+veh%C3%ADculo+asignados")
-        precio_ok = (
-            float(viaje["precio_final"] or 0) > 0
-            or float(viaje["precio_cliente"] or 0) > 0
-            or float(viaje["precio"] or 0) > 0
-        ) if viaje else False
-        if not precio_ok:
-            conexion.close()
-            return redirect(f"/admin/viajes/{id}/gestionar?error=No+se+puede+poner+En+ruta+sin+precio+cliente+confirmado")
-        cursor.execute("""
-            SELECT id FROM viajes
-            WHERE camionero_id = ?
-              AND id != ?
-              AND estado = 'En ruta'
-              AND DATE(fecha_recogida) = DATE('now')
-        """, (viaje["camionero_id"], id))
-        if cursor.fetchone():
-            conexion.close()
-            return redirect(f"/admin/viajes/{id}/gestionar?error=El+camionero+ya+tiene+otro+viaje+En+ruta+hoy.+Verifica+antes+de+continuar.")
 
     cursor.execute("UPDATE viajes SET estado = ? WHERE id = ?", (estado, id))
 
