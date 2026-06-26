@@ -311,6 +311,10 @@ def generar_factura_cliente(viaje_id: int) -> bytes:
     if not v.get("cliente") and not v.get("cliente_id"):
         raise ValueError("El viaje no tiene cliente asignado.")
 
+    nombre_check = v.get("cli_nombre") or ""
+    if not nombre_check.strip() or "@" in nombre_check:
+        raise ValueError("El cliente no tiene nombre real registrado. Ve a Clientes, edita el registro y agrega el nombre antes de generar la factura.")
+
     precio = (
         float(v.get("precio_final") or 0)
         or float(v.get("precio_cliente") or 0)
@@ -330,8 +334,6 @@ def _construir_pdf_factura(v: dict, precio: float) -> bytes:
         topMargin=2 * cm, bottomMargin=2 * cm,
     )
     es = _estilos()
-
-    VERDE = colors.HexColor("#27ae60")
 
     estilo_label_fac = ParagraphStyle(
         "LabelFac", parent=es["label"],
@@ -476,7 +478,7 @@ def _construir_pdf_factura(v: dict, precio: float) -> bytes:
         colWidths=[17 * cm],
     )
     total_box.setStyle(TableStyle([
-        ("BACKGROUND",    (0, 0), (-1, -1), VERDE),
+        ("BACKGROUND",    (0, 0), (-1, -1), NARANJA),
         ("TOPPADDING",    (0, 0), (-1, -1), 8),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
         ("ALIGN",         (0, 0), (-1, -1), "CENTER"),
@@ -484,26 +486,6 @@ def _construir_pdf_factura(v: dict, precio: float) -> bytes:
     ]))
     elems.append(total_box)
     elems.append(Spacer(1, 14))
-
-    # ── Condiciones de pago ───────────────────────────────────────────────────
-    elems.append(_seccion("CONDICIONES DE PAGO", estilo_seccion_fac))
-    elems.append(Spacer(1, 8))
-    condiciones_txt = (
-        "• Pago neto a 30 días de la fecha de emisión de esta factura.<br/>"
-        "• Formas de pago aceptadas: transferencia bancaria o efectivo.<br/>"
-        "• En caso de mora se aplicará un recargo del 2% mensual sobre el saldo pendiente.<br/>"
-        "• Esta factura es válida como comprobante de servicio prestado."
-    )
-    cond_table = Table([[Paragraph(condiciones_txt, estilo_condiciones)]], colWidths=[17 * cm])
-    cond_table.setStyle(TableStyle([
-        ("BACKGROUND",    (0, 0), (-1, -1), GRIS_FONDO),
-        ("TOPPADDING",    (0, 0), (-1, -1), 10),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 12),
-        ("RIGHTPADDING",  (0, 0), (-1, -1), 12),
-    ]))
-    elems.append(cond_table)
-    elems.append(Spacer(1, 20))
 
     # ── Firmas ────────────────────────────────────────────────────────────────
     elems.append(_seccion("CONFORMIDAD Y FIRMA", estilo_seccion_fac))
