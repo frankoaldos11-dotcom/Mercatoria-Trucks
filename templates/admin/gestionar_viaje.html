@@ -80,13 +80,32 @@
 
                 <div>
                     <label>Precio cliente</label>
-                    <p>{% if viaje["precio_final"] and viaje["precio_final"]|float > 0 %}
-                        ${{ "%.2f"|format(viaje["precio_final"]|float) }}
-                    {% elif viaje["precio"] and viaje["precio"]|float > 0 %}
-                        ${{ "%.2f"|format(viaje["precio"]|float) }}
+                    {% set _precio_confirmado = (viaje["precio_final"] and viaje["precio_final"]|float > 0)
+                                             or (viaje["precio_cliente"] and viaje["precio_cliente"]|float > 0)
+                                             or (viaje["precio"] and viaje["precio"]|float > 0) %}
+                    {% if _precio_confirmado %}
+                        {% if viaje["precio_final"] and viaje["precio_final"]|float > 0 %}
+                        <p>${{ "%.2f"|format(viaje["precio_final"]|float) }}</p>
+                        {% elif viaje["precio_cliente"] and viaje["precio_cliente"]|float > 0 %}
+                        <p>${{ "%.2f"|format(viaje["precio_cliente"]|float) }}</p>
+                        {% else %}
+                        <p>${{ "%.2f"|format(viaje["precio"]|float) }}</p>
+                        {% endif %}
                     {% else %}
-                        <span style="color:#e74c3c">Sin precio confirmado</span>
-                    {% endif %}</p>
+                    <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/confirmar-precio" style="margin:0;margin-top:4px;">
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <input type="number" name="precio_cliente" step="0.01" min="0.01"
+                                   placeholder="0.00"
+                                   style="width:90px;padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;"
+                                   required>
+                            <button type="submit"
+                                    style="padding:5px 10px;background:#F36B21;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+                                Confirmar
+                            </button>
+                        </div>
+                        <span style="color:#e74c3c;font-size:11px;">Sin precio confirmado</span>
+                    </form>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -155,24 +174,24 @@
         <div class="card bloque estado-bloque">
             <h2 class="estado-titulo">Cambiar estado</h2>
 
+            {% if estados_validos %}
             <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/estado">
-
                 <label>Nuevo estado</label>
-
                 <select name="estado" class="input input-estado" required>
-                    <option value="Solicitado" {% if viaje["estado"] in ["Solicitado", "solicitado"] %}selected{% endif %}>Solicitado</option>
-                    <option value="Pendiente" {% if viaje["estado"] in ["Pendiente", "pendiente"] %}selected{% endif %}>Pendiente</option>
-                    <option value="Asignado" {% if viaje["estado"] in ["Asignado", "asignado"] %}selected{% endif %}>Asignado ⚠ requiere camionero + vehículo</option>
-                    <option value="En ruta" {% if viaje["estado"] in ["En ruta", "en_ruta"] %}selected{% endif %}>En ruta ⚠ requiere precio confirmado</option>
-                    <option value="Entregado" {% if viaje["estado"] in ["Entregado", "entregado"] %}selected{% endif %}>Entregado</option>
-                    <option value="Cancelado" {% if viaje["estado"] in ["Cancelado", "cancelado"] %}selected{% endif %}>Cancelado</option>
+                    {% for e in estados_validos %}
+                    <option value="{{ e }}">{{ e }}{% if e == "Asignado" %} ⚠ requiere camionero + vehículo{% elif e == "En ruta" %} ⚠ requiere camionero, vehículo y precio{% endif %}</option>
+                    {% endfor %}
                 </select>
-
                 <button class="btn-estado" type="submit">
                     Actualizar estado
                 </button>
-
             </form>
+            {% else %}
+            <p style="color:#777;font-size:13px;margin:0;">
+                El viaje está en estado <strong>{{ viaje["estado"] }}</strong>.<br>
+                No hay transiciones disponibles.
+            </p>
+            {% endif %}
         </div>
 
         <div class="card bloque">
@@ -221,15 +240,23 @@
         <div class="card bloque operaciones-box">
             <h2>Operaciones</h2>
 
+            {% if orden_carga_ok %}
             <a href="/admin/viajes/{{ viaje['id'] }}/orden-carga"
                class="btn-principal btn-link-operacion">
                 Ver Orden de Carga
             </a>
-
             <a href="/admin/viaje/{{ viaje['id'] }}/pdf"
                class="btn-pdf btn-link-operacion">
                 Descargar PDF Orden de Carga
             </a>
+            {% else %}
+            <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">
+                Ver Orden de Carga
+            </button>
+            <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">
+                Descargar PDF Orden de Carga
+            </button>
+            {% endif %}
 
             {% set _precio_ok = (viaje["precio_final"] and viaje["precio_final"]|float > 0)
                               or (viaje["precio_cliente"] and viaje["precio_cliente"]|float > 0)

@@ -2,6 +2,7 @@ import csv
 import io
 import json
 from datetime import date, datetime
+from urllib.parse import quote_plus
 
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 import sqlite3
@@ -149,6 +150,32 @@ def gestionar_viaje(id):
     liquidacion = calcular_liquidacion(id)
     error = request.args.get("error")
 
+    _transiciones = {
+        "solicitado": ["Asignado", "Cancelado"],
+        "pendiente":  ["Asignado", "Cancelado"],
+        "asignado":   ["En ruta", "Cancelado"],
+        "en ruta":    ["Entregado", "Cancelado"],
+        "en_ruta":    ["Entregado", "Cancelado"],
+        "entregado":  [],
+        "cancelado":  [],
+    }
+    estado_norm = (viaje["estado"] or "").lower()
+    estados_validos = _transiciones.get(estado_norm, ["Asignado", "En ruta", "Entregado", "Cancelado"])
+
+    orden_faltantes = []
+    if not viaje["cliente"]:
+        orden_faltantes.append("cliente")
+    if not viaje["camionero_nombre"] and not viaje["camionero_id"]:
+        orden_faltantes.append("camionero")
+    if not viaje["vehiculo_id"]:
+        orden_faltantes.append("vehículo")
+    if not viaje["origen"]:
+        orden_faltantes.append("origen")
+    if not viaje["destino"]:
+        orden_faltantes.append("destino")
+    orden_carga_ok = len(orden_faltantes) == 0
+    orden_carga_tooltip = "Falta: " + ", ".join(orden_faltantes) if orden_faltantes else ""
+
     return render_template(
         "admin/gestionar_viaje.html",
         viaje=viaje,
@@ -158,6 +185,9 @@ def gestionar_viaje(id):
         tipo_vehiculo_nombre=tipo_vehiculo_nombre,
         tarifa_info=tarifa_info,
         error=error,
+        estados_validos=estados_validos,
+        orden_carga_ok=orden_carga_ok,
+        orden_carga_tooltip=orden_carga_tooltip,
     )
 
 
@@ -200,7 +230,7 @@ def cambiar_estado(id):
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT camionero_id, vehiculo_id, precio_final, precio_cliente, precio
+        SELECT camionero_id, vehiculo_id, precio_final, precio_cliente, precio, estado
         FROM viajes WHERE id = ?
     """, (id,))
     viaje = cursor.fetchone()
@@ -211,6 +241,9 @@ def cambiar_estado(id):
             return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+Asignado+debes+asignar+un+camionero+y+un+veh%C3%ADculo")
 
     if estado == "En ruta":
+        if not viaje or not viaje["camionero_id"] or not viaje["vehiculo_id"]:
+            conexion.close()
+            return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+En+ruta+se+requiere+camionero+y+veh%C3%ADculo+asignados")
         precio_ok = (
             float(viaje["precio_final"] or 0) > 0
             or float(viaje["precio_cliente"] or 0) > 0
@@ -219,6 +252,12 @@ def cambiar_estado(id):
         if not precio_ok:
             conexion.close()
             return redirect(f"/admin/viajes/{id}/gestionar?error=No+se+puede+poner+En+ruta+sin+precio+cliente+confirmado")
+
+    if estado == "Entregado":
+        estado_actual = (viaje["estado"] or "").lower().replace("_", " ") if viaje else ""
+        if estado_actual != "en ruta":
+            conexion.close()
+            return redirect(f"/admin/viajes/{id}/gestionar?error=Solo+se+puede+marcar+como+Entregado+cuando+el+viaje+est%C3%A1+En+ruta")
 
     cursor.execute("UPDATE viajes SET estado = ? WHERE id = ?", (estado, id))
 
@@ -384,6 +423,22 @@ def descargar_pdf_orden_carga(id):
         return redirect("/admin/viajes")
 
     viaje = dict(fila)
+
+    faltantes_oc = []
+    if not viaje.get("cliente"):
+        faltantes_oc.append("cliente")
+    if not viaje.get("camionero_nombre") and not viaje.get("camionero_id"):
+        faltantes_oc.append("camionero")
+    if not viaje.get("vehiculo_id"):
+        faltantes_oc.append("vehículo")
+    if not viaje.get("origen"):
+        faltantes_oc.append("origen")
+    if not viaje.get("destino"):
+        faltantes_oc.append("destino")
+    if faltantes_oc:
+        msg = quote_plus("Faltan datos para Orden de Carga: " + ", ".join(faltantes_oc))
+        return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
+
     pdf_bytes = generar_pdf_orden_carga(viaje)
 
     return send_file(
@@ -410,6 +465,28 @@ def descargar_factura_cliente(id):
         as_attachment=True,
         download_name=f"factura-{id:04d}.pdf",
     )
+
+
+@admin_bp.route("/viaje/<int:id>/confirmar-precio", methods=["POST"])
+def confirmar_precio(id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    precio_str = request.form.get("precio_cliente", "").strip()
+    try:
+        precio = float(precio_str)
+        if precio <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return redirect(f"/admin/viajes/{id}/gestionar?error=Precio+inv%C3%A1lido%2C+debe+ser+un+n%C3%BAmero+mayor+que+cero")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("UPDATE viajes SET precio_cliente = ? WHERE id = ?", (precio, id))
+    conexion.commit()
+    conexion.close()
+
+    return redirect(f"/admin/viajes/{id}/gestionar")
 
 
 @admin_bp.route("/cotizacion/<int:id>/convertir")
