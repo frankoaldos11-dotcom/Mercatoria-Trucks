@@ -6,7 +6,7 @@
     <div>
         <span class="eyebrow">Motor Comercial</span>
         <h1>Rutas</h1>
-        <p>Rutas fijas con kilómetros oficiales para calcular tarifas logísticas.</p>
+        <p>Rutas fijas con kilómetros oficiales y tarifas por km para liquidación.</p>
     </div>
 </div>
 
@@ -23,7 +23,6 @@
         <input name="destino" placeholder="Destino" required>
         <input name="zona" placeholder="Zona">
         <input name="km" type="number" step="0.1" placeholder="Km oficiales" required>
-
         <button type="submit" class="btn-submit">Añadir ruta</button>
     </form>
 </section>
@@ -32,7 +31,7 @@
     <div class="panel-header">
         <div>
             <h2>Rutas registradas</h2>
-            <p>Listado de rutas activas disponibles para cotización.</p>
+            <p>Tarifa/km propia sobreescribe la tarifa global en la liquidación. Si está vacía, se usa la global.</p>
         </div>
     </div>
 
@@ -45,6 +44,8 @@
                     <th>Destino</th>
                     <th>Zona</th>
                     <th>Km oficiales</th>
+                    <th>Tarifa/km</th>
+                    <th>Camioneros</th>
                 </tr>
             </thead>
             <tbody>
@@ -55,15 +56,265 @@
                     <td>{{ r["destino"] }}</td>
                     <td>{{ r["zona"] or "—" }}</td>
                     <td>{{ r["km_oficiales"] }}</td>
+                    <td class="td-tarifa">
+                        <span class="tarifa-display" id="disp-{{ r['id'] }}">
+                            {% if r["tarifa_km"] is not none and r["tarifa_km"] != "" %}
+                                <strong>${{ "%.2f"|format(r["tarifa_km"]|float) }}</strong>/km
+                            {% else %}
+                                <span class="badge-global">Global</span>
+                            {% endif %}
+                        </span>
+                        <form method="POST" action="/admin/comercial/rutas/{{ r['id'] }}/tarifa"
+                              class="tarifa-form" id="form-t-{{ r['id'] }}" style="display:none;">
+                            <input type="number" name="tarifa_km" step="0.01" min="0"
+                                   value="{{ r['tarifa_km'] or '' }}"
+                                   placeholder="USD/km"
+                                   class="input-tarifa">
+                            <button type="submit" class="btn-save-sm" title="Guardar">✓</button>
+                            <button type="button" class="btn-cancel-sm" onclick="cancelEdit({{ r['id'] }})" title="Cancelar">✕</button>
+                        </form>
+                        <button type="button" class="btn-edit-sm" id="btn-e-{{ r['id'] }}"
+                                onclick="startEdit({{ r['id'] }})">Editar</button>
+                    </td>
+                    <td>
+                        <button type="button"
+                                class="btn-camioneros-toggle"
+                                onclick="toggleCamioneros({{ r['id'] }})">
+                            {% set n = camioneros_por_ruta[r['id']]|length %}
+                            {{ n }} {{ "camionero" if n == 1 else "camioneros" }}
+                            <span class="chevron" id="chev-{{ r['id'] }}">▸</span>
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- Fila expandible: camioneros de esta ruta -->
+                <tr id="row-cam-{{ r['id'] }}" style="display:none;" class="sub-row">
+                    <td colspan="7">
+                        <div class="camioneros-panel">
+                            <div class="camioneros-asignados">
+                                {% for c in camioneros_por_ruta[r['id']] %}
+                                <span class="cam-chip">
+                                    <span class="cam-chip-dot estado-{{ c['estado']|lower|replace(' ', '-') }}"></span>
+                                    {{ c["nombre"] }}
+                                    <form method="POST"
+                                          action="/admin/comercial/rutas/{{ r['id'] }}/camioneros/{{ c['id'] }}/desasociar"
+                                          style="display:inline;"
+                                          onsubmit="return confirm('¿Desasociar {{ c["nombre"] }} de esta ruta?')">
+                                        <button type="submit" class="chip-remove" title="Desasociar">×</button>
+                                    </form>
+                                </span>
+                                {% else %}
+                                <span class="cam-vacio">Sin camioneros asignados a esta ruta</span>
+                                {% endfor %}
+                            </div>
+
+                            <form method="POST"
+                                  action="/admin/comercial/rutas/{{ r['id'] }}/camioneros/asignar"
+                                  class="form-add-cam">
+                                <select name="camionero_id" class="input-cam-sel" required>
+                                    <option value="">Añadir camionero a esta ruta...</option>
+                                    {% for c in todos_camioneros %}
+                                    {% if c["id"] not in ids_asignados_por_ruta[r["id"]] %}
+                                    <option value="{{ c['id'] }}">{{ c['nombre'] }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn-add-cam">+ Añadir</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="empty-state">Sin rutas todavía.</td>
+                    <td colspan="7" class="empty-state">Sin rutas todavía.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </section>
+
+<style>
+.td-tarifa { min-width: 160px; }
+
+.badge-global {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #f0f0f0;
+    color: #888;
+    letter-spacing: .03em;
+}
+
+.btn-edit-sm {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fafafa;
+    color: #555;
+    cursor: pointer;
+}
+.btn-edit-sm:hover { background: #eee; }
+
+.tarifa-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.input-tarifa {
+    width: 80px;
+    padding: 4px 8px;
+    border: 1px solid #F36B21;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.btn-save-sm, .btn-cancel-sm {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+}
+.btn-save-sm  { background: #2ecc71; color: #fff; }
+.btn-cancel-sm { background: #eee; color: #555; }
+
+.btn-camioneros-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-camioneros-toggle:hover { background: #f0f0f0; border-color: #ccc; }
+
+.chevron { font-size: 11px; transition: transform .2s; }
+.chevron.open { transform: rotate(90deg); }
+
+.sub-row td { background: #f9f9f9; padding: 16px 20px; }
+
+.camioneros-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.camioneros-asignados {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 32px;
+    align-items: center;
+}
+
+.cam-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.cam-chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    flex-shrink: 0;
+}
+.cam-chip-dot.estado-disponible { background: #2ecc71; }
+.cam-chip-dot.estado-en-viaje   { background: #F36B21; }
+.cam-chip-dot.estado-ocupado    { background: #e67e22; }
+.cam-chip-dot.estado-inactivo   { background: #bbb; }
+
+.chip-remove {
+    background: none;
+    border: none;
+    font-size: 16px;
+    line-height: 1;
+    color: #aaa;
+    cursor: pointer;
+    padding: 0 2px;
+}
+.chip-remove:hover { color: #c0392b; }
+
+.cam-vacio {
+    font-size: 13px;
+    color: #aaa;
+    font-style: italic;
+}
+
+.form-add-cam {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.input-cam-sel {
+    flex: 1;
+    max-width: 320px;
+    padding: 7px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    background: #fff;
+}
+.input-cam-sel:focus { outline: none; border-color: #F36B21; }
+
+.btn-add-cam {
+    padding: 7px 16px;
+    background: #F36B21;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-add-cam:hover { background: #d95714; }
+</style>
+
+<script>
+function startEdit(id) {
+    document.getElementById('disp-' + id).style.display = 'none';
+    document.getElementById('btn-e-' + id).style.display = 'none';
+    document.getElementById('form-t-' + id).style.display = 'inline-flex';
+    document.querySelector('#form-t-' + id + ' .input-tarifa').focus();
+}
+
+function cancelEdit(id) {
+    document.getElementById('disp-' + id).style.display = '';
+    document.getElementById('btn-e-' + id).style.display = '';
+    document.getElementById('form-t-' + id).style.display = 'none';
+}
+
+function toggleCamioneros(id) {
+    const row = document.getElementById('row-cam-' + id);
+    const chev = document.getElementById('chev-' + id);
+    const open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : '';
+    chev.classList.toggle('open', !open);
+}
+</script>
 
 {% endblock %}

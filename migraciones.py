@@ -110,5 +110,20 @@ def ejecutar_migraciones():
             (clave, valor, desc)
         )
 
+    agregar_columna(cursor, "rutas", "tarifa_km", "REAL")
+
+    if not tabla_existe(cursor, "camionero_ruta"):
+        cursor.execute("""
+        CREATE TABLE camionero_ruta (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            camionero_id INTEGER NOT NULL,
+            ruta_id INTEGER NOT NULL,
+            fecha_asignacion TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (camionero_id) REFERENCES camioneros(id),
+            FOREIGN KEY (ruta_id) REFERENCES rutas(id),
+            UNIQUE(camionero_id, ruta_id)
+        )
+        """)
+
     conexion.commit()
     conexion.close()

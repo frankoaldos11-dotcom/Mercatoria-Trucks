@@ -77,6 +77,7 @@
                     <th>Matrícula</th>
                     <th>Tipo</th>
                     <th>Estado</th>
+                    <th>Rutas asignadas</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -95,6 +96,18 @@
                             {{ c["estado"] or "—" }}
                         </span>
                     </td>
+                    <td class="td-rutas">
+                        {% set rutas_c = rutas_por_camionero[c["id"]] %}
+                        {% if rutas_c %}
+                            {% for r in rutas_c %}
+                            <span class="ruta-pill" title="{{ r['km_oficiales'] }} km">
+                                {{ r["origen"] }} → {{ r["destino"] }}
+                            </span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="sin-rutas">Sin rutas</span>
+                        {% endif %}
+                    </td>
                     <td class="td-acciones">
                         <a href="/admin/camioneros/{{ c['id'] }}/editar" class="btn-accion-edit">Editar</a>
                         <form method="POST" action="/admin/camioneros/{{ c['id'] }}/eliminar"
@@ -106,7 +119,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="8" class="empty-state">No hay camioneros registrados.</td>
+                    <td colspan="9" class="empty-state">No hay camioneros registrados.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -208,6 +221,26 @@
 .estado-pill.estado-disponible { background: #e6f7ee; color: #1a7a45; }
 .estado-pill.estado-en-viaje   { background: #fff3e0; color: #b35a00; }
 .estado-pill.estado-inactivo   { background: #f0f0f0; color: #888; }
+
+.td-rutas { min-width: 160px; }
+
+.ruta-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 2px 2px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #e8f4fd;
+    color: #1a6fa0;
+    white-space: nowrap;
+}
+
+.sin-rutas {
+    font-size: 12px;
+    color: #bbb;
+    font-style: italic;
+}
 </style>
 
 {% endblock %}

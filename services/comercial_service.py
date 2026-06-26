@@ -243,6 +243,76 @@ def get_cotizacion_detalle(id):
     return dato
 
 
+def actualizar_tarifa_km_ruta(ruta_id, tarifa_km):
+    con = conectar()
+    cur = con.cursor()
+    val = float(tarifa_km) if tarifa_km not in (None, "", "null") else None
+    cur.execute("UPDATE rutas SET tarifa_km = ? WHERE id = ?", (val, ruta_id))
+    con.commit()
+    con.close()
+
+
+def get_camioneros_por_ruta(ruta_id):
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("""
+        SELECT c.id, c.nombre, c.telefono, c.estado
+        FROM camioneros c
+        JOIN camionero_ruta cr ON cr.camionero_id = c.id
+        WHERE cr.ruta_id = ? AND c.activo = 1
+        ORDER BY c.nombre
+    """, (ruta_id,))
+    rows = cur.fetchall()
+    con.close()
+    return rows
+
+
+def get_all_camioneros_activos():
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT id, nombre, estado FROM camioneros WHERE activo = 1 ORDER BY nombre")
+    rows = cur.fetchall()
+    con.close()
+    return rows
+
+
+def asignar_camionero_a_ruta(ruta_id, camionero_id):
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(
+        "INSERT OR IGNORE INTO camionero_ruta (ruta_id, camionero_id) VALUES (?, ?)",
+        (ruta_id, camionero_id)
+    )
+    con.commit()
+    con.close()
+
+
+def desasociar_camionero_de_ruta(ruta_id, camionero_id):
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(
+        "DELETE FROM camionero_ruta WHERE ruta_id = ? AND camionero_id = ?",
+        (ruta_id, camionero_id)
+    )
+    con.commit()
+    con.close()
+
+
+def get_rutas_por_camionero(camionero_id):
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("""
+        SELECT r.id, r.origen, r.destino, r.km_oficiales, r.zona
+        FROM rutas r
+        JOIN camionero_ruta cr ON cr.ruta_id = r.id
+        WHERE cr.camionero_id = ? AND r.activa = 1
+        ORDER BY r.origen, r.destino
+    """, (camionero_id,))
+    rows = cur.fetchall()
+    con.close()
+    return rows
+
+
 def convertir_cotizacion_en_viaje(cotizacion_id):
     con = conectar()
     cur = con.cursor()

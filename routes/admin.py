@@ -3,7 +3,7 @@ import io
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 import sqlite3
 
-from services.comercial_service import convertir_cotizacion_en_viaje
+from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_por_camionero
 from services.finanzas_service import calcular_liquidacion
 from services.pdf_service import generar_pdf_orden_carga
 from utils.constants import CAMIONERO_ESTADOS, VEHICULO_ESTADOS
@@ -352,7 +352,14 @@ def admin_camioneros():
 
     conexion.close()
 
-    return render_template("admin/camioneros.html", lista=lista, estados=CAMIONERO_ESTADOS)
+    rutas_por_camionero = {c["id"]: get_rutas_por_camionero(c["id"]) for c in lista}
+
+    return render_template(
+        "admin/camioneros.html",
+        lista=lista,
+        estados=CAMIONERO_ESTADOS,
+        rutas_por_camionero=rutas_por_camionero,
+    )
 
 
 @admin_bp.route("/camioneros/<int:id>/editar", methods=["GET", "POST"])

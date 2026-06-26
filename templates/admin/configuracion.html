@@ -19,8 +19,11 @@
 
         <div class="config-grupo">
             <label class="config-label">
-                Tarifa por km (USD/km)
-                <span class="config-hint">{{ config.get('tarifa_km', 1.5) }} USD — base para calcular pago al camionero</span>
+                Tarifa por km — valor global por defecto (USD/km)
+                <span class="config-hint">
+                    Se usa cuando la ruta del viaje no tiene tarifa propia. Cada ruta puede tener su tarifa independiente
+                    en <a href="/admin/comercial/rutas" style="color:#F36B21;">Rutas → columna Tarifa/km</a>.
+                </span>
             </label>
             <input
                 type="number"

@@ -85,8 +85,21 @@ def crear_base_datos(bcrypt):
         destino TEXT NOT NULL,
         zona TEXT,
         km_oficiales REAL DEFAULT 0,
+        tarifa_km REAL,
         activa INTEGER DEFAULT 1,
         fecha_creacion TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS camionero_ruta (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        camionero_id INTEGER NOT NULL,
+        ruta_id INTEGER NOT NULL,
+        fecha_asignacion TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (camionero_id) REFERENCES camioneros(id),
+        FOREIGN KEY (ruta_id) REFERENCES rutas(id),
+        UNIQUE(camionero_id, ruta_id)
     )
     """)
 
@@ -219,6 +232,7 @@ def crear_base_datos(bcrypt):
     agregar_columna(cursor, "camioneros", "activo", "INTEGER DEFAULT 1")
     agregar_columna(cursor, "camioneros", "fecha_creacion", "TEXT DEFAULT CURRENT_TIMESTAMP")
     agregar_columna(cursor, "rutas", "km_oficiales", "REAL DEFAULT 0")
+    agregar_columna(cursor, "rutas", "tarifa_km", "REAL")
     agregar_columna(cursor, "rutas", "activa", "INTEGER DEFAULT 1")
     agregar_columna(cursor, "viajes", "cliente_id", "INTEGER")
     agregar_columna(cursor, "viajes", "ruta_id", "INTEGER")

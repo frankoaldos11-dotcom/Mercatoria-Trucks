@@ -1,4 +1,4 @@
-  esto {% extends "admin/base_admin.html" %}
+{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -30,11 +30,18 @@
         <select id="ruta_id" required>
             <option value="">Seleccionar ruta</option>
             {% for r in rutas %}
-            <option value="{{ r['id'] }}">
+            <option value="{{ r['id'] }}"
+                    data-tarifa="{{ r['tarifa_km'] if r['tarifa_km'] is not none else '' }}">
                 {{ r['origen'] }} → {{ r['destino'] }} · {{ r['km_oficiales'] }} km
             </option>
             {% endfor %}
         </select>
+
+        <div id="tarifa-info" style="display:none; grid-column: 1 / -1;" class="tarifa-info-banner">
+            Tarifa de liquidación aplicable:
+            <strong id="tarifa-valor">—</strong>
+            <span id="tarifa-fuente" class="tarifa-fuente"></span>
+        </div>
 
         <select id="tipo_vehiculo_id" required>
             <option value="">Tipo de vehículo</option>
@@ -139,7 +146,34 @@
 
 </section>
 
+<style>
+.tarifa-info-banner {
+    background: #fff8f3;
+    border: 1px solid #fdd3b4;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    color: #7a3800;
+}
+.tarifa-info-banner strong { color: #F36B21; font-size: 16px; margin: 0 4px; }
+.tarifa-fuente { font-size: 12px; color: #aaa; margin-left: 4px; }
+</style>
+
 <script>
+const TARIFA_KM_GLOBAL = {{ tarifa_km_global }};
+
+document.getElementById("ruta_id").addEventListener("change", function() {
+    const opt = this.options[this.selectedIndex];
+    const info = document.getElementById("tarifa-info");
+    if (!this.value) { info.style.display = "none"; return; }
+    const tarifaStr = opt.getAttribute("data-tarifa");
+    const esPropia = tarifaStr !== "" && tarifaStr !== null;
+    const tarifa = esPropia ? parseFloat(tarifaStr) : TARIFA_KM_GLOBAL;
+    document.getElementById("tarifa-valor").textContent = "$" + tarifa.toFixed(2) + "/km";
+    document.getElementById("tarifa-fuente").textContent = esPropia ? "(tarifa propia de la ruta)" : "(tarifa global por defecto)";
+    info.style.display = "";
+});
+
 const btnCalcular = document.getElementById("btn-calcular");
 const resultado = document.getElementById("resultado");
 

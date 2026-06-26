@@ -8,6 +8,11 @@ from services.comercial_service import (
     get_ruta,
     crear_ruta,
     ruta_existe,
+    actualizar_tarifa_km_ruta,
+    get_camioneros_por_ruta,
+    get_all_camioneros_activos,
+    asignar_camionero_a_ruta,
+    desasociar_camionero_de_ruta,
     get_all_tipos_vehiculo,
     crear_tipo_vehiculo,
     get_all_tarifas,
@@ -50,7 +55,20 @@ def get_viaje_id_por_cotizacion(cotizacion_id):
 def rutas():
     if not requiere_admin():
         return redirect("/login")
-    return render_template("admin/comercial/rutas.html", rutas=get_all_rutas())
+    all_rutas = get_all_rutas()
+    todos_camioneros = get_all_camioneros_activos()
+    camioneros_por_ruta = {r["id"]: get_camioneros_por_ruta(r["id"]) for r in all_rutas}
+    ids_asignados_por_ruta = {
+        r["id"]: {c["id"] for c in camioneros_por_ruta[r["id"]]}
+        for r in all_rutas
+    }
+    return render_template(
+        "admin/comercial/rutas.html",
+        rutas=all_rutas,
+        todos_camioneros=todos_camioneros,
+        camioneros_por_ruta=camioneros_por_ruta,
+        ids_asignados_por_ruta=ids_asignados_por_ruta,
+    )
 
 
 @comercial_bp.route("/admin/comercial/rutas/nueva", methods=["POST"])
@@ -66,6 +84,33 @@ def nueva_ruta():
     if not ruta_existe(origen, destino):
         crear_ruta(origen, destino, zona, km)
 
+    return redirect("/admin/comercial/rutas")
+
+
+@comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/tarifa", methods=["POST"])
+def actualizar_tarifa_ruta(ruta_id):
+    if not requiere_admin():
+        return redirect("/login")
+    tarifa_km = request.form.get("tarifa_km", "").strip()
+    actualizar_tarifa_km_ruta(ruta_id, tarifa_km if tarifa_km else None)
+    return redirect("/admin/comercial/rutas")
+
+
+@comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/camioneros/asignar", methods=["POST"])
+def asignar_camionero_ruta(ruta_id):
+    if not requiere_admin():
+        return redirect("/login")
+    camionero_id = request.form.get("camionero_id")
+    if camionero_id:
+        asignar_camionero_a_ruta(ruta_id, int(camionero_id))
+    return redirect("/admin/comercial/rutas")
+
+
+@comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/camioneros/<int:camionero_id>/desasociar", methods=["POST"])
+def desasociar_camionero_ruta(ruta_id, camionero_id):
+    if not requiere_admin():
+        return redirect("/login")
+    desasociar_camionero_de_ruta(ruta_id, camionero_id)
     return redirect("/admin/comercial/rutas")
 
 
@@ -131,12 +176,15 @@ def cotizar_view():
         return redirect("/login")
 
     from routes.clientes import get_all_clientes
+    from services.finanzas_service import get_configuracion
 
+    cfg = get_configuracion()
     return render_template(
         "admin/comercial/cotizar.html",
         rutas=get_all_rutas(),
         tipos=get_all_tipos_vehiculo(),
-        clientes=get_all_clientes()
+        clientes=get_all_clientes(),
+        tarifa_km_global=cfg.get("tarifa_km", 1.5),
     )
 
 

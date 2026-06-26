@@ -28,6 +28,17 @@ def calcular_liquidacion(viaje_id):
 
     cur.execute("SELECT * FROM viajes WHERE id = ?", (viaje_id,))
     viaje = cur.fetchone()
+
+    ruta_tarifa_km = None
+    if viaje and _col_exists(viaje, "ruta_id") and viaje["ruta_id"]:
+        try:
+            cur.execute("SELECT tarifa_km FROM rutas WHERE id = ?", (viaje["ruta_id"],))
+            ruta = cur.fetchone()
+            if ruta and ruta["tarifa_km"] is not None:
+                ruta_tarifa_km = float(ruta["tarifa_km"])
+        except Exception:
+            pass
+
     con.close()
 
     if not viaje:
@@ -35,7 +46,9 @@ def calcular_liquidacion(viaje_id):
 
     cfg = get_configuracion()
 
-    tarifa_km                 = cfg.get("tarifa_km", 1.5)
+    tarifa_km_global          = cfg.get("tarifa_km", 1.5)
+    tarifa_km_fuente          = "ruta" if ruta_tarifa_km is not None else "global"
+    tarifa_km                 = ruta_tarifa_km if ruta_tarifa_km is not None else tarifa_km_global
     margen_divisor            = cfg.get("margen_combustible_divisor", 2.0)
     multiplicador_camionero   = cfg.get("multiplicador_pago_camionero", 2.5)
     minimo_km                 = cfg.get("minimo_km_garantizado", 120.0)
@@ -71,6 +84,8 @@ def calcular_liquidacion(viaje_id):
         "comision_mercatoria": round(comision_mercatoria, 2),
         "utilidad_mercatoria": round(utilidad_mercatoria, 2),
         "minimo_aplicado":     km_real < minimo_km or km_real == 0,
+        "tarifa_km":           tarifa_km,
+        "tarifa_km_fuente":    tarifa_km_fuente,
         "config":              cfg,
     }
 
