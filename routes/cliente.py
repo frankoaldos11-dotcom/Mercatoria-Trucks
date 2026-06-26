@@ -1,6 +1,10 @@
+import secrets
+from datetime import datetime, timedelta
+
 from flask import Blueprint, render_template, request, session, redirect, url_for
+from flask_mail import Message
 from database import conectar
-from extensions import bcrypt
+from extensions import bcrypt, mail
 
 cliente_bp = Blueprint("cliente", __name__, url_prefix="/cliente")
 
@@ -62,7 +66,8 @@ def login():
         error = "Correo o contraseña incorrectos"
 
     registrado = request.args.get("registrado")
-    return render_template("cliente/login.html", error=error, registrado=registrado)
+    reset = request.args.get("reset")
+    return render_template("cliente/login.html", error=error, registrado=registrado, reset=reset)
 
 
 @cliente_bp.route("/registro", methods=["GET", "POST"])
@@ -118,6 +123,25 @@ def registro():
 
         con.commit()
         con.close()
+
+        try:
+            msg = Message(
+                subject="Bienvenido a Mercatoria Truck",
+                recipients=[email]
+            )
+            msg.body = f"""Hola {nombre},
+
+Tu cuenta en Mercatoria Truck ha sido creada exitosamente.
+
+Accede a tu portal en:
+https://mercatoria-trucks.onrender.com/cliente
+
+— Mercatoria Truck
+"""
+            mail.send(msg)
+        except Exception as e:
+            print(f"Error enviando email bienvenida: {e}")
+
         return redirect(url_for("cliente.login") + "?registrado=1")
 
     return render_template("cliente/registro.html")
@@ -340,6 +364,101 @@ def perfil():
 
     con.close()
     return render_template("cliente/perfil.html", datos=datos)
+
+
+@cliente_bp.route("/recuperar", methods=["GET", "POST"])
+def recuperar_password():
+    if request.method == "GET":
+        return render_template("cliente/recuperar.html")
+
+    email = request.form.get("email", "").strip().lower()
+    if not email:
+        return render_template("cliente/recuperar.html",
+                               error="Ingresa tu correo electrónico")
+
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT id, nombre FROM usuarios WHERE usuario = ? AND rol = 'cliente'", (email,))
+    usuario = cur.fetchone()
+
+    if usuario:
+        token = secrets.token_urlsafe(32)
+        expira = (datetime.utcnow() + timedelta(minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
+        cur.execute(
+            "INSERT INTO reset_tokens (token, usuario, expira) VALUES (?, ?, ?)",
+            (token, email, expira)
+        )
+        con.commit()
+        nombre = usuario["nombre"] or email.split("@")[0]
+        try:
+            msg = Message(
+                subject="Recuperación de contraseña — Mercatoria Truck",
+                recipients=[email]
+            )
+            msg.body = f"""Hola {nombre},
+
+Recibimos una solicitud para restablecer tu contraseña en Mercatoria Truck.
+
+Haz clic en el siguiente enlace (válido por 30 minutos):
+https://mercatoria-trucks.onrender.com/cliente/reset/{token}
+
+Si no solicitaste este cambio, ignora este mensaje.
+
+— Mercatoria Truck
+"""
+            mail.send(msg)
+        except Exception as e:
+            print(f"Error enviando email recuperacion: {e}")
+
+    con.close()
+    return render_template("cliente/recuperar.html",
+                           enviado=True)
+
+
+@cliente_bp.route("/reset/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(
+        "SELECT usuario, expira, usado FROM reset_tokens WHERE token = ?", (token,)
+    )
+    fila = cur.fetchone()
+
+    if not fila or fila["usado"]:
+        con.close()
+        return render_template("cliente/reset_password.html",
+                               error="El enlace no es válido o ya fue usado.", token=None)
+
+    expira = datetime.strptime(fila["expira"], "%Y-%m-%d %H:%M:%S")
+    if datetime.utcnow() > expira:
+        con.close()
+        return render_template("cliente/reset_password.html",
+                               error="El enlace ha expirado. Solicita uno nuevo.", token=None)
+
+    if request.method == "GET":
+        con.close()
+        return render_template("cliente/reset_password.html", token=token)
+
+    nueva = request.form.get("password", "")
+    confirmar = request.form.get("confirmar", "")
+
+    if len(nueva) < 6:
+        con.close()
+        return render_template("cliente/reset_password.html", token=token,
+                               error="La contraseña debe tener al menos 6 caracteres")
+    if nueva != confirmar:
+        con.close()
+        return render_template("cliente/reset_password.html", token=token,
+                               error="Las contraseñas no coinciden")
+
+    nuevo_hash = bcrypt.generate_password_hash(nueva).decode("utf-8")
+    cur.execute("UPDATE usuarios SET password = ? WHERE usuario = ?",
+                (nuevo_hash, fila["usuario"]))
+    cur.execute("UPDATE reset_tokens SET usado = 1 WHERE token = ?", (token,))
+    con.commit()
+    con.close()
+
+    return redirect(url_for("cliente.login") + "?reset=1")
 
 
 @cliente_bp.route("/activos")

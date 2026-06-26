@@ -261,6 +261,16 @@ def crear_base_datos(bcrypt):
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reset_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        token TEXT UNIQUE,
+        usuario TEXT,
+        expira TEXT,
+        usado INTEGER DEFAULT 0
+    )
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS auditoria (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         fecha TEXT DEFAULT CURRENT_TIMESTAMP,

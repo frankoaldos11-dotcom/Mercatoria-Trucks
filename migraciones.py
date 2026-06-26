@@ -139,6 +139,17 @@ def ejecutar_migraciones():
         )
         """)
 
+    if not tabla_existe(cursor, "reset_tokens"):
+        cursor.execute("""
+        CREATE TABLE reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT UNIQUE,
+            usuario TEXT,
+            expira TEXT,
+            usado INTEGER DEFAULT 0
+        )
+        """)
+
     if not tabla_existe(cursor, "auditoria"):
         cursor.execute("""
         CREATE TABLE auditoria (
