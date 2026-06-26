@@ -1,4 +1,7 @@
+import csv
 import io
+import json
+from datetime import date, datetime
 
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 import sqlite3
@@ -755,3 +758,182 @@ def eliminar_vehiculo(id):
     conexion.close()
 
     return redirect("/admin/vehiculos")
+
+
+# ── Reportes ─────────────────────────────────────────────────────────────────
+
+MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun",
+            "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+
+def _ultimos_6_meses():
+    """Devuelve lista de (year, month) para los últimos 6 meses, orden ascendente."""
+    hoy = date.today()
+    meses = []
+    for i in range(5, -1, -1):
+        m = hoy.month - i
+        y = hoy.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        meses.append((y, m))
+    return meses
+
+
+def _calcular_financieros_periodo(fecha_desde, fecha_hasta):
+    """Devuelve (filas_tabla, totales) para el período dado."""
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("""
+        SELECT id, cliente, origen, destino, estado, fecha_creacion
+        FROM viajes
+        WHERE (fecha_creacion >= ? AND fecha_creacion <= ?)
+          AND LOWER(estado) != 'cancelado'
+        ORDER BY id DESC
+    """, (fecha_desde, fecha_hasta + " 23:59:59"))
+    viajes_periodo = cursor.fetchall()
+    conexion.close()
+
+    filas = []
+    totales = {"ingresos": 0.0, "pago_camionero": 0.0,
+               "combustible": 0.0, "comision": 0.0, "utilidad": 0.0}
+
+    for v in viajes_periodo:
+        liq = calcular_liquidacion(v["id"])
+        pc = liq["precio_cliente"] if liq else 0.0
+        pag = liq["pago_camionero"] if liq else 0.0
+        comb = liq["combustible"] if liq else 0.0
+        com = liq["comision_mercatoria"] if liq else 0.0
+        util = liq["utilidad_mercatoria"] if liq else 0.0
+
+        totales["ingresos"] += pc
+        totales["pago_camionero"] += pag
+        totales["combustible"] += comb
+        totales["comision"] += com
+        totales["utilidad"] += util
+
+        filas.append({
+            "id": v["id"],
+            "cliente": v["cliente"] or "—",
+            "ruta": f"{v['origen']} → {v['destino']}",
+            "estado": v["estado"],
+            "precio_cliente": pc,
+            "pago_camionero": pag,
+            "combustible": comb,
+            "utilidad": util,
+        })
+
+    return filas, totales
+
+
+@admin_bp.route("/reportes")
+def reportes():
+    if not requiere_admin():
+        return redirect("/login")
+
+    hoy = date.today()
+    fecha_desde = request.args.get("fecha_desde", hoy.replace(day=1).isoformat())
+    fecha_hasta = request.args.get("fecha_hasta", hoy.isoformat())
+
+    filas_tabla, totales = _calcular_financieros_periodo(fecha_desde, fecha_hasta)
+
+    # KPIs adicionales
+    n = len(filas_tabla)
+    viaje_promedio = totales["ingresos"] / n if n else 0.0
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("""
+        SELECT origen || ' → ' || destino AS ruta,
+               COUNT(*) AS viajes,
+               SUM(COALESCE(precio_final, precio_cliente, precio, 0)) AS ingresos_proxy
+        FROM viajes
+        WHERE (fecha_creacion >= ? AND fecha_creacion <= ?)
+          AND LOWER(estado) != 'cancelado'
+        GROUP BY ruta
+        ORDER BY ingresos_proxy DESC
+        LIMIT 1
+    """, (fecha_desde, fecha_hasta + " 23:59:59"))
+    ruta_top = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT camionero_nombre, COUNT(*) AS total_viajes
+        FROM viajes
+        WHERE (fecha_creacion >= ? AND fecha_creacion <= ?)
+          AND LOWER(estado) != 'cancelado'
+          AND camionero_nombre IS NOT NULL AND camionero_nombre != ''
+        GROUP BY camionero_nombre
+        ORDER BY total_viajes DESC
+        LIMIT 1
+    """, (fecha_desde, fecha_hasta + " 23:59:59"))
+    camionero_top = cursor.fetchone()
+
+    # Datos mensuales (últimos 6 meses) para el gráfico
+    cursor.execute("""
+        SELECT strftime('%Y-%m', fecha_creacion) AS mes,
+               SUM(COALESCE(precio_final, precio_cliente, precio, 0)) AS ingresos
+        FROM viajes
+        WHERE fecha_creacion >= date('now', '-5 months', 'start of month')
+          AND LOWER(estado) != 'cancelado'
+        GROUP BY mes
+        ORDER BY mes
+    """)
+    datos_db = {row["mes"]: float(row["ingresos"] or 0) for row in cursor.fetchall()}
+    conexion.close()
+
+    # Rellenar los 6 meses aunque no haya datos
+    meses_base = _ultimos_6_meses()
+    chart_labels = [f"{MESES_ES[m-1]} {y}" for y, m in meses_base]
+    chart_data = [datos_db.get(f"{y:04d}-{m:02d}", 0.0) for y, m in meses_base]
+
+    return render_template(
+        "admin/reportes.html",
+        filas_tabla=filas_tabla,
+        totales=totales,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+        chart_labels=json.dumps(chart_labels),
+        chart_data=json.dumps(chart_data),
+        viaje_promedio=round(viaje_promedio, 2),
+        ruta_top=ruta_top,
+        camionero_top=camionero_top,
+        total_viajes=n,
+    )
+
+
+@admin_bp.route("/reportes/exportar")
+def exportar_reportes_csv():
+    if not requiere_admin():
+        return redirect("/login")
+
+    hoy = date.today()
+    fecha_desde = request.args.get("fecha_desde", hoy.replace(day=1).isoformat())
+    fecha_hasta = request.args.get("fecha_hasta", hoy.isoformat())
+
+    filas, totales = _calcular_financieros_periodo(fecha_desde, fecha_hasta)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["ID", "Cliente", "Ruta", "Estado",
+                     "Precio Cliente (USD)", "Pago Camionero (USD)",
+                     "Combustible (USD)", "Utilidad (USD)"])
+    for f in filas:
+        writer.writerow([
+            f["id"], f["cliente"], f["ruta"], f["estado"],
+            f"{f['precio_cliente']:.2f}", f"{f['pago_camionero']:.2f}",
+            f"{f['combustible']:.2f}", f"{f['utilidad']:.2f}",
+        ])
+    writer.writerow([])
+    writer.writerow(["TOTALES", "", "", "",
+                     f"{totales['ingresos']:.2f}", f"{totales['pago_camionero']:.2f}",
+                     f"{totales['combustible']:.2f}", f"{totales['utilidad']:.2f}"])
+
+    csv_bytes = output.getvalue().encode("utf-8-sig")
+    nombre = f"reporte-{fecha_desde}-{fecha_hasta}.csv"
+    return send_file(
+        io.BytesIO(csv_bytes),
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=nombre,
+    )
