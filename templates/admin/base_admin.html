@@ -120,6 +120,10 @@
             <div class="nav-section">Sistema</div>
 
             {% if session.get('rol') == 'admin' %}
+            <a href="/admin/usuarios" class="nav-item">
+                <i class="bi bi-people"></i>
+                <span>Usuarios</span>
+            </a>
             <a href="/admin/configuracion" class="nav-item">
                 <i class="bi bi-sliders"></i>
                 <span>Configuración</span>
