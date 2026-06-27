@@ -195,6 +195,22 @@ else:
     ejecutar_migraciones()
 
 
+@app.route("/debug-usuarios-tmp-borrar")
+def debug_usuarios():
+    try:
+        con = conectar()
+        cur = con.cursor()
+        cur.execute("SELECT id, usuario, rol, activo FROM usuarios ORDER BY id")
+        filas = cur.fetchall()
+        con.close()
+        resultado = ""
+        for f in filas:
+            resultado += f"id={f['id']} usuario={f['usuario']} rol={f['rol']} activo={f['activo']}<br>"
+        return resultado or "Sin usuarios"
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
