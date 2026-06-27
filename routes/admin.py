@@ -1239,8 +1239,8 @@ def _calcular_financieros_periodo(fecha_desde, fecha_hasta):
 
 @admin_bp.route("/reportes")
 def reportes():
-    if not requiere_admin():
-        return redirect("/login")
+    if not (session.get("usuario") and session.get("rol") == "admin"):
+        return redirect("/admin?access_error=Solo+administradores+pueden+ver+reportes")
 
     hoy = date.today()
     fecha_desde = request.args.get("fecha_desde", hoy.replace(day=1).isoformat())
