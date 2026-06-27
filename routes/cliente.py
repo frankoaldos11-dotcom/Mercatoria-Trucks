@@ -240,25 +240,27 @@ def detalle_viaje(viaje_id):
     con = conectar()
     cur = con.cursor()
 
-    # Obtener cliente_id del usuario en sesión
-    cur.execute("SELECT id FROM clientes WHERE usuario_id = ?", (session["user_id"],))
+    cur.execute(
+        "SELECT id FROM clientes WHERE usuario_id = ?",
+        (session["user_id"],)
+    )
     cliente_row = cur.fetchone()
-    cliente_id = cliente_row["id"] if cliente_row else None
-
-    if not cliente_id:
+    if not cliente_row:
         con.close()
         return redirect(url_for("cliente.mis_viajes"))
+    cliente_id = cliente_row["id"]
 
     cur.execute("""
         SELECT v.id, v.origen, v.destino, v.estado, v.camionero_nombre,
-               v.fecha_creacion, v.fecha_asignacion, v.fecha_recogida, v.fecha_entrega,
-               v.observaciones,
-               COALESCE(NULLIF(v.precio_final,0), NULLIF(v.precio_cliente,0), NULLIF(v.precio,0), 0) as precio_confirmado,
-               COALESCE(veh.marca, '') as vehiculo_marca,
-               COALESCE(veh.modelo, '') as vehiculo_modelo,
-               COALESCE(veh.matricula, '') as vehiculo_placa,
-               COALESCE(r.nombre, '') as ruta_nombre,
-               COALESCE(r.km_oficiales, 0) as km_ruta
+               v.fecha_creacion, v.fecha_asignacion, v.fecha_recogida,
+               v.fecha_entrega, v.observaciones,
+               COALESCE(NULLIF(v.precio_final,0), NULLIF(v.precio_cliente,0),
+                        NULLIF(v.precio,0), 0) AS precio_confirmado,
+               COALESCE(veh.marca, '') AS vehiculo_marca,
+               COALESCE(veh.modelo, '') AS vehiculo_modelo,
+               COALESCE(veh.matricula, '') AS vehiculo_placa,
+               COALESCE(r.nombre, '') AS ruta_nombre,
+               COALESCE(r.km_oficiales, 0) AS km_ruta
         FROM viajes v
         LEFT JOIN vehiculos veh ON v.vehiculo_id = veh.id
         LEFT JOIN rutas r ON v.ruta_id = r.id
@@ -271,7 +273,11 @@ def detalle_viaje(viaje_id):
         return redirect(url_for("cliente.mis_viajes"))
 
     paso_actual = PASOS_ESTADO.get(viaje["estado"], 0)
-    return render_template("cliente/viaje_detalle.html", viaje=viaje, paso_actual=paso_actual)
+    return render_template(
+        "cliente/viaje_detalle.html",
+        viaje=viaje,
+        paso_actual=paso_actual
+    )
 
 
 @cliente_bp.route("/solicitar", methods=["GET", "POST"])
