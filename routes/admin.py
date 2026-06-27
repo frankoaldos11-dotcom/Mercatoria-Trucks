@@ -123,6 +123,34 @@ def dashboard():
     """)
     lista = cursor.fetchall()
 
+    # Ingresos del mes actual
+    cursor.execute("""
+        SELECT COALESCE(SUM(COALESCE(precio_final, precio_cliente, precio, 0)), 0)
+        FROM viajes
+        WHERE strftime('%Y-%m', fecha_creacion) = strftime('%Y-%m', 'now')
+          AND LOWER(estado) != 'cancelado'
+    """)
+    ingresos_mes = round(cursor.fetchone()[0], 2)
+
+    # Camionero más activo (viajes totales)
+    cursor.execute("""
+        SELECT camionero_nombre, COUNT(*) as total
+        FROM viajes
+        WHERE camionero_nombre IS NOT NULL AND camionero_nombre != ''
+          AND LOWER(estado) != 'cancelado'
+        GROUP BY camionero_nombre
+        ORDER BY total DESC LIMIT 1
+    """)
+    row = cursor.fetchone()
+    camionero_top = row["camionero_nombre"] if row else "—"
+
+    # Clientes sin nombre (para aviso)
+    cursor.execute("""
+        SELECT COUNT(*) FROM clientes
+        WHERE nombre IS NULL OR TRIM(nombre) = ''
+    """)
+    clientes_sin_nombre = cursor.fetchone()[0]
+
     conexion.close()
 
     return render_template(
@@ -134,7 +162,10 @@ def dashboard():
         cancelados=cancelados,
         camioneros=camioneros,
         clientes=clientes,
-        lista=lista
+        lista=lista,
+        ingresos_mes=ingresos_mes,
+        camionero_top=camionero_top,
+        clientes_sin_nombre=clientes_sin_nombre
     )
 
 
@@ -693,6 +724,18 @@ def confirmar_precio(id):
     return redirect(f"/admin/viajes/{id}/gestionar")
 
 
+@admin_bp.route("/viaje/<int:id>/eliminar", methods=["POST"])
+def eliminar_viaje_admin(id):
+    if not requiere_admin():
+        return redirect("/login")
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("DELETE FROM viajes WHERE id = ?", (id,))
+    conexion.commit()
+    conexion.close()
+    return redirect("/admin/viajes")
+
+
 @admin_bp.route("/cotizacion/<int:id>/convertir")
 @admin_bp.route("/cotizaciones/<int:id>/convertir")
 def convertir_cotizacion(id):
@@ -741,11 +784,26 @@ def admin_camioneros():
 
         conexion.commit()
 
-    cursor.execute("""
+    buscar = request.args.get("buscar", "").strip()
+    filtro_estado = request.args.get("estado", "").strip()
+
+    condiciones = []
+    params = []
+    if buscar:
+        condiciones.append("(nombre LIKE ? OR telefono LIKE ? OR licencia LIKE ?)")
+        like = f"%{buscar}%"
+        params.extend([like, like, like])
+    if filtro_estado:
+        condiciones.append("LOWER(estado) = ?")
+        params.append(filtro_estado.lower())
+    where = ("WHERE " + " AND ".join(condiciones)) if condiciones else ""
+
+    cursor.execute(f"""
         SELECT id, nombre, telefono, licencia, matricula, tipo, capacidad, estado
         FROM camioneros
+        {where}
         ORDER BY id DESC
-    """)
+    """, params)
     lista = cursor.fetchall()
 
     cursor.execute("""
@@ -767,6 +825,8 @@ def admin_camioneros():
         estados=CAMIONERO_ESTADOS,
         rutas_por_camionero=rutas_por_camionero,
         vehiculos_disponibles=vehiculos_disponibles,
+        buscar=buscar,
+        filtro_estado=filtro_estado,
     )
 
 
@@ -947,14 +1007,28 @@ def admin_vehiculos():
         """, (matricula, tipo, marca, modelo, capacidad, camionero_id, estado))
         conexion.commit()
 
-    cursor.execute("""
+    buscar_v = request.args.get("buscar", "").strip()
+    filtro_estado_v = request.args.get("estado", "").strip()
+
+    cond_v = []
+    params_v = []
+    if buscar_v:
+        cond_v.append("(v.matricula LIKE ? OR v.marca LIKE ? OR v.modelo LIKE ?)")
+        like_v = f"%{buscar_v}%"
+        params_v.extend([like_v, like_v, like_v])
+    if filtro_estado_v:
+        cond_v.append("LOWER(v.estado) = ?")
+        params_v.append(filtro_estado_v.lower())
+    where_v = "WHERE v.activo = 1" + (" AND " + " AND ".join(cond_v) if cond_v else "")
+
+    cursor.execute(f"""
         SELECT v.id, v.matricula, v.tipo, v.marca, v.modelo, v.capacidad, v.estado,
                c.nombre AS camionero_nombre
         FROM vehiculos v
         LEFT JOIN camioneros c ON v.camionero_id = c.id
-        WHERE v.activo = 1
+        {where_v}
         ORDER BY v.id DESC
-    """)
+    """, params_v)
     lista = cursor.fetchall()
 
     cursor.execute("SELECT id, nombre FROM camioneros WHERE activo = 1 ORDER BY nombre")
@@ -966,7 +1040,10 @@ def admin_vehiculos():
         "admin/vehiculos.html",
         lista=lista,
         camioneros=camioneros,
-        estados=VEHICULO_ESTADOS
+        estados=VEHICULO_ESTADOS,
+        buscar_v=buscar_v,
+        filtro_estado_v=filtro_estado_v,
+        estados_vehiculo=["Disponible", "En ruta", "En mantenimiento"],
     )
 
 

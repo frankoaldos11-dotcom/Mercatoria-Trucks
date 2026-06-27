@@ -72,7 +72,37 @@
     </div>
     </a>
 
+    <a href="/admin/reportes" style="text-decoration:none;color:inherit;display:block;">
+    <div class="kpi-card">
+        <div class="kpi-icon success">
+            <i class="bi bi-currency-dollar"></i>
+        </div>
+        <div>
+            <span>Ingresos este mes</span>
+            <strong>${{ "%.2f"|format(ingresos_mes) }}</strong>
+        </div>
+    </div>
+    </a>
+
+    <div class="kpi-card" style="cursor:default;">
+        <div class="kpi-icon primary">
+            <i class="bi bi-star-fill"></i>
+        </div>
+        <div>
+            <span>Camionero top</span>
+            <strong>{{ camionero_top }}</strong>
+        </div>
+    </div>
+
 </div>
+
+{% if clientes_sin_nombre > 0 %}
+<div style="background:#fff8e6;border:1px solid #f5a623;color:#7a5800;border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;">
+    <i class="bi bi-exclamation-triangle-fill" style="font-size:18px;color:#f5a623;"></i>
+    <span>Hay <strong>{{ clientes_sin_nombre }}</strong> cliente(s) sin nombre registrado.
+    <a href="/admin/clientes" style="color:#7a5800;font-weight:700;text-decoration:underline;margin-left:4px;">Completar ahora →</a></span>
+</div>
+{% endif %}
 
 <style>
 .badge-estado { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }

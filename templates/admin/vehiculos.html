@@ -20,6 +20,22 @@
     </div>
 </div>
 
+<form method="GET" action="/admin/vehiculos" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+    <input type="text" name="buscar" value="{{ buscar_v or '' }}"
+           placeholder="Buscar por matrícula, marca o modelo..."
+           style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;min-width:260px;">
+    <select name="estado" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+        <option value="">Todos los estados</option>
+        {% for e in estados_vehiculo %}
+        <option value="{{ e }}" {% if filtro_estado_v == e %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" style="padding:8px 16px;background:#F36B21;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
+    {% if buscar_v or filtro_estado_v %}
+    <a href="/admin/vehiculos" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
+    {% endif %}
+</form>
+
 <section class="panel">
     <div class="panel-header">
         <div>

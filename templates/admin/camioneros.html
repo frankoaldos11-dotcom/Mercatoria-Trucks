@@ -76,6 +76,22 @@
     </div>
 </section>
 
+<form method="GET" action="/admin/camioneros" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+    <input type="text" name="buscar" value="{{ buscar or '' }}"
+           placeholder="Buscar por nombre, teléfono o licencia..."
+           style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;min-width:260px;">
+    <select name="estado" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+        <option value="">Todos los estados</option>
+        {% for e in estados %}
+        <option value="{{ e }}" {% if filtro_estado == e %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" style="padding:8px 16px;background:#F36B21;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
+    {% if buscar or filtro_estado %}
+    <a href="/admin/camioneros" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
+    {% endif %}
+</form>
+
 <section class="panel">
     <div class="panel-header">
         <div>

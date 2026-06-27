@@ -5,7 +5,14 @@
 <div class="page-header">
     <div>
         <a href="/admin/viajes" class="btn-volver">← Volver a viajes</a>
-        <h1>Gestionar Viaje #{{ viaje["id"] }}</h1>
+        <h1>
+            Gestionar Viaje #{{ viaje["id"] }}
+            <button onclick="navigator.clipboard.writeText('{{ viaje[\"id\"] }}');this.textContent='✓';setTimeout(()=>this.textContent='#',1200);return false;"
+                    title="Copiar ID"
+                    style="background:none;border:1px solid #ddd;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;color:#888;margin-left:6px;vertical-align:middle;">
+                #
+            </button>
+        </h1>
         <p class="subtitulo">Centro operativo del viaje</p>
     </div>
 
@@ -208,6 +215,30 @@
             {% endif %}
         </div>
 
+        <div class="card bloque">
+            <h2><i class="bi bi-clock-history" style="color:#F36B21;margin-right:5px;"></i>Historial de estados</h2>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                {% set estados_hist = [
+                    ("Solicitado",  viaje["fecha_creacion"]),
+                    ("Asignado",    viaje["fecha_asignacion"]),
+                    ("En ruta",     viaje["fecha_recogida"]),
+                    ("Entregado",   viaje["fecha_entrega"]),
+                ] %}
+                {% for nombre_estado, fecha in estados_hist %}
+                {% if fecha %}
+                <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:#F36B21;flex-shrink:0;"></div>
+                    <span style="font-weight:700;min-width:90px;">{{ nombre_estado }}</span>
+                    <span style="color:#888;">{{ fecha[:16] }}</span>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% if not viaje["fecha_creacion"] %}
+                <p style="color:#999;font-size:12px;margin:0;">Sin historial registrado.</p>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 
     <div class="columna-lateral">
@@ -216,7 +247,8 @@
             <h2 class="estado-titulo">Cambiar estado</h2>
 
             {% if estados_validos %}
-            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/estado">
+            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/estado"
+                  onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
                 <label>Nuevo estado</label>
                 <select name="estado" class="input input-estado" required>
                     {% for e in estados_validos %}
@@ -333,6 +365,15 @@
                class="btn-factura btn-link-operacion">
                 Descargar Liquidación Camionero
             </a>
+
+            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/eliminar"
+                  onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje[\"id\"] }} permanentemente? Esta acción no se puede deshacer.');"
+                  style="margin-top:12px;border-top:1px solid #eee;padding-top:12px;">
+                <button type="submit"
+                        style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+                    <i class="bi bi-trash3"></i> Eliminar viaje
+                </button>
+            </form>
         </div>
 
         {% if cliente_info %}

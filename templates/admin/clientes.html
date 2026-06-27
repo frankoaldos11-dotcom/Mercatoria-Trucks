@@ -84,7 +84,14 @@
                 {% for c in lista %}
                 <tr>
                     <td>#{{ c["id"] }}</td>
-                    <td>{{ c["nombre"] }}</td>
+                    <td>
+                        {% if not c["nombre"] or c["nombre"]|trim == "" %}
+                        <span style="color:#e74c3c;font-weight:700;font-size:12px;">⚠ Sin nombre</span>
+                        {% if c["email"] %}<br><span style="color:#999;font-size:11px;">{{ c["email"] }}</span>{% endif %}
+                        {% else %}
+                        {{ c["nombre"] }}
+                        {% endif %}
+                    </td>
                     <td>{{ c["empresa"] or "—" }}</td>
                     <td>{{ c["contacto"] or "—" }}</td>
                     <td>{{ c["telefono"] or "—" }}</td>
