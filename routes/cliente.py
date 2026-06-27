@@ -312,6 +312,27 @@ def solicitar_envio():
     return render_template("cliente/solicitar.html", rutas=rutas)
 
 
+@cliente_bp.route("/viaje/<int:viaje_id>/cancelar", methods=["POST"])
+def cancelar_viaje(viaje_id):
+    if not _requiere_cliente():
+        return redirect(url_for("cliente.login"))
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(
+        "SELECT id, estado FROM viajes WHERE id = ? AND cliente = ?",
+        (viaje_id, session["usuario"])
+    )
+    viaje = cur.fetchone()
+    if viaje and viaje["estado"].lower() == "solicitado":
+        cur.execute(
+            "UPDATE viajes SET estado = 'Cancelado' WHERE id = ?",
+            (viaje_id,)
+        )
+        con.commit()
+    con.close()
+    return redirect(url_for("cliente.detalle_viaje", viaje_id=viaje_id))
+
+
 @cliente_bp.route("/perfil", methods=["GET", "POST"])
 def perfil():
     if not _requiere_cliente():
