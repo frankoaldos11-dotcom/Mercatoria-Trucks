@@ -512,20 +512,11 @@ def asignar_vehiculo(id):
     vehiculo = cursor.fetchone()
 
     if vehiculo:
-        cur_cols = cursor.execute("PRAGMA table_info(viajes)")
-        columnas_viajes = [col["name"] for col in cur_cols.fetchall()]
-
-        if "vehiculo_placa" in columnas_viajes:
-            cursor.execute("""
-                UPDATE viajes
-                SET vehiculo_id = ?, vehiculo_placa = ?, estado = 'Asignado'
-                WHERE id = ?
-            """, (vehiculo["id"], vehiculo["matricula"], id))
-        else:
-            cursor.execute(
-                "UPDATE viajes SET vehiculo_id = ?, estado = 'Asignado' WHERE id = ?",
-                (vehiculo["id"], id)
-            )
+        cursor.execute("""
+            UPDATE viajes
+            SET vehiculo_id = ?, vehiculo_placa = ?, estado = 'Asignado'
+            WHERE id = ?
+        """, (vehiculo["id"], vehiculo["matricula"], id))
 
         cursor.execute("UPDATE vehiculos SET estado = 'En viaje' WHERE id = ?", (vehiculo["id"],))
 
@@ -573,14 +564,9 @@ def asignar_camionero_vehiculo(id):
         cursor.execute("UPDATE camioneros SET estado = 'En viaje' WHERE id = ?", (camionero_id,))
 
     if vehiculo:
-        cur_cols = cursor.execute("PRAGMA table_info(viajes)")
-        columnas_viajes = [col["name"] for col in cur_cols.fetchall()]
-        if "vehiculo_placa" in columnas_viajes:
-            cursor.execute("""
-                UPDATE viajes SET vehiculo_id = ?, vehiculo_placa = ? WHERE id = ?
-            """, (vehiculo["id"], vehiculo["matricula"], id))
-        else:
-            cursor.execute("UPDATE viajes SET vehiculo_id = ? WHERE id = ?", (vehiculo["id"], id))
+        cursor.execute("""
+            UPDATE viajes SET vehiculo_id = ?, vehiculo_placa = ? WHERE id = ?
+        """, (vehiculo["id"], vehiculo["matricula"], id))
         cursor.execute("UPDATE vehiculos SET estado = 'En viaje' WHERE id = ?", (vehiculo["id"],))
 
     if camionero:
