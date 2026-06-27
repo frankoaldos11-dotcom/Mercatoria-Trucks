@@ -1,4 +1,9 @@
 from database import conectar
+from db_config import USE_POSTGRES
+
+
+def ph():
+    return "%s" if USE_POSTGRES else "?"
 
 
 def get_configuracion():
@@ -15,7 +20,7 @@ def guardar_configuracion(parametros: dict):
     cur = con.cursor()
     for clave, valor in parametros.items():
         cur.execute(
-            "UPDATE configuracion SET valor = ? WHERE clave = ?",
+            f"UPDATE configuracion SET valor = {ph()} WHERE clave = {ph()}",
             (float(valor), clave)
         )
     con.commit()
@@ -26,13 +31,13 @@ def calcular_liquidacion(viaje_id):
     con = conectar()
     cur = con.cursor()
 
-    cur.execute("SELECT * FROM viajes WHERE id = ?", (viaje_id,))
+    cur.execute(f"SELECT * FROM viajes WHERE id = {ph()}", (viaje_id,))
     viaje = cur.fetchone()
 
     ruta_tarifa_km = None
     if viaje and _col_exists(viaje, "ruta_id") and viaje["ruta_id"]:
         try:
-            cur.execute("SELECT tarifa_km FROM rutas WHERE id = ?", (viaje["ruta_id"],))
+            cur.execute(f"SELECT tarifa_km FROM rutas WHERE id = {ph()}", (viaje["ruta_id"],))
             ruta = cur.fetchone()
             if ruta and ruta["tarifa_km"] is not None:
                 ruta_tarifa_km = float(ruta["tarifa_km"])

@@ -1,4 +1,9 @@
 from database import conectar
+from db_config import USE_POSTGRES
+
+
+def ph():
+    return "%s" if USE_POSTGRES else "?"
 
 
 # ── RUTAS ────────────────────────────────────────────────────────────────────
@@ -15,7 +20,7 @@ def get_all_rutas():
 def get_ruta(ruta_id):
     con = conectar()
     cur = con.cursor()
-    cur.execute("SELECT * FROM rutas WHERE id = ?", (ruta_id,))
+    cur.execute(f"SELECT * FROM rutas WHERE id = {ph()}", (ruta_id,))
     row = cur.fetchone()
     con.close()
     return row
@@ -24,9 +29,9 @@ def get_ruta(ruta_id):
 def crear_ruta(origen, destino, zona, km):
     con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         INSERT INTO rutas (origen, destino, zona, km_oficiales)
-        VALUES (?, ?, ?, ?)
+        VALUES ({ph()}, {ph()}, {ph()}, {ph()})
     """, (origen.strip(), destino.strip(), zona.strip(), float(km)))
     con.commit()
     con.close()
@@ -35,9 +40,9 @@ def crear_ruta(origen, destino, zona, km):
 def ruta_existe(origen, destino):
     con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         SELECT id FROM rutas
-        WHERE LOWER(origen) = LOWER(?) AND LOWER(destino) = LOWER(?)
+        WHERE LOWER(origen) = LOWER({ph()}) AND LOWER(destino) = LOWER({ph()})
     """, (origen.strip(), destino.strip()))
     row = cur.fetchone()
     con.close()
@@ -58,9 +63,9 @@ def get_all_tipos_vehiculo():
 def crear_tipo_vehiculo(nombre, descripcion, capacidad_ton):
     con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         INSERT INTO tipos_vehiculo (nombre, descripcion, capacidad_ton)
-        VALUES (?, ?, ?)
+        VALUES ({ph()}, {ph()}, {ph()})
     """, (nombre.strip(), descripcion.strip(), float(capacidad_ton) if capacidad_ton else None))
     con.commit()
     con.close()
@@ -90,12 +95,12 @@ def get_all_tarifas():
 def get_tarifa(ruta_id, tipo_vehiculo_id):
     con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         SELECT t.*, r.km_oficiales, r.origen, r.destino, tv.nombre AS tipo_vehiculo
         FROM tarifas t
         JOIN rutas r ON t.ruta_id = r.id
         JOIN tipos_vehiculo tv ON t.tipo_vehiculo_id = tv.id
-        WHERE t.ruta_id = ? AND t.tipo_vehiculo_id = ? AND t.activa = 1
+        WHERE t.ruta_id = {ph()} AND t.tipo_vehiculo_id = {ph()} AND t.activa = 1
     """, (ruta_id, tipo_vehiculo_id))
     row = cur.fetchone()
     con.close()
@@ -112,13 +117,13 @@ def crear_tarifa(ruta_id, tipo_vehiculo_id, precio_cliente, pago_camionero,
     precio_km_cliente = round(float(precio_cliente) / km, 4) if km else 0
     precio_km_camionero = round(float(pago_camionero) / km, 4) if km else 0
 
-    cur.execute("""
+    cur.execute(f"""
         INSERT INTO tarifas (
             ruta_id, tipo_vehiculo_id,
             precio_cliente, pago_camionero,
             precio_km_cliente, precio_km_camionero,
             combustible_estimado, vigencia_desde, vigencia_hasta
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
     """, (
         ruta_id, tipo_vehiculo_id,
         float(precio_cliente), float(pago_camionero),
@@ -173,14 +178,14 @@ def guardar_cotizacion(datos, cliente_id, usuario_id,
 
     con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         INSERT INTO cotizaciones (
             cliente_id, ruta_id, tipo_vehiculo_id, km,
             precio_calculado, precio_final, pago_camionero,
             combustible_estimado, beneficio_estimado,
             modificado_manualmente, motivo_modificacion, usuario_modificacion,
             estado
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'borrador')
+        ) VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, 'borrador')
     """, (
         cliente_id, datos["ruta_id"], datos["tipo_vehiculo_id"], datos["km"],
         datos["precio_calculado"], precio_final, datos["pago_camionero"],
@@ -224,7 +229,7 @@ def get_cotizacion_detalle(id):
     con = conectar()
     cur = con.cursor()
 
-    cur.execute("""
+    cur.execute(f"""
         SELECT
             c.*,
             cl.nombre AS cliente_nombre,
@@ -235,7 +240,7 @@ def get_cotizacion_detalle(id):
         LEFT JOIN clientes cl ON cl.id = c.cliente_id
         JOIN rutas r ON r.id = c.ruta_id
         JOIN tipos_vehiculo tv ON tv.id = c.tipo_vehiculo_id
-        WHERE c.id = ?
+        WHERE c.id = {ph()}
     """, (id,))
 
     dato = cur.fetchone()
@@ -247,7 +252,7 @@ def actualizar_tarifa_km_ruta(ruta_id, tarifa_km):
     con = conectar()
     cur = con.cursor()
     val = float(tarifa_km) if tarifa_km not in (None, "", "null") else None
-    cur.execute("UPDATE rutas SET tarifa_km = ? WHERE id = ?", (val, ruta_id))
+    cur.execute(f"UPDATE rutas SET tarifa_km = {ph()} WHERE id = {ph()}", (val, ruta_id))
     con.commit()
     con.close()
 
@@ -255,11 +260,11 @@ def actualizar_tarifa_km_ruta(ruta_id, tarifa_km):
 def get_camioneros_por_ruta(ruta_id):
     con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         SELECT c.id, c.nombre, c.telefono, c.estado
         FROM camioneros c
         JOIN camionero_ruta cr ON cr.camionero_id = c.id
-        WHERE cr.ruta_id = ? AND c.activo = 1
+        WHERE cr.ruta_id = {ph()} AND c.activo = 1
         ORDER BY c.nombre
     """, (ruta_id,))
     rows = cur.fetchall()
@@ -279,10 +284,16 @@ def get_all_camioneros_activos():
 def asignar_camionero_a_ruta(ruta_id, camionero_id):
     con = conectar()
     cur = con.cursor()
-    cur.execute(
-        "INSERT OR IGNORE INTO camionero_ruta (ruta_id, camionero_id) VALUES (?, ?)",
-        (ruta_id, camionero_id)
-    )
+    if USE_POSTGRES:
+        cur.execute(
+            f"INSERT INTO camionero_ruta (ruta_id, camionero_id) VALUES ({ph()}, {ph()}) ON CONFLICT DO NOTHING",
+            (ruta_id, camionero_id)
+        )
+    else:
+        cur.execute(
+            f"INSERT OR IGNORE INTO camionero_ruta (ruta_id, camionero_id) VALUES ({ph()}, {ph()})",
+            (ruta_id, camionero_id)
+        )
     con.commit()
     con.close()
 
@@ -291,7 +302,7 @@ def desasociar_camionero_de_ruta(ruta_id, camionero_id):
     con = conectar()
     cur = con.cursor()
     cur.execute(
-        "DELETE FROM camionero_ruta WHERE ruta_id = ? AND camionero_id = ?",
+        f"DELETE FROM camionero_ruta WHERE ruta_id = {ph()} AND camionero_id = {ph()}",
         (ruta_id, camionero_id)
     )
     con.commit()
@@ -301,11 +312,11 @@ def desasociar_camionero_de_ruta(ruta_id, camionero_id):
 def get_rutas_por_camionero(camionero_id):
     con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         SELECT r.id, r.origen, r.destino, r.km_oficiales, r.zona
         FROM rutas r
         JOIN camionero_ruta cr ON cr.ruta_id = r.id
-        WHERE cr.camionero_id = ? AND r.activa = 1
+        WHERE cr.camionero_id = {ph()} AND r.activa = 1
         ORDER BY r.origen, r.destino
     """, (camionero_id,))
     rows = cur.fetchall()
@@ -317,10 +328,16 @@ def convertir_cotizacion_en_viaje(cotizacion_id):
     con = conectar()
     cur = con.cursor()
 
-    cur.execute("PRAGMA table_info(viajes)")
+    if USE_POSTGRES:
+        cur.execute("""
+            SELECT column_name AS name FROM information_schema.columns
+            WHERE table_name = 'viajes'
+        """)
+    else:
+        cur.execute("PRAGMA table_info(viajes)")
     columnas_viajes = [col["name"] for col in cur.fetchall()]
 
-    cur.execute("""
+    cur.execute(f"""
         SELECT
             c.*,
             cl.nombre AS cliente_nombre,
@@ -336,7 +353,7 @@ def convertir_cotizacion_en_viaje(cotizacion_id):
             ON t.ruta_id = c.ruta_id
             AND t.tipo_vehiculo_id = c.tipo_vehiculo_id
             AND t.activa = 1
-        WHERE c.id = ?
+        WHERE c.id = {ph()}
     """, (cotizacion_id,))
 
     c = cur.fetchone()
@@ -346,14 +363,14 @@ def convertir_cotizacion_en_viaje(cotizacion_id):
         return None
 
     if "cotizacion_id" in columnas_viajes:
-        cur.execute("SELECT id FROM viajes WHERE cotizacion_id = ?", (cotizacion_id,))
+        cur.execute(f"SELECT id FROM viajes WHERE cotizacion_id = {ph()}", (cotizacion_id,))
         viaje_existente = cur.fetchone()
 
         if viaje_existente:
-            cur.execute("""
+            cur.execute(f"""
                 UPDATE cotizaciones
                 SET estado = 'convertida'
-                WHERE id = ?
+                WHERE id = {ph()}
             """, (cotizacion_id,))
             con.commit()
             con.close()
@@ -408,7 +425,7 @@ def convertir_cotizacion_en_viaje(cotizacion_id):
             datos[columna] = valor
 
     campos = ", ".join(datos.keys())
-    placeholders = ", ".join(["?"] * len(datos))
+    placeholders = ", ".join([ph()] * len(datos))
     valores = list(datos.values())
 
     cur.execute(
@@ -418,10 +435,10 @@ def convertir_cotizacion_en_viaje(cotizacion_id):
 
     viaje_id = cur.lastrowid
 
-    cur.execute("""
+    cur.execute(f"""
         UPDATE cotizaciones
         SET estado = 'convertida'
-        WHERE id = ?
+        WHERE id = {ph()}
     """, (cotizacion_id,))
 
     con.commit()

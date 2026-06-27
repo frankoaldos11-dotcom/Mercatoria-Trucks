@@ -1,7 +1,13 @@
 import io
 import os
-import sqlite3
 from datetime import datetime
+
+from database import conectar
+from db_config import USE_POSTGRES
+
+
+def ph():
+    return "%s" if USE_POSTGRES else "?"
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
@@ -301,11 +307,9 @@ def generar_pdf_orden_carga(viaje: dict) -> bytes:
 def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
     from services.finanzas_service import calcular_liquidacion
 
-    db_path = os.path.join(_BASE_DIR, "mercatoria.db")
-    con = sqlite3.connect(db_path)
-    con.row_factory = sqlite3.Row
+    con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         SELECT
             v.*,
             c.nombre   AS cam_nombre,
@@ -316,7 +320,7 @@ def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
         FROM viajes v
         LEFT JOIN camioneros c ON v.camionero_id = c.id
         LEFT JOIN rutas      r ON v.ruta_id      = r.id
-        WHERE v.id = ?
+        WHERE v.id = {ph()}
     """, (viaje_id,))
     row = cur.fetchone()
     con.close()
@@ -501,11 +505,9 @@ def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
 
 
 def generar_pdf_carta_porte(viaje_id: int) -> bytes:
-    db_path = os.path.join(_BASE_DIR, "mercatoria.db")
-    con = sqlite3.connect(db_path)
-    con.row_factory = sqlite3.Row
+    con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         SELECT
             v.*,
             c.nombre     AS cam_nombre,
@@ -526,7 +528,7 @@ def generar_pdf_carta_porte(viaje_id: int) -> bytes:
         LEFT JOIN clientes   cl  ON v.cliente_id   = cl.id
         LEFT JOIN vehiculos  veh ON v.vehiculo_id  = veh.id
         LEFT JOIN rutas      r   ON v.ruta_id      = r.id
-        WHERE v.id = ?
+        WHERE v.id = {ph()}
     """, (viaje_id,))
     row = cur.fetchone()
     con.close()
@@ -753,11 +755,9 @@ def generar_pdf_carta_porte(viaje_id: int) -> bytes:
 
 
 def generar_factura_cliente(viaje_id: int) -> bytes:
-    db_path = os.path.join(_BASE_DIR, "mercatoria.db")
-    con = sqlite3.connect(db_path)
-    con.row_factory = sqlite3.Row
+    con = conectar()
     cur = con.cursor()
-    cur.execute("""
+    cur.execute(f"""
         SELECT
             v.*,
             cl.nombre    AS cli_nombre,
@@ -768,7 +768,7 @@ def generar_factura_cliente(viaje_id: int) -> bytes:
         FROM viajes v
         LEFT JOIN clientes      cl ON v.cliente_id      = cl.id
         LEFT JOIN tipos_vehiculo tv ON v.tipo_vehiculo_id = tv.id
-        WHERE v.id = ?
+        WHERE v.id = {ph()}
     """, (viaje_id,))
     row = cur.fetchone()
     con.close()
