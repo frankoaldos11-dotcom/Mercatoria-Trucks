@@ -145,7 +145,7 @@
                             {% endif %}
                         </form>
                         <form method="POST" action="/admin/usuarios/{{ u['id'] }}/reset-password"
-                              onsubmit="return confirm('¿Resetear contraseña de {{ u[\"usuario\"] }}?')"
+                              onsubmit="return confirm('¿Resetear contraseña de {{ u.usuario }}?')"
                               style="display:inline-flex;gap:4px;align-items:center;margin-left:4px;">
                             <input type="text" name="nueva_password" placeholder="Nueva contraseña"
                                    style="padding:3px 7px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:120px;"
