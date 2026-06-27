@@ -60,7 +60,7 @@
                 <td>{{ badge_estado(v.estado) }}</td>
                 <td style="color:#6B7280;font-size:0.82rem;">{{ v.camionero_nombre or '—' }}</td>
                 <td style="color:#9CA3AF;font-size:0.8rem;">
-                    {{ v.fecha_creacion[:10] if v.fecha_creacion else '—' }}
+                    {{ v.fecha_creacion.strftime('%Y-%m-%d') if v.fecha_creacion else '—' }}
                 </td>
                 <td>
                     <a href="/cliente/viaje/{{ v.id }}"
@@ -95,7 +95,7 @@
             {% endif %}
             {% if v.fecha_creacion %}
             <span class="mx-2">·</span>
-            {{ v.fecha_creacion[:10] }}
+            {{ v.fecha_creacion.strftime('%Y-%m-%d') if v.fecha_creacion else '—' }}
             {% endif %}
         </div>
     </a>
