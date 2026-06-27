@@ -3,12 +3,15 @@
 {% block contenido %}
 
 {% set bc = {
-    'solicitado': 'badge-warn',
-    'pendiente':  'badge-warn',
-    'asignado':   'badge-active',
-    'en ruta':    'badge-info',
-    'entregado':  'badge-ok',
-    'cancelado':  'badge-danger'
+    'solicitado':          'badge-warn',
+    'pendiente':           'badge-warn',
+    'pendiente de pago':   'badge-warn',
+    'confirmado':          'badge-active',
+    'asignado':            'badge-active',
+    'carga recogida':      'badge-info',
+    'en ruta':             'badge-info',
+    'entregado':           'badge-ok',
+    'cancelado':           'badge-danger'
 } %}
 
 <div class="page-header">

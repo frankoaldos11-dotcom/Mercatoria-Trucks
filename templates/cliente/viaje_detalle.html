@@ -45,6 +45,7 @@
         (2, 'bi-truck-front-fill', 'En ruta'),
         (3, 'bi-check-circle-fill', 'Entregado')
     ] %}
+    {% set estados_intermedios = {'Pendiente de pago': 1, 'Confirmado': 1, 'Carga recogida': 2} %}
 
     <div class="tl-wrap">
         {% for idx, icon, label in pasos %}
@@ -60,6 +61,9 @@
             </div>
             <div class="tl-line-after"></div>
             <span class="tl-label">{{ label }}</span>
+            {% if estado_paso == 'active' and estados_intermedios.get(viaje.estado) == idx %}
+            <span style="font-size:0.62rem;color:#E86A2C;font-weight:700;margin-top:2px;white-space:nowrap;">{{ viaje.estado }}</span>
+            {% endif %}
         </div>
         {% endfor %}
     </div>

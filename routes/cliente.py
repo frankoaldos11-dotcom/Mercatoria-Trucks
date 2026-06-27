@@ -301,10 +301,16 @@ def solicitar_envio():
             return render_template("cliente/solicitar.html", rutas=rutas,
                                    error="Selecciona la ruta, tipo de carga y peso aproximado")
 
-        cur.execute("SELECT origen, destino FROM rutas WHERE id = ?", (ruta_id,))
+        cur.execute("SELECT origen, destino FROM rutas WHERE id = ? AND activa = 1", (ruta_id,))
         ruta = cur.fetchone()
-        origen  = ruta["origen"]  if ruta else ""
-        destino = ruta["destino"] if ruta else ""
+        if not ruta:
+            cur.execute("SELECT id, nombre, origen, destino FROM rutas WHERE activa = 1 ORDER BY nombre")
+            rutas = cur.fetchall()
+            con.close()
+            return render_template("cliente/solicitar.html", rutas=rutas,
+                                   error="La ruta seleccionada no es válida. Por favor elige una de la lista.")
+        origen  = ruta["origen"]
+        destino = ruta["destino"]
 
         cur.execute("SELECT id FROM clientes WHERE usuario_id = ?", (session["user_id"],))
         cliente_row = cur.fetchone()
