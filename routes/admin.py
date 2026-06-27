@@ -8,8 +8,8 @@ from datetime import date, datetime
 from urllib.parse import quote_plus
 
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
-import sqlite3
 
+from database import conectar
 from extensions import bcrypt, mail
 from flask_mail import Message
 from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_por_camionero
@@ -18,12 +18,6 @@ from services.pdf_service import generar_factura_cliente, generar_pdf_orden_carg
 from utils.constants import CAMIONERO_ESTADOS, VEHICULO_ESTADOS
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
-
-
-def conectar():
-    conexion = sqlite3.connect("mercatoria.db")
-    conexion.row_factory = sqlite3.Row
-    return conexion
 
 
 def registrar_auditoria(accion, categoria, entidad=None, entidad_id=None, detalle=None):
