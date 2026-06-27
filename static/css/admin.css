@@ -523,3 +523,13 @@ body {
     white-space: nowrap;
 }
 .btn-excel-import:hover { background: #1D4ED8; }
+
+.nav-item-active {
+    background: #E86A2C !important;
+    color: white !important;
+}
+.nav-item-active:hover {
+    background: #cf5a22 !important;
+    color: white !important;
+    transform: none;
+}

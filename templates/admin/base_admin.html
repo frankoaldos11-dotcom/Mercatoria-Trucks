@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -17,7 +17,7 @@
             border-radius: 999px;
             font-size: 11px;
             font-weight: 700;
-            background: #F36B21;
+            background: #E86A2C;
             color: #fff;
             margin-left: auto;
             line-height: 1;
@@ -51,7 +51,7 @@
 
             <div class="nav-section">Operaciones</div>
 
-            <a href="/admin" class="nav-item">
+            <a href="/admin" class="nav-item {{ 'nav-item-active' if request.path == '/admin' else '' }}">
                 <i class="bi bi-grid-1x2"></i>
                 <span>Dashboard</span>
                 {% if sidebar_dashboard_urgentes > 0 %}
@@ -59,7 +59,7 @@
                 {% endif %}
             </a>
 
-            <a href="/admin/viajes" class="nav-item">
+            <a href="/admin/viajes" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/viajes') else '' }}">
                 <i class="bi bi-truck"></i>
                 <span>Viajes</span>
                 {% if sidebar_viajes_urgentes > 0 %}
@@ -67,44 +67,43 @@
                 {% endif %}
             </a>
 
-            <a href="/admin/comercial/cotizaciones" class="nav-item">
+            <a href="/admin/comercial/cotizaciones" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/comercial/cotizacion') else '' }}">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Cotizaciones</span>
             </a>
 
             <div class="nav-section">Comercial</div>
 
-            <a href="/admin/comercial/rutas" class="nav-item">
+            <a href="/admin/comercial/rutas" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/comercial/rutas') else '' }}">
                 <i class="bi bi-signpost-2"></i>
                 <span>Rutas</span>
             </a>
 
             {% if session.get('rol') == 'admin' %}
-            <a href="/admin/comercial/vehiculos" class="nav-item">
+            <a href="/admin/comercial/vehiculos" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/comercial/vehiculos') else '' }}">
                 <i class="bi bi-truck-front"></i>
                 <span>Tipos de vehículo</span>
             </a>
 
-            <a href="/admin/comercial/tarifas" class="nav-item">
+            <a href="/admin/comercial/tarifas" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/comercial/tarifas') else '' }}">
                 <i class="bi bi-table"></i>
                 <span>Tarifas</span>
             </a>
             {% endif %}
 
-            <a href="/admin/comercial/cotizar" class="nav-item">
+            <a href="/admin/comercial/cotizar" class="nav-item {{ 'nav-item-active' if request.path == '/admin/comercial/cotizar' else '' }}">
                 <i class="bi bi-calculator"></i>
                 <span>Cotizar</span>
             </a>
 
             <div class="nav-section">Recursos</div>
 
-            <a href="/admin/camioneros" class="nav-item">
+            <a href="/admin/camioneros" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/camioneros') else '' }}">
                 <i class="bi bi-person-vcard"></i>
                 <span>Camioneros</span>
             </a>
 
-
-            <a href="/admin/clientes" class="nav-item">
+            <a href="/admin/clientes" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/clientes') else '' }}">
                 <i class="bi bi-buildings"></i>
                 <span>Clientes</span>
             </a>
@@ -112,27 +111,27 @@
             <div class="nav-section">Sistema</div>
 
             {% if session.get('rol') == 'admin' %}
-            <a href="/admin/reportes" class="nav-item">
+            <a href="/admin/reportes" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/reportes') else '' }}">
                 <i class="bi bi-bar-chart-line"></i>
                 <span>Reportes</span>
             </a>
-            <a href="/admin/usuarios" class="nav-item">
+            <a href="/admin/usuarios" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/usuarios') else '' }}">
                 <i class="bi bi-people"></i>
                 <span>Usuarios</span>
             </a>
-            <a href="/admin/configuracion" class="nav-item">
+            <a href="/admin/configuracion" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/configuracion') else '' }}">
                 <i class="bi bi-sliders"></i>
                 <span>Configuración</span>
             </a>
-            <a href="/admin/auditoria" class="nav-item">
+            <a href="/admin/auditoria" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/auditoria') else '' }}">
                 <i class="bi bi-journal-text"></i>
                 <span>Auditoría</span>
             </a>
-            <a href="/admin/lote" class="nav-item">
+            <a href="/admin/lote" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/lote') else '' }}">
                 <i class="bi bi-lightning-charge"></i>
                 <span>Acciones por lote</span>
             </a>
-            <a href="/admin/mensajes" class="nav-item">
+            <a href="/admin/mensajes" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/mensajes') else '' }}">
                 <i class="bi bi-envelope-fill"></i>
                 <span>Mensajes</span>
             </a>

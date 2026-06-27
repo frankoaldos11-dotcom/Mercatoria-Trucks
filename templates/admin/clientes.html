@@ -2,6 +2,12 @@
 
 {% block contenido %}
 
+{% if request.args.get('ok') == '1' %}
+<div style="background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
+    <i class="bi bi-check-circle-fill"></i> Registro guardado correctamente.
+</div>
+{% endif %}
+
 <div class="page-header">
     <div>
         <span class="eyebrow">Comercial</span>
@@ -61,7 +67,7 @@
     <input type="text" name="buscar" value="{{ buscar_cl or '' }}"
            placeholder="Buscar por nombre, email, empresa o teléfono..."
            style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;min-width:280px;">
-    <button type="submit" style="padding:8px 16px;background:#F36B21;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
+    <button type="submit" style="padding:8px 16px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
     {% if buscar_cl %}
     <a href="/admin/clientes" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
     {% endif %}
@@ -158,7 +164,7 @@
 
 .input-crud:focus {
     outline: none;
-    border-color: #F36B21;
+    border-color: #E86A2C;
     background: #fff;
 }
 
@@ -169,7 +175,7 @@
 
 .btn-crud-primary {
     width: 100%;
-    background: #F36B21;
+    background: #E86A2C;
     color: white;
     padding: 10px 18px;
     border: none;

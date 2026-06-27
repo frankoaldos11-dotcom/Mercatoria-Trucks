@@ -139,7 +139,7 @@ def tipos_vehiculo():
     if not requiere_admin():
         return redirect("/login")
     if not _solo_admin():
-        return redirect("/admin/viajes?access_error=Sin+permisos+para+acceder+a+Tipos+de+vehículo")
+        return redirect("/admin?access_error=Sin+permisos+para+acceder+a+Tipos+de+vehículo")
 
     return render_template(
         "admin/comercial/tipos_vehiculo.html",
@@ -152,7 +152,7 @@ def nuevo_tipo_vehiculo():
     if not requiere_admin():
         return redirect("/login")
     if not _solo_admin():
-        return redirect("/admin/viajes?access_error=Sin+permisos")
+        return redirect("/admin?access_error=Sin+permisos")
 
     nombre = request.form["nombre"]
     descripcion = request.form.get("descripcion", "")
@@ -168,7 +168,7 @@ def tarifas():
     if not requiere_admin():
         return redirect("/login")
     if not _solo_admin():
-        return redirect("/admin/viajes?access_error=Sin+permisos+para+acceder+a+Tarifas")
+        return redirect("/admin?access_error=Sin+permisos+para+acceder+a+Tarifas")
 
     return render_template(
         "admin/comercial/tarifas.html",
@@ -183,7 +183,7 @@ def nueva_tarifa():
     if not requiere_admin():
         return redirect("/login")
     if not _solo_admin():
-        return redirect("/admin/viajes?access_error=Sin+permisos")
+        return redirect("/admin?access_error=Sin+permisos")
 
     crear_tarifa(
         ruta_id=request.form["ruta_id"],

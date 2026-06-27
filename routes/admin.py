@@ -846,6 +846,8 @@ def admin_camioneros():
                 """, (nuevo_id, matricula, marca, modelo, tipo, capacidad))
 
             conexion.commit()
+            conexion.close()
+            return redirect("/admin/camioneros?ok=1")
 
     buscar = request.args.get("buscar", "").strip()
     filtro_estado = request.args.get("estado", "").strip()
@@ -1014,6 +1016,8 @@ def admin_clientes():
         """, (nombre, empresa, contacto, telefono, email, direccion))
 
         conexion.commit()
+        conexion.close()
+        return redirect("/admin/clientes?ok=1")
 
     buscar_cl = request.args.get("buscar", "").strip()
     cond_cl = []
@@ -1118,6 +1122,8 @@ def admin_vehiculos():
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (matricula, tipo, marca, modelo, capacidad, camionero_id, estado))
         conexion.commit()
+        conexion.close()
+        return redirect("/admin/vehiculos?ok=1")
 
     buscar_v = request.args.get("buscar", "").strip()
     filtro_estado_v = request.args.get("estado", "").strip()
