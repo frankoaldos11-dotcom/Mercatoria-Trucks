@@ -82,6 +82,8 @@
                     <th>Origen</th>
                     <th>Destino</th>
                     <th>Estado</th>
+                    <th>Precio</th>
+                    <th>Fecha</th>
                     <th>Camionero</th>
                     <th>Acción</th>
                 </tr>
@@ -90,25 +92,33 @@
             <tbody>
                 {% for v in lista %}
                 <tr>
-                    <td>#{{ v[0] }}</td>
-                    <td>{{ v[1] }}</td>
-                    <td>{{ v[2] }}</td>
-                    <td>{{ v[3] }}</td>
+                    <td>#{{ v.id }}</td>
+                    <td>{{ v.cliente }}</td>
+                    <td>{{ v.origen }}</td>
+                    <td>{{ v.destino }}</td>
                     <td>
-                        <span class="badge {{ bc.get(v[4]|lower, '') }}">{{ v[4] }}</span>
+                        <span class="badge {{ bc.get(v.estado|lower, '') }}">{{ v.estado }}</span>
                     </td>
-                    <td>{{ v[5] if v[5] else "Sin asignar" }}</td>
                     <td>
-                        <a href="/admin/viaje/{{ v[0] }}"
+                        {% if v.precio and v.precio|float > 0 %}
+                        <span style="font-weight:700;color:#27ae60;">${{ "%.0f"|format(v.precio|float) }}</span>
+                        {% else %}
+                        <span style="color:#ccc;font-size:11px;">Sin precio</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:11px;color:#999;">{{ v.fecha_creacion.strftime('%Y-%m-%d') if v.fecha_creacion else "—" }}</td>
+                    <td>{{ v.camionero_nombre if v.camionero_nombre else "Sin asignar" }}</td>
+                    <td>
+                        <a href="/admin/viaje/{{ v.id }}"
                            class="btn-icon-action"
-                           title="Gestionar viaje #{{ v[0] }}">
+                           title="Gestionar viaje #{{ v.id }}">
                             <i class="bi bi-sliders"></i>
                         </a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="empty-state">No hay viajes{% if buscar %} que coincidan con "{{ buscar }}"{% endif %}.</td>
+                    <td colspan="9" class="empty-state">No hay viajes{% if buscar %} que coincidan con "{{ buscar }}"{% endif %}.</td>
                 </tr>
                 {% endfor %}
             </tbody>
