@@ -734,8 +734,8 @@ def confirmar_precio(id):
 
 @admin_bp.route("/viaje/<int:id>/eliminar", methods=["POST"])
 def eliminar_viaje_admin(id):
-    if not requiere_admin():
-        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin/viajes")
     conexion = conectar()
     cursor = conexion.cursor()
     cursor.execute("DELETE FROM viajes WHERE id = ?", (id,))
@@ -1239,8 +1239,8 @@ def _calcular_financieros_periodo(fecha_desde, fecha_hasta):
 
 @admin_bp.route("/reportes")
 def reportes():
-    if not (session.get("usuario") and session.get("rol") == "admin"):
-        return redirect("/admin?access_error=Solo+administradores+pueden+ver+reportes")
+    if not requiere_admin():
+        return redirect("/login")
 
     hoy = date.today()
     fecha_desde = request.args.get("fecha_desde", hoy.replace(day=1).isoformat())
@@ -1495,8 +1495,8 @@ def toggle_usuario(id):
 
 @admin_bp.route("/usuarios/<int:id>/reset-password", methods=["POST"])
 def reset_password_usuario(id):
-    if not requiere_admin():
-        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin/usuarios")
     nueva = request.form.get("nueva_password", "").strip()
     if len(nueva) < 4:
         return redirect("/admin/usuarios?error=La+contraseña+debe+tener+al+menos+4+caracteres")
@@ -1542,8 +1542,8 @@ _HEADER_FONT = Font(bold=True, color="FFFFFF")
 
 @admin_bp.route("/exportar/<string:tabla>", methods=["GET"])
 def exportar_excel(tabla):
-    if not requiere_admin():
-        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin")
 
     cfg = _EXCEL_CONFIG.get(tabla)
     if not cfg:
@@ -1586,8 +1586,8 @@ def exportar_excel(tabla):
 
 @admin_bp.route("/importar/<string:tabla>", methods=["POST"])
 def importar_excel(tabla):
-    if not requiere_admin():
-        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin")
 
     cfg = _EXCEL_CONFIG.get(tabla)
     if not cfg:
@@ -1633,8 +1633,8 @@ def importar_excel(tabla):
 
 @admin_bp.route("/auditoria", methods=["GET"])
 def ver_auditoria():
-    if not requiere_admin():
-        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin")
 
     categoria = request.args.get("categoria", "").strip()
     usuario_f = request.args.get("usuario", "").strip()
@@ -1707,8 +1707,8 @@ _ESTADOS_VIAJE = [
 
 @admin_bp.route("/lote", methods=["GET"])
 def panel_lote():
-    if not requiere_admin():
-        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin")
 
     conexion = conectar()
     cursor = conexion.cursor()
@@ -1739,7 +1739,7 @@ def panel_lote():
 
 @admin_bp.route("/lote/preview", methods=["GET"])
 def lote_preview():
-    if not requiere_admin():
+    if session.get("rol") != "admin":
         return jsonify({"count": 0})
 
     criterio = request.args.get("criterio", "")
@@ -1780,8 +1780,8 @@ def lote_preview():
 
 @admin_bp.route("/lote/precios", methods=["POST"])
 def lote_precios():
-    if not requiere_admin():
-        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin")
 
     criterio = request.form.get("criterio", "").strip()
     valor_criterio = request.form.get("valor_criterio", "").strip()
@@ -1835,8 +1835,8 @@ def lote_precios():
 
 @admin_bp.route("/lote/estados", methods=["POST"])
 def lote_estados():
-    if not requiere_admin():
-        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin")
 
     estado_origen = request.form.get("estado_origen", "").strip()
     estado_destino = request.form.get("estado_destino", "").strip()
@@ -1865,8 +1865,8 @@ def lote_estados():
 
 @admin_bp.route("/lote/viajes-seleccionados", methods=["POST"])
 def lote_seleccionados():
-    if not requiere_admin():
-        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin")
 
     ids_raw = request.form.getlist("ids[]")
     accion = request.form.get("accion", "").strip()

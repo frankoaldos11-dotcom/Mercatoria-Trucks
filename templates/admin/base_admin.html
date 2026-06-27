@@ -115,6 +115,11 @@
 
             <div class="nav-section">Sistema</div>
 
+            <a href="/admin/reportes" class="nav-item">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>Reportes</span>
+            </a>
+
             {% if session.get('rol') == 'admin' %}
             <a href="/admin/usuarios" class="nav-item">
                 <i class="bi bi-people"></i>
@@ -123,10 +128,6 @@
             <a href="/admin/configuracion" class="nav-item">
                 <i class="bi bi-sliders"></i>
                 <span>Configuración</span>
-            </a>
-            <a href="/admin/reportes" class="nav-item">
-                <i class="bi bi-bar-chart-line"></i>
-                <span>Reportes</span>
             </a>
             <a href="/admin/auditoria" class="nav-item">
                 <i class="bi bi-journal-text"></i>
