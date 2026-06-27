@@ -10,6 +10,17 @@
     </div>
 </div>
 
+{% if request.args.get('ok') %}
+<div style="background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;">
+    ✅ {{ request.args.get('ok') }}
+</div>
+{% endif %}
+{% if request.args.get('error') %}
+<div style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;">
+    ⚠ {{ request.args.get('error') }}
+</div>
+{% endif %}
+
 {% if mensaje %}
 <div class="alerta-exito">{{ mensaje }}</div>
 {% endif %}
@@ -132,6 +143,17 @@
                             {% else %}
                             <button type="submit" class="btn-accion-ok">Activar</button>
                             {% endif %}
+                        </form>
+                        <form method="POST" action="/admin/usuarios/{{ u['id'] }}/reset-password"
+                              onsubmit="return confirm('¿Resetear contraseña de {{ u[\"usuario\"] }}?')"
+                              style="display:inline-flex;gap:4px;align-items:center;margin-left:4px;">
+                            <input type="text" name="nueva_password" placeholder="Nueva contraseña"
+                                   style="padding:3px 7px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:120px;"
+                                   required minlength="4">
+                            <button type="submit"
+                                    style="padding:4px 10px;background:#7c3aed;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">
+                                🔑 Resetear
+                            </button>
                         </form>
                         {% else %}
                         <span style="color:#aaa;font-size:13px;">Tu cuenta</span>

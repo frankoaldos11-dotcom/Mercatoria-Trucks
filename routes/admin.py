@@ -1488,6 +1488,24 @@ def toggle_usuario(id):
     return redirect("/admin/usuarios")
 
 
+@admin_bp.route("/usuarios/<int:id>/reset-password", methods=["POST"])
+def reset_password_usuario(id):
+    if not requiere_admin():
+        return redirect("/login")
+    nueva = request.form.get("nueva_password", "").strip()
+    if len(nueva) < 4:
+        return redirect("/admin/usuarios?error=La+contraseña+debe+tener+al+menos+4+caracteres")
+    from extensions import bcrypt as _bcrypt
+    nuevo_hash = _bcrypt.generate_password_hash(nueva).decode("utf-8")
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (nuevo_hash, id))
+    conexion.commit()
+    conexion.close()
+    registrar_auditoria(f"Reseteó contraseña de usuario #{id}", "Usuarios", "usuario", id)
+    return redirect("/admin/usuarios?ok=Contraseña+actualizada")
+
+
 # ── Exportar / Importar Excel ──────────────────────────────────────────────────
 
 _EXCEL_CONFIG = {
