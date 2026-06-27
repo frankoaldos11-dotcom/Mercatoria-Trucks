@@ -1,7 +1,21 @@
-﻿{% extends "admin/base_admin.html" %}
+{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
+{# ── Variables compartidas ─────────────────────────────────── #}
+{% set _precio_confirmado = (viaje.precio_final and viaje.precio_final|float > 0)
+                         or (viaje.precio_cliente and viaje.precio_cliente|float > 0)
+                         or (viaje.precio and viaje.precio|float > 0) %}
+{% set _pns = namespace(precio_val="0.00") %}
+{% if viaje.precio_final and viaje.precio_final|float > 0 %}
+    {% set _pns.precio_val = "%.2f"|format(viaje.precio_final|float) %}
+{% elif viaje.precio_cliente and viaje.precio_cliente|float > 0 %}
+    {% set _pns.precio_val = "%.2f"|format(viaje.precio_cliente|float) %}
+{% elif viaje.precio and viaje.precio|float > 0 %}
+    {% set _pns.precio_val = "%.2f"|format(viaje.precio|float) %}
+{% endif %}
+
+{# ── HEADER ────────────────────────────────────────────────── #}
 <div class="page-header">
     <div>
         <a href="/admin/viajes" class="btn-volver">← Volver a viajes</a>
@@ -15,14 +29,11 @@
         </h1>
         <p class="subtitulo">Centro operativo del viaje</p>
     </div>
-
-    <div class="estado-badge">
-        {{ viaje.estado }}
-    </div>
+    <div class="estado-badge">{{ viaje.estado }}</div>
 </div>
 
+{# ── RESUMEN RÁPIDO ────────────────────────────────────────── #}
 <div class="grid-resumen">
-
     <div class="card resumen-card">
         <span>Cliente</span>
         {% if cliente_info and cliente_info.nombre %}
@@ -35,381 +46,362 @@
         <strong>{{ viaje.cliente if viaje.cliente else "Sin cliente" }}</strong>
         {% endif %}
     </div>
-
     <div class="card resumen-card">
         <span>Origen</span>
         <strong>{{ viaje.origen if viaje.origen else "Sin origen" }}</strong>
     </div>
-
     <div class="card resumen-card">
         <span>Destino</span>
         <strong>{{ viaje.destino if viaje.destino else "Sin destino" }}</strong>
     </div>
-
     <div class="card resumen-card">
         <span>Camionero</span>
         <strong>{{ viaje.camionero_nombre if viaje.camionero_nombre else "Sin asignar" }}</strong>
     </div>
-
 </div>
 
-<div class="layout-operacion">
+{# ── BLOQUE DE ALERTAS ─────────────────────────────────────── #}
+{% set _miss_cam    = not viaje.camionero_id and not viaje.camionero_nombre %}
+{% set _miss_veh    = not viaje.vehiculo_id %}
+{% set _miss_precio = not _precio_confirmado %}
+{% set _miss_pago   = not viaje.pago_camionero or viaje.pago_camionero|float == 0 %}
+{% set _miss_comb   = not viaje.combustible or viaje.combustible|float == 0 %}
+{% set _miss_ext    = not viaje.fecha_recogida %}
+{% set _miss_desc   = not viaje.fecha_entrega %}
+{% if _miss_cam or _miss_veh or _miss_precio or _miss_pago or _miss_comb or _miss_ext or _miss_desc %}
+<div class="alertas-bloque">
+    {% if _miss_cam %}<div class="alerta-item alerta-roja"><i class="bi bi-exclamation-triangle-fill"></i> Falta: Camionero asignado</div>{% endif %}
+    {% if _miss_veh %}<div class="alerta-item alerta-roja"><i class="bi bi-exclamation-triangle-fill"></i> Falta: Vehículo</div>{% endif %}
+    {% if _miss_precio %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Precio cliente</div>{% endif %}
+    {% if _miss_pago %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Pago camionero</div>{% endif %}
+    {% if _miss_comb %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Combustible asignado</div>{% endif %}
+    {% if _miss_ext %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Fecha de extracción</div>{% endif %}
+    {% if _miss_desc %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Fecha de descarga</div>{% endif %}
+</div>
+{% endif %}
 
-    <!-- ══ COLUMNA PRINCIPAL — solo informativo ══ -->
-    <div class="columna-principal">
+{# ── TAB NAV ───────────────────────────────────────────────── #}
+<div class="tab-nav">
+    <button class="tab-btn tab-activo" onclick="activarTab('info',this)" id="btn-info">
+        <i class="bi bi-info-circle"></i> Información
+    </button>
+    <button class="tab-btn" onclick="activarTab('operacion',this)" id="btn-operacion">
+        <i class="bi bi-gear"></i> Operación
+    </button>
+</div>
 
-        <!-- Timeline de pasos -->
-        {% set _pasos_lista = ['Solicitado', 'Asignado', 'En ruta', 'Entregado'] %}
-        {% if viaje.estado == 'Asignado' %}{% set _paso_idx = 1 %}
-        {% elif viaje.estado == 'En ruta' %}{% set _paso_idx = 2 %}
-        {% elif viaje.estado == 'Entregado' %}{% set _paso_idx = 3 %}
-        {% elif viaje.estado == 'Cancelado' %}{% set _paso_idx = -1 %}
-        {% else %}{% set _paso_idx = 0 %}{% endif %}
+{# ════════════════════════════════════════════════════════════
+   TAB 1 — INFORMACIÓN
+   ════════════════════════════════════════════════════════════ #}
+<div id="tab-info" class="tab-panel">
 
-        <div class="card bloque timeline-card">
-            {% if _paso_idx == -1 %}
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span class="tl-dot-cancel"><i class="bi bi-x-lg"></i></span>
-                <span style="font-size:13px;font-weight:700;color:#c0392b;">Viaje cancelado</span>
-            </div>
-            {% else %}
-            <div class="tl-row">
-                {% for i in range(4) %}
-                {% if i < _paso_idx %}{% set _cls = 'tl-done' %}
-                {% elif i == _paso_idx %}{% set _cls = 'tl-active' %}
-                {% else %}{% set _cls = 'tl-future' %}{% endif %}
-                <div class="tl-step {{ _cls }}">
-                    <div class="tl-node">
-                        {% if i < _paso_idx %}<i class="bi bi-check-lg"></i>
-                        {% elif i == 0 %}<i class="bi bi-send-fill"></i>
-                        {% elif i == 1 %}<i class="bi bi-person-check-fill"></i>
-                        {% elif i == 2 %}<i class="bi bi-truck-front-fill"></i>
-                        {% else %}<i class="bi bi-check-circle-fill"></i>{% endif %}
-                    </div>
-                    <span class="tl-lbl">{{ _pasos_lista[i] }}</span>
-                </div>
-                {% if i < 3 %}
-                <div class="tl-connector {% if i < _paso_idx %}tl-connector-done{% endif %}"></div>
-                {% endif %}
-                {% endfor %}
-            </div>
-            {% endif %}
+    {# Timeline #}
+    {% set _pasos_lista = ['Solicitado', 'Asignado', 'En ruta', 'Entregado'] %}
+    {% if viaje.estado == 'Asignado' %}{% set _paso_idx = 1 %}
+    {% elif viaje.estado == 'En ruta' %}{% set _paso_idx = 2 %}
+    {% elif viaje.estado == 'Entregado' %}{% set _paso_idx = 3 %}
+    {% elif viaje.estado == 'Cancelado' %}{% set _paso_idx = -1 %}
+    {% else %}{% set _paso_idx = 0 %}{% endif %}
+
+    <div class="card bloque timeline-card">
+        {% if _paso_idx == -1 %}
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span class="tl-dot-cancel"><i class="bi bi-x-lg"></i></span>
+            <span style="font-size:13px;font-weight:700;color:#c0392b;">Viaje cancelado</span>
         </div>
-
-        {% if error %}
-        <div class="alerta-error">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-            {{ error }}
-        </div>
-        {% endif %}
-
-        <div class="card bloque">
-            <h2>Datos del viaje</h2>
-
-            <div class="detalle-grid">
-                <div>
-                    <label>ID viaje</label>
-                    <p>#{{ viaje.id }}</p>
+        {% else %}
+        <div class="tl-row">
+            {% for i in range(4) %}
+            {% if i < _paso_idx %}{% set _cls = 'tl-done' %}
+            {% elif i == _paso_idx %}{% set _cls = 'tl-active' %}
+            {% else %}{% set _cls = 'tl-future' %}{% endif %}
+            <div class="tl-step {{ _cls }}">
+                <div class="tl-node">
+                    {% if i < _paso_idx %}<i class="bi bi-check-lg"></i>
+                    {% elif i == 0 %}<i class="bi bi-send-fill"></i>
+                    {% elif i == 1 %}<i class="bi bi-person-check-fill"></i>
+                    {% elif i == 2 %}<i class="bi bi-truck-front-fill"></i>
+                    {% else %}<i class="bi bi-check-circle-fill"></i>{% endif %}
                 </div>
-
-                <div>
-                    <label>Ruta</label>
-                    <p>{{ ruta_display if ruta_display else "—" }}</p>
-                </div>
-
-                <div>
-                    <label>Tipo de vehículo</label>
-                    <p>{{ tipo_vehiculo_nombre if tipo_vehiculo_nombre else "—" }}</p>
-                </div>
-
-                <div>
-                    <label>Tarifa</label>
-                    <p>{{ tarifa_info if tarifa_info else "Sin tarifa asignada" }}</p>
-                </div>
-
-                <div>
-                    <label>Cotización</label>
-                    <p>{% if viaje.cotizacion_id %}#{{ viaje.cotizacion_id }}{% else %}Sin cotización{% endif %}</p>
-                </div>
-
-                <div>
-                    <label>Precio cliente</label>
-                    {% set _precio_confirmado = (viaje.precio_final and viaje.precio_final|float > 0)
-                                             or (viaje.precio_cliente and viaje.precio_cliente|float > 0)
-                                             or (viaje.precio and viaje.precio|float > 0) %}
-                    {% if _precio_confirmado %}
-                        {% if viaje.precio_final and viaje.precio_final|float > 0 %}
-                        <p>${{ "%.2f"|format(viaje.precio_final|float) }}</p>
-                        {% elif viaje.precio_cliente and viaje.precio_cliente|float > 0 %}
-                        <p>${{ "%.2f"|format(viaje.precio_cliente|float) }}</p>
-                        {% else %}
-                        <p>${{ "%.2f"|format(viaje.precio|float) }}</p>
-                        {% endif %}
-                    {% else %}
-                    <form method="POST" action="/admin/viaje/{{ viaje.id }}/confirmar-precio" style="margin:0;margin-top:4px;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        {% if liquidacion and liquidacion.precio_cliente > 0 %}
-                        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                            <input type="number" name="precio_cliente" id="precio-inp-{{ viaje.id }}"
-                                   value="{{ '%.2f'|format(liquidacion.precio_cliente) }}"
-                                   step="0.01" min="0.01" readonly
-                                   style="width:85px;padding:5px 8px;border:2px solid #E86A2C;border-radius:6px;font-size:13px;font-weight:700;background:#fff8f5;color:#222;"
-                                   required>
-                            <button type="submit"
-                                    style="padding:5px 10px;background:#E86A2C;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
-                                Confirmar precio calculado
-                            </button>
-                            <a href="#" onclick="editarPrecioViaje('{{ viaje.id }}');return false;"
-                               style="font-size:11px;color:#aaa;text-decoration:underline;">Modificar</a>
-                        </div>
-                        {% else %}
-                        <div style="display:flex;gap:6px;align-items:center;">
-                            <input type="number" name="precio_cliente" step="0.01" min="0.01"
-                                   placeholder="0.00"
-                                   style="width:85px;padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;"
-                                   required>
-                            <button type="submit"
-                                    style="padding:5px 10px;background:#E86A2C;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
-                                Confirmar
-                            </button>
-                        </div>
-                        {% endif %}
-                        <span style="color:#e74c3c;font-size:11px;">Sin precio confirmado</span>
-                    </form>
-                    {% endif %}
-                </div>
+                <span class="tl-lbl">{{ _pasos_lista[i] }}</span>
             </div>
-        </div>
-
-        <div class="card bloque">
-            <h2>Liquidación financiera</h2>
-
-            {% if liquidacion %}
-
-            {% if liquidacion.minimo_aplicado %}
-            <div class="liq-aviso">
-                <i class="bi bi-info-circle"></i>
-                Km mínimo garantizado aplicado ({{ liquidacion.km_liquidable|int }} km en lugar de {{ liquidacion.km_real|int }} km reales)
-            </div>
+            {% if i < 3 %}
+            <div class="tl-connector {% if i < _paso_idx %}tl-connector-done{% endif %}"></div>
             {% endif %}
-
-            <div class="economia-grid">
-                <div class="economia-item">
-                    <span>Km liquidables</span>
-                    <strong>{{ liquidacion.km_liquidable|int }} km</strong>
-                </div>
-
-                <div class="economia-item">
-                    <span>Precio cliente</span>
-                    <strong>${{ "%.2f"|format(liquidacion.precio_cliente) }}</strong>
-                </div>
-
-                <div class="economia-item">
-                    <span>Combustible</span>
-                    <strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong>
-                </div>
-
-                <div class="economia-item">
-                    <span>Pago camionero</span>
-                    <strong>${{ "%.2f"|format(liquidacion.pago_camionero) }}</strong>
-                </div>
-
-                <div class="economia-item">
-                    <span>Comisión Mercatoria ({{ liquidacion.config.comision_mercatoria_porcentaje|int }}%)</span>
-                    <strong>${{ "%.2f"|format(liquidacion.comision_mercatoria) }}</strong>
-                </div>
-
-                <div class="economia-item beneficio">
-                    <span>Utilidad Mercatoria</span>
-                    <strong>${{ "%.2f"|format(liquidacion.utilidad_mercatoria) }}</strong>
-                </div>
-            </div>
-
-            {% else %}
-            <p class="sin-datos">No se pudo calcular la liquidación para este viaje.</p>
-            {% endif %}
-        </div>
-
-        <div class="card bloque">
-            <h2>Detalles de la carga</h2>
-
-            {% if viaje.tipo_carga %}
-            {# ── Campos estructurados (solicitudes nuevas) ── #}
-
-            {% if (viaje.prioridad and viaje.prioridad != 'Normal') or viaje.referencia_cliente %}
-            <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
-                {% if viaje.prioridad and viaje.prioridad != 'Normal' %}
-                <span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;
-                    {% if viaje.prioridad == 'Urgente' %}background:#fef2f2;color:#991b1b;border:1px solid #f87171;
-                    {% else %}background:#fffbeb;color:#92400e;border:1px solid #fcd34d;{% endif %}">
-                    {{ viaje.prioridad }}
-                </span>
-                {% endif %}
-                {% if viaje.referencia_cliente %}
-                <span style="font-size:12px;color:#666;">Ref. cliente: <strong>{{ viaje.referencia_cliente }}</strong></span>
-                {% endif %}
-            </div>
-            {% endif %}
-
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:10px;">
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
-                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Tipo de carga</div>
-                    <div style="font-size:13px;font-weight:700;">{{ viaje.tipo_carga or "—" }}</div>
-                </div>
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
-                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Tipo de transporte</div>
-                    <div style="font-size:13px;font-weight:700;">{{ viaje.tipo_transporte or "—" }}</div>
-                </div>
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
-                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Peso (ton)</div>
-                    <div style="font-size:13px;font-weight:700;">{{ viaje.peso_toneladas if viaje.peso_toneladas else "—" }}</div>
-                </div>
-                {% if viaje.cantidad_contenedores %}
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
-                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Contenedores</div>
-                    <div style="font-size:13px;font-weight:700;">{{ viaje.cantidad_contenedores }}</div>
-                </div>
-                {% endif %}
-                {% if viaje.numero_contenedor %}
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
-                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">N° contenedor</div>
-                    <div style="font-size:13px;font-weight:700;">{{ viaje.numero_contenedor }}</div>
-                </div>
-                {% endif %}
-            </div>
-
-            {% if viaje.observaciones_operativas %}
-            <div style="background:#f0f7ff;border-left:3px solid #2563EB;border-radius:6px;padding:9px 12px;margin-bottom:8px;">
-                <div style="font-size:10px;color:#2563EB;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Obs. operativas</div>
-                <div style="font-size:13px;white-space:pre-line;">{{ viaje.observaciones_operativas }}</div>
-            </div>
-            {% endif %}
-
-            {% if viaje.observaciones %}
-            <div class="observaciones" style="margin-top:8px;">
-                <div style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px;">Notas adicionales</div>
-                {{ viaje.observaciones }}
-            </div>
-            {% endif %}
-
-            {% elif obs_parsed.tipo_carga or obs_parsed.peso or obs_parsed.notas %}
-            {# ── Datos legacy (formato texto antiguo) ── #}
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;">
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
-                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Tipo de carga</div>
-                    <div style="font-size:13px;font-weight:700;">{{ obs_parsed.tipo_carga if obs_parsed.tipo_carga else "—" }}</div>
-                </div>
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
-                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Peso aproximado</div>
-                    <div style="font-size:13px;font-weight:700;">{{ obs_parsed.peso if obs_parsed.peso else "—" }}</div>
-                </div>
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
-                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Notas adicionales</div>
-                    <div style="font-size:13px;font-weight:700;">{{ obs_parsed.notas if obs_parsed.notas else "—" }}</div>
-                </div>
-            </div>
-            {% else %}
-            <div class="observaciones">
-                {{ obs_parsed.crudo if obs_parsed.crudo else "Sin observaciones registradas." }}
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="card bloque">
-            <h2><i class="bi bi-clock-history" style="color:#E86A2C;margin-right:5px;"></i>Historial de estados</h2>
-            <div style="display:flex;flex-direction:column;gap:6px;">
-                {% set estados_hist = [
-                    ("Solicitado",  viaje.fecha_creacion),
-                    ("Asignado",    viaje.fecha_asignacion),
-                    ("En ruta",     viaje.fecha_recogida),
-                    ("Entregado",   viaje.fecha_entrega),
-                ] %}
-                {% for nombre_estado, fecha in estados_hist %}
-                {% if fecha %}
-                <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
-                    <div style="width:10px;height:10px;border-radius:50%;background:#E86A2C;flex-shrink:0;"></div>
-                    <span style="font-weight:700;min-width:90px;">{{ nombre_estado }}</span>
-                    <span style="color:#888;">{{ fecha | fmt_fecha }}</span>
-                </div>
-                {% endif %}
-                {% endfor %}
-                {% if not viaje.fecha_creacion %}
-                <p style="color:#999;font-size:12px;margin:0;">Sin historial registrado.</p>
-                {% endif %}
-            </div>
-        </div>
-
-        {% if cliente_info %}
-        <div class="card bloque">
-            <h2><i class="bi bi-person-circle" style="color:#E86A2C;margin-right:5px;"></i>Datos del cliente</h2>
-            {% set cat = cliente_info.categoria or 'Normal' %}
-            {% if cat != 'Normal' %}
-            <div style="margin-bottom:10px;">
-                <span class="badge-cat badge-cat-{{ cat|lower|replace('é','e')|replace('ó','o') }}">{{ cat }}</span>
-            </div>
-            {% endif %}
-            <table style="width:100%;font-size:12px;border-collapse:collapse;">
-                <tr>
-                    <td style="color:#888;padding:5px 0;width:30%;font-size:11px;text-transform:uppercase;">Nombre</td>
-                    <td style="font-weight:700;">{{ cliente_info.nombre or "—" }}</td>
-                </tr>
-                <tr>
-                    <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Teléfono</td>
-                    <td style="font-weight:600;">{{ cliente_info.telefono or "—" }}</td>
-                </tr>
-                <tr>
-                    <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Empresa</td>
-                    <td style="font-weight:600;">{{ cliente_info.empresa or "—" }}</td>
-                </tr>
-                <tr>
-                    <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Email</td>
-                    <td style="font-weight:600;word-break:break-all;">{{ cliente_info.email or viaje.cliente or "—" }}</td>
-                </tr>
-            </table>
+            {% endfor %}
         </div>
         {% endif %}
-
-        <div class="card bloque">
-            <h2><i class="bi bi-journal-text" style="color:#E86A2C;margin-right:5px;"></i>Notas internas</h2>
-
-            <form method="POST" action="/admin/viaje/{{ viaje.id }}/nota"
-                  style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-start;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <textarea name="texto" rows="2" placeholder="Añadir nota interna (llamada, acuerdo, incidencia...)"
-                          style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;"
-                          required></textarea>
-                <button type="submit"
-                        style="padding:8px 14px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
-                    <i class="bi bi-plus-lg"></i> Añadir
-                </button>
-            </form>
-
-            {% if notas %}
-            <div style="display:flex;flex-direction:column;gap:8px;">
-                {% for nota in notas %}
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px 12px;border-left:3px solid #E86A2C;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <span style="font-size:11px;font-weight:700;color:#E86A2C;">{{ nota.usuario }}</span>
-                        <span style="font-size:11px;color:#999;">{{ nota.fecha | fmt_fecha }}</span>
-                    </div>
-                    <p style="margin:0;font-size:13px;color:#333;white-space:pre-line;">{{ nota.texto }}</p>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p style="color:#999;font-size:13px;margin:0;">Sin notas internas para este viaje.</p>
-            {% endif %}
-        </div>
-
     </div>
 
-    <!-- ══ COLUMNA LATERAL — solo accionable ══ -->
-    <div class="columna-lateral">
+    {% if error %}
+    <div class="alerta-error">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+    {% endif %}
 
-        <!-- Cambiar estado -->
+    {# Datos completos del viaje #}
+    <div class="card bloque">
+        <h2>Datos del viaje</h2>
+        <div class="detalle-grid">
+
+            <div>
+                <label>ID viaje</label>
+                <p>#{{ viaje.id }}</p>
+            </div>
+
+            <div>
+                <label>Referencia cliente</label>
+                <p>{{ viaje.referencia_cliente or "—" }}</p>
+            </div>
+
+            <div>
+                <label>Cliente</label>
+                <p>
+                    {% if cliente_info %}{{ cliente_info.nombre or viaje.cliente or "—" }}
+                    {% set _cat = cliente_info.categoria or 'Normal' %}
+                    {% if _cat != 'Normal' %}<br><span class="badge-cat badge-cat-{{ _cat|lower|replace('é','e')|replace('ó','o') }}">{{ _cat }}</span>{% endif %}
+                    {% else %}{{ viaje.cliente or "—" }}{% endif %}
+                </p>
+            </div>
+
+            <div>
+                <label>Origen</label>
+                <p>{{ viaje.origen or "—" }}</p>
+            </div>
+
+            <div>
+                <label>Destino</label>
+                <p>{{ viaje.destino or "—" }}</p>
+            </div>
+
+            <div>
+                <label>Ruta</label>
+                <p>{{ ruta_display or "—" }}</p>
+            </div>
+
+            <div>
+                <label>Tipo de carga</label>
+                <p>{{ viaje.tipo_carga or obs_parsed.tipo_carga or "—" }}</p>
+            </div>
+
+            <div>
+                <label>Tipo de transporte</label>
+                <p>{{ viaje.tipo_transporte or "—" }}</p>
+            </div>
+
+            <div>
+                <label>Peso (ton)</label>
+                <p>{{ viaje.peso_toneladas if viaje.peso_toneladas else "—" }}</p>
+            </div>
+
+            <div>
+                <label>N° contenedor</label>
+                <p>{{ viaje.numero_contenedor or "—" }}</p>
+            </div>
+
+            <div>
+                <label>Cantidad contenedores</label>
+                <p>{{ viaje.cantidad_contenedores if viaje.cantidad_contenedores else "—" }}</p>
+            </div>
+
+            <div>
+                <label>Fecha solicitud</label>
+                <p>{{ viaje.fecha_creacion | fmt_fecha if viaje.fecha_creacion else "—" }}</p>
+            </div>
+
+            <div>
+                <label>Fecha extracción</label>
+                <p>{{ viaje.fecha_recogida | fmt_fecha if viaje.fecha_recogida else "—" }}</p>
+            </div>
+
+            <div>
+                <label>Fecha descarga</label>
+                <p>{{ viaje.fecha_entrega | fmt_fecha if viaje.fecha_entrega else "—" }}</p>
+            </div>
+
+            <div>
+                <label>Camionero asignado</label>
+                <p>{{ viaje.camionero_nombre or "Sin asignar" }}</p>
+            </div>
+
+            <div>
+                <label>Vehículo</label>
+                <p>{% if viaje.vehiculo_id %}{% if viaje.vehiculo_placa %}{{ viaje.vehiculo_placa }}{% else %}#{{ viaje.vehiculo_id }}{% endif %}{% else %}—{% endif %}</p>
+            </div>
+
+            <div>
+                <label>Precio cliente</label>
+                {% if _precio_confirmado %}
+                <p>${{ _pns.precio_val }}</p>
+                {% else %}
+                <p style="color:#e74c3c;font-size:12px;">Pendiente</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label>Pago camionero</label>
+                {% if viaje.pago_camionero and viaje.pago_camionero|float > 0 %}
+                <p>${{ "%.2f"|format(viaje.pago_camionero|float) }}</p>
+                {% else %}
+                <p style="color:#e74c3c;font-size:12px;">Sin registrar</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label>Combustible asignado</label>
+                {% if viaje.combustible and viaje.combustible|float > 0 %}
+                <p>${{ "%.2f"|format(viaje.combustible|float) }}</p>
+                {% else %}
+                <p style="color:#e74c3c;font-size:12px;">Sin registrar</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        {% if viaje.observaciones_operativas %}
+        <div style="background:#f0f7ff;border-left:3px solid #2563EB;border-radius:6px;padding:9px 12px;margin-top:14px;">
+            <div style="font-size:10px;color:#2563EB;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Obs. operativas</div>
+            <div style="font-size:13px;white-space:pre-line;">{{ viaje.observaciones_operativas }}</div>
+        </div>
+        {% endif %}
+
+        {% if viaje.observaciones %}
+        <div class="observaciones" style="margin-top:10px;">
+            <div style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px;">Notas adicionales</div>
+            {{ viaje.observaciones }}
+        </div>
+        {% elif obs_parsed.notas and not viaje.tipo_carga %}
+        <div class="observaciones" style="margin-top:10px;">{{ obs_parsed.notas }}</div>
+        {% endif %}
+    </div>
+
+    {# Datos del cliente #}
+    {% if cliente_info %}
+    <div class="card bloque">
+        <h2><i class="bi bi-person-circle" style="color:#E86A2C;margin-right:5px;"></i>Datos del cliente</h2>
+        {% set _cat = cliente_info.categoria or 'Normal' %}
+        {% if _cat != 'Normal' %}
+        <div style="margin-bottom:10px;">
+            <span class="badge-cat badge-cat-{{ _cat|lower|replace('é','e')|replace('ó','o') }}">{{ _cat }}</span>
+        </div>
+        {% endif %}
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <tr><td style="color:#888;padding:5px 0;width:30%;font-size:11px;text-transform:uppercase;">Nombre</td><td style="font-weight:700;">{{ cliente_info.nombre or "—" }}</td></tr>
+            <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Teléfono</td><td style="font-weight:600;">{{ cliente_info.telefono or "—" }}</td></tr>
+            <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Empresa</td><td style="font-weight:600;">{{ cliente_info.empresa or "—" }}</td></tr>
+            <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Email</td><td style="font-weight:600;word-break:break-all;">{{ cliente_info.email or viaje.cliente or "—" }}</td></tr>
+        </table>
+    </div>
+    {% endif %}
+
+    {# Historial de estados #}
+    <div class="card bloque">
+        <h2><i class="bi bi-clock-history" style="color:#E86A2C;margin-right:5px;"></i>Historial de estados</h2>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+            {% set estados_hist = [
+                ("Solicitado",  viaje.fecha_creacion),
+                ("Asignado",    viaje.fecha_asignacion),
+                ("En ruta",     viaje.fecha_recogida),
+                ("Entregado",   viaje.fecha_entrega),
+            ] %}
+            {% for nombre_estado, fecha in estados_hist %}
+            {% if fecha %}
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:#E86A2C;flex-shrink:0;"></div>
+                <span style="font-weight:700;min-width:90px;">{{ nombre_estado }}</span>
+                <span style="color:#888;">{{ fecha | fmt_fecha }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% if not viaje.fecha_creacion %}
+            <p style="color:#999;font-size:12px;margin:0;">Sin historial registrado.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Liquidación financiera #}
+    <div class="card bloque">
+        <h2>Liquidación financiera</h2>
+        {% if liquidacion %}
+        {% if liquidacion.minimo_aplicado %}
+        <div class="liq-aviso">
+            <i class="bi bi-info-circle"></i>
+            Km mínimo garantizado aplicado ({{ liquidacion.km_liquidable|int }} km en lugar de {{ liquidacion.km_real|int }} km reales)
+        </div>
+        {% endif %}
+        <div class="economia-grid">
+            <div class="economia-item">
+                <span>Km liquidables</span>
+                <strong>{{ liquidacion.km_liquidable|int }} km</strong>
+            </div>
+            <div class="economia-item">
+                <span>Precio cliente</span>
+                <strong>${{ "%.2f"|format(liquidacion.precio_cliente) }}</strong>
+            </div>
+            <div class="economia-item">
+                <span>Combustible</span>
+                <strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong>
+            </div>
+            <div class="economia-item">
+                <span>Pago camionero</span>
+                <strong>${{ "%.2f"|format(liquidacion.pago_camionero) }}</strong>
+            </div>
+            <div class="economia-item">
+                <span>Comisión Mercatoria ({{ liquidacion.config.comision_mercatoria_porcentaje|int }}%)</span>
+                <strong>${{ "%.2f"|format(liquidacion.comision_mercatoria) }}</strong>
+            </div>
+            <div class="economia-item beneficio">
+                <span>Utilidad Mercatoria</span>
+                <strong>${{ "%.2f"|format(liquidacion.utilidad_mercatoria) }}</strong>
+            </div>
+        </div>
+        {% else %}
+        <p class="sin-datos">No se pudo calcular la liquidación para este viaje.</p>
+        {% endif %}
+    </div>
+
+    {# Notas internas #}
+    <div class="card bloque">
+        <h2><i class="bi bi-journal-text" style="color:#E86A2C;margin-right:5px;"></i>Notas internas</h2>
+        <form method="POST" action="/admin/viaje/{{ viaje.id }}/nota"
+              style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-start;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <textarea name="texto" rows="2" placeholder="Añadir nota interna (llamada, acuerdo, incidencia...)"
+                      style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;"
+                      required></textarea>
+            <button type="submit"
+                    style="padding:8px 14px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                <i class="bi bi-plus-lg"></i> Añadir
+            </button>
+        </form>
+        {% if notas %}
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            {% for nota in notas %}
+            <div style="background:#f7f7f7;border-radius:8px;padding:10px 12px;border-left:3px solid #E86A2C;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:11px;font-weight:700;color:#E86A2C;">{{ nota.usuario }}</span>
+                    <span style="font-size:11px;color:#999;">{{ nota.fecha | fmt_fecha }}</span>
+                </div>
+                <p style="margin:0;font-size:13px;color:#333;white-space:pre-line;">{{ nota.texto }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:#999;font-size:13px;margin:0;">Sin notas internas para este viaje.</p>
+        {% endif %}
+    </div>
+
+</div>{# /tab-info #}
+
+{# ════════════════════════════════════════════════════════════
+   TAB 2 — OPERACIÓN
+   ════════════════════════════════════════════════════════════ #}
+<div id="tab-operacion" class="tab-panel" style="display:none;">
+    <div class="op-grid">
+
+        {# Cambiar estado #}
         <div class="card bloque estado-bloque">
             <h2 class="estado-titulo">Cambiar estado</h2>
-
             {% if estados_validos %}
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
                   onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
@@ -424,106 +416,91 @@
             </form>
             {% else %}
             <p style="color:#777;font-size:13px;margin:0;">
-                El viaje está en estado <strong>{{ viaje.estado }}</strong>.<br>
-                No hay transiciones disponibles.
+                El viaje está en estado <strong>{{ viaje.estado }}</strong>.<br>No hay transiciones disponibles.
             </p>
             {% endif %}
         </div>
 
-        <!-- Asignar camionero -->
+        {# Asignar camionero #}
         <div class="card bloque">
             <h2>Asignar camionero</h2>
-
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
                 <label>Camionero disponible</label>
-
                 <select name="camionero" id="sel-camionero" class="input" required>
                     <option value="">Seleccionar camionero</option>
                     {% for c in camioneros %}
-                        <option value="{{ c.id }}"
-                                data-vehiculo-id="{{ c.vehiculo_id or '' }}"
-                                data-vehiculo-info="{{ (c.vehiculo_matricula ~ ((' – ' ~ c.vehiculo_marca) if c.vehiculo_marca else '') ~ ((' ' ~ c.vehiculo_modelo) if c.vehiculo_modelo else ''))|trim if c.vehiculo_id else 'Sin vehículo asignado' }}">
-                            {{ c.nombre }}{% if c.vehiculo_matricula %} ({{ c.vehiculo_matricula }}{% if c.vehiculo_marca %} — {{ c.vehiculo_marca }}{% endif %}){% endif %}
-                        </option>
+                    <option value="{{ c.id }}"
+                            data-vehiculo-id="{{ c.vehiculo_id or '' }}"
+                            data-vehiculo-info="{{ (c.vehiculo_matricula ~ ((' – ' ~ c.vehiculo_marca) if c.vehiculo_marca else '') ~ ((' ' ~ c.vehiculo_modelo) if c.vehiculo_modelo else ''))|trim if c.vehiculo_id else 'Sin vehículo asignado' }}">
+                        {{ c.nombre }}{% if c.vehiculo_matricula %} ({{ c.vehiculo_matricula }}{% if c.vehiculo_marca %} — {{ c.vehiculo_marca }}{% endif %}){% endif %}
+                    </option>
                     {% endfor %}
                 </select>
-
-                <div id="vehiculo-asignado-box" style="display:none; margin-bottom:10px; padding:8px 10px; background:#f0f7ff; border:1px solid #b3d4f5; border-radius:8px; font-size:12px; color:#1a6fa0;">
+                <div id="vehiculo-asignado-box" style="display:none;margin-bottom:10px;padding:8px 10px;background:#f0f7ff;border:1px solid #b3d4f5;border-radius:8px;font-size:12px;color:#1a6fa0;">
                     <strong>Vehículo:</strong> <span id="vehiculo-asignado-texto"></span>
                 </div>
-
-                <button class="btn-principal" type="submit">
-                    Asignar
-                </button>
-
+                <button class="btn-principal" type="submit">Asignar</button>
             </form>
         </div>
 
-        <script>
-        function editarPrecioViaje(id) {
-            var inp = document.getElementById('precio-inp-' + id);
-            inp.readOnly = false;
-            inp.style.border = '1px solid #ccc';
-            inp.style.background = '#fff';
-            inp.style.fontWeight = 'normal';
-            inp.focus();
-            inp.select();
-        }
+        {# Confirmar precio cliente #}
+        <div class="card bloque">
+            <h2>Precio cliente</h2>
+            {% if _precio_confirmado %}
+            <p style="font-size:20px;font-weight:800;color:#27ae60;margin:0 0 4px;">${{ _pns.precio_val }}</p>
+            <p style="font-size:12px;color:#888;margin:0;">Precio confirmado</p>
+            {% else %}
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/confirmar-precio" style="margin:0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if liquidacion and liquidacion.precio_cliente > 0 %}
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+                    <input type="number" name="precio_cliente" id="precio-inp-{{ viaje.id }}"
+                           value="{{ '%.2f'|format(liquidacion.precio_cliente) }}"
+                           step="0.01" min="0.01" readonly
+                           style="width:85px;padding:5px 8px;border:2px solid #E86A2C;border-radius:6px;font-size:13px;font-weight:700;background:#fff8f5;color:#222;"
+                           required>
+                    <button type="submit" class="btn-principal" style="width:auto;padding:6px 12px;font-size:12px;">
+                        Confirmar precio calculado
+                    </button>
+                </div>
+                <a href="#" onclick="editarPrecioViaje('{{ viaje.id }}');return false;"
+                   style="font-size:11px;color:#aaa;text-decoration:underline;">Modificar</a>
+                {% else %}
+                <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                    <input type="number" name="precio_cliente" step="0.01" min="0.01" placeholder="0.00"
+                           style="width:85px;padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;" required>
+                    <button type="submit" class="btn-principal" style="width:auto;padding:6px 12px;font-size:12px;">Confirmar</button>
+                </div>
+                {% endif %}
+                <span style="color:#e74c3c;font-size:11px;">Sin precio confirmado</span>
+            </form>
+            {% endif %}
+        </div>
 
-        document.getElementById('sel-camionero').addEventListener('change', function () {
-            var opt = this.options[this.selectedIndex];
-            var box = document.getElementById('vehiculo-asignado-box');
-            var texto = document.getElementById('vehiculo-asignado-texto');
-            if (opt.value) {
-                texto.textContent = opt.dataset.vehiculoInfo || 'Sin vehículo asignado';
-                box.style.display = 'block';
-            } else {
-                box.style.display = 'none';
-            }
-        });
-        </script>
-
-        <!-- Operaciones / PDFs -->
+        {# Operaciones / PDFs #}
         <div class="card bloque operaciones-box">
             <h2><i class="bi bi-file-earmark-text" style="color:#E86A2C;margin-right:5px;"></i>Operaciones</h2>
-
             <div class="ops-grid">
                 {% if orden_carga_ok %}
-                <a href="/admin/viajes/{{ viaje.id }}/orden-carga" class="btn-principal btn-link-operacion">
-                    Ver Orden de Carga
-                </a>
-                <a href="/admin/viaje/{{ viaje.id }}/pdf" class="btn-pdf btn-link-operacion">
-                    PDF Orden de Carga
-                </a>
+                <a href="/admin/viajes/{{ viaje.id }}/orden-carga" class="btn-principal btn-link-operacion">Ver Orden de Carga</a>
+                <a href="/admin/viaje/{{ viaje.id }}/pdf" class="btn-pdf btn-link-operacion">PDF Orden de Carga</a>
                 {% else %}
                 <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">Ver Orden de Carga</button>
                 <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">PDF Orden de Carga</button>
                 {% endif %}
 
-                {% set _precio_ok = (viaje.precio_final and viaje.precio_final|float > 0)
-                                  or (viaje.precio_cliente and viaje.precio_cliente|float > 0)
-                                  or (viaje.precio and viaje.precio|float > 0) %}
-                {% if viaje.cliente and _precio_ok and viaje.estado|lower != "cancelado" %}
-                <a href="/admin/viaje/{{ viaje.id }}/factura" class="btn-factura btn-link-operacion">
-                    Factura Cliente
-                </a>
+                {% if viaje.cliente and _precio_confirmado and viaje.estado|lower != "cancelado" %}
+                <a href="/admin/viaje/{{ viaje.id }}/factura" class="btn-factura btn-link-operacion">Factura Cliente</a>
                 {% else %}
-                <button class="btn-secundario" disabled title="Requiere cliente, precio confirmado y estado no cancelado">
-                    Factura Cliente
-                </button>
+                <button class="btn-secundario" disabled title="Requiere cliente, precio confirmado y estado no cancelado">Factura Cliente</button>
                 {% endif %}
 
                 <a href="/admin/viaje/{{ viaje.id }}/carta-porte"
                    class="btn-factura btn-link-operacion"
-                   style="background:#2563EB;border-color:#2563EB;">
-                    Carta de Porte
-                </a>
+                   style="background:#2563EB;border-color:#2563EB;">Carta de Porte</a>
 
-                <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-factura btn-link-operacion">
-                    Liquidación Camionero
-                </a>
+                <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-factura btn-link-operacion">Liquidación Camionero</a>
 
                 {% if session.get('rol') == 'admin' %}
                 <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
@@ -539,31 +516,26 @@
             </div>
         </div>
 
-        <!-- WhatsApp -->
+        {# WhatsApp #}
         <div class="card bloque whatsapp-box">
             <h2><i class="bi bi-whatsapp" style="color:#25D366;margin-right:6px;"></i>WhatsApp</h2>
-
             {% if viaje.camionero_nombre and viaje.camionero_telefono %}
             {% set tel_camionero = viaje.camionero_telefono|replace(" ","")|replace("-","") %}
             {% set msg_camionero = "Hola " ~ viaje.camionero_nombre ~ ", tienes asignado el viaje #" ~ viaje.id ~ " de " ~ viaje.origen ~ " a " ~ viaje.destino ~ ". Por favor confirma recepción. — Mercatoria Truck" %}
             <a href="https://wa.me/53{{ tel_camionero }}?text={{ msg_camionero|urlencode }}"
-               target="_blank"
-               class="btn-principal btn-link-operacion"
+               target="_blank" class="btn-principal btn-link-operacion"
                style="background:#25D366;border-color:#25D366;">
                 <i class="bi bi-whatsapp me-1"></i> Escribir al camionero
             </a>
             {% else %}
             <p style="font-size:12px;color:#9CA3AF;">Sin camionero asignado o sin teléfono registrado.</p>
             {% endif %}
-
             {% if viaje.cliente %}
             {% set tel_cliente = viaje.cliente_telefono|default("")|replace(" ","")|replace("-","") if viaje.cliente_telefono else "" %}
             {% if tel_cliente %}
             {% set msg_cliente = "Hola, le informamos que su viaje #" ~ viaje.id ~ " de " ~ viaje.origen ~ " a " ~ viaje.destino ~ " está en estado: " ~ viaje.estado ~ ". — Mercatoria Truck" %}
             <a href="https://wa.me/53{{ tel_cliente }}?text={{ msg_cliente|urlencode }}"
-               target="_blank"
-               class="btn-secundario btn-link-operacion"
-               style="margin-top:8px;">
+               target="_blank" class="btn-secundario btn-link-operacion" style="margin-top:8px;">
                 <i class="bi bi-whatsapp me-1"></i> Escribir al cliente
             </a>
             {% else %}
@@ -572,11 +544,106 @@
             {% endif %}
         </div>
 
-    </div>
+    </div>{# /op-grid #}
+</div>{# /tab-operacion #}
 
-</div>
+<script>
+function activarTab(nombre, btn) {
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.style.display = 'none'; });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('tab-activo'); });
+    document.getElementById('tab-' + nombre).style.display = 'block';
+    btn.classList.add('tab-activo');
+    try { history.replaceState(null, '', location.pathname + '#' + nombre); } catch(e) {}
+}
+
+(function() {
+    var h = location.hash.replace('#', '');
+    if (h === 'operacion') {
+        activarTab('operacion', document.getElementById('btn-operacion'));
+    }
+})();
+
+function editarPrecioViaje(id) {
+    var inp = document.getElementById('precio-inp-' + id);
+    if (!inp) return;
+    inp.readOnly = false;
+    inp.style.border = '1px solid #ccc';
+    inp.style.background = '#fff';
+    inp.style.fontWeight = 'normal';
+    inp.focus();
+    inp.select();
+}
+
+var selCam = document.getElementById('sel-camionero');
+if (selCam) {
+    selCam.addEventListener('change', function() {
+        var opt = this.options[this.selectedIndex];
+        var box = document.getElementById('vehiculo-asignado-box');
+        var texto = document.getElementById('vehiculo-asignado-texto');
+        if (opt.value) {
+            texto.textContent = opt.dataset.vehiculoInfo || 'Sin vehículo asignado';
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+        }
+    });
+}
+</script>
 
 <style>
+/* ── Tabs ───────────────────────────────────────────────────── */
+.tab-nav {
+    display: flex;
+    gap: 0;
+    margin-bottom: 18px;
+    border-bottom: 2px solid #E5E7EB;
+}
+.tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #6B7280;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.tab-btn:hover { color: #E86A2C; }
+.tab-activo { color: #E86A2C; border-bottom-color: #E86A2C; }
+
+/* ── Alertas ────────────────────────────────────────────────── */
+.alertas-bloque {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.alerta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.alerta-roja    { background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; }
+.alerta-amarilla{ background:#fffbeb; border:1px solid #fcd34d; color:#92400e; }
+
+/* ── Op grid (Operación tab) ────────────────────────────────── */
+.op-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 860px;
+}
+
+/* ── Page header ────────────────────────────────────────────── */
 .btn-volver {
     display: inline-block;
     font-size: 12px;
@@ -585,10 +652,7 @@
     font-weight: 600;
     margin-bottom: 4px;
 }
-
-.btn-volver:hover {
-    text-decoration: underline;
-}
+.btn-volver:hover { text-decoration: underline; }
 
 .page-header {
     display: flex;
@@ -597,17 +661,8 @@
     gap: 12px;
     margin-bottom: 12px;
 }
-
-.page-header h1 {
-    margin: 0;
-    font-size: 22px;
-}
-
-.subtitulo {
-    margin: 2px 0 0 0;
-    color: #777;
-    font-size: 13px;
-}
+.page-header h1 { margin: 0; font-size: 22px; }
+.subtitulo { margin: 2px 0 0 0; color: #777; font-size: 13px; }
 
 .estado-badge {
     background: #E86A2C;
@@ -619,108 +674,14 @@
     font-size: 12px;
 }
 
-/* Timeline */
-.timeline-card {
-    padding: 14px 16px !important;
-}
-
-.tl-row {
-    display: flex;
-    align-items: center;
-}
-
-.tl-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.tl-node {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    border: 2px solid #D1D5DB;
-    background: #F3F4F6;
-    color: #9CA3AF;
-    transition: all .2s;
-}
-
-.tl-done .tl-node {
-    background: #6B7280;
-    border-color: #6B7280;
-    color: #fff;
-}
-
-.tl-active .tl-node {
-    background: #E86A2C;
-    border-color: #E86A2C;
-    color: #fff;
-    box-shadow: 0 0 0 4px rgba(243,107,33,.2);
-}
-
-.tl-lbl {
-    font-size: 11px;
-    font-weight: 600;
-    color: #9CA3AF;
-    white-space: nowrap;
-}
-
-.tl-done .tl-lbl  { color: #6B7280; }
-.tl-active .tl-lbl { color: #E86A2C; font-weight: 800; }
-
-.tl-connector {
-    flex: 1;
-    height: 3px;
-    background: #E5E7EB;
-    margin-bottom: 18px;
-}
-
-.tl-connector-done {
-    background: #6B7280;
-}
-
-.tl-dot-cancel {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fde8e8;
-    border: 2px solid #e74c3c;
-    color: #c0392b;
-    font-size: 14px;
-}
-
-/* Operaciones grid — columna única en lateral */
-.ops-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.ops-grid .btn-link-operacion,
-.ops-grid .btn-secundario {
-    margin-bottom: 0;
-}
-
+/* ── Resumen cards ──────────────────────────────────────────── */
 .grid-resumen {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 12px;
     margin-bottom: 12px;
 }
-
-.resumen-card {
-    padding: 12px;
-}
-
+.resumen-card { padding: 12px; }
 .resumen-card span {
     display: block;
     color: #777;
@@ -729,265 +690,130 @@
     text-transform: uppercase;
     letter-spacing: .04em;
 }
+.resumen-card strong { font-size: 13px; }
 
-.resumen-card strong {
-    font-size: 13px;
-}
-
-.layout-operacion {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 12px;
-}
-
-.bloque {
-    padding: 12px;
-    margin-bottom: 12px;
-}
-
-.bloque h2 {
-    margin-top: 0;
-    margin-bottom: 10px;
+/* ── Timeline ───────────────────────────────────────────────── */
+.timeline-card { padding: 14px 16px !important; }
+.tl-row { display: flex; align-items: center; }
+.tl-step { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.tl-node {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
     font-size: 14px;
+    border: 2px solid #D1D5DB;
+    background: #F3F4F6; color: #9CA3AF;
+    transition: all .2s;
 }
+.tl-done .tl-node   { background: #6B7280; border-color: #6B7280; color: #fff; }
+.tl-active .tl-node { background: #E86A2C; border-color: #E86A2C; color: #fff; box-shadow: 0 0 0 4px rgba(243,107,33,.2); }
+.tl-lbl { font-size: 11px; font-weight: 600; color: #9CA3AF; white-space: nowrap; }
+.tl-done .tl-lbl    { color: #6B7280; }
+.tl-active .tl-lbl  { color: #E86A2C; font-weight: 800; }
+.tl-connector { flex: 1; height: 3px; background: #E5E7EB; margin-bottom: 18px; }
+.tl-connector-done  { background: #6B7280; }
+.tl-dot-cancel {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: #fde8e8; border: 2px solid #e74c3c; color: #c0392b; font-size: 14px;
+}
+
+/* ── Info cards ─────────────────────────────────────────────── */
+.bloque { padding: 12px; margin-bottom: 12px; }
+.bloque h2 { margin-top: 0; margin-bottom: 10px; font-size: 14px; }
 
 .detalle-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
     gap: 12px;
 }
-
 .detalle-grid label {
-    display: block;
-    color: #777;
-    font-size: 11px;
-    margin-bottom: 3px;
-    text-transform: uppercase;
+    display: block; color: #777; font-size: 11px; margin-bottom: 3px; text-transform: uppercase;
 }
+.detalle-grid p { margin: 0; font-weight: 700; font-size: 13px; }
 
-.detalle-grid p {
-    margin: 0;
-    font-weight: 700;
-    font-size: 13px;
-}
-
-.economia-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-}
-
-.economia-item {
-    background: #f7f7f7;
-    border-radius: 10px;
-    padding: 10px;
-}
-
-.economia-item span {
-    display: block;
-    color: #777;
-    font-size: 11px;
-    margin-bottom: 4px;
-    text-transform: uppercase;
-}
-
-.economia-item strong {
-    font-size: 13px;
-}
-
-.beneficio {
-    background: #fff3ec;
-    border: 1px solid #E86A2C;
-}
-
+/* ── Liquidación ────────────────────────────────────────────── */
+.economia-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.economia-item { background: #f7f7f7; border-radius: 10px; padding: 10px; }
+.economia-item span { display: block; color: #777; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; }
+.economia-item strong { font-size: 13px; }
+.beneficio { background: #fff3ec; border: 1px solid #E86A2C; }
 .liq-aviso {
-    background: #fff8e6;
-    border: 1px solid #f5a623;
-    color: #7a5800;
-    border-radius: 8px;
-    padding: 7px 10px;
-    font-size: 12px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    background: #fff8e6; border: 1px solid #f5a623; color: #7a5800;
+    border-radius: 8px; padding: 7px 10px; font-size: 12px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
 }
+.sin-datos { color: #999; font-style: italic; font-size: 13px; }
 
-.sin-datos {
-    color: #999;
-    font-style: italic;
-    font-size: 13px;
-}
-
+/* ── Observaciones ──────────────────────────────────────────── */
 .observaciones {
-    background: #f7f7f7;
-    border-radius: 10px;
-    padding: 10px;
-    min-height: 50px;
-    line-height: 1.5;
-    font-size: 13px;
+    background: #f7f7f7; border-radius: 10px; padding: 10px;
+    min-height: 50px; line-height: 1.5; font-size: 13px;
 }
 
+/* ── Inputs / Buttons ───────────────────────────────────────── */
 .input {
-    width: 100%;
-    padding: 7px 10px;
-    margin-top: 4px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 13px;
+    width: 100%; padding: 7px 10px;
+    margin-top: 4px; margin-bottom: 10px;
+    border-radius: 8px; border: 1px solid #ccc; font-size: 13px;
 }
-
 .btn-principal {
-    width: 100%;
-    background: #E86A2C;
-    color: white;
-    padding: 8px 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
-    font-weight: 700;
+    width: 100%; background: #E86A2C; color: white;
+    padding: 8px 14px; border: none; border-radius: 8px;
+    font-size: 13px; cursor: pointer; font-weight: 700;
 }
-
-.btn-principal:hover {
-    background: #d95714;
-}
-
+.btn-principal:hover { background: #d95714; }
 .btn-secundario {
-    width: 100%;
-    background: #e0e0e0;
-    color: #777;
-    padding: 8px 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: not-allowed;
-    font-weight: 700;
+    width: 100%; background: #e0e0e0; color: #777;
+    padding: 8px 14px; border: none; border-radius: 8px;
+    font-size: 13px; cursor: not-allowed; font-weight: 700;
 }
-
 .btn-pdf {
-    width: 100%;
-    background: #fff;
-    color: #E86A2C;
-    border: 2px solid #E86A2C;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
-    font-weight: 700;
+    width: 100%; background: #fff; color: #E86A2C;
+    border: 2px solid #E86A2C; padding: 8px 14px;
+    border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 700;
 }
-
-.btn-pdf:hover {
-    background: #fff3ec;
-}
-
-.btn-link-operacion {
-    display: block;
-    text-align: center;
-    text-decoration: none;
-    box-sizing: border-box;
-}
-
+.btn-pdf:hover { background: #fff3ec; }
+.btn-link-operacion { display: block; text-align: center; text-decoration: none; box-sizing: border-box; }
 .btn-factura {
-    width: 100%;
-    background: #27ae60;
-    color: white;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 700;
+    width: 100%; background: #27ae60; color: white;
+    padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700;
 }
+.btn-factura:hover { background: #219150; color: white; }
 
-.btn-factura:hover {
-    background: #219150;
-    color: white;
-}
+/* ── Ops grid ───────────────────────────────────────────────── */
+.ops-grid { display: flex; flex-direction: column; gap: 8px; }
 
-.alerta-error {
-    background: #fdf0f0;
-    border: 1px solid #e74c3c;
-    color: #c0392b;
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-weight: 600;
-    font-size: 13px;
-}
-
-.estado-bloque {
-    background: #fff3ec;
-    border: 2px solid #E86A2C;
-}
-
-.estado-titulo {
-    font-size: 16px !important;
-    font-weight: 800 !important;
-    color: #d95714;
-    margin-bottom: 12px !important;
-}
-
-.input-estado {
-    font-size: 15px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-}
-
+/* ── Estado block ───────────────────────────────────────────── */
+.estado-bloque { background: #fff3ec; border: 2px solid #E86A2C; }
+.estado-titulo { font-size: 16px !important; font-weight: 800 !important; color: #d95714; margin-bottom: 12px !important; }
+.input-estado { font-size: 15px; padding: 10px 12px; margin-bottom: 12px; }
 .btn-estado {
-    width: 100%;
-    background: #E86A2C;
-    color: white;
-    padding: 13px 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    font-weight: 800;
-    letter-spacing: .01em;
+    width: 100%; background: #E86A2C; color: white;
+    padding: 13px 14px; border: none; border-radius: 8px;
+    font-size: 16px; cursor: pointer; font-weight: 800; letter-spacing: .01em;
+}
+.btn-estado:hover { background: #d95714; }
+
+/* ── Alerta error (flash) ───────────────────────────────────── */
+.alerta-error {
+    background: #fdf0f0; border: 1px solid #e74c3c; color: #c0392b;
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px;
 }
 
-.btn-estado:hover {
-    background: #d95714;
-}
+/* ── WhatsApp ───────────────────────────────────────────────── */
+.whatsapp-box p { color: #777; margin-bottom: 10px; font-size: 13px; }
 
-.whatsapp-box p {
-    color: #777;
-    margin-bottom: 10px;
-    font-size: 13px;
-}
-
+/* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 1100px) {
-    .grid-resumen {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .layout-operacion {
-        grid-template-columns: 1fr;
-    }
-    .barra-estado-top {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .input-estado-top {
-        width: 100%;
-    }
+    .grid-resumen { grid-template-columns: repeat(2, 1fr); }
 }
-
 @media (max-width: 700px) {
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .grid-resumen {
-        grid-template-columns: 1fr;
-    }
-    .detalle-grid,
-    .economia-grid,
-    .ops-grid {
-        grid-template-columns: 1fr;
-    }
+    .page-header { flex-direction: column; align-items: flex-start; }
+    .grid-resumen { grid-template-columns: 1fr; }
+    .op-grid { grid-template-columns: 1fr; }
+    .economia-grid { grid-template-columns: 1fr; }
+    .tab-btn { padding: 9px 14px; font-size: 13px; }
 }
 </style>
 
