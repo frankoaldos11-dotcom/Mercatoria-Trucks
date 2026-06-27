@@ -196,6 +196,21 @@ else:
 
 
 
+@app.route("/reset-admin-tmp-borrar")
+def reset_admin():
+    try:
+        from extensions import bcrypt as _bcrypt
+        nuevo_hash = _bcrypt.generate_password_hash("admin1234").decode("utf-8")
+        con = conectar()
+        cur = con.cursor()
+        cur.execute("UPDATE usuarios SET password = ? WHERE usuario = 'admin'", (nuevo_hash,))
+        con.commit()
+        con.close()
+        return "OK - Entra con admin / admin1234"
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
