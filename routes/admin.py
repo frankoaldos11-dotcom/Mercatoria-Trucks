@@ -88,26 +88,26 @@ def dashboard():
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM viajes WHERE LOWER(estado) IN ('pendiente', 'solicitado')")
-    pendientes = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) IN ('pendiente', 'solicitado')")
+    pendientes = cursor.fetchone()["total"]
 
-    cursor.execute("SELECT COUNT(*) FROM viajes WHERE LOWER(estado) IN ('en ruta', 'en_ruta')")
-    en_curso = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) IN ('en ruta', 'en_ruta')")
+    en_curso = cursor.fetchone()["total"]
 
-    cursor.execute("SELECT COUNT(*) FROM viajes WHERE LOWER(estado) = 'entregado'")
-    entregados = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) = 'entregado'")
+    entregados = cursor.fetchone()["total"]
 
-    cursor.execute("SELECT COUNT(*) FROM viajes WHERE LOWER(estado) = 'asignado'")
-    asignados = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) = 'asignado'")
+    asignados = cursor.fetchone()["total"]
 
-    cursor.execute("SELECT COUNT(*) FROM viajes WHERE LOWER(estado) = 'cancelado'")
-    cancelados = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) = 'cancelado'")
+    cancelados = cursor.fetchone()["total"]
 
-    cursor.execute("SELECT COUNT(*) FROM camioneros")
-    camioneros = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) AS total FROM camioneros")
+    camioneros = cursor.fetchone()["total"]
 
-    cursor.execute("SELECT COUNT(*) FROM clientes")
-    clientes = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) AS total FROM clientes")
+    clientes = cursor.fetchone()["total"]
 
     cursor.execute("""
         SELECT id, cliente, origen, destino, estado
@@ -119,12 +119,12 @@ def dashboard():
 
     # Ingresos del mes actual
     cursor.execute("""
-        SELECT COALESCE(SUM(COALESCE(precio_final, precio_cliente, precio, 0)), 0)
+        SELECT COALESCE(SUM(COALESCE(precio_final, precio_cliente, precio, 0)), 0) AS total
         FROM viajes
-        WHERE strftime('%Y-%m', fecha_creacion) = strftime('%Y-%m', 'now')
+        WHERE TO_CHAR(fecha_creacion, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')
           AND LOWER(estado) != 'cancelado'
     """)
-    ingresos_mes = round(cursor.fetchone()[0], 2)
+    ingresos_mes = round(cursor.fetchone()["total"], 2)
 
     # Camionero más activo (viajes totales)
     cursor.execute("""
@@ -140,10 +140,10 @@ def dashboard():
 
     # Clientes sin nombre (para aviso)
     cursor.execute("""
-        SELECT COUNT(*) FROM clientes
+        SELECT COUNT(*) AS total FROM clientes
         WHERE nombre IS NULL OR TRIM(nombre) = ''
     """)
-    clientes_sin_nombre = cursor.fetchone()[0]
+    clientes_sin_nombre = cursor.fetchone()["total"]
 
     conexion.close()
 
@@ -196,11 +196,11 @@ def viajes():
     cursor = conexion.cursor()
 
     cursor.execute(f"""
-        SELECT COUNT(*) FROM viajes v
+        SELECT COUNT(*) AS total FROM viajes v
         LEFT JOIN clientes cl ON v.cliente_id = cl.id
         {where}
     """, params)
-    total = cursor.fetchone()[0]
+    total = cursor.fetchone()["total"]
 
     total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
     pagina = min(pagina, total_paginas)
@@ -1377,14 +1377,14 @@ def lista_usuarios():
         """)
     lista = cursor.fetchall()
 
-    cursor.execute("SELECT COUNT(*) FROM usuarios")
-    total = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'admin'")
-    total_admin = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'operador'")
-    total_operador = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'cliente'")
-    total_cliente = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) AS total FROM usuarios")
+    total = cursor.fetchone()["total"]
+    cursor.execute("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'admin'")
+    total_admin = cursor.fetchone()["total"]
+    cursor.execute("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'operador'")
+    total_operador = cursor.fetchone()["total"]
+    cursor.execute("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'cliente'")
+    total_cliente = cursor.fetchone()["total"]
 
     conexion.close()
 
@@ -1740,7 +1740,7 @@ def lote_preview():
     try:
         if criterio == "sin_precio":
             cursor.execute("""
-                SELECT COUNT(*) FROM viajes
+                SELECT COUNT(*) AS total FROM viajes
                 WHERE LOWER(estado) NOT IN ('entregado','cancelado')
                   AND (precio_cliente IS NULL OR precio_cliente = 0)
                   AND (precio_final   IS NULL OR precio_final   = 0)
@@ -1748,17 +1748,17 @@ def lote_preview():
             """)
         elif criterio == "estado" and valor:
             cursor.execute(
-                "SELECT COUNT(*) FROM viajes WHERE LOWER(estado) = LOWER(?)", (valor,)
+                "SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) = LOWER(?)", (valor,)
             )
         elif criterio == "ruta" and valor:
             cursor.execute(
-                "SELECT COUNT(*) FROM viajes WHERE ruta_id = ?", (valor,)
+                "SELECT COUNT(*) AS total FROM viajes WHERE ruta_id = ?", (valor,)
             )
         else:
             cursor.execute(
-                "SELECT COUNT(*) FROM viajes WHERE LOWER(estado) NOT IN ('entregado','cancelado')"
+                "SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) NOT IN ('entregado','cancelado')"
             )
-        count = cursor.fetchone()[0]
+        count = cursor.fetchone()["total"]
     except Exception:
         count = 0
     finally:
