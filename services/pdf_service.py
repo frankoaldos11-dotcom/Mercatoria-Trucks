@@ -42,7 +42,7 @@ def _cargar_logo(width=2.2*cm, height=2.2*cm):
         pass
     return ""
 
-NARANJA = colors.HexColor("#F36B21")
+NARANJA = colors.HexColor("#E86A2C")
 GRIS_TEXTO = colors.HexColor("#333333")
 GRIS_FONDO = colors.HexColor("#f7f7f7")
 
