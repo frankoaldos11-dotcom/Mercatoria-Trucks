@@ -260,6 +260,17 @@ def ejecutar_migraciones_pg():
     )
     """)
 
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS notas_viaje (
+        id SERIAL PRIMARY KEY,
+        viaje_id INTEGER NOT NULL,
+        usuario TEXT NOT NULL,
+        texto TEXT NOT NULL,
+        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (viaje_id) REFERENCES viajes(id)
+    )
+    """)
+
     cur.execute("SELECT id FROM usuarios WHERE usuario = %s", ("admin",))
     if not cur.fetchone():
         hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")

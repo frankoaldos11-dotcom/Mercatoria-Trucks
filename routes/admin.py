@@ -16,6 +16,7 @@ from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_
 from services.finanzas_service import calcular_liquidacion
 from services.pdf_service import generar_factura_cliente, generar_pdf_orden_carga
 from utils.constants import CAMIONERO_ESTADOS, VEHICULO_ESTADOS
+from db_config import USE_POSTGRES
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -358,10 +359,11 @@ def gestionar_viaje(id):
 
     conexion2 = conectar()
     cursor2 = conexion2.cursor()
-    cursor2.execute("""
+    ph = "%s" if USE_POSTGRES else "?"
+    cursor2.execute(f"""
         SELECT usuario, texto, fecha
         FROM notas_viaje
-        WHERE viaje_id = ?
+        WHERE viaje_id = {ph}
         ORDER BY fecha DESC
     """, (id,))
     notas = cursor2.fetchall()
@@ -758,8 +760,9 @@ def agregar_nota_viaje(id):
     if texto:
         conexion = conectar()
         cursor = conexion.cursor()
+        ph = "%s" if USE_POSTGRES else "?"
         cursor.execute(
-            "INSERT INTO notas_viaje (viaje_id, usuario, texto) VALUES (?, ?, ?)",
+            f"INSERT INTO notas_viaje (viaje_id, usuario, texto) VALUES ({ph}, {ph}, {ph})",
             (id, session.get("usuario", "admin"), texto)
         )
         conexion.commit()

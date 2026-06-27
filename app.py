@@ -88,10 +88,11 @@ def login():
         conexion = conectar()
         cursor = conexion.cursor()
 
-        cursor.execute("""
+        ph = "%s" if USE_POSTGRES else "?"
+        cursor.execute(f"""
         SELECT id, password, rol
         FROM usuarios
-        WHERE usuario = ?
+        WHERE usuario = {ph}
         """, (usuario,))
 
         fila = cursor.fetchone()
