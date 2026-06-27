@@ -228,6 +228,51 @@ def debug2():
         return f"ERROR: {e}"
 
 
+@app.route("/migrar-usuarios-tmp-borrar")
+def migrar_usuarios():
+    try:
+        import json
+        import sqlite3 as _sqlite3
+
+        # Leer usuarios del SQLite local
+        conn_local = _sqlite3.connect("mercatoria.db")
+        conn_local.row_factory = _sqlite3.Row
+        cur_local = conn_local.cursor()
+        cur_local.execute("""
+            SELECT usuario, password, rol, activo,
+                   COALESCE(nombre,'') as nombre,
+                   COALESCE(apellidos,'') as apellidos,
+                   COALESCE(telefono,'') as telefono,
+                   COALESCE(empresa,'') as empresa
+            FROM usuarios WHERE usuario != 'admin'
+        """)
+        usuarios = [dict(r) for r in cur_local.fetchall()]
+        conn_local.close()
+
+        # Insertar en PostgreSQL
+        con = conectar()
+        cur = con.cursor()
+        insertados = 0
+        omitidos = 0
+        for u in usuarios:
+            cur.execute("SELECT id FROM usuarios WHERE usuario = ?", (u['usuario'],))
+            existe = cur.fetchone()
+            if existe:
+                omitidos += 1
+                continue
+            cur.execute("""
+                INSERT INTO usuarios (usuario, password, rol, activo, nombre, apellidos, telefono, empresa)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (u['usuario'], u['password'], u['rol'], u['activo'],
+                  u['nombre'], u['apellidos'], u['telefono'], u['empresa']))
+            insertados += 1
+        con.commit()
+        con.close()
+        return f"OK — Insertados: {insertados}, Omitidos (ya existían): {omitidos}"
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
