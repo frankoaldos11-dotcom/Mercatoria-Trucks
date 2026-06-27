@@ -528,6 +528,19 @@ body {
     background: #E86A2C !important;
     color: white !important;
 }
+
+.badge-admin {
+    margin-left: auto;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
 .nav-item-active:hover {
     background: #cf5a22 !important;
     color: white !important;

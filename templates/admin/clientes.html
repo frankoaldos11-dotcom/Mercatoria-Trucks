@@ -22,6 +22,7 @@
     </div>
 </div>
 
+{% if session.get('rol') == 'admin' %}
 <section class="panel" style="margin-bottom: 24px;">
     <div class="panel-header">
         <div>
@@ -63,6 +64,7 @@
         </form>
     </div>
 </section>
+{% endif %}
 
 <form method="GET" action="/admin/clientes" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
     <input type="text" name="buscar" value="{{ buscar_cl or '' }}"
@@ -90,11 +92,13 @@
                     <th>Nombre</th>
                     <th>Empresa</th>
                     <th>Contacto</th>
+                    {% if session.get('rol') == 'admin' %}
                     <th>Teléfono</th>
                     <th>Email</th>
                     <th>Dirección</th>
+                    {% endif %}
                     <th>Registrado</th>
-                    <th>Acciones</th>
+                    {% if session.get('rol') == 'admin' %}<th>Acciones</th>{% endif %}
                 </tr>
             </thead>
 
@@ -105,17 +109,20 @@
                     <td>
                         {% if not c.nombre or c.nombre|trim == "" %}
                         <span style="color:#e74c3c;font-weight:700;font-size:12px;">⚠ Sin nombre</span>
-                        {% if c.email %}<br><span style="color:#999;font-size:11px;">{{ c.email }}</span>{% endif %}
+                        {% if c.email and session.get('rol') == 'admin' %}<br><span style="color:#999;font-size:11px;">{{ c.email }}</span>{% endif %}
                         {% else %}
                         {{ c.nombre }}
                         {% endif %}
                     </td>
                     <td>{{ c.empresa or "—" }}</td>
                     <td>{{ c.contacto or "—" }}</td>
+                    {% if session.get('rol') == 'admin' %}
                     <td>{{ c.telefono or "—" }}</td>
                     <td>{{ c.email or "—" }}</td>
                     <td>{{ c.direccion or "—" }}</td>
+                    {% endif %}
                     <td style="font-size:11px;color:#999;">{{ c.fecha_creacion.strftime('%Y-%m-%d') if c.fecha_creacion else "—" }}</td>
+                    {% if session.get('rol') == 'admin' %}
                     <td class="td-acciones">
                         <a href="/admin/clientes/{{ c.id }}/editar" class="btn-accion-edit">Editar</a>
                         <form method="POST" action="/admin/clientes/{{ c.id }}/eliminar"
@@ -125,6 +132,7 @@
                             <button type="submit" class="btn-accion-del">Eliminar</button>
                         </form>
                     </td>
+                    {% endif %}
                 </tr>
                 {% else %}
                 <tr>

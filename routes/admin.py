@@ -1005,6 +1005,10 @@ def admin_clientes():
     cursor = conexion.cursor()
 
     if request.method == "POST":
+        if session.get("rol") != "admin":
+            conexion.close()
+            return redirect("/admin/clientes?access_error=No+tienes+permisos+para+crear+clientes")
+
         nombre = request.form["nombre"].strip()
         empresa = request.form.get("empresa", "").strip()
         contacto = request.form.get("contacto", "").strip()
@@ -1047,6 +1051,8 @@ def admin_clientes():
 def editar_cliente(id):
     if not requiere_admin():
         return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin/clientes?access_error=No+tienes+permisos+para+editar+clientes")
 
     conexion = conectar()
     cursor = conexion.cursor()
@@ -1090,6 +1096,8 @@ def editar_cliente(id):
 def eliminar_cliente(id):
     if not requiere_admin():
         return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin/clientes?access_error=No+tienes+permisos+para+eliminar+clientes")
 
     conexion = conectar()
     cursor = conexion.cursor()

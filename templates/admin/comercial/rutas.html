@@ -10,14 +10,17 @@
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
         <a href="/admin/exportar/rutas" class="btn-excel-export">⬇ Exportar Excel</a>
+        {% if session.get('rol') == 'admin' %}
         <form method="POST" action="/admin/importar/rutas" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" name="archivo" accept=".xlsx" required style="font-size:12px;">
             <button type="submit" class="btn-excel-import">⬆ Importar</button>
         </form>
+        {% endif %}
     </div>
 </div>
 
+{% if session.get('rol') == 'admin' %}
 <section class="panel">
     <div class="panel-header">
         <div>
@@ -50,6 +53,7 @@
         <button type="submit" class="btn-submit">Añadir ruta</button>
     </form>
 </section>
+{% endif %}
 
 <section class="panel panel-spaced">
     <div class="panel-header">
@@ -70,7 +74,7 @@
                     <th>Km oficiales</th>
                     <th>Tarifa/km</th>
                     <th>Camioneros</th>
-                    <th></th>
+                    {% if session.get('rol') == 'admin' %}<th></th>{% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -99,6 +103,7 @@
                                 <span class="badge-global">Global</span>
                             {% endif %}
                         </span>
+                        {% if session.get('rol') == 'admin' %}
                         <form method="POST" action="/admin/comercial/rutas/{{ r.id }}/tarifa"
                               class="tarifa-form" id="form-t-{{ r.id }}" style="display:none;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -111,6 +116,7 @@
                         </form>
                         <button type="button" class="btn-edit-sm" id="btn-e-{{ r.id }}"
                                 onclick="startEdit({{ r.id }})">Editar</button>
+                        {% endif %}
                     </td>
                     <td>
                         <button type="button"
@@ -121,6 +127,7 @@
                             <span class="chevron" id="chev-{{ r.id }}">▸</span>
                         </button>
                     </td>
+                    {% if session.get('rol') == 'admin' %}
                     <td>
                         <button type="button"
                                 class="btn-edit-ruta"
@@ -133,6 +140,7 @@
                             ✎ Editar ruta
                         </button>
                     </td>
+                    {% endif %}
                 </tr>
 
                 <!-- Fila expandible: camioneros de esta ruta -->
@@ -144,6 +152,7 @@
                                 <span class="cam-chip">
                                     <span class="cam-chip-dot estado-{{ c.estado|lower|replace(' ', '-') }}"></span>
                                     {{ c.nombre }}
+                                    {% if session.get('rol') == 'admin' %}
                                     <form method="POST"
                                           action="/admin/comercial/rutas/{{ r.id }}/camioneros/{{ c.id }}/desasociar"
                                           style="display:inline;"
@@ -151,12 +160,14 @@
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="chip-remove" title="Desasociar">×</button>
                                     </form>
+                                    {% endif %}
                                 </span>
                                 {% else %}
                                 <span class="cam-vacio">Sin camioneros asignados a esta ruta</span>
                                 {% endfor %}
                             </div>
 
+                            {% if session.get('rol') == 'admin' %}
                             <form method="POST"
                                   action="/admin/comercial/rutas/{{ r.id }}/camioneros/asignar"
                                   class="form-add-cam">
@@ -171,6 +182,7 @@
                                 </select>
                                 <button type="submit" class="btn-add-cam">+ Añadir</button>
                             </form>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
@@ -184,6 +196,7 @@
     </div>
 </section>
 
+{% if session.get('rol') == 'admin' %}
 <!-- Modal editar ruta -->
 <div id="modal-editar-ruta" class="modal-overlay" style="display:none;" onclick="closeEditModal(event)">
     <div class="modal-box" onclick="event.stopPropagation()">
@@ -213,6 +226,7 @@
         </form>
     </div>
 </div>
+{% endif %}
 
 <style>
 .btn-edit-ruta {

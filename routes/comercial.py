@@ -72,6 +72,8 @@ def rutas():
 def nueva_ruta():
     if not requiere_admin():
         return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin/comercial/rutas?access_error=No+tienes+permisos+para+modificar+rutas")
 
     origen = request.form["origen"]
     destino = request.form["destino"]
@@ -88,6 +90,8 @@ def nueva_ruta():
 def actualizar_tarifa_ruta(ruta_id):
     if not requiere_admin():
         return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin/comercial/rutas?access_error=No+tienes+permisos+para+modificar+tarifas")
     tarifa_km = request.form.get("tarifa_km", "").strip()
     actualizar_tarifa_km_ruta(ruta_id, tarifa_km if tarifa_km else None)
     return redirect("/admin/comercial/rutas")
@@ -97,6 +101,8 @@ def actualizar_tarifa_ruta(ruta_id):
 def editar_ruta(ruta_id):
     if not requiere_admin():
         return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin/comercial/rutas?access_error=No+tienes+permisos+para+modificar+rutas")
     origen = request.form["origen"].strip()
     destino = request.form["destino"].strip()
     zona = request.form.get("zona", "").strip()
