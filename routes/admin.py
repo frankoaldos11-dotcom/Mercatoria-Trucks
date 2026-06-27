@@ -120,7 +120,7 @@ def dashboard():
 
     # Ingresos del mes actual
     cursor.execute("""
-        SELECT COALESCE(SUM(COALESCE(precio_final, precio_cliente, precio, 0)), 0) AS total
+        SELECT COALESCE(SUM(COALESCE(NULLIF(precio_final,0), NULLIF(precio_cliente,0), NULLIF(precio,0), 0)), 0) AS total
         FROM viajes
         WHERE TO_CHAR(fecha_creacion, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')
           AND LOWER(estado) != 'cancelado'
@@ -1258,7 +1258,7 @@ def reportes():
     cursor.execute("""
         SELECT origen || ' → ' || destino AS ruta,
                COUNT(*) AS viajes,
-               SUM(COALESCE(precio_final, precio_cliente, precio, 0)) AS ingresos_proxy
+               SUM(COALESCE(NULLIF(precio_final,0), NULLIF(precio_cliente,0), NULLIF(precio,0), 0)) AS ingresos_proxy
         FROM viajes
         WHERE (fecha_creacion >= ? AND fecha_creacion <= ?)
           AND LOWER(estado) != 'cancelado'
@@ -1284,7 +1284,7 @@ def reportes():
     if USE_POSTGRES:
         cursor.execute("""
             SELECT TO_CHAR(fecha_creacion, 'YYYY-MM') AS mes,
-                   SUM(COALESCE(precio_final, precio_cliente, precio, 0)) AS ingresos
+                   SUM(COALESCE(NULLIF(precio_final,0), NULLIF(precio_cliente,0), NULLIF(precio,0), 0)) AS ingresos
             FROM viajes
             WHERE fecha_creacion >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '5 months')
               AND LOWER(estado) != 'cancelado'
@@ -1294,7 +1294,7 @@ def reportes():
     else:
         cursor.execute("""
             SELECT strftime('%Y-%m', fecha_creacion) AS mes,
-                   SUM(COALESCE(precio_final, precio_cliente, precio, 0)) AS ingresos
+                   SUM(COALESCE(NULLIF(precio_final,0), NULLIF(precio_cliente,0), NULLIF(precio,0), 0)) AS ingresos
             FROM viajes
             WHERE fecha_creacion >= date('now', '-5 months', 'start of month')
               AND LOWER(estado) != 'cancelado'
@@ -1719,7 +1719,7 @@ def panel_lote():
     rutas = cursor.fetchall()
     cursor.execute("""
         SELECT id, cliente, origen, destino, estado,
-               COALESCE(precio_cliente, precio_final, precio, 0) AS precio
+               COALESCE(NULLIF(precio_cliente,0), NULLIF(precio_final,0), NULLIF(precio,0), 0) AS precio
         FROM viajes
         WHERE LOWER(estado) NOT IN ('entregado', 'cancelado')
         ORDER BY id DESC
