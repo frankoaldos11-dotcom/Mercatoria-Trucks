@@ -110,6 +110,7 @@
         </div>
     {% else %}
         <form method="POST" action="/admin/comercial/cotizacion/{{ cotizacion.id }}/convertir">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-primary">
                 Convertir en viaje
             </button>

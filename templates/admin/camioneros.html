@@ -36,6 +36,7 @@
         </div>
         {% endif %}
         <form method="POST" action="/admin/camioneros" class="form-crud-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-crud-field">
                 <label>Nombre *</label>
                 <input type="text" name="nombre" class="input-crud" required placeholder="Nombre completo">
@@ -189,6 +190,7 @@
                         <form method="POST" action="/admin/camioneros/{{ c.id }}/eliminar"
                               style="display:inline"
                               onsubmit="return confirm('¿Confirmar eliminación?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn-accion-del">Eliminar</button>
                         </form>
                     </td>
@@ -328,6 +330,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" action="/admin/importar/camioneros" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body p-4">
                     <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">
                         El archivo Excel debe tener las siguientes columnas en orden:

@@ -16,6 +16,7 @@
 <div class="config-layout">
 
     <form method="POST" action="/admin/configuracion" class="card config-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="config-grupo">
             <label class="config-label">

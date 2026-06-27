@@ -38,6 +38,7 @@
     </div>
     <div style="padding: 24px;">
         <form method="POST" action="/admin/usuarios/crear" class="form-crud-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-crud-field">
                 <label>Email *</label>
                 <input type="email" name="usuario" class="input-crud" required placeholder="usuario@empresa.com">
@@ -130,6 +131,7 @@
                     <td class="td-acciones">
                         {% if u.usuario != session.get('usuario') %}
                         <form method="POST" action="/admin/usuarios/{{ u.id }}/rol" style="display:inline-flex;align-items:center;gap:6px;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <select name="rol" class="select-accion">
                                 <option value="admin" {% if u.rol=="admin" %}selected{% endif %}>Admin</option>
                                 <option value="operador" {% if u.rol=="operador" %}selected{% endif %}>Operador</option>
@@ -138,6 +140,7 @@
                             <button type="submit" class="btn-accion-edit">Cambiar rol</button>
                         </form>
                         <form method="POST" action="/admin/usuarios/{{ u.id }}/toggle" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             {% if u.activo %}
                             <button type="submit" class="btn-accion-del">Desactivar</button>
                             {% else %}
@@ -147,6 +150,7 @@
                         <form method="POST" action="/admin/usuarios/{{ u.id }}/reset-password"
                               onsubmit="return confirm('¿Resetear contraseña de {{ u.usuario }}?')"
                               style="display:inline-flex;gap:4px;align-items:center;margin-left:4px;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="text" name="nueva_password" placeholder="Nueva contraseña"
                                    style="padding:3px 7px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:120px;"
                                    required minlength="4">

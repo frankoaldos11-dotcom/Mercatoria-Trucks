@@ -147,6 +147,7 @@
                         {% endif %}
                     {% else %}
                     <form method="POST" action="/admin/viaje/{{ viaje.id }}/confirmar-precio" style="margin:0;margin-top:4px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         {% if liquidacion and liquidacion.precio_cliente > 0 %}
                         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                             <input type="number" name="precio_cliente" id="precio-inp-{{ viaje.id }}"
@@ -307,6 +308,7 @@
 
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/nota"
                   style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-start;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <textarea name="texto" rows="2" placeholder="Añadir nota interna (llamada, acuerdo, incidencia...)"
                           style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;"
                           required></textarea>
@@ -345,6 +347,7 @@
             {% if estados_validos %}
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
                   onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label>Nuevo estado</label>
                 <select name="estado" class="input input-estado" required>
                     {% for e in estados_validos %}
@@ -366,6 +369,7 @@
             <h2>Asignar camionero</h2>
 
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <label>Camionero disponible</label>
 
@@ -459,6 +463,7 @@
                 <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
                       onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje.id }} permanentemente? Esta acción no se puede deshacer.');"
                       style="margin-top:4px;border-top:1px solid #eee;padding-top:10px;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit"
                             style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
                         <i class="bi bi-trash3"></i> Eliminar viaje

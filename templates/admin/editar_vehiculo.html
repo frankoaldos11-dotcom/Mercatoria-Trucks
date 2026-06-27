@@ -20,6 +20,7 @@
     </div>
     <div style="padding: 24px;">
         <form method="POST" action="/admin/vehiculos/{{ vehiculo.id }}/editar" class="form-crud-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-crud-field">
                 <label>Matrícula *</label>
                 <input type="text" name="matricula" class="input-crud" required value="{{ vehiculo.matricula }}">

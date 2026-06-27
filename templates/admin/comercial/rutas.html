@@ -11,6 +11,7 @@
     <div style="display:flex;gap:8px;align-items:center;">
         <a href="/admin/exportar/rutas" class="btn-excel-export">⬇ Exportar Excel</a>
         <form method="POST" action="/admin/importar/rutas" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" name="archivo" accept=".xlsx" required style="font-size:12px;">
             <button type="submit" class="btn-excel-import">⬆ Importar</button>
         </form>
@@ -26,6 +27,7 @@
     </div>
 
     <form method="POST" action="/admin/comercial/rutas/nueva" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input id="ruta-origen" name="origen" placeholder="Origen" required
                onblur="calcularKmSiCompleto()">
         <input id="ruta-destino" name="destino" placeholder="Destino" required
@@ -99,6 +101,7 @@
                         </span>
                         <form method="POST" action="/admin/comercial/rutas/{{ r.id }}/tarifa"
                               class="tarifa-form" id="form-t-{{ r.id }}" style="display:none;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="number" name="tarifa_km" step="0.01" min="0"
                                    value="{{ r.tarifa_km or '' }}"
                                    placeholder="USD/km"
@@ -145,6 +148,7 @@
                                           action="/admin/comercial/rutas/{{ r.id }}/camioneros/{{ c.id }}/desasociar"
                                           style="display:inline;"
                                           onsubmit="return confirm('¿Desasociar {{ c.nombre }} de esta ruta?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="chip-remove" title="Desasociar">×</button>
                                     </form>
                                 </span>
@@ -156,6 +160,7 @@
                             <form method="POST"
                                   action="/admin/comercial/rutas/{{ r.id }}/camioneros/asignar"
                                   class="form-add-cam">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <select name="camionero_id" class="input-cam-sel" required>
                                     <option value="">Añadir camionero a esta ruta...</option>
                                     {% for c in todos_camioneros %}
@@ -187,6 +192,7 @@
             <button type="button" class="modal-close" onclick="closeEditModal()">&times;</button>
         </div>
         <form id="form-editar-ruta" method="POST" class="modal-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label>Origen</label>
             <input type="text" id="edit-origen" name="origen" required placeholder="Origen">
             <label>Destino</label>

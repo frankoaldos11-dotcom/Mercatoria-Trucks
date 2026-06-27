@@ -82,6 +82,7 @@
     <div style="background:#fff;border-radius:16px;padding:2rem;width:400px;max-width:90%;">
         <h3 style="margin:0 0 1rem;font-size:1.1rem;">Importar cotizaciones</h3>
         <form method="POST" action="/admin/comercial/cotizaciones/importar" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" name="archivo" accept=".xlsx" class="form-control mb-3" required>
             <div style="display:flex;gap:8px;justify-content:flex-end;">
                 <button type="button" onclick="document.getElementById('modalImportar').style.display='none'" class="btn btn-soft">Cancelar</button>

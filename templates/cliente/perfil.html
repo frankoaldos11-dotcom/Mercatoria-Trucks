@@ -21,6 +21,7 @@
 {% endif %}
 
 <form method="POST" action="/cliente/perfil" style="max-width:600px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <!-- Datos personales -->
     <div class="mt-card p-4 mb-3">

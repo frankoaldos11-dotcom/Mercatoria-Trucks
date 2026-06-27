@@ -28,7 +28,7 @@ https://mercatoria-trucks.onrender.com/cliente
 """
             mail.send(msg)
         except Exception as e:
-            print(f"Error enviando email bienvenida: {e}")
+            app.logger.error(f"Error enviando email bienvenida a {email}: {e}")
 
 cliente_bp = Blueprint("cliente", __name__, url_prefix="/cliente")
 
@@ -68,7 +68,6 @@ def login():
             (email,)
         )
         fila = cur.fetchone()
-        print(f"DEBUG LOGIN: buscando usuario={email}, fila={fila}", flush=True)
 
         if fila and bcrypt.check_password_hash(fila["password"], password):
             cur.execute("SELECT nombre, apellidos FROM usuarios WHERE id = ?", (fila["id"],))
@@ -470,7 +469,7 @@ Si no solicitaste este cambio, ignora este mensaje.
 """
             mail.send(msg)
         except Exception as e:
-            print(f"Error enviando email recuperacion: {e}")
+            current_app.logger.error(f"Error enviando email recuperacion a {email}: {e}")
 
     con.close()
     return render_template("cliente/recuperar.html",

@@ -19,6 +19,7 @@
     </div>
 
     <form method="POST" action="/admin/comercial/vehiculos/nuevo" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <input
             name="nombre"

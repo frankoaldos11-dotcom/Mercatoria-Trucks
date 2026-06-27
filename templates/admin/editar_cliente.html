@@ -14,6 +14,7 @@
 <section class="panel">
     <div style="padding: 28px; max-width: 720px;">
         <form method="POST" action="/admin/clientes/{{ cliente.id }}/editar">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="edit-row">
                 <div class="edit-field">

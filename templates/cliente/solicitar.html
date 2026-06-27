@@ -17,6 +17,7 @@
 <div class="mt-card p-4" style="max-width:640px;">
 
     <form method="POST" action="/cliente/solicitar" id="formSolicitar">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Ruta -->
         <div class="mb-4">

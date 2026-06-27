@@ -65,6 +65,7 @@
     {% endif %}
 
     <form method="POST" action="/cliente/registro">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="section-divider">Datos personales</div>
 

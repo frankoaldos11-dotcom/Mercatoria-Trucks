@@ -239,6 +239,7 @@
     </p>
     <form method="POST" action="/cliente/viaje/{{ viaje.id }}/cancelar"
           onsubmit="return confirm('¿Seguro que deseas cancelar esta solicitud?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit"
                 style="background:#dc2626;color:white;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
             <i class="bi bi-x-circle"></i> Cancelar solicitud

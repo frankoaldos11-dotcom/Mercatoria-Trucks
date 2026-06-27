@@ -35,9 +35,9 @@ def registrar_auditoria(accion, categoria, entidad=None, entidad_id=None, detall
         ))
         conexion.commit()
         conexion.close()
-        print(f"AUDITORIA OK: {accion} | {categoria} | {entidad} #{entidad_id}")
     except Exception as e:
-        print(f"AUDITORIA ERROR: {e}")
+        from flask import current_app
+        current_app.logger.error(f"AUDITORIA ERROR: {e}")
 
 
 def notificar_cliente_estado(viaje_id, nuevo_estado, email_cliente):
@@ -74,7 +74,8 @@ def notificar_cliente_estado(viaje_id, nuevo_estado, email_cliente):
         )
         mail.send(msg)
     except Exception as e:
-        print(f"Error enviando email: {e}")
+        from flask import current_app
+        current_app.logger.error(f"Error enviando email estado viaje {viaje_id}: {e}")
 
 
 def requiere_admin():
@@ -410,9 +411,7 @@ def asignar_camionero(id):
 
     conexion.close()
 
-    print(f"=== ANTES AUDITORIA: usuario={session.get('usuario')} rol={session.get('rol')} ===")
     registrar_auditoria(f"Asignó camionero {nombre_camionero}", "Viajes", "viaje", id, f"Camionero ID: {camionero_id}")
-    print(f"=== DESPUES AUDITORIA ===")
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -2110,7 +2109,7 @@ def mensajes_enviar():
                     msg.body = cuerpo
                     mail.send(msg)
                 except Exception as e:
-                    print(f"Error enviando a {email}: {e}")
+                    app_obj.logger.error(f"Error enviando mensaje masivo a {email}: {e}")
 
     threading.Thread(target=enviar_todos, daemon=True).start()
 

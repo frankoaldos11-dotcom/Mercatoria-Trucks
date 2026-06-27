@@ -86,6 +86,7 @@
     {% endif %}
 
     <form action="/login" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
             <label class="form-label">Usuario o correo electrónico</label>
             <input type="text" name="usuario" class="form-control" placeholder="usuario o correo@email.com" required autofocus>

@@ -121,6 +121,7 @@
     </div>
 
     <form method="POST" action="/admin/comercial/cotizar/guardar" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <input type="hidden" name="ruta_id" id="f-ruta">
         <input type="hidden" name="tipo_vehiculo_id" id="f-tipo">

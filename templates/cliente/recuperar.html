@@ -78,6 +78,7 @@
     </p>
 
     <form method="POST" action="/cliente/recuperar">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-4">
             <label class="form-label">Correo electrónico</label>
             <input type="email" name="email" class="form-control" placeholder="tu@correo.com" required autofocus>

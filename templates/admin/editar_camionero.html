@@ -19,6 +19,7 @@
         </div>
         {% endif %}
         <form method="POST" action="/admin/camioneros/{{ camionero.id }}/editar">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="edit-row">
                 <div class="edit-field">

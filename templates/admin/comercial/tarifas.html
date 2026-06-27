@@ -21,6 +21,7 @@
     </div>
 
     <form method="POST" action="/admin/comercial/tarifas/nueva" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <select name="ruta_id" required>
             <option value="">Seleccionar ruta</option>
