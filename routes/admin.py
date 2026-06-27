@@ -463,7 +463,13 @@ def cambiar_estado(id):
     conexion.close()
 
     if estado in ["Asignado", "En ruta", "Carga recogida", "Entregado", "Cancelado"]:
-        notificar_cliente_estado(id, estado, email_cliente)
+        import threading
+        t = threading.Thread(
+            target=notificar_cliente_estado,
+            args=(id, estado, email_cliente),
+            daemon=True
+        )
+        t.start()
 
     registrar_auditoria(
         f"Cambió estado a {estado}", "Viajes", "viaje", id,
