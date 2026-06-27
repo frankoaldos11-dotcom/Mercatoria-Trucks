@@ -311,7 +311,7 @@
                         <option value="{{ c.id }}"
                                 data-vehiculo-id="{{ c.vehiculo_id or '' }}"
                                 data-vehiculo-info="{{ (c.vehiculo_matricula ~ ((' – ' ~ c.vehiculo_marca) if c.vehiculo_marca else '') ~ ((' ' ~ c.vehiculo_modelo) if c.vehiculo_modelo else ''))|trim if c.vehiculo_id else 'Sin vehículo asignado' }}">
-                            {{ c.nombre }}
+                            {{ c.nombre }}{% if c.vehiculo_matricula %} ({{ c.vehiculo_matricula }}{% if c.vehiculo_marca %} — {{ c.vehiculo_marca }}{% endif %}){% endif %}
                         </option>
                     {% endfor %}
                 </select>

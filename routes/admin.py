@@ -218,7 +218,6 @@ def viajes():
         LIMIT ? OFFSET ?
     """, params + [por_pagina, offset])
     lista = cursor.fetchall()
-    print(f"DEBUG VIAJES: total={total}, lista_len={len(lista)}, where={where}, params={params}", flush=True)
 
     conexion.close()
 
@@ -272,10 +271,15 @@ def gestionar_viaje(id):
         return redirect("/admin/viajes")
 
     cursor.execute("""
-        SELECT id, nombre, telefono, estado
-        FROM camioneros
-        WHERE activo = 1 OR activo IS NULL
-        ORDER BY nombre
+        SELECT c.id, c.nombre, c.telefono, c.estado,
+               v.id       AS vehiculo_id,
+               COALESCE(v.matricula, '') AS vehiculo_matricula,
+               COALESCE(v.marca, '')    AS vehiculo_marca,
+               COALESCE(v.modelo, '')   AS vehiculo_modelo
+        FROM camioneros c
+        LEFT JOIN vehiculos v ON v.camionero_id = c.id AND v.activo = 1
+        WHERE c.activo = 1 OR c.activo IS NULL
+        ORDER BY c.nombre
     """)
     camioneros = cursor.fetchall()
     vehiculos = []
@@ -778,60 +782,68 @@ def admin_camioneros():
     conexion = conectar()
     cursor = conexion.cursor()
 
+    error = None
+
     if request.method == "POST":
-        nombre = request.form["nombre"].strip()
-        telefono = request.form.get("telefono", "").strip()
-        licencia = request.form.get("licencia", "").strip()
+        nombre    = request.form["nombre"].strip()
+        telefono  = request.form.get("telefono", "").strip()
+        licencia  = request.form.get("licencia", "").strip()
+        estado    = request.form.get("estado", "Disponible").strip()
+
         matricula = request.form.get("matricula", "").strip()
-        tipo = request.form.get("tipo", "").strip()
+        marca     = request.form.get("marca", "").strip()
+        modelo    = request.form.get("modelo", "").strip()
+        tipo      = request.form.get("tipo", "").strip()
         capacidad = request.form.get("capacidad", "").strip()
-        estado = request.form.get("estado", "Disponible").strip()
-        vehiculo_id = request.form.get("vehiculo_id") or None
 
-        cursor.execute("""
-            INSERT INTO camioneros (nombre, telefono, licencia, matricula, tipo, capacidad, estado)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (nombre, telefono, licencia, matricula, tipo, capacidad, estado))
+        if matricula:
+            cursor.execute("SELECT id FROM vehiculos WHERE matricula = ?", (matricula,))
+            if cursor.fetchone():
+                error = f"La matrícula '{matricula}' ya está registrada."
 
-        nuevo_id = cursor.lastrowid
-        if vehiculo_id:
-            cursor.execute(
-                "UPDATE vehiculos SET camionero_id = ? WHERE id = ? AND activo = 1",
-                (nuevo_id, vehiculo_id)
-            )
+        if not error:
+            cursor.execute("""
+                INSERT INTO camioneros (nombre, telefono, licencia, estado, activo)
+                VALUES (?, ?, ?, ?, 1)
+            """, (nombre, telefono, licencia, estado))
+            nuevo_id = cursor.lastrowid
 
-        conexion.commit()
+            if matricula:
+                cursor.execute("""
+                    INSERT INTO vehiculos
+                        (camionero_id, matricula, marca, modelo, tipo, capacidad,
+                         estado, activo)
+                    VALUES (?, ?, ?, ?, ?, ?, 'Disponible', 1)
+                """, (nuevo_id, matricula, marca, modelo, tipo, capacidad))
+
+            conexion.commit()
 
     buscar = request.args.get("buscar", "").strip()
     filtro_estado = request.args.get("estado", "").strip()
 
-    condiciones = []
+    condiciones = ["(c.activo = 1 OR c.activo IS NULL)"]
     params = []
     if buscar:
-        condiciones.append("(nombre LIKE ? OR telefono LIKE ? OR licencia LIKE ?)")
+        condiciones.append("(c.nombre LIKE ? OR c.telefono LIKE ? OR c.licencia LIKE ?)")
         like = f"%{buscar}%"
         params.extend([like, like, like])
     if filtro_estado:
-        condiciones.append("LOWER(estado) = ?")
+        condiciones.append("LOWER(c.estado) = ?")
         params.append(filtro_estado.lower())
-    where = ("WHERE " + " AND ".join(condiciones)) if condiciones else ""
+    where = "WHERE " + " AND ".join(condiciones)
 
     cursor.execute(f"""
-        SELECT id, nombre, telefono, licencia, matricula, tipo, capacidad, estado
-        FROM camioneros
+        SELECT c.id, c.nombre, c.telefono, c.licencia, c.estado,
+               COALESCE(v.matricula, '—') AS vehiculo_matricula,
+               COALESCE(v.marca, '') AS vehiculo_marca,
+               COALESCE(v.modelo, '') AS vehiculo_modelo,
+               COALESCE(v.tipo, '') AS vehiculo_tipo
+        FROM camioneros c
+        LEFT JOIN vehiculos v ON v.camionero_id = c.id AND v.activo = 1
         {where}
-        ORDER BY id DESC
+        ORDER BY c.id DESC
     """, params)
     lista = cursor.fetchall()
-
-    cursor.execute("""
-        SELECT id, COALESCE(matricula, '') AS matricula,
-               COALESCE(marca, '') AS marca, COALESCE(modelo, '') AS modelo
-        FROM vehiculos
-        WHERE activo = 1 AND camionero_id IS NULL
-        ORDER BY matricula
-    """)
-    vehiculos_disponibles = cursor.fetchall()
 
     conexion.close()
 
@@ -842,9 +854,9 @@ def admin_camioneros():
         lista=lista,
         estados=CAMIONERO_ESTADOS,
         rutas_por_camionero=rutas_por_camionero,
-        vehiculos_disponibles=vehiculos_disponibles,
         buscar=buscar,
         filtro_estado=filtro_estado,
+        error=error,
     )
 
 
@@ -856,40 +868,83 @@ def editar_camionero(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
+    error = None
+
     if request.method == "POST":
-        nombre = request.form["nombre"].strip()
+        nombre   = request.form["nombre"].strip()
         telefono = request.form.get("telefono", "").strip()
         licencia = request.form.get("licencia", "").strip()
+        estado   = request.form.get("estado", "Disponible").strip()
+
         matricula = request.form.get("matricula", "").strip()
-        tipo = request.form.get("tipo", "").strip()
+        marca     = request.form.get("marca", "").strip()
+        modelo    = request.form.get("modelo", "").strip()
+        tipo      = request.form.get("tipo", "").strip()
         capacidad = request.form.get("capacidad", "").strip()
-        estado = request.form.get("estado", "Disponible").strip()
 
         cursor.execute("""
-            UPDATE camioneros
-            SET nombre = ?, telefono = ?, licencia = ?, matricula = ?,
-                tipo = ?, capacidad = ?, estado = ?
+            UPDATE camioneros SET nombre = ?, telefono = ?, licencia = ?, estado = ?
             WHERE id = ?
-        """, (nombre, telefono, licencia, matricula, tipo, capacidad, estado, id))
+        """, (nombre, telefono, licencia, estado, id))
 
-        conexion.commit()
-        conexion.close()
+        # Buscar vehículo actual del camionero
+        cursor.execute(
+            "SELECT id FROM vehiculos WHERE camionero_id = ? AND activo = 1", (id,)
+        )
+        veh_row = cursor.fetchone()
 
-        return redirect("/admin/camioneros")
+        if veh_row:
+            # Actualizar vehículo existente
+            cursor.execute("""
+                UPDATE vehiculos
+                SET matricula = ?, marca = ?, modelo = ?, tipo = ?, capacidad = ?
+                WHERE id = ?
+            """, (matricula, marca, modelo, tipo, capacidad, veh_row["id"]))
+        elif matricula:
+            # Verificar matrícula única antes de insertar
+            cursor.execute(
+                "SELECT id FROM vehiculos WHERE matricula = ?", (matricula,)
+            )
+            if cursor.fetchone():
+                error = f"La matrícula '{matricula}' ya está registrada."
+            else:
+                cursor.execute("""
+                    INSERT INTO vehiculos
+                        (camionero_id, matricula, marca, modelo, tipo, capacidad,
+                         estado, activo)
+                    VALUES (?, ?, ?, ?, ?, ?, 'Disponible', 1)
+                """, (id, matricula, marca, modelo, tipo, capacidad))
 
-    cursor.execute("""
-        SELECT id, nombre, telefono, licencia, matricula, tipo, capacidad, estado
-        FROM camioneros
-        WHERE id = ?
-    """, (id,))
+        if not error:
+            conexion.commit()
+            conexion.close()
+            return redirect("/admin/camioneros")
+
+    cursor.execute(
+        "SELECT id, nombre, telefono, licencia, estado FROM camioneros WHERE id = ?",
+        (id,)
+    )
     camionero = cursor.fetchone()
 
-    conexion.close()
-
     if not camionero:
+        conexion.close()
         return redirect("/admin/camioneros")
 
-    return render_template("admin/editar_camionero.html", camionero=camionero, estados=CAMIONERO_ESTADOS)
+    cursor.execute(
+        """SELECT id, matricula, marca, modelo, tipo, capacidad
+           FROM vehiculos WHERE camionero_id = ? AND activo = 1""",
+        (id,)
+    )
+    vehiculo = cursor.fetchone()
+    conexion.close()
+
+    return render_template(
+        "admin/editar_camionero.html",
+        camionero=camionero,
+        vehiculo=vehiculo,
+        estados=CAMIONERO_ESTADOS,
+        error=error,
+    )
 
 
 @admin_bp.route("/camioneros/<int:id>/eliminar", methods=["POST"])

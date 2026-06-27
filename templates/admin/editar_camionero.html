@@ -13,6 +13,11 @@
 
 <section class="panel">
     <div style="padding: 28px; max-width: 720px;">
+        {% if error %}
+        <div style="background:#fde8e8;color:#c0392b;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:14px;font-weight:600;">
+            {{ error }}
+        </div>
+        {% endif %}
         <form method="POST" action="/admin/camioneros/{{ camionero.id }}/editar">
 
             <div class="edit-row">
@@ -34,35 +39,59 @@
                     <input type="text" name="licencia" class="input-crud"
                            value="{{ camionero.licencia or '' }}">
                 </div>
+                <div class="edit-field" style="max-width: 340px;">
+                    <label>Estado</label>
+                    <select name="estado" class="input-crud">
+                        {% for e in estados %}
+                        <option value="{{ e }}" {% if camionero.estado == e %}selected{% endif %}>
+                            {{ e }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <p style="font-size:13px;font-weight:700;color:#F36B21;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 12px;">
+                Vehículo
+            </p>
+
+            <div class="edit-row">
                 <div class="edit-field">
                     <label>Matrícula</label>
                     <input type="text" name="matricula" class="input-crud"
-                           value="{{ camionero.matricula or '' }}">
+                           value="{{ vehiculo.matricula if vehiculo else '' }}"
+                           placeholder="Matrícula">
+                </div>
+                <div class="edit-field">
+                    <label>Marca</label>
+                    <input type="text" name="marca" class="input-crud"
+                           value="{{ vehiculo.marca if vehiculo else '' }}"
+                           placeholder="Marca">
                 </div>
             </div>
 
             <div class="edit-row">
                 <div class="edit-field">
-                    <label>Tipo</label>
-                    <input type="text" name="tipo" class="input-crud"
-                           value="{{ camionero.tipo or '' }}">
+                    <label>Modelo</label>
+                    <input type="text" name="modelo" class="input-crud"
+                           value="{{ vehiculo.modelo if vehiculo else '' }}"
+                           placeholder="Modelo">
                 </div>
                 <div class="edit-field">
-                    <label>Capacidad</label>
-                    <input type="text" name="capacidad" class="input-crud"
-                           value="{{ camionero.capacidad or '' }}">
+                    <label>Tipo</label>
+                    <input type="text" name="tipo" class="input-crud"
+                           value="{{ vehiculo.tipo if vehiculo else '' }}"
+                           placeholder="Tipo de transporte">
                 </div>
             </div>
 
-            <div class="edit-field" style="max-width: 340px;">
-                <label>Estado</label>
-                <select name="estado" class="input-crud">
-                    {% for e in estados %}
-                    <option value="{{ e }}" {% if camionero.estado == e %}selected{% endif %}>
-                        {{ e }}
-                    </option>
-                    {% endfor %}
-                </select>
+            <div class="edit-row">
+                <div class="edit-field">
+                    <label>Capacidad</label>
+                    <input type="text" name="capacidad" class="input-crud"
+                           value="{{ vehiculo.capacidad if vehiculo else '' }}"
+                           placeholder="Ej: 10 ton">
+                </div>
             </div>
 
             <div class="edit-actions">

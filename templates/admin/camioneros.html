@@ -25,6 +25,11 @@
         </div>
     </div>
     <div style="padding: 24px;">
+        {% if error %}
+        <div style="background:#fde8e8;color:#c0392b;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:14px;font-weight:600;">
+            {{ error }}
+        </div>
+        {% endif %}
         <form method="POST" action="/admin/camioneros" class="form-crud-grid">
             <div class="form-crud-field">
                 <label>Nombre *</label>
@@ -39,8 +44,27 @@
                 <input type="text" name="licencia" class="input-crud" placeholder="Número de licencia">
             </div>
             <div class="form-crud-field">
+                <label>Estado</label>
+                <select name="estado" class="input-crud">
+                    {% for e in estados %}
+                    <option value="{{ e }}">{{ e }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-crud-field" style="grid-column:1/-1;">
+                <label style="color:#F36B21;">Vehículo (opcional)</label>
+            </div>
+            <div class="form-crud-field">
                 <label>Matrícula</label>
-                <input type="text" name="matricula" class="input-crud" placeholder="Matrícula del vehículo">
+                <input type="text" name="matricula" class="input-crud" placeholder="Matrícula">
+            </div>
+            <div class="form-crud-field">
+                <label>Marca</label>
+                <input type="text" name="marca" class="input-crud" placeholder="Marca">
+            </div>
+            <div class="form-crud-field">
+                <label>Modelo</label>
+                <input type="text" name="modelo" class="input-crud" placeholder="Modelo">
             </div>
             <div class="form-crud-field">
                 <label>Tipo</label>
@@ -49,25 +73,6 @@
             <div class="form-crud-field">
                 <label>Capacidad</label>
                 <input type="text" name="capacidad" class="input-crud" placeholder="Ej: 10 ton">
-            </div>
-            <div class="form-crud-field">
-                <label>Estado</label>
-                <select name="estado" class="input-crud">
-                    {% for e in estados %}
-                    <option value="{{ e }}">{{ e }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-crud-field">
-                <label>Vehículo asignado</label>
-                <select name="vehiculo_id" class="input-crud">
-                    <option value="">Sin vehículo</option>
-                    {% for v in vehiculos_disponibles %}
-                    <option value="{{ v.id }}">
-                        {{ v.matricula or ('Veh. #' ~ v.id) }}{% if v.marca %} – {{ v.marca }}{% endif %}{% if v.modelo %} {{ v.modelo }}{% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
             </div>
             <div class="form-crud-field form-crud-submit">
                 <button type="submit" class="btn-crud-primary">Registrar camionero</button>
@@ -108,8 +113,7 @@
                     <th>Nombre</th>
                     <th>Teléfono</th>
                     <th>Licencia</th>
-                    <th>Matrícula</th>
-                    <th>Tipo</th>
+                    <th>Vehículo</th>
                     <th>Estado</th>
                     <th>Rutas asignadas</th>
                     <th>Acciones</th>
@@ -123,8 +127,19 @@
                     <td>{{ c.nombre }}</td>
                     <td>{{ c.telefono or "—" }}</td>
                     <td>{{ c.licencia or "—" }}</td>
-                    <td>{{ c.matricula or "—" }}</td>
-                    <td>{{ c.tipo or "—" }}</td>
+                    <td>
+                        {% if c.vehiculo_matricula and c.vehiculo_matricula != '—' %}
+                            <strong>{{ c.vehiculo_matricula }}</strong>
+                            {% if c.vehiculo_marca or c.vehiculo_modelo %}
+                            <br><small style="color:#888;">{{ c.vehiculo_marca }} {{ c.vehiculo_modelo }}</small>
+                            {% endif %}
+                            {% if c.vehiculo_tipo %}
+                            <br><small style="color:#aaa;">{{ c.vehiculo_tipo }}</small>
+                            {% endif %}
+                        {% else %}
+                            <span style="color:#ccc;font-style:italic;">Sin vehículo</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <span class="estado-pill estado-{{ c.estado|lower|replace(' ', '-') }}">
                             {{ c.estado or "—" }}
@@ -153,7 +168,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="9" class="empty-state">No hay camioneros registrados.</td>
+                    <td colspan="8" class="empty-state">No hay camioneros registrados.</td>
                 </tr>
                 {% endfor %}
             </tbody>
