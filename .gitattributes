@@ -1,0 +1,15 @@
+# Normalizar todos los archivos de texto a LF en el repositorio
+* text=auto eol=lf
+
+# Binarios — sin conversión
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.xlsx binary
+*.xls  binary
+*.zip  binary
+*.db   binary
+*.pyc  binary
