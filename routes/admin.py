@@ -10,6 +10,7 @@ from urllib.parse import quote_plus
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 
 from database import conectar
+from db_config import USE_POSTGRES
 from extensions import bcrypt, mail
 from flask_mail import Message
 from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_por_camionero
@@ -1280,15 +1281,26 @@ def reportes():
     camionero_top = cursor.fetchone()
 
     # Datos mensuales (últimos 6 meses) para el gráfico
-    cursor.execute("""
-        SELECT strftime('%Y-%m', fecha_creacion) AS mes,
-               SUM(COALESCE(precio_final, precio_cliente, precio, 0)) AS ingresos
-        FROM viajes
-        WHERE fecha_creacion >= date('now', '-5 months', 'start of month')
-          AND LOWER(estado) != 'cancelado'
-        GROUP BY mes
-        ORDER BY mes
-    """)
+    if USE_POSTGRES:
+        cursor.execute("""
+            SELECT TO_CHAR(fecha_creacion, 'YYYY-MM') AS mes,
+                   SUM(COALESCE(precio_final, precio_cliente, precio, 0)) AS ingresos
+            FROM viajes
+            WHERE fecha_creacion >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '5 months')
+              AND LOWER(estado) != 'cancelado'
+            GROUP BY mes
+            ORDER BY mes
+        """)
+    else:
+        cursor.execute("""
+            SELECT strftime('%Y-%m', fecha_creacion) AS mes,
+                   SUM(COALESCE(precio_final, precio_cliente, precio, 0)) AS ingresos
+            FROM viajes
+            WHERE fecha_creacion >= date('now', '-5 months', 'start of month')
+              AND LOWER(estado) != 'cancelado'
+            GROUP BY mes
+            ORDER BY mes
+        """)
     datos_db = {row["mes"]: float(row["ingresos"] or 0) for row in cursor.fetchall()}
     conexion.close()
 
