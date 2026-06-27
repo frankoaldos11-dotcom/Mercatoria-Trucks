@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from flask import Blueprint, render_template, request, session, redirect, url_for, current_app
 from flask_mail import Message
-from database import conectar
+from database import conectar, crear_checklist_viaje
 from extensions import bcrypt, mail
 
 
@@ -373,6 +373,8 @@ def solicitar_envio():
             peso_toneladas,
             obs_operativas or None,
         ))
+        viaje_id = cur.lastrowid
+        crear_checklist_viaje(cur, viaje_id)
         con.commit()
         con.close()
         return redirect(url_for("cliente.mis_viajes", nuevo=1))

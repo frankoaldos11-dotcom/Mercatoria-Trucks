@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, session
 
-from database import conectar
+from database import conectar, crear_checklist_viaje
 from utils.constants import VIAJE_ESTADOS
 
 
@@ -84,6 +84,8 @@ def nuevo_viaje():
             observaciones
         ))
 
+        viaje_id = cursor.lastrowid
+        crear_checklist_viaje(cursor, viaje_id)
         conexion.commit()
         conexion.close()
 

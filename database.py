@@ -386,6 +386,18 @@ def crear_base_datos(bcrypt):
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS viaje_checklist (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        viaje_id INTEGER NOT NULL,
+        item TEXT NOT NULL,
+        completado INTEGER DEFAULT 0,
+        completado_por TEXT,
+        fecha_completado TEXT,
+        FOREIGN KEY (viaje_id) REFERENCES viajes(id)
+    )
+    """)
+
     cursor.execute("SELECT id FROM usuarios WHERE usuario = ?", ("admin",))
     if not cursor.fetchone():
         hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")
@@ -396,3 +408,29 @@ def crear_base_datos(bcrypt):
 
     conexion.commit()
     conexion.close()
+
+
+CHECKLIST_ITEMS_DEFAULT = [
+    "Solicitud revisada",
+    "Km calculados",
+    "Combustible calculado",
+    "Pago camionero calculado",
+    "Camionero asignado",
+    "Vehículo confirmado",
+    "Documentación enviada",
+    "Combustible confirmado",
+    "Contenedor extraído / carga recogida",
+    "Descarga realizada",
+    "Pago camionero confirmado",
+    "Cobro cliente confirmado",
+    "Documentos archivados",
+]
+
+
+def crear_checklist_viaje(cursor, viaje_id):
+    """Inserta los ítems del checklist operativo para un viaje recién creado."""
+    for item in CHECKLIST_ITEMS_DEFAULT:
+        cursor.execute(
+            "INSERT INTO viaje_checklist (viaje_id, item) VALUES (?, ?)",
+            (viaje_id, item)
+        )

@@ -1,4 +1,4 @@
-from database import conectar
+from database import conectar, crear_checklist_viaje
 from db_config import USE_POSTGRES
 
 
@@ -434,6 +434,7 @@ def convertir_cotizacion_en_viaje(cotizacion_id):
     )
 
     viaje_id = cur.lastrowid
+    crear_checklist_viaje(cur, viaje_id)
 
     cur.execute(f"""
         UPDATE cotizaciones

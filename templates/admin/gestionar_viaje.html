@@ -399,6 +399,45 @@
 <div id="tab-operacion" class="tab-panel" style="display:none;">
     <div class="op-grid">
 
+        {# ── Checklist operativo ── #}
+        <div class="card bloque cl-card">
+            <div class="cl-header">
+                <h2 style="margin:0;"><i class="bi bi-check2-square" style="color:#E86A2C;margin-right:6px;"></i>Checklist operativo</h2>
+                <span class="cl-progreso" id="cl-counter">
+                    {% set cl_done = checklist | selectattr('completado') | list | length %}
+                    {{ cl_done }}/{{ checklist | length }} completados
+                </span>
+            </div>
+
+            <div class="cl-barra-wrap">
+                <div class="cl-barra" id="cl-barra"
+                     style="width:{{ ((cl_done / checklist|length * 100) if checklist else 0)|int }}%"></div>
+            </div>
+
+            <input type="hidden" id="cl-csrf" value="{{ csrf_token() }}">
+            <input type="hidden" id="cl-viaje-id" value="{{ viaje.id }}">
+
+            <ul class="cl-lista">
+                {% for item in checklist %}
+                <li class="cl-row {% if item.completado %}cl-done{% endif %}" id="cl-row-{{ item.id }}">
+                    <button class="cl-toggle"
+                            onclick="toggleChecklist({{ item.id }}, this)"
+                            title="{% if item.completado %}Desmarcar{% else %}Marcar como completado{% endif %}">
+                        {% if item.completado %}
+                        <i class="bi bi-check-square-fill"></i>
+                        {% else %}
+                        <i class="bi bi-square"></i>
+                        {% endif %}
+                    </button>
+                    <span class="cl-label">{{ item.item }}</span>
+                    {% if item.completado and item.completado_por %}
+                    <span class="cl-meta">{{ item.completado_por }}{% if item.fecha_completado %} · {{ item.fecha_completado | fmt_fecha }}{% endif %}</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
         {# Cambiar estado #}
         <div class="card bloque estado-bloque">
             <h2 class="estado-titulo">Cambiar estado</h2>
@@ -574,6 +613,36 @@ function editarPrecioViaje(id) {
     inp.select();
 }
 
+function toggleChecklist(itemId, btn) {
+    var viajeId = document.getElementById('cl-viaje-id').value;
+    var fd = new FormData();
+    fd.append('csrf_token', document.getElementById('cl-csrf').value);
+    fetch('/admin/viaje/' + viajeId + '/checklist/' + itemId + '/toggle', {
+        method: 'POST',
+        body: fd
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var row = document.getElementById('cl-row-' + itemId);
+        var icon = btn.querySelector('i');
+        if (data.completado) {
+            row.classList.add('cl-done');
+            icon.className = 'bi bi-check-square-fill';
+            btn.title = 'Desmarcar';
+        } else {
+            row.classList.remove('cl-done');
+            icon.className = 'bi bi-square';
+            btn.title = 'Marcar como completado';
+        }
+        var total = document.querySelectorAll('.cl-row').length;
+        var done  = document.querySelectorAll('.cl-row.cl-done').length;
+        document.getElementById('cl-counter').textContent = done + '/' + total + ' completados';
+        var barra = document.getElementById('cl-barra');
+        if (barra) barra.style.width = (total > 0 ? Math.round(done / total * 100) : 0) + '%';
+    })
+    .catch(function(e) { console.error('checklist toggle error:', e); });
+}
+
 var selCam = document.getElementById('sel-camionero');
 if (selCam) {
     selCam.addEventListener('change', function() {
@@ -641,6 +710,82 @@ if (selCam) {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     max-width: 860px;
+}
+.cl-card { grid-column: 1 / -1; }
+
+/* ── Checklist ──────────────────────────────────────────────── */
+.cl-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.cl-progreso {
+    font-size: 13px;
+    font-weight: 700;
+    color: #E86A2C;
+    background: #fff3ec;
+    border: 1px solid #fbd5bb;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+.cl-barra-wrap {
+    background: #E5E7EB;
+    border-radius: 999px;
+    height: 6px;
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.cl-barra {
+    height: 100%;
+    background: #E86A2C;
+    border-radius: 999px;
+    transition: width .35s ease;
+    min-width: 0;
+}
+.cl-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 4px;
+}
+.cl-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: background .15s;
+}
+.cl-row:hover { background: #f9fafb; }
+.cl-done .cl-label { text-decoration: line-through; color: #9CA3AF; }
+.cl-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 17px;
+    color: #9CA3AF;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: color .15s;
+}
+.cl-done .cl-toggle { color: #E86A2C; }
+.cl-toggle:hover { color: #E86A2C; }
+.cl-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    flex: 1;
+}
+.cl-meta {
+    font-size: 10px;
+    color: #9CA3AF;
+    white-space: nowrap;
 }
 
 /* ── Page header ────────────────────────────────────────────── */

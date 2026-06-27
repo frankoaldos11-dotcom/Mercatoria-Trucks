@@ -150,6 +150,18 @@ def ejecutar_migraciones():
         )
         """)
 
+    if not tabla_existe(cursor, "viaje_checklist"):
+        cursor.execute("""
+        CREATE TABLE viaje_checklist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            viaje_id INTEGER NOT NULL,
+            item TEXT NOT NULL,
+            completado INTEGER DEFAULT 0,
+            completado_por TEXT,
+            fecha_completado TEXT
+        )
+        """)
+
     if not tabla_existe(cursor, "reset_tokens"):
         cursor.execute("""
         CREATE TABLE reset_tokens (

@@ -9,7 +9,7 @@ from urllib.parse import quote_plus
 
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 
-from database import conectar
+from database import conectar, crear_checklist_viaje
 from db_config import USE_POSTGRES
 from extensions import bcrypt, mail
 from flask_mail import Message
@@ -370,6 +370,20 @@ def gestionar_viaje(id):
         ORDER BY fecha DESC
     """, (id,))
     notas = cursor2.fetchall()
+
+    # Checklist operativo — crear automáticamente si el viaje no lo tiene aún
+    cursor2.execute(
+        "SELECT COUNT(*) AS cnt FROM viaje_checklist WHERE viaje_id = ?", (id,)
+    )
+    if cursor2.fetchone()["cnt"] == 0:
+        crear_checklist_viaje(cursor2, id)
+        conexion2.commit()
+    cursor2.execute(
+        "SELECT id, item, completado, completado_por, fecha_completado "
+        "FROM viaje_checklist WHERE viaje_id = ? ORDER BY id",
+        (id,)
+    )
+    checklist = cursor2.fetchall()
     conexion2.close()
 
     return render_template(
@@ -388,7 +402,44 @@ def gestionar_viaje(id):
         ruta_display=ruta_display,
         obs_parsed=obs_parsed,
         notas=notas,
+        checklist=checklist,
     )
+
+
+@admin_bp.route("/viaje/<int:viaje_id>/checklist/<int:item_id>/toggle", methods=["POST"])
+def toggle_checklist(viaje_id, item_id):
+    if not requiere_admin():
+        return jsonify({"error": "no auth"}), 401
+
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(
+        "SELECT id, completado FROM viaje_checklist WHERE id = ? AND viaje_id = ?",
+        (item_id, viaje_id)
+    )
+    row = cur.fetchone()
+    if not row:
+        con.close()
+        return jsonify({"error": "not found"}), 404
+
+    nuevo = 0 if row["completado"] else 1
+    if nuevo:
+        cur.execute(
+            "UPDATE viaje_checklist "
+            "SET completado = 1, completado_por = ?, fecha_completado = CURRENT_TIMESTAMP "
+            "WHERE id = ?",
+            (session.get("usuario", "admin"), item_id)
+        )
+    else:
+        cur.execute(
+            "UPDATE viaje_checklist "
+            "SET completado = 0, completado_por = NULL, fecha_completado = NULL "
+            "WHERE id = ?",
+            (item_id,)
+        )
+    con.commit()
+    con.close()
+    return jsonify({"completado": bool(nuevo)})
 
 
 @admin_bp.route("/viaje/<int:id>/asignar", methods=["POST"])
