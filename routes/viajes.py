@@ -212,7 +212,6 @@ def orden_carga(id):
     if "usuario" not in session:
         return redirect("/login")
     conexion = conectar()
-    conexion.row_factory = None
     cursor = conexion.cursor()
 
     cursor.execute("""
@@ -234,15 +233,12 @@ def orden_carga(id):
     """, (id,))
 
     fila = cursor.fetchone()
+    conexion.close()
 
     if not fila:
-        conexion.close()
         return redirect("/admin/viajes")
 
-    columnas = [descripcion[0] for descripcion in cursor.description]
-    viaje = dict(zip(columnas, fila))
-
-    conexion.close()
+    viaje = dict(fila)
 
     return render_template(
         "admin/orden_carga.html",

@@ -640,7 +640,16 @@ def descargar_pdf_orden_carga(id):
         msg = quote_plus("Faltan datos para Orden de Carga: " + ", ".join(faltantes_oc))
         return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
 
-    pdf_bytes = generar_pdf_orden_carga(viaje)
+    try:
+        pdf_bytes = generar_pdf_orden_carga(viaje)
+    except ValueError as e:
+        msg = quote_plus(str(e))
+        return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"Error PDF orden carga viaje {id}: {e}")
+        msg = quote_plus("Error generando PDF de Orden de Carga")
+        return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
 
     return send_file(
         io.BytesIO(pdf_bytes),
@@ -667,6 +676,11 @@ def descargar_carta_porte(id):
     except ValueError as e:
         msg = quote_plus(str(e))
         return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"Error PDF carta porte viaje {id}: {e}")
+        msg = quote_plus("Error generando Carta de Porte")
+        return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
 
 
 @admin_bp.route("/viaje/<int:id>/liquidacion")
@@ -685,6 +699,11 @@ def descargar_liquidacion(id):
     except ValueError as e:
         msg = quote_plus(str(e))
         return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"Error PDF liquidacion viaje {id}: {e}")
+        msg = quote_plus("Error generando Liquidación")
+        return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
 
 
 @admin_bp.route("/viaje/<int:id>/factura")
@@ -695,7 +714,13 @@ def descargar_factura_cliente(id):
     try:
         pdf_bytes = generar_factura_cliente(id)
     except ValueError as e:
-        return redirect(f"/admin/viajes/{id}/gestionar?error={e}")
+        msg = quote_plus(str(e))
+        return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"Error PDF factura viaje {id}: {e}")
+        msg = quote_plus("Error generando Factura")
+        return redirect(f"/admin/viajes/{id}/gestionar?error={msg}")
 
     return send_file(
         io.BytesIO(pdf_bytes),
