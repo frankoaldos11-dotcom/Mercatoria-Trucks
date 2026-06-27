@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -74,58 +74,58 @@
             <tbody>
                 {% for r in rutas %}
                 <tr>
-                    <td>#{{ r["id"] }}</td>
-                    <td>{{ r["origen"] }}</td>
-                    <td>{{ r["destino"] }}</td>
+                    <td>#{{ r.id }}</td>
+                    <td>{{ r.origen }}</td>
+                    <td>{{ r.destino }}</td>
                     <td>
-                        {% if r["zona"] == "Occidente" %}
+                        {% if r.zona == "Occidente" %}
                             <span style="background:#FFF3EC;color:#E86A2C;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;">Occidente</span>
-                        {% elif r["zona"] == "Centro" %}
+                        {% elif r.zona == "Centro" %}
                             <span style="background:#EFF6FF;color:#2563EB;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;">Centro</span>
-                        {% elif r["zona"] == "Oriente" %}
+                        {% elif r.zona == "Oriente" %}
                             <span style="background:#F0FDF4;color:#16A34A;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;">Oriente</span>
                         {% else %}
                             <span style="color:#9CA3AF;font-size:11px;">—</span>
                         {% endif %}
                     </td>
-                    <td>{{ r["km_oficiales"] }}</td>
+                    <td>{{ r.km_oficiales }}</td>
                     <td class="td-tarifa">
-                        <span class="tarifa-display" id="disp-{{ r['id'] }}">
-                            {% if r["tarifa_km"] is not none and r["tarifa_km"] != "" %}
-                                <strong>${{ "%.2f"|format(r["tarifa_km"]|float) }}</strong>/km
+                        <span class="tarifa-display" id="disp-{{ r.id }}">
+                            {% if r.tarifa_km is not none and r.tarifa_km != "" %}
+                                <strong>${{ "%.2f"|format(r.tarifa_km|float) }}</strong>/km
                             {% else %}
                                 <span class="badge-global">Global</span>
                             {% endif %}
                         </span>
-                        <form method="POST" action="/admin/comercial/rutas/{{ r['id'] }}/tarifa"
-                              class="tarifa-form" id="form-t-{{ r['id'] }}" style="display:none;">
+                        <form method="POST" action="/admin/comercial/rutas/{{ r.id }}/tarifa"
+                              class="tarifa-form" id="form-t-{{ r.id }}" style="display:none;">
                             <input type="number" name="tarifa_km" step="0.01" min="0"
-                                   value="{{ r['tarifa_km'] or '' }}"
+                                   value="{{ r.tarifa_km or '' }}"
                                    placeholder="USD/km"
                                    class="input-tarifa">
                             <button type="submit" class="btn-save-sm" title="Guardar">✓</button>
-                            <button type="button" class="btn-cancel-sm" onclick="cancelEdit({{ r['id'] }})" title="Cancelar">✕</button>
+                            <button type="button" class="btn-cancel-sm" onclick="cancelEdit({{ r.id }})" title="Cancelar">✕</button>
                         </form>
-                        <button type="button" class="btn-edit-sm" id="btn-e-{{ r['id'] }}"
-                                onclick="startEdit({{ r['id'] }})">Editar</button>
+                        <button type="button" class="btn-edit-sm" id="btn-e-{{ r.id }}"
+                                onclick="startEdit({{ r.id }})">Editar</button>
                     </td>
                     <td>
                         <button type="button"
                                 class="btn-camioneros-toggle"
-                                onclick="toggleCamioneros({{ r['id'] }})">
-                            {% set n = camioneros_por_ruta[r['id']]|length %}
+                                onclick="toggleCamioneros({{ r.id }})">
+                            {% set n = camioneros_por_ruta[r.id]|length %}
                             {{ n }} {{ "camionero" if n == 1 else "camioneros" }}
-                            <span class="chevron" id="chev-{{ r['id'] }}">▸</span>
+                            <span class="chevron" id="chev-{{ r.id }}">▸</span>
                         </button>
                     </td>
                     <td>
                         <button type="button"
                                 class="btn-edit-ruta"
-                                data-id="{{ r['id'] }}"
-                                data-origen="{{ r['origen'] }}"
-                                data-destino="{{ r['destino'] }}"
-                                data-zona="{{ r['zona'] or '' }}"
-                                data-km="{{ r['km_oficiales'] or '' }}"
+                                data-id="{{ r.id }}"
+                                data-origen="{{ r.origen }}"
+                                data-destino="{{ r.destino }}"
+                                data-zona="{{ r.zona or '' }}"
+                                data-km="{{ r.km_oficiales or '' }}"
                                 onclick="openEditModal(this)">
                             ✎ Editar ruta
                         </button>
@@ -133,18 +133,18 @@
                 </tr>
 
                 <!-- Fila expandible: camioneros de esta ruta -->
-                <tr id="row-cam-{{ r['id'] }}" style="display:none;" class="sub-row">
+                <tr id="row-cam-{{ r.id }}" style="display:none;" class="sub-row">
                     <td colspan="8">
                         <div class="camioneros-panel">
                             <div class="camioneros-asignados">
-                                {% for c in camioneros_por_ruta[r['id']] %}
+                                {% for c in camioneros_por_ruta[r.id] %}
                                 <span class="cam-chip">
-                                    <span class="cam-chip-dot estado-{{ c['estado']|lower|replace(' ', '-') }}"></span>
-                                    {{ c["nombre"] }}
+                                    <span class="cam-chip-dot estado-{{ c.estado|lower|replace(' ', '-') }}"></span>
+                                    {{ c.nombre }}
                                     <form method="POST"
-                                          action="/admin/comercial/rutas/{{ r['id'] }}/camioneros/{{ c['id'] }}/desasociar"
+                                          action="/admin/comercial/rutas/{{ r.id }}/camioneros/{{ c.id }}/desasociar"
                                           style="display:inline;"
-                                          onsubmit="return confirm('¿Desasociar {{ c["nombre"] }} de esta ruta?')">
+                                          onsubmit="return confirm('¿Desasociar {{ c.nombre }} de esta ruta?')">
                                         <button type="submit" class="chip-remove" title="Desasociar">×</button>
                                     </form>
                                 </span>
@@ -154,13 +154,13 @@
                             </div>
 
                             <form method="POST"
-                                  action="/admin/comercial/rutas/{{ r['id'] }}/camioneros/asignar"
+                                  action="/admin/comercial/rutas/{{ r.id }}/camioneros/asignar"
                                   class="form-add-cam">
                                 <select name="camionero_id" class="input-cam-sel" required>
                                     <option value="">Añadir camionero a esta ruta...</option>
                                     {% for c in todos_camioneros %}
-                                    {% if c["id"] not in ids_asignados_por_ruta[r["id"]] %}
-                                    <option value="{{ c['id'] }}">{{ c['nombre'] }}</option>
+                                    {% if c.id not in ids_asignados_por_ruta[r.id] %}
+                                    <option value="{{ c.id }}">{{ c.nombre }}</option>
                                     {% endif %}
                                     {% endfor %}
                                 </select>

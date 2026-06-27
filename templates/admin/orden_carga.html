@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orden de Carga N° {{ '%04d' % viaje['id'] }} | Mercatoria Truck</title>
+    <title>Orden de Carga N° {{ '%04d' % viaje.id }} | Mercatoria Truck</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -240,10 +240,10 @@
 
 <!-- Toolbar -->
 <div class="toolbar">
-    <a class="volver" href="/admin/viajes/{{ viaje['id'] }}/gestionar">← Volver al viaje</a>
+    <a class="volver" href="/admin/viajes/{{ viaje.id }}/gestionar">← Volver al viaje</a>
     <div class="toolbar-acciones">
         <button class="btn-imprimir" onclick="window.print()">Imprimir</button>
-        <a class="btn-pdf" href="/admin/viaje/{{ viaje['id'] }}/pdf">Descargar PDF</a>
+        <a class="btn-pdf" href="/admin/viaje/{{ viaje.id }}/pdf">Descargar PDF</a>
     </div>
 </div>
 
@@ -255,11 +255,11 @@
         <img src="/static/logo-mercatoria.jpg" alt="Mercatoria Truck" />
         <div class="titulo-doc">
             <h1>ORDEN DE CARGA</h1>
-            <p class="numero">N° {{ '%04d' % viaje['id'] }}</p>
+            <p class="numero">N° {{ '%04d' % viaje.id }}</p>
             <p class="fecha">
                 Fecha:
                 {% if viaje.get('fecha_creacion') %}
-                    {{ viaje['fecha_creacion'][:10] }}
+                    {{ viaje.fecha_creacion.strftime('%Y-%m-%d') if viaje.fecha_creacion else '' }}
                 {% else %}
                     Sin fecha
                 {% endif %}
@@ -269,7 +269,7 @@
 
     <hr class="divisor" />
 
-    <span class="estado-badge">{{ viaje['estado'] or 'Sin estado' }}</span>
+    <span class="estado-badge">{{ viaje.estado or 'Sin estado' }}</span>
 
     <!-- Datos del cliente -->
     <div class="seccion">
@@ -277,7 +277,7 @@
         <div class="campos-grid cols-3">
             <div class="campo">
                 <label>Cliente</label>
-                <p>{{ viaje['cliente'] or '—' }}</p>
+                <p>{{ viaje.cliente or '—' }}</p>
             </div>
             <div class="campo">
                 <label>Empresa</label>
@@ -296,11 +296,11 @@
         <div class="campos-grid cols-2">
             <div class="campo">
                 <label>Origen</label>
-                <p>{{ viaje['origen'] or '—' }}</p>
+                <p>{{ viaje.origen or '—' }}</p>
             </div>
             <div class="campo">
                 <label>Destino</label>
-                <p>{{ viaje['destino'] or '—' }}</p>
+                <p>{{ viaje.destino or '—' }}</p>
             </div>
         </div>
     </div>
@@ -311,7 +311,7 @@
         <div class="campos-grid cols-4">
             <div class="campo">
                 <label>Conductor</label>
-                <p>{{ viaje['camionero_nombre'] or '—' }}</p>
+                <p>{{ viaje.camionero_nombre or '—' }}</p>
             </div>
             <div class="campo">
                 <label>Teléfono</label>
@@ -357,7 +357,7 @@
     <div class="seccion">
         <div class="seccion-titulo">Observaciones</div>
         <div class="observaciones-box">
-            {{ viaje['observaciones'] or 'Sin observaciones registradas.' }}
+            {{ viaje.observaciones or 'Sin observaciones registradas.' }}
         </div>
     </div>
 
@@ -381,7 +381,7 @@
     </div>
 
     <div class="pie-documento">
-        Mercatoria Truck &middot; Orden de Carga N° {{ '%04d' % viaje['id'] }}
+        Mercatoria Truck &middot; Orden de Carga N° {{ '%04d' % viaje.id }}
     </div>
 
 </div>

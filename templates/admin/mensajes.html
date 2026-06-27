@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -79,8 +79,8 @@
         <ul style="list-style:none;margin:0;padding:0 4px 4px;">
             {% for h in historial %}
             <li style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
-                <div style="font-weight:600;color:#1e293b;">{{ h["accion"] }}</div>
-                <div style="color:#94a3b8;margin-top:2px;">{{ h["fecha"] }}</div>
+                <div style="font-weight:600;color:#1e293b;">{{ h.accion }}</div>
+                <div style="color:#94a3b8;margin-top:2px;">{{ h.fecha }}</div>
             </li>
             {% endfor %}
         </ul>

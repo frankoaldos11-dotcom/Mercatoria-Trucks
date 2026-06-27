@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -71,10 +71,10 @@
 
                 {% for t in tipos %}
                 <tr>
-                    <td>#{{ t["id"] }}</td>
-                    <td>{{ t["nombre"] }}</td>
-                    <td>{{ t["descripcion"] or "—" }}</td>
-                    <td>{{ t["capacidad_ton"] or "—" }} T</td>
+                    <td>#{{ t.id }}</td>
+                    <td>{{ t.nombre }}</td>
+                    <td>{{ t.descripcion or "—" }}</td>
+                    <td>{{ t.capacidad_ton or "—" }} T</td>
                 </tr>
                 {% else %}
                 <tr>

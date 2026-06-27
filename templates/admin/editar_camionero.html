@@ -1,11 +1,11 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
 <div class="page-header">
     <div>
         <span class="eyebrow">Recursos</span>
-        <h1>Editar Camionero #{{ camionero["id"] }}</h1>
+        <h1>Editar Camionero #{{ camionero.id }}</h1>
         <p>Actualiza los datos del transportista.</p>
     </div>
     <a href="/admin/camioneros" class="btn-volver">← Volver</a>
@@ -13,18 +13,18 @@
 
 <section class="panel">
     <div style="padding: 28px; max-width: 720px;">
-        <form method="POST" action="/admin/camioneros/{{ camionero['id'] }}/editar">
+        <form method="POST" action="/admin/camioneros/{{ camionero.id }}/editar">
 
             <div class="edit-row">
                 <div class="edit-field">
                     <label>Nombre *</label>
                     <input type="text" name="nombre" class="input-crud"
-                           value="{{ camionero['nombre'] }}" required>
+                           value="{{ camionero.nombre }}" required>
                 </div>
                 <div class="edit-field">
                     <label>Teléfono</label>
                     <input type="text" name="telefono" class="input-crud"
-                           value="{{ camionero['telefono'] or '' }}">
+                           value="{{ camionero.telefono or '' }}">
                 </div>
             </div>
 
@@ -32,12 +32,12 @@
                 <div class="edit-field">
                     <label>Licencia</label>
                     <input type="text" name="licencia" class="input-crud"
-                           value="{{ camionero['licencia'] or '' }}">
+                           value="{{ camionero.licencia or '' }}">
                 </div>
                 <div class="edit-field">
                     <label>Matrícula</label>
                     <input type="text" name="matricula" class="input-crud"
-                           value="{{ camionero['matricula'] or '' }}">
+                           value="{{ camionero.matricula or '' }}">
                 </div>
             </div>
 
@@ -45,12 +45,12 @@
                 <div class="edit-field">
                     <label>Tipo</label>
                     <input type="text" name="tipo" class="input-crud"
-                           value="{{ camionero['tipo'] or '' }}">
+                           value="{{ camionero.tipo or '' }}">
                 </div>
                 <div class="edit-field">
                     <label>Capacidad</label>
                     <input type="text" name="capacidad" class="input-crud"
-                           value="{{ camionero['capacidad'] or '' }}">
+                           value="{{ camionero.capacidad or '' }}">
                 </div>
             </div>
 
@@ -58,7 +58,7 @@
                 <label>Estado</label>
                 <select name="estado" class="input-crud">
                     {% for e in estados %}
-                    <option value="{{ e }}" {% if camionero['estado'] == e %}selected{% endif %}>
+                    <option value="{{ e }}" {% if camionero.estado == e %}selected{% endif %}>
                         {{ e }}
                     </option>
                     {% endfor %}

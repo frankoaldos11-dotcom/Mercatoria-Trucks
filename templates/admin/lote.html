@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -54,7 +54,7 @@
                     <label class="lote-label">Ruta</label>
                     <select name="valor_criterio" id="val-ruta" class="lote-input" onchange="actualizarPreview()">
                         {% for r in rutas %}
-                        <option value="{{ r['id'] }}">{{ r['nombre'] or (r['origen'] + ' → ' + r['destino']) }}</option>
+                        <option value="{{ r.id }}">{{ r.nombre or (r.origen + ' → ' + r.destino) }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -188,20 +188,20 @@
                     {% for v in viajes_activos %}
                     <tr>
                         <td>
-                            <input type="checkbox" name="ids[]" value="{{ v['id'] }}" class="chk-viaje">
+                            <input type="checkbox" name="ids[]" value="{{ v.id }}" class="chk-viaje">
                         </td>
-                        <td style="font-weight:600;">#{{ v['id'] }}</td>
-                        <td>{{ v['cliente'] or '—' }}</td>
-                        <td style="font-size:12px;">{{ v['origen'] or '—' }}</td>
-                        <td style="font-size:12px;">{{ v['destino'] or '—' }}</td>
+                        <td style="font-weight:600;">#{{ v.id }}</td>
+                        <td>{{ v.cliente or '—' }}</td>
+                        <td style="font-size:12px;">{{ v.origen or '—' }}</td>
+                        <td style="font-size:12px;">{{ v.destino or '—' }}</td>
                         <td>
-                            <span class="badge-estado-lote estado-{{ v['estado']|lower|replace(' ', '-') }}">
-                                {{ v['estado'] }}
+                            <span class="badge-estado-lote estado-{{ v.estado|lower|replace(' ', '-') }}">
+                                {{ v.estado }}
                             </span>
                         </td>
                         <td style="font-weight:600;">
-                            {% if v['precio'] and v['precio'] > 0 %}
-                                ${{ "%.2f"|format(v['precio']|float) }}
+                            {% if v.precio and v.precio > 0 %}
+                                ${{ "%.2f"|format(v.precio|float) }}
                             {% else %}
                                 <span style="color:#bbb;">Sin precio</span>
                             {% endif %}

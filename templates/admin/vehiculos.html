@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -62,21 +62,21 @@
             <tbody>
                 {% for v in lista %}
                 <tr>
-                    <td>#{{ v["id"] }}</td>
-                    <td><strong>{{ v["matricula"] }}</strong></td>
-                    <td>{{ v["tipo"] or "—" }}</td>
-                    <td>{{ v["marca"] or "—" }}</td>
-                    <td>{{ v["modelo"] or "—" }}</td>
-                    <td>{{ v["capacidad"] or "—" }}</td>
+                    <td>#{{ v.id }}</td>
+                    <td><strong>{{ v.matricula }}</strong></td>
+                    <td>{{ v.tipo or "—" }}</td>
+                    <td>{{ v.marca or "—" }}</td>
+                    <td>{{ v.modelo or "—" }}</td>
+                    <td>{{ v.capacidad or "—" }}</td>
                     <td>
-                        <span class="estado-pill estado-{{ v['estado']|lower|replace(' ', '-') }}">
-                            {{ v["estado"] or "—" }}
+                        <span class="estado-pill estado-{{ v.estado|lower|replace(' ', '-') }}">
+                            {{ v.estado or "—" }}
                         </span>
                     </td>
-                    <td>{{ v["camionero_nombre"] or "—" }}</td>
+                    <td>{{ v.camionero_nombre or "—" }}</td>
                     <td class="td-acciones">
-                        <a href="/admin/vehiculos/{{ v['id'] }}/editar" class="btn-accion-edit">Editar</a>
-                        <form method="POST" action="/admin/vehiculos/{{ v['id'] }}/eliminar"
+                        <a href="/admin/vehiculos/{{ v.id }}/editar" class="btn-accion-edit">Editar</a>
+                        <form method="POST" action="/admin/vehiculos/{{ v.id }}/eliminar"
                               style="display:inline"
                               onsubmit="return confirm('¿Dar de baja este vehículo? La operación es reversible desde la base de datos.')">
                             <button type="submit" class="btn-accion-del">Dar de baja</button>
@@ -129,7 +129,7 @@
                             <select name="camionero_id" class="input-crud">
                                 <option value="">— Sin asignar —</option>
                                 {% for c in camioneros %}
-                                <option value="{{ c['id'] }}">{{ c['nombre'] }}</option>
+                                <option value="{{ c.id }}">{{ c.nombre }}</option>
                                 {% endfor %}
                             </select>
                         </div>

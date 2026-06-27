@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -135,17 +135,17 @@
             <tbody>
                 {% for v in lista %}
                 <tr>
-                    <td>#{{ v[0] }}</td>
-                    <td>{{ v[1] }}</td>
-                    <td>{{ v[2] }}</td>
-                    <td>{{ v[3] }}</td>
+                    <td>#{{ v.id }}</td>
+                    <td>{{ v.cliente }}</td>
+                    <td>{{ v.origen }}</td>
+                    <td>{{ v.destino }}</td>
                     <td>
-                        <span class="badge-estado badge-{{ v[4]|lower|replace(' ', '-') }}">
-                            {{ v[4] }}
+                        <span class="badge-estado badge-{{ v.estado|lower|replace(' ', '-') }}">
+                            {{ v.estado }}
                         </span>
                     </td>
                     <td>
-                        <a class="btn btn-soft" href="/admin/viaje/{{ v[0] }}">Gestionar</a>
+                        <a class="btn btn-soft" href="/admin/viaje/{{ v.id }}">Gestionar</a>
                     </td>
                 </tr>
                 {% else %}

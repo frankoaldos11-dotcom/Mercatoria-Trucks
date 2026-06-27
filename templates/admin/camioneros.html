@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -63,8 +63,8 @@
                 <select name="vehiculo_id" class="input-crud">
                     <option value="">Sin vehículo</option>
                     {% for v in vehiculos_disponibles %}
-                    <option value="{{ v['id'] }}">
-                        {{ v['matricula'] or ('Veh. #' ~ v['id']) }}{% if v['marca'] %} – {{ v['marca'] }}{% endif %}{% if v['modelo'] %} {{ v['modelo'] }}{% endif %}
+                    <option value="{{ v.id }}">
+                        {{ v.matricula or ('Veh. #' ~ v.id) }}{% if v.marca %} – {{ v.marca }}{% endif %}{% if v.modelo %} {{ v.modelo }}{% endif %}
                     </option>
                     {% endfor %}
                 </select>
@@ -119,23 +119,23 @@
             <tbody>
                 {% for c in lista %}
                 <tr>
-                    <td>#{{ c["id"] }}</td>
-                    <td>{{ c["nombre"] }}</td>
-                    <td>{{ c["telefono"] or "—" }}</td>
-                    <td>{{ c["licencia"] or "—" }}</td>
-                    <td>{{ c["matricula"] or "—" }}</td>
-                    <td>{{ c["tipo"] or "—" }}</td>
+                    <td>#{{ c.id }}</td>
+                    <td>{{ c.nombre }}</td>
+                    <td>{{ c.telefono or "—" }}</td>
+                    <td>{{ c.licencia or "—" }}</td>
+                    <td>{{ c.matricula or "—" }}</td>
+                    <td>{{ c.tipo or "—" }}</td>
                     <td>
-                        <span class="estado-pill estado-{{ c['estado']|lower|replace(' ', '-') }}">
-                            {{ c["estado"] or "—" }}
+                        <span class="estado-pill estado-{{ c.estado|lower|replace(' ', '-') }}">
+                            {{ c.estado or "—" }}
                         </span>
                     </td>
                     <td class="td-rutas">
-                        {% set rutas_c = rutas_por_camionero[c["id"]] %}
+                        {% set rutas_c = rutas_por_camionero[c.id] %}
                         {% if rutas_c %}
                             {% for r in rutas_c %}
-                            <span class="ruta-pill" title="{{ r['km_oficiales'] }} km">
-                                {{ r["origen"] }} → {{ r["destino"] }}
+                            <span class="ruta-pill" title="{{ r.km_oficiales }} km">
+                                {{ r.origen }} → {{ r.destino }}
                             </span>
                             {% endfor %}
                         {% else %}
@@ -143,8 +143,8 @@
                         {% endif %}
                     </td>
                     <td class="td-acciones">
-                        <a href="/admin/camioneros/{{ c['id'] }}/editar" class="btn-accion-edit">Editar</a>
-                        <form method="POST" action="/admin/camioneros/{{ c['id'] }}/eliminar"
+                        <a href="/admin/camioneros/{{ c.id }}/editar" class="btn-accion-edit">Editar</a>
+                        <form method="POST" action="/admin/camioneros/{{ c.id }}/eliminar"
                               style="display:inline"
                               onsubmit="return confirm('¿Confirmar eliminación?')">
                             <button type="submit" class="btn-accion-del">Eliminar</button>

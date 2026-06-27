@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -91,8 +91,8 @@
             <div>
                 <div class="kpi-extra-label">Ruta más activa (período)</div>
                 {% if ruta_top %}
-                <div class="kpi-extra-valor">{{ ruta_top['ruta'] }}</div>
-                <div class="kpi-extra-sub">{{ ruta_top['viajes'] }} viaje{{ 's' if ruta_top['viajes'] != 1 else '' }}</div>
+                <div class="kpi-extra-valor">{{ ruta_top.ruta }}</div>
+                <div class="kpi-extra-sub">{{ ruta_top.viajes }} viaje{{ 's' if ruta_top.viajes != 1 else '' }}</div>
                 {% else %}
                 <div class="kpi-extra-valor kpi-vacio">Sin datos</div>
                 {% endif %}
@@ -104,8 +104,8 @@
             <div>
                 <div class="kpi-extra-label">Camionero más activo (período)</div>
                 {% if camionero_top %}
-                <div class="kpi-extra-valor">{{ camionero_top['camionero_nombre'] }}</div>
-                <div class="kpi-extra-sub">{{ camionero_top['total_viajes'] }} viaje{{ 's' if camionero_top['total_viajes'] != 1 else '' }}</div>
+                <div class="kpi-extra-valor">{{ camionero_top.camionero_nombre }}</div>
+                <div class="kpi-extra-sub">{{ camionero_top.total_viajes }} viaje{{ 's' if camionero_top.total_viajes != 1 else '' }}</div>
                 {% else %}
                 <div class="kpi-extra-valor kpi-vacio">Sin datos</div>
                 {% endif %}

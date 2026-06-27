@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -108,43 +108,43 @@
             <tbody>
                 {% for u in usuarios %}
                 <tr>
-                    <td>#{{ u["id"] }}</td>
-                    <td>{{ u["usuario"] }}</td>
+                    <td>#{{ u.id }}</td>
+                    <td>{{ u.usuario }}</td>
                     <td>
-                        {% if u["rol"] == "admin" %}
+                        {% if u.rol == "admin" %}
                         <span class="badge-rol badge-admin">Admin</span>
-                        {% elif u["rol"] == "operador" %}
+                        {% elif u.rol == "operador" %}
                         <span class="badge-rol badge-operador">Operador</span>
                         {% else %}
                         <span class="badge-rol badge-cliente">Cliente</span>
                         {% endif %}
                     </td>
                     <td>
-                        {% if u["activo"] %}
+                        {% if u.activo %}
                         <span class="badge-estado badge-activo">Activo</span>
                         {% else %}
                         <span class="badge-estado badge-inactivo">Inactivo</span>
                         {% endif %}
                     </td>
-                    <td>{{ u["fecha_creacion"] or "—" }}</td>
+                    <td>{{ u.fecha_creacion or "—" }}</td>
                     <td class="td-acciones">
-                        {% if u["usuario"] != session.get('usuario') %}
-                        <form method="POST" action="/admin/usuarios/{{ u['id'] }}/rol" style="display:inline-flex;align-items:center;gap:6px;">
+                        {% if u.usuario != session.get('usuario') %}
+                        <form method="POST" action="/admin/usuarios/{{ u.id }}/rol" style="display:inline-flex;align-items:center;gap:6px;">
                             <select name="rol" class="select-accion">
-                                <option value="admin" {% if u["rol"]=="admin" %}selected{% endif %}>Admin</option>
-                                <option value="operador" {% if u["rol"]=="operador" %}selected{% endif %}>Operador</option>
-                                <option value="cliente" {% if u["rol"]=="cliente" %}selected{% endif %}>Cliente</option>
+                                <option value="admin" {% if u.rol=="admin" %}selected{% endif %}>Admin</option>
+                                <option value="operador" {% if u.rol=="operador" %}selected{% endif %}>Operador</option>
+                                <option value="cliente" {% if u.rol=="cliente" %}selected{% endif %}>Cliente</option>
                             </select>
                             <button type="submit" class="btn-accion-edit">Cambiar rol</button>
                         </form>
-                        <form method="POST" action="/admin/usuarios/{{ u['id'] }}/toggle" style="display:inline;">
-                            {% if u["activo"] %}
+                        <form method="POST" action="/admin/usuarios/{{ u.id }}/toggle" style="display:inline;">
+                            {% if u.activo %}
                             <button type="submit" class="btn-accion-del">Desactivar</button>
                             {% else %}
                             <button type="submit" class="btn-accion-ok">Activar</button>
                             {% endif %}
                         </form>
-                        <form method="POST" action="/admin/usuarios/{{ u['id'] }}/reset-password"
+                        <form method="POST" action="/admin/usuarios/{{ u.id }}/reset-password"
                               onsubmit="return confirm('¿Resetear contraseña de {{ u.usuario }}?')"
                               style="display:inline-flex;gap:4px;align-items:center;margin-left:4px;">
                             <input type="text" name="nueva_password" placeholder="Nueva contraseña"

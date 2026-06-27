@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -57,6 +57,16 @@
     </div>
 </section>
 
+<form method="GET" action="/admin/clientes" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+    <input type="text" name="buscar" value="{{ buscar_cl or '' }}"
+           placeholder="Buscar por nombre, email, empresa o teléfono..."
+           style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;min-width:280px;">
+    <button type="submit" style="padding:8px 16px;background:#F36B21;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
+    {% if buscar_cl %}
+    <a href="/admin/clientes" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
+    {% endif %}
+</form>
+
 <section class="panel">
     <div class="panel-header">
         <div>
@@ -76,6 +86,7 @@
                     <th>Teléfono</th>
                     <th>Email</th>
                     <th>Dirección</th>
+                    <th>Registrado</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -83,23 +94,24 @@
             <tbody>
                 {% for c in lista %}
                 <tr>
-                    <td>#{{ c["id"] }}</td>
+                    <td>#{{ c.id }}</td>
                     <td>
-                        {% if not c["nombre"] or c["nombre"]|trim == "" %}
+                        {% if not c.nombre or c.nombre|trim == "" %}
                         <span style="color:#e74c3c;font-weight:700;font-size:12px;">⚠ Sin nombre</span>
-                        {% if c["email"] %}<br><span style="color:#999;font-size:11px;">{{ c["email"] }}</span>{% endif %}
+                        {% if c.email %}<br><span style="color:#999;font-size:11px;">{{ c.email }}</span>{% endif %}
                         {% else %}
-                        {{ c["nombre"] }}
+                        {{ c.nombre }}
                         {% endif %}
                     </td>
-                    <td>{{ c["empresa"] or "—" }}</td>
-                    <td>{{ c["contacto"] or "—" }}</td>
-                    <td>{{ c["telefono"] or "—" }}</td>
-                    <td>{{ c["email"] or "—" }}</td>
-                    <td>{{ c["direccion"] or "—" }}</td>
+                    <td>{{ c.empresa or "—" }}</td>
+                    <td>{{ c.contacto or "—" }}</td>
+                    <td>{{ c.telefono or "—" }}</td>
+                    <td>{{ c.email or "—" }}</td>
+                    <td>{{ c.direccion or "—" }}</td>
+                    <td style="font-size:11px;color:#999;">{{ c.fecha_creacion.strftime('%Y-%m-%d') if c.fecha_creacion else "—" }}</td>
                     <td class="td-acciones">
-                        <a href="/admin/clientes/{{ c['id'] }}/editar" class="btn-accion-edit">Editar</a>
-                        <form method="POST" action="/admin/clientes/{{ c['id'] }}/eliminar"
+                        <a href="/admin/clientes/{{ c.id }}/editar" class="btn-accion-edit">Editar</a>
+                        <form method="POST" action="/admin/clientes/{{ c.id }}/eliminar"
                               style="display:inline"
                               onsubmit="return confirm('¿Confirmar eliminación?')">
                             <button type="submit" class="btn-accion-del">Eliminar</button>

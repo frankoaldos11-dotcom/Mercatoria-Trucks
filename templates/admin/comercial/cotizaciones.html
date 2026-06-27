@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -53,15 +53,15 @@
             <tbody>
                 {% for c in cotizaciones %}
                 <tr>
-                    <td>#{{ c[0] }}</td>
-                    <td>{{ c[1] if c[1] else "Sin cliente" }}</td>
-                    <td>{{ c[2] }} → {{ c[3] }}</td>
-                    <td>{{ c[4] }}</td>
-                    <td>${{ "%.2f"|format(c[5] or 0) }}</td>
-                    <td>${{ "%.2f"|format(c[6] or 0) }}</td>
-                    <td>{{ c[7] }}</td>
+                    <td>#{{ c.id }}</td>
+                    <td>{{ c.cliente if c.cliente else "Sin cliente" }}</td>
+                    <td>{{ c.origen }} → {{ c.destino }}</td>
+                    <td>{{ c.tipo_vehiculo }}</td>
+                    <td>${{ "%.2f"|format(c.precio_final or 0) }}</td>
+                    <td>${{ "%.2f"|format(c.beneficio_estimado or 0) }}</td>
+                    <td>{{ c.estado }}</td>
                     <td>
-                        <a class="btn btn-soft" href="/admin/comercial/cotizacion/{{ c[0] }}">
+                        <a class="btn btn-soft" href="/admin/comercial/cotizacion/{{ c.id }}">
                             Ver detalle
                         </a>
                     </td>

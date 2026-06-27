@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -14,39 +14,39 @@
 <section class="panel">
     <div class="panel-header">
         <div>
-            <h2>{{ vehiculo["matricula"] }}</h2>
+            <h2>{{ vehiculo.matricula }}</h2>
             <p>Modifica los campos necesarios y guarda los cambios.</p>
         </div>
     </div>
     <div style="padding: 24px;">
-        <form method="POST" action="/admin/vehiculos/{{ vehiculo['id'] }}/editar" class="form-crud-grid">
+        <form method="POST" action="/admin/vehiculos/{{ vehiculo.id }}/editar" class="form-crud-grid">
             <div class="form-crud-field">
                 <label>Matrícula *</label>
-                <input type="text" name="matricula" class="input-crud" required value="{{ vehiculo['matricula'] }}">
+                <input type="text" name="matricula" class="input-crud" required value="{{ vehiculo.matricula }}">
             </div>
             <div class="form-crud-field">
                 <label>Tipo</label>
-                <input type="text" name="tipo" class="input-crud" value="{{ vehiculo['tipo'] or '' }}" placeholder="Ej: Plataforma, Toldo">
+                <input type="text" name="tipo" class="input-crud" value="{{ vehiculo.tipo or '' }}" placeholder="Ej: Plataforma, Toldo">
             </div>
             <div class="form-crud-field">
                 <label>Marca</label>
-                <input type="text" name="marca" class="input-crud" value="{{ vehiculo['marca'] or '' }}" placeholder="Ej: Volvo, MAN" data-ac="marca" autocomplete="off">
+                <input type="text" name="marca" class="input-crud" value="{{ vehiculo.marca or '' }}" placeholder="Ej: Volvo, MAN" data-ac="marca" autocomplete="off">
             </div>
             <div class="form-crud-field">
                 <label>Modelo</label>
-                <input type="text" name="modelo" class="input-crud" value="{{ vehiculo['modelo'] or '' }}" placeholder="Ej: FH16 2022" data-ac="modelo" autocomplete="off">
+                <input type="text" name="modelo" class="input-crud" value="{{ vehiculo.modelo or '' }}" placeholder="Ej: FH16 2022" data-ac="modelo" autocomplete="off">
             </div>
             <div class="form-crud-field">
                 <label>Capacidad</label>
-                <input type="text" name="capacidad" class="input-crud" value="{{ vehiculo['capacidad'] or '' }}" placeholder="Ej: 24 ton">
+                <input type="text" name="capacidad" class="input-crud" value="{{ vehiculo.capacidad or '' }}" placeholder="Ej: 24 ton">
             </div>
             <div class="form-crud-field">
                 <label>Camionero asignado</label>
                 <select name="camionero_id" class="input-crud">
                     <option value="">— Sin asignar —</option>
                     {% for c in camioneros %}
-                    <option value="{{ c['id'] }}" {% if c['id'] == vehiculo['camionero_id'] %}selected{% endif %}>
-                        {{ c['nombre'] }}
+                    <option value="{{ c.id }}" {% if c.id == vehiculo.camionero_id %}selected{% endif %}>
+                        {{ c.nombre }}
                     </option>
                     {% endfor %}
                 </select>
@@ -55,7 +55,7 @@
                 <label>Estado</label>
                 <select name="estado" class="input-crud">
                     {% for e in estados %}
-                    <option value="{{ e }}" {% if e == vehiculo['estado'] %}selected{% endif %}>{{ e }}</option>
+                    <option value="{{ e }}" {% if e == vehiculo.estado %}selected{% endif %}>{{ e }}</option>
                     {% endfor %}
                 </select>
             </div>

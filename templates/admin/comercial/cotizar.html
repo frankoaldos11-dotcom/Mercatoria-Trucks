@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -23,16 +23,16 @@
         <select id="cliente_id">
             <option value="">Cliente no asignado</option>
             {% for c in clientes %}
-            <option value="{{ c['id'] }}">{{ c['nombre'] }}</option>
+            <option value="{{ c.id }}">{{ c.nombre }}</option>
             {% endfor %}
         </select>
 
         <select id="ruta_id" required>
             <option value="">Seleccionar ruta</option>
             {% for r in rutas %}
-            <option value="{{ r['id'] }}"
-                    data-tarifa="{{ r['tarifa_km'] if r['tarifa_km'] is not none else '' }}">
-                {{ r['origen'] }} → {{ r['destino'] }} · {{ r['km_oficiales'] }} km
+            <option value="{{ r.id }}"
+                    data-tarifa="{{ r.tarifa_km if r.tarifa_km is not none else '' }}">
+                {{ r.origen }} → {{ r.destino }} · {{ r.km_oficiales }} km
             </option>
             {% endfor %}
         </select>
@@ -46,7 +46,7 @@
         <select id="tipo_vehiculo_id" required>
             <option value="">Tipo de vehículo</option>
             {% for t in tipos %}
-            <option value="{{ t['id'] }}">{{ t['nombre'] }}</option>
+            <option value="{{ t.id }}">{{ t.nombre }}</option>
             {% endfor %}
         </select>
 

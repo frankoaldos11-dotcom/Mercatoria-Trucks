@@ -1,4 +1,4 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -6,7 +6,7 @@
     <div>
         <a href="/admin/viajes" class="btn-volver">← Volver a viajes</a>
         <h1>
-            Gestionar Viaje #{{ viaje["id"] }}
+            Gestionar Viaje #{{ viaje.id }}
             <button onclick="navigator.clipboard.writeText('{{ viaje[\"id\"] }}');this.textContent='✓';setTimeout(()=>this.textContent='#',1200);return false;"
                     title="Copiar ID"
                     style="background:none;border:1px solid #ddd;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;color:#888;margin-left:6px;vertical-align:middle;">
@@ -17,7 +17,7 @@
     </div>
 
     <div class="estado-badge">
-        {{ viaje["estado"] }}
+        {{ viaje.estado }}
     </div>
 </div>
 
@@ -25,30 +25,30 @@
 
     <div class="card resumen-card">
         <span>Cliente</span>
-        {% if cliente_info and cliente_info["nombre"] %}
-        <strong>{{ cliente_info["nombre"] }}</strong>
+        {% if cliente_info and cliente_info.nombre %}
+        <strong>{{ cliente_info.nombre }}</strong>
         <small style="display:block;color:#888;font-size:11px;margin-top:2px;">
-            {% if cliente_info["telefono"] %}<i class="bi bi-telephone"></i> {{ cliente_info["telefono"] }}{% endif %}
-            {% if cliente_info["empresa"] %} · {{ cliente_info["empresa"] }}{% endif %}
+            {% if cliente_info.telefono %}<i class="bi bi-telephone"></i> {{ cliente_info.telefono }}{% endif %}
+            {% if cliente_info.empresa %} · {{ cliente_info.empresa }}{% endif %}
         </small>
         {% else %}
-        <strong>{{ viaje["cliente"] if viaje["cliente"] else "Sin cliente" }}</strong>
+        <strong>{{ viaje.cliente if viaje.cliente else "Sin cliente" }}</strong>
         {% endif %}
     </div>
 
     <div class="card resumen-card">
         <span>Origen</span>
-        <strong>{{ viaje["origen"] if viaje["origen"] else "Sin origen" }}</strong>
+        <strong>{{ viaje.origen if viaje.origen else "Sin origen" }}</strong>
     </div>
 
     <div class="card resumen-card">
         <span>Destino</span>
-        <strong>{{ viaje["destino"] if viaje["destino"] else "Sin destino" }}</strong>
+        <strong>{{ viaje.destino if viaje.destino else "Sin destino" }}</strong>
     </div>
 
     <div class="card resumen-card">
         <span>Camionero</span>
-        <strong>{{ viaje["camionero_nombre"] if viaje["camionero_nombre"] else "Sin asignar" }}</strong>
+        <strong>{{ viaje.camionero_nombre if viaje.camionero_nombre else "Sin asignar" }}</strong>
     </div>
 
 </div>
@@ -70,7 +70,7 @@
             <div class="detalle-grid">
                 <div>
                     <label>ID viaje</label>
-                    <p>#{{ viaje["id"] }}</p>
+                    <p>#{{ viaje.id }}</p>
                 </div>
 
                 <div>
@@ -90,27 +90,27 @@
 
                 <div>
                     <label>Cotización</label>
-                    <p>{% if viaje["cotizacion_id"] %}#{{ viaje["cotizacion_id"] }}{% else %}Sin cotización{% endif %}</p>
+                    <p>{% if viaje.cotizacion_id %}#{{ viaje.cotizacion_id }}{% else %}Sin cotización{% endif %}</p>
                 </div>
 
                 <div>
                     <label>Precio cliente</label>
-                    {% set _precio_confirmado = (viaje["precio_final"] and viaje["precio_final"]|float > 0)
-                                             or (viaje["precio_cliente"] and viaje["precio_cliente"]|float > 0)
-                                             or (viaje["precio"] and viaje["precio"]|float > 0) %}
+                    {% set _precio_confirmado = (viaje.precio_final and viaje.precio_final|float > 0)
+                                             or (viaje.precio_cliente and viaje.precio_cliente|float > 0)
+                                             or (viaje.precio and viaje.precio|float > 0) %}
                     {% if _precio_confirmado %}
-                        {% if viaje["precio_final"] and viaje["precio_final"]|float > 0 %}
-                        <p>${{ "%.2f"|format(viaje["precio_final"]|float) }}</p>
-                        {% elif viaje["precio_cliente"] and viaje["precio_cliente"]|float > 0 %}
-                        <p>${{ "%.2f"|format(viaje["precio_cliente"]|float) }}</p>
+                        {% if viaje.precio_final and viaje.precio_final|float > 0 %}
+                        <p>${{ "%.2f"|format(viaje.precio_final|float) }}</p>
+                        {% elif viaje.precio_cliente and viaje.precio_cliente|float > 0 %}
+                        <p>${{ "%.2f"|format(viaje.precio_cliente|float) }}</p>
                         {% else %}
-                        <p>${{ "%.2f"|format(viaje["precio"]|float) }}</p>
+                        <p>${{ "%.2f"|format(viaje.precio|float) }}</p>
                         {% endif %}
                     {% else %}
-                    <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/confirmar-precio" style="margin:0;margin-top:4px;">
+                    <form method="POST" action="/admin/viaje/{{ viaje.id }}/confirmar-precio" style="margin:0;margin-top:4px;">
                         {% if liquidacion and liquidacion.precio_cliente > 0 %}
                         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                            <input type="number" name="precio_cliente" id="precio-inp-{{ viaje['id'] }}"
+                            <input type="number" name="precio_cliente" id="precio-inp-{{ viaje.id }}"
                                    value="{{ '%.2f'|format(liquidacion.precio_cliente) }}"
                                    step="0.01" min="0.01" readonly
                                    style="width:85px;padding:5px 8px;border:2px solid #F36B21;border-radius:6px;font-size:13px;font-weight:700;background:#fff8f5;color:#222;"
@@ -119,7 +119,7 @@
                                     style="padding:5px 10px;background:#F36B21;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
                                 Confirmar precio calculado
                             </button>
-                            <a href="#" onclick="editarPrecioViaje('{{ viaje['id'] }}');return false;"
+                            <a href="#" onclick="editarPrecioViaje('{{ viaje.id }}');return false;"
                                style="font-size:11px;color:#aaa;text-decoration:underline;">Modificar</a>
                         </div>
                         {% else %}
@@ -193,24 +193,24 @@
         <div class="card bloque">
             <h2>Detalles de la carga</h2>
 
-            {% if obs_parsed["tipo_carga"] or obs_parsed["peso"] or obs_parsed["notas"] %}
+            {% if obs_parsed.tipo_carga or obs_parsed.peso or obs_parsed.notas %}
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;">
                 <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
                     <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Tipo de carga</div>
-                    <div style="font-size:13px;font-weight:700;">{{ obs_parsed["tipo_carga"] if obs_parsed["tipo_carga"] else "—" }}</div>
+                    <div style="font-size:13px;font-weight:700;">{{ obs_parsed.tipo_carga if obs_parsed.tipo_carga else "—" }}</div>
                 </div>
                 <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
                     <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Peso aproximado</div>
-                    <div style="font-size:13px;font-weight:700;">{{ obs_parsed["peso"] if obs_parsed["peso"] else "—" }}</div>
+                    <div style="font-size:13px;font-weight:700;">{{ obs_parsed.peso if obs_parsed.peso else "—" }}</div>
                 </div>
                 <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
                     <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Notas adicionales</div>
-                    <div style="font-size:13px;font-weight:700;">{{ obs_parsed["notas"] if obs_parsed["notas"] else "—" }}</div>
+                    <div style="font-size:13px;font-weight:700;">{{ obs_parsed.notas if obs_parsed.notas else "—" }}</div>
                 </div>
             </div>
             {% else %}
             <div class="observaciones">
-                {{ obs_parsed["crudo"] if obs_parsed["crudo"] else "Sin observaciones registradas." }}
+                {{ obs_parsed.crudo if obs_parsed.crudo else "Sin observaciones registradas." }}
             </div>
             {% endif %}
         </div>
@@ -219,10 +219,10 @@
             <h2><i class="bi bi-clock-history" style="color:#F36B21;margin-right:5px;"></i>Historial de estados</h2>
             <div style="display:flex;flex-direction:column;gap:6px;">
                 {% set estados_hist = [
-                    ("Solicitado",  viaje["fecha_creacion"]),
-                    ("Asignado",    viaje["fecha_asignacion"]),
-                    ("En ruta",     viaje["fecha_recogida"]),
-                    ("Entregado",   viaje["fecha_entrega"]),
+                    ("Solicitado",  viaje.fecha_creacion),
+                    ("Asignado",    viaje.fecha_asignacion),
+                    ("En ruta",     viaje.fecha_recogida),
+                    ("Entregado",   viaje.fecha_entrega),
                 ] %}
                 {% for nombre_estado, fecha in estados_hist %}
                 {% if fecha %}
@@ -233,7 +233,7 @@
                 </div>
                 {% endif %}
                 {% endfor %}
-                {% if not viaje["fecha_creacion"] %}
+                {% if not viaje.fecha_creacion %}
                 <p style="color:#999;font-size:12px;margin:0;">Sin historial registrado.</p>
                 {% endif %}
             </div>
@@ -242,7 +242,7 @@
         <div class="card bloque">
             <h2><i class="bi bi-journal-text" style="color:#F36B21;margin-right:5px;"></i>Notas internas</h2>
 
-            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/nota"
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/nota"
                   style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-start;">
                 <textarea name="texto" rows="2" placeholder="Añadir nota interna (llamada, acuerdo, incidencia...)"
                           style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;"
@@ -258,10 +258,10 @@
                 {% for nota in notas %}
                 <div style="background:#f7f7f7;border-radius:8px;padding:10px 12px;border-left:3px solid #F36B21;">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <span style="font-size:11px;font-weight:700;color:#F36B21;">{{ nota["usuario"] }}</span>
-                        <span style="font-size:11px;color:#999;">{{ nota["fecha"][:16] }}</span>
+                        <span style="font-size:11px;font-weight:700;color:#F36B21;">{{ nota.usuario }}</span>
+                        <span style="font-size:11px;color:#999;">{{ nota.fecha[:16] }}</span>
                     </div>
-                    <p style="margin:0;font-size:13px;color:#333;white-space:pre-line;">{{ nota["texto"] }}</p>
+                    <p style="margin:0;font-size:13px;color:#333;white-space:pre-line;">{{ nota.texto }}</p>
                 </div>
                 {% endfor %}
             </div>
@@ -278,7 +278,7 @@
             <h2 class="estado-titulo">Cambiar estado</h2>
 
             {% if estados_validos %}
-            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/estado"
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
                   onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
                 <label>Nuevo estado</label>
                 <select name="estado" class="input input-estado" required>
@@ -292,7 +292,7 @@
             </form>
             {% else %}
             <p style="color:#777;font-size:13px;margin:0;">
-                El viaje está en estado <strong>{{ viaje["estado"] }}</strong>.<br>
+                El viaje está en estado <strong>{{ viaje.estado }}</strong>.<br>
                 No hay transiciones disponibles.
             </p>
             {% endif %}
@@ -301,17 +301,17 @@
         <div class="card bloque">
             <h2>Asignar camionero</h2>
 
-            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/asignar-todo">
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo">
 
                 <label>Camionero disponible</label>
 
                 <select name="camionero" id="sel-camionero" class="input" required>
                     <option value="">Seleccionar camionero</option>
                     {% for c in camioneros %}
-                        <option value="{{ c['id'] }}"
-                                data-vehiculo-id="{{ c['vehiculo_id'] or '' }}"
-                                data-vehiculo-info="{{ (c['vehiculo_matricula'] ~ ((' – ' ~ c['vehiculo_marca']) if c['vehiculo_marca'] else '') ~ ((' ' ~ c['vehiculo_modelo']) if c['vehiculo_modelo'] else ''))|trim if c['vehiculo_id'] else 'Sin vehículo asignado' }}">
-                            {{ c['nombre'] }}
+                        <option value="{{ c.id }}"
+                                data-vehiculo-id="{{ c.vehiculo_id or '' }}"
+                                data-vehiculo-info="{{ (c.vehiculo_matricula ~ ((' – ' ~ c.vehiculo_marca) if c.vehiculo_marca else '') ~ ((' ' ~ c.vehiculo_modelo) if c.vehiculo_modelo else ''))|trim if c.vehiculo_id else 'Sin vehículo asignado' }}">
+                            {{ c.nombre }}
                         </option>
                     {% endfor %}
                 </select>
@@ -355,11 +355,11 @@
             <h2>Operaciones</h2>
 
             {% if orden_carga_ok %}
-            <a href="/admin/viajes/{{ viaje['id'] }}/orden-carga"
+            <a href="/admin/viajes/{{ viaje.id }}/orden-carga"
                class="btn-principal btn-link-operacion">
                 Ver Orden de Carga
             </a>
-            <a href="/admin/viaje/{{ viaje['id'] }}/pdf"
+            <a href="/admin/viaje/{{ viaje.id }}/pdf"
                class="btn-pdf btn-link-operacion">
                 Descargar PDF Orden de Carga
             </a>
@@ -372,11 +372,11 @@
             </button>
             {% endif %}
 
-            {% set _precio_ok = (viaje["precio_final"] and viaje["precio_final"]|float > 0)
-                              or (viaje["precio_cliente"] and viaje["precio_cliente"]|float > 0)
-                              or (viaje["precio"] and viaje["precio"]|float > 0) %}
-            {% if viaje["cliente"] and _precio_ok and viaje["estado"]|lower != "cancelado" %}
-            <a href="/admin/viaje/{{ viaje['id'] }}/factura"
+            {% set _precio_ok = (viaje.precio_final and viaje.precio_final|float > 0)
+                              or (viaje.precio_cliente and viaje.precio_cliente|float > 0)
+                              or (viaje.precio and viaje.precio|float > 0) %}
+            {% if viaje.cliente and _precio_ok and viaje.estado|lower != "cancelado" %}
+            <a href="/admin/viaje/{{ viaje.id }}/factura"
                class="btn-factura btn-link-operacion">
                 Descargar Factura Cliente
             </a>
@@ -386,18 +386,18 @@
             </button>
             {% endif %}
 
-            <a href="/admin/viaje/{{ viaje['id'] }}/carta-porte"
+            <a href="/admin/viaje/{{ viaje.id }}/carta-porte"
                class="btn-factura btn-link-operacion"
                style="background:#2563EB;border-color:#2563EB;">
                 Descargar Carta de Porte
             </a>
 
-            <a href="/admin/viaje/{{ viaje['id'] }}/liquidacion"
+            <a href="/admin/viaje/{{ viaje.id }}/liquidacion"
                class="btn-factura btn-link-operacion">
                 Descargar Liquidación Camionero
             </a>
 
-            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/eliminar"
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
                   onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje[\"id\"] }} permanentemente? Esta acción no se puede deshacer.');"
                   style="margin-top:12px;border-top:1px solid #eee;padding-top:12px;">
                 <button type="submit"
@@ -413,19 +413,19 @@
             <table style="width:100%;font-size:12px;border-collapse:collapse;">
                 <tr>
                     <td style="color:#888;padding:5px 0;width:40%;font-size:11px;text-transform:uppercase;">Nombre</td>
-                    <td style="font-weight:700;">{{ cliente_info["nombre"] or "—" }}</td>
+                    <td style="font-weight:700;">{{ cliente_info.nombre or "—" }}</td>
                 </tr>
                 <tr>
                     <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Teléfono</td>
-                    <td style="font-weight:600;">{{ cliente_info["telefono"] or "—" }}</td>
+                    <td style="font-weight:600;">{{ cliente_info.telefono or "—" }}</td>
                 </tr>
                 <tr>
                     <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Empresa</td>
-                    <td style="font-weight:600;">{{ cliente_info["empresa"] or "—" }}</td>
+                    <td style="font-weight:600;">{{ cliente_info.empresa or "—" }}</td>
                 </tr>
                 <tr>
                     <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Email</td>
-                    <td style="font-weight:600;word-break:break-all;">{{ cliente_info["email"] or viaje["cliente"] or "—" }}</td>
+                    <td style="font-weight:600;word-break:break-all;">{{ cliente_info.email or viaje.cliente or "—" }}</td>
                 </tr>
             </table>
         </div>
@@ -434,9 +434,9 @@
         <div class="card bloque whatsapp-box">
             <h2><i class="bi bi-whatsapp" style="color:#25D366;margin-right:6px;"></i>WhatsApp</h2>
 
-            {% if viaje["camionero_nombre"] and viaje["camionero_telefono"] %}
-            {% set tel_camionero = viaje["camionero_telefono"]|replace(" ","")|replace("-","") %}
-            {% set msg_camionero = "Hola " ~ viaje["camionero_nombre"] ~ ", tienes asignado el viaje #" ~ viaje["id"] ~ " de " ~ viaje["origen"] ~ " a " ~ viaje["destino"] ~ ". Por favor confirma recepción. — Mercatoria Truck" %}
+            {% if viaje.camionero_nombre and viaje.camionero_telefono %}
+            {% set tel_camionero = viaje.camionero_telefono|replace(" ","")|replace("-","") %}
+            {% set msg_camionero = "Hola " ~ viaje.camionero_nombre ~ ", tienes asignado el viaje #" ~ viaje.id ~ " de " ~ viaje.origen ~ " a " ~ viaje.destino ~ ". Por favor confirma recepción. — Mercatoria Truck" %}
             <a href="https://wa.me/53{{ tel_camionero }}?text={{ msg_camionero|urlencode }}"
                target="_blank"
                class="btn-principal btn-link-operacion"
@@ -447,10 +447,10 @@
             <p style="font-size:12px;color:#9CA3AF;">Sin camionero asignado o sin teléfono registrado.</p>
             {% endif %}
 
-            {% if viaje["cliente"] %}
-            {% set tel_cliente = viaje["cliente_telefono"]|default("")|replace(" ","")|replace("-","") if viaje["cliente_telefono"] else "" %}
+            {% if viaje.cliente %}
+            {% set tel_cliente = viaje.cliente_telefono|default("")|replace(" ","")|replace("-","") if viaje.cliente_telefono else "" %}
             {% if tel_cliente %}
-            {% set msg_cliente = "Hola, le informamos que su viaje #" ~ viaje["id"] ~ " de " ~ viaje["origen"] ~ " a " ~ viaje["destino"] ~ " está en estado: " ~ viaje["estado"] ~ ". — Mercatoria Truck" %}
+            {% set msg_cliente = "Hola, le informamos que su viaje #" ~ viaje.id ~ " de " ~ viaje.origen ~ " a " ~ viaje.destino ~ " está en estado: " ~ viaje.estado ~ ". — Mercatoria Truck" %}
             <a href="https://wa.me/53{{ tel_cliente }}?text={{ msg_cliente|urlencode }}"
                target="_blank"
                class="btn-secundario btn-link-operacion"

@@ -1,11 +1,11 @@
-{% extends "admin/base_admin.html" %}
+﻿{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
 <div class="page-header">
     <div>
         <span class="eyebrow">Comercial</span>
-        <h1>Editar Cliente #{{ cliente["id"] }}</h1>
+        <h1>Editar Cliente #{{ cliente.id }}</h1>
         <p>Actualiza los datos del cliente o empresa.</p>
     </div>
     <a href="/admin/clientes" class="btn-volver">← Volver</a>
@@ -13,18 +13,18 @@
 
 <section class="panel">
     <div style="padding: 28px; max-width: 720px;">
-        <form method="POST" action="/admin/clientes/{{ cliente['id'] }}/editar">
+        <form method="POST" action="/admin/clientes/{{ cliente.id }}/editar">
 
             <div class="edit-row">
                 <div class="edit-field">
                     <label>Nombre *</label>
                     <input type="text" name="nombre" class="input-crud"
-                           value="{{ cliente['nombre'] }}" required>
+                           value="{{ cliente.nombre }}" required>
                 </div>
                 <div class="edit-field">
                     <label>Empresa</label>
                     <input type="text" name="empresa" class="input-crud"
-                           value="{{ cliente['empresa'] or '' }}">
+                           value="{{ cliente.empresa or '' }}">
                 </div>
             </div>
 
@@ -32,12 +32,12 @@
                 <div class="edit-field">
                     <label>Contacto</label>
                     <input type="text" name="contacto" class="input-crud"
-                           value="{{ cliente['contacto'] or '' }}">
+                           value="{{ cliente.contacto or '' }}">
                 </div>
                 <div class="edit-field">
                     <label>Teléfono</label>
                     <input type="text" name="telefono" class="input-crud"
-                           value="{{ cliente['telefono'] or '' }}">
+                           value="{{ cliente.telefono or '' }}">
                 </div>
             </div>
 
@@ -45,12 +45,12 @@
                 <div class="edit-field">
                     <label>Email</label>
                     <input type="email" name="email" class="input-crud"
-                           value="{{ cliente['email'] or '' }}">
+                           value="{{ cliente.email or '' }}">
                 </div>
                 <div class="edit-field">
                     <label>Dirección</label>
                     <input type="text" name="direccion" class="input-crud"
-                           value="{{ cliente['direccion'] or '' }}">
+                           value="{{ cliente.direccion or '' }}">
                 </div>
             </div>
 
