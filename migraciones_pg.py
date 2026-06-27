@@ -15,6 +15,35 @@ def ejecutar_migraciones_pg():
     conn = _conectar()
     cur = conn.cursor()
 
+    import os
+    if os.environ.get("SKIP_MIGRATIONS") == "true":
+        print("[migraciones_pg] SKIP_MIGRATIONS=true — omitiendo migraciones.")
+        conn.close()
+        return
+
+    # Verificación ligera: si la tabla principal ya existe, saltar
+    cur.execute("""
+        SELECT COUNT(*) FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'usuarios'
+    """)
+    if cur.fetchone()[0] > 0:
+        # Schema ya existe — solo asegurar usuario admin
+        cur.execute("SELECT id FROM usuarios WHERE usuario = 'admin'")
+        if not cur.fetchone():
+            from flask_bcrypt import Bcrypt
+            _bcrypt = Bcrypt()
+            hash_pw = _bcrypt.generate_password_hash("admin1234").decode("utf-8")
+            cur.execute(
+                "INSERT INTO usuarios (usuario, password, rol) VALUES (%s, %s, %s)",
+                ("admin", hash_pw, "admin")
+            )
+            conn.commit()
+        conn.close()
+        print("[migraciones_pg] Schema existente detectado — migraciones omitidas.")
+        return
+
+    print("[migraciones_pg] Schema nuevo — ejecutando migraciones completas.")
+
     cur.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
         id SERIAL PRIMARY KEY,

@@ -1,5 +1,10 @@
 __pycache__/
 *.py[cod]
+*.pyc
 .vscode/
 venv/
 .venv/
+.env
+mercatoria.db
+*.db
+*.sqlite3

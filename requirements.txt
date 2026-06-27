@@ -7,4 +7,3 @@ flask-mail
 flask-limiter
 flask-wtf
 psycopg2-binary
-sqlalchemy
