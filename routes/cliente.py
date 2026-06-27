@@ -300,8 +300,8 @@ def solicitar_envio():
 
         cur.execute("""
             INSERT INTO viajes (cliente, cliente_id, ruta_id, origen, destino, precio, combustible,
-                                camionero, comision, beneficio, estado, observaciones)
-            VALUES (?, ?, ?, ?, ?, 0, 0, '', 0, 0, 'Solicitado', ?)
+                                comision, beneficio, estado, observaciones)
+            VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, 'Solicitado', ?)
         """, (session["usuario"], cliente_id, ruta_id, origen, destino, obs))
         con.commit()
         con.close()
