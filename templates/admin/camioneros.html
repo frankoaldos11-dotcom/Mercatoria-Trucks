@@ -53,10 +53,11 @@
             </div>
             <div class="form-crud-field" style="grid-column:1/-1;">
                 <label style="color:#F36B21;">Vehículo (opcional)</label>
+                <small style="color:#999;font-size:11px;">Si registras un vehículo, la matrícula es obligatoria.</small>
             </div>
             <div class="form-crud-field">
                 <label>Matrícula</label>
-                <input type="text" name="matricula" class="input-crud" placeholder="Matrícula">
+                <input type="text" name="matricula" id="campo-matricula" class="input-crud" placeholder="Matrícula">
             </div>
             <div class="form-crud-field">
                 <label>Marca</label>
@@ -78,6 +79,27 @@
                 <button type="submit" class="btn-crud-primary">Registrar camionero</button>
             </div>
         </form>
+        <script>
+        (function() {
+          const camposVehiculo = ['marca', 'modelo', 'tipo', 'capacidad'];
+          const matriculaInp = document.getElementById('campo-matricula');
+          function checkMatricula() {
+            const alguno = camposVehiculo.some(n => document.querySelector('[name="'+n+'"]').value.trim());
+            matriculaInp.required = alguno;
+            matriculaInp.style.borderColor = alguno ? '#F36B21' : '';
+          }
+          camposVehiculo.forEach(n => document.querySelector('[name="'+n+'"]').addEventListener('input', checkMatricula));
+          document.querySelector('form[action="/admin/camioneros"]').addEventListener('submit', function(e) {
+            const alguno = camposVehiculo.some(n => document.querySelector('[name="'+n+'"]').value.trim());
+            if (alguno && !matriculaInp.value.trim()) {
+              e.preventDefault();
+              matriculaInp.focus();
+              matriculaInp.style.borderColor = '#e74c3c';
+              alert('La matrícula es obligatoria si registras un vehículo.');
+            }
+          });
+        })();
+        </script>
     </div>
 </section>
 

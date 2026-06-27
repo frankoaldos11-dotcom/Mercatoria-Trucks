@@ -796,7 +796,11 @@ def admin_camioneros():
         tipo      = request.form.get("tipo", "").strip()
         capacidad = request.form.get("capacidad", "").strip()
 
-        if matricula:
+        campos_vehiculo = [marca, modelo, tipo, capacidad]
+        if any(campos_vehiculo) and not matricula:
+            error = "La matrícula es obligatoria si registras datos del vehículo."
+
+        if not error and matricula:
             cursor.execute("SELECT id FROM vehiculos WHERE matricula = ?", (matricula,))
             if cursor.fetchone():
                 error = f"La matrícula '{matricula}' ya está registrada."
