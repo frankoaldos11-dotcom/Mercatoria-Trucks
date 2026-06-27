@@ -297,8 +297,8 @@ def solicitar_envio():
         else:
             cur.execute("""
                 INSERT INTO clientes (usuario_id, nombre, email, contacto, telefono)
-                VALUES (?, ?, ?, ?, '')
-            """, (session["user_id"], session.get("nombre", ""), session.get("usuario", "")))
+                VALUES (?, ?, ?, ?, ?)
+            """, (session["user_id"], session.get("nombre", ""), session.get("usuario", ""), session.get("usuario", ""), ""))
             cliente_id = cur.lastrowid
             con.commit()
 
