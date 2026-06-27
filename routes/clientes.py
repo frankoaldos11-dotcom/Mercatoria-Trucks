@@ -1,11 +1,7 @@
 from flask import Blueprint, redirect, session
-import sqlite3
+from database import conectar
 
 clientes_bp = Blueprint("clientes", __name__)
-
-
-def conectar():
-    return sqlite3.connect("mercatoria.db")
 
 
 @clientes_bp.route("/clientes", methods=["GET", "POST"])

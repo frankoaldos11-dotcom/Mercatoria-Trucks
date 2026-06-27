@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, jsonify, session, send_file
-import sqlite3
 import io
 import openpyxl
 from openpyxl.styles import PatternFill, Font
 
 from routes.admin import requiere_admin
+from database import conectar
 
 from services.comercial_service import (
     get_all_rutas,
@@ -30,14 +30,8 @@ from services.comercial_service import (
 comercial_bp = Blueprint("comercial", __name__)
 
 
-def conectar_comercial():
-    conexion = sqlite3.connect("mercatoria.db")
-    conexion.row_factory = sqlite3.Row
-    return conexion
-
-
 def get_viaje_id_por_cotizacion(cotizacion_id):
-    conexion = conectar_comercial()
+    conexion = conectar()
     cursor = conexion.cursor()
 
     cursor.execute("""
@@ -107,8 +101,9 @@ def editar_ruta(ruta_id):
     destino = request.form["destino"].strip()
     zona = request.form.get("zona", "").strip()
     km_oficiales = request.form.get("km_oficiales", "").strip()
-    con = conectar_comercial()
-    con.execute(
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(
         "UPDATE rutas SET origen=?, destino=?, zona=?, km_oficiales=? WHERE id=?",
         (origen, destino, zona or None, km_oficiales or None, ruta_id)
     )
@@ -319,7 +314,7 @@ def importar_cotizaciones():
     wb = openpyxl.load_workbook(archivo)
     ws = wb.active
 
-    con = conectar_comercial()
+    con = conectar()
     cur = con.cursor()
     insertados = 0
 
