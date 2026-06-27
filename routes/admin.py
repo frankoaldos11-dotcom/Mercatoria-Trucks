@@ -464,11 +464,12 @@ def cambiar_estado(id):
 
     if estado in ["Asignado", "En ruta", "Carga recogida", "Entregado", "Cancelado"]:
         import threading
-        t = threading.Thread(
-            target=notificar_cliente_estado,
-            args=(id, estado, email_cliente),
-            daemon=True
-        )
+        from flask import current_app
+        app_ctx = current_app._get_current_object()
+        def _notificar():
+            with app_ctx.app_context():
+                notificar_cliente_estado(id, estado, email_cliente)
+        t = threading.Thread(target=_notificar, daemon=True)
         t.start()
 
     registrar_auditoria(
