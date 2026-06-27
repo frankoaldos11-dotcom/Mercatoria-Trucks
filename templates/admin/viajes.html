@@ -19,20 +19,57 @@
     </div>
 </div>
 
+{# Buscador #}
+<form method="GET" action="/admin/viajes" style="margin-bottom:12px;">
+    <input type="hidden" name="estado" value="{{ filtro }}">
+    <div style="display:flex;gap:8px;max-width:480px;">
+        <input type="text" name="buscar" value="{{ buscar }}"
+               placeholder="Buscar por cliente, origen, destino o camionero…"
+               class="form-control form-control-sm"
+               style="border-radius:8px;">
+        <button type="submit" class="btn btn-sm btn-secondary" style="border-radius:8px;white-space:nowrap;">
+            <i class="bi bi-search"></i>
+        </button>
+        {% if buscar %}
+        <a href="/admin/viajes?estado={{ filtro }}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;white-space:nowrap;">
+            <i class="bi bi-x"></i>
+        </a>
+        {% endif %}
+    </div>
+</form>
+
+{# Pills de filtro por estado #}
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-    <a href="/admin/viajes" class="badge {% if not filtro %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Todos</a>
-    <a href="/admin/viajes?estado=solicitado" class="badge {% if filtro=='solicitado' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Solicitados</a>
-    <a href="/admin/viajes?estado=asignado" class="badge {% if filtro=='asignado' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Asignados</a>
-    <a href="/admin/viajes?estado=en+ruta" class="badge {% if filtro=='en ruta' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">En ruta</a>
-    <a href="/admin/viajes?estado=entregado" class="badge {% if filtro=='entregado' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Entregados</a>
-    <a href="/admin/viajes?estado=cancelado" class="badge {% if filtro=='cancelado' %}bg-dark{% else %}bg-light text-dark border{% endif %}" style="text-decoration:none;padding:6px 14px;font-size:12px;">Cancelados</a>
+    <a href="/admin/viajes{% if buscar %}?buscar={{ buscar }}{% endif %}"
+       class="badge {% if not filtro %}bg-dark{% else %}bg-light text-dark border{% endif %}"
+       style="text-decoration:none;padding:6px 14px;font-size:12px;">Todos</a>
+    <a href="/admin/viajes?estado=solicitado{% if buscar %}&buscar={{ buscar }}{% endif %}"
+       class="badge {% if filtro=='solicitado' %}bg-dark{% else %}bg-light text-dark border{% endif %}"
+       style="text-decoration:none;padding:6px 14px;font-size:12px;">Solicitados</a>
+    <a href="/admin/viajes?estado=asignado{% if buscar %}&buscar={{ buscar }}{% endif %}"
+       class="badge {% if filtro=='asignado' %}bg-dark{% else %}bg-light text-dark border{% endif %}"
+       style="text-decoration:none;padding:6px 14px;font-size:12px;">Asignados</a>
+    <a href="/admin/viajes?estado=en+ruta{% if buscar %}&buscar={{ buscar }}{% endif %}"
+       class="badge {% if filtro=='en ruta' %}bg-dark{% else %}bg-light text-dark border{% endif %}"
+       style="text-decoration:none;padding:6px 14px;font-size:12px;">En ruta</a>
+    <a href="/admin/viajes?estado=entregado{% if buscar %}&buscar={{ buscar }}{% endif %}"
+       class="badge {% if filtro=='entregado' %}bg-dark{% else %}bg-light text-dark border{% endif %}"
+       style="text-decoration:none;padding:6px 14px;font-size:12px;">Entregados</a>
+    <a href="/admin/viajes?estado=cancelado{% if buscar %}&buscar={{ buscar }}{% endif %}"
+       class="badge {% if filtro=='cancelado' %}bg-dark{% else %}bg-light text-dark border{% endif %}"
+       style="text-decoration:none;padding:6px 14px;font-size:12px;">Cancelados</a>
 </div>
 
 <section class="panel">
     <div class="panel-header">
         <div>
             <h2>Listado de viajes</h2>
-            <p>Todos los viajes del sistema ordenados por ID.</p>
+            <p>
+                {% if buscar %}Resultados para "{{ buscar }}" — {% endif %}
+                {{ total }} viaje{% if total != 1 %}s{% endif %}
+                {% if filtro %}en estado "{{ filtro }}"{% endif %}
+                · Página {{ pagina_actual }} de {{ total_paginas }}
+            </p>
         </div>
     </div>
 
@@ -71,12 +108,43 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="empty-state">No hay viajes registrados.</td>
+                    <td colspan="7" class="empty-state">No hay viajes{% if buscar %} que coincidan con "{{ buscar }}"{% endif %}.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {# Paginación #}
+    {% if total_paginas > 1 %}
+    <div style="padding:16px 0 4px;display:flex;justify-content:center;">
+        <nav>
+            <ul class="pagination pagination-sm mb-0" style="gap:2px;">
+                <li class="page-item {% if pagina_actual == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="/admin/viajes?estado={{ filtro }}&buscar={{ buscar }}&pagina={{ pagina_actual - 1 }}" style="border-radius:6px;">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                {% for p in range(1, total_paginas + 1) %}
+                    {% if p == 1 or p == total_paginas or (p >= pagina_actual - 2 and p <= pagina_actual + 2) %}
+                        <li class="page-item {% if p == pagina_actual %}active{% endif %}">
+                            <a class="page-link" href="/admin/viajes?estado={{ filtro }}&buscar={{ buscar }}&pagina={{ p }}" style="border-radius:6px;">{{ p }}</a>
+                        </li>
+                    {% elif p == pagina_actual - 3 or p == pagina_actual + 3 %}
+                        <li class="page-item disabled"><span class="page-link" style="border-radius:6px;">…</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                <li class="page-item {% if pagina_actual == total_paginas %}disabled{% endif %}">
+                    <a class="page-link" href="/admin/viajes?estado={{ filtro }}&buscar={{ buscar }}&pagina={{ pagina_actual + 1 }}" style="border-radius:6px;">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
 </section>
 
 <style>
@@ -96,6 +164,16 @@
 .btn-icon-action:hover {
     background: #dbeafe;
     color: #1d4ed8;
+}
+.pagination .page-item.active .page-link {
+    background: #E86A2C;
+    border-color: #E86A2C;
+}
+.pagination .page-link {
+    color: #E86A2C;
+}
+.pagination .page-item.active .page-link {
+    color: #fff;
 }
 </style>
 

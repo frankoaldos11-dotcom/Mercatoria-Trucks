@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+import threading
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import date, datetime
@@ -143,34 +144,66 @@ def viajes():
         return redirect("/login")
 
     filtro = request.args.get("estado", "").strip().lower()
+    buscar = request.args.get("buscar", "").strip()
+    pagina = max(1, int(request.args.get("pagina", 1) or 1))
+    por_pagina = 20
+
+    condiciones = []
+    params = []
+
+    if filtro:
+        condiciones.append("LOWER(v.estado) = ?")
+        params.append(filtro)
+
+    if buscar:
+        condiciones.append("""(
+            COALESCE(cl.nombre, v.cliente, '') LIKE ?
+            OR COALESCE(v.origen, '') LIKE ?
+            OR COALESCE(v.destino, '') LIKE ?
+            OR COALESCE(v.camionero_nombre, '') LIKE ?
+        )""")
+        like = f"%{buscar}%"
+        params.extend([like, like, like, like])
+
+    where = ("WHERE " + " AND ".join(condiciones)) if condiciones else ""
 
     conexion = conectar()
     cursor = conexion.cursor()
 
-    if filtro:
-        cursor.execute("""
-            SELECT v.id,
-                   COALESCE(cl.nombre, v.cliente, 'Sin cliente') as cliente,
-                   v.origen, v.destino, v.estado, v.camionero_nombre
-            FROM viajes v
-            LEFT JOIN clientes cl ON v.cliente_id = cl.id
-            WHERE LOWER(v.estado) = ?
-            ORDER BY v.id DESC
-        """, (filtro,))
-    else:
-        cursor.execute("""
-            SELECT v.id,
-                   COALESCE(cl.nombre, v.cliente, 'Sin cliente') as cliente,
-                   v.origen, v.destino, v.estado, v.camionero_nombre
-            FROM viajes v
-            LEFT JOIN clientes cl ON v.cliente_id = cl.id
-            ORDER BY v.id DESC
-        """)
+    cursor.execute(f"""
+        SELECT COUNT(*) FROM viajes v
+        LEFT JOIN clientes cl ON v.cliente_id = cl.id
+        {where}
+    """, params)
+    total = cursor.fetchone()[0]
+
+    total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
+    pagina = min(pagina, total_paginas)
+    offset = (pagina - 1) * por_pagina
+
+    cursor.execute(f"""
+        SELECT v.id,
+               COALESCE(cl.nombre, v.cliente, 'Sin cliente') as cliente,
+               v.origen, v.destino, v.estado, v.camionero_nombre
+        FROM viajes v
+        LEFT JOIN clientes cl ON v.cliente_id = cl.id
+        {where}
+        ORDER BY v.id DESC
+        LIMIT ? OFFSET ?
+    """, params + [por_pagina, offset])
     lista = cursor.fetchall()
 
     conexion.close()
 
-    return render_template("admin/viajes.html", lista=lista, filtro=filtro)
+    return render_template(
+        "admin/viajes.html",
+        lista=lista,
+        filtro=filtro,
+        buscar=buscar,
+        pagina_actual=pagina,
+        total_paginas=total_paginas,
+        total=total,
+    )
 
 
 def _parsear_observaciones(obs):
@@ -1742,3 +1775,125 @@ def lote_seleccionados():
     )
     from urllib.parse import quote_plus as qp
     return redirect(f"/admin/lote?resultado={qp(str(n) + ' viajes actualizados (' + detalle + ')')}")
+
+
+# ── Mensajes masivos ───────────────────────────────────────────────────────────
+
+def _query_emails_clientes(filtro):
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    if filtro == "activos":
+        cursor.execute("""
+            SELECT DISTINCT cl.email FROM clientes cl
+            JOIN viajes v ON v.cliente_id = cl.id
+            WHERE LOWER(v.estado) NOT IN ('entregado', 'cancelado')
+              AND cl.email IS NOT NULL AND cl.email != ''
+        """)
+    elif filtro == "zona_occidente":
+        cursor.execute("""
+            SELECT DISTINCT cl.email FROM clientes cl
+            JOIN viajes v ON v.cliente_id = cl.id
+            JOIN rutas r ON v.ruta_id = r.id
+            WHERE LOWER(r.zona) = 'occidente'
+              AND cl.email IS NOT NULL AND cl.email != ''
+        """)
+    elif filtro == "zona_centro":
+        cursor.execute("""
+            SELECT DISTINCT cl.email FROM clientes cl
+            JOIN viajes v ON v.cliente_id = cl.id
+            JOIN rutas r ON v.ruta_id = r.id
+            WHERE LOWER(r.zona) = 'centro'
+              AND cl.email IS NOT NULL AND cl.email != ''
+        """)
+    elif filtro == "zona_oriente":
+        cursor.execute("""
+            SELECT DISTINCT cl.email FROM clientes cl
+            JOIN viajes v ON v.cliente_id = cl.id
+            JOIN rutas r ON v.ruta_id = r.id
+            WHERE LOWER(r.zona) = 'oriente'
+              AND cl.email IS NOT NULL AND cl.email != ''
+        """)
+    elif filtro == "sin_viajes":
+        cursor.execute("""
+            SELECT cl.email FROM clientes cl
+            WHERE cl.email IS NOT NULL AND cl.email != ''
+              AND cl.id NOT IN (
+                  SELECT DISTINCT cliente_id FROM viajes WHERE cliente_id IS NOT NULL
+              )
+        """)
+    else:
+        cursor.execute("SELECT email FROM clientes WHERE email IS NOT NULL AND email != ''")
+
+    emails = [row["email"] for row in cursor.fetchall() if row["email"]]
+    conexion.close()
+    return emails
+
+
+@admin_bp.route("/mensajes")
+def mensajes():
+    if session.get("rol") != "admin":
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("""
+        SELECT accion, fecha FROM auditoria
+        WHERE accion LIKE 'Envió mensaje masivo%'
+        ORDER BY id DESC
+        LIMIT 10
+    """)
+    historial = cursor.fetchall()
+    conexion.close()
+
+    enviado = request.args.get("enviado")
+    error = request.args.get("error")
+    return render_template("admin/mensajes.html", historial=historial, enviado=enviado, error=error)
+
+
+@admin_bp.route("/mensajes/preview")
+def mensajes_preview():
+    if session.get("rol") != "admin":
+        return jsonify({"count": 0, "emails": []})
+
+    filtro = request.args.get("filtro", "todos")
+    emails = _query_emails_clientes(filtro)
+    return jsonify({"count": len(emails), "emails": emails[:3]})
+
+
+@admin_bp.route("/mensajes/enviar", methods=["POST"])
+def mensajes_enviar():
+    if session.get("rol") != "admin":
+        return redirect("/login")
+
+    asunto = request.form.get("asunto", "").strip()
+    cuerpo = request.form.get("cuerpo", "").strip()
+    destinatarios = request.form.get("destinatarios", "todos").strip()
+
+    if not asunto or not cuerpo:
+        return redirect("/admin/mensajes?error=Faltan+asunto+o+cuerpo")
+
+    emails = _query_emails_clientes(destinatarios)
+
+    from flask import current_app
+    app_obj = current_app._get_current_object()
+
+    def enviar_todos():
+        with app_obj.app_context():
+            for email in emails:
+                try:
+                    msg = Message(subject=asunto, recipients=[email])
+                    msg.body = cuerpo
+                    mail.send(msg)
+                except Exception as e:
+                    print(f"Error enviando a {email}: {e}")
+
+    threading.Thread(target=enviar_todos, daemon=True).start()
+
+    registrar_auditoria(
+        f"Envió mensaje masivo a {len(emails)} clientes: {asunto}",
+        "Clientes", "clientes", None,
+        f"Filtro: {destinatarios}"
+    )
+
+    return redirect(f"/admin/mensajes?enviado={len(emails)}")

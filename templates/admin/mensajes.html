@@ -1,0 +1,119 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Sistema</span>
+        <h1>Mensajes a clientes</h1>
+        <p>Envía comunicados masivos a segmentos de clientes por correo electrónico.</p>
+    </div>
+</div>
+
+{% if enviado %}
+<div class="alert alert-success d-flex align-items-center gap-2 mb-4" style="border-radius:10px;">
+    <i class="bi bi-check-circle-fill" style="font-size:18px;"></i>
+    <span>Mensaje enviado correctamente a <strong>{{ enviado }}</strong> cliente{% if enviado|int != 1 %}s{% endif %}.</span>
+</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-4" style="border-radius:10px;">
+    <i class="bi bi-exclamation-triangle-fill" style="font-size:18px;"></i>
+    <span>{{ error }}</span>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+
+    {# Formulario principal #}
+    <section class="panel">
+        <div class="panel-header">
+            <div><h2>Nuevo mensaje</h2></div>
+        </div>
+        <form method="POST" action="/admin/mensajes/enviar" style="padding:0 4px 4px;">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Destinatarios</label>
+                <select name="destinatarios" id="sel-destinatarios" class="form-select" style="border-radius:8px;" onchange="actualizarPreview()">
+                    <option value="todos">Todos los clientes</option>
+                    <option value="activos">Clientes con viajes activos</option>
+                    <option value="zona_occidente">Clientes zona Occidente</option>
+                    <option value="zona_centro">Clientes zona Centro</option>
+                    <option value="zona_oriente">Clientes zona Oriente</option>
+                    <option value="sin_viajes">Clientes sin viajes</option>
+                </select>
+            </div>
+
+            {# Preview de destinatarios #}
+            <div id="preview-box" style="background:#f8f9fa;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;">
+                <span id="preview-count" style="font-weight:600;color:#E86A2C;">Cargando…</span>
+                <span id="preview-emails" style="color:#64748b;"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Asunto</label>
+                <input type="text" name="asunto" class="form-control" placeholder="Asunto del correo" required style="border-radius:8px;">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Cuerpo del mensaje</label>
+                <textarea name="cuerpo" class="form-control" rows="8"
+                          placeholder="Escribe aquí el contenido del correo…"
+                          required style="border-radius:8px;resize:vertical;"></textarea>
+            </div>
+
+            <button type="submit" class="btn" style="background:#E86A2C;color:#fff;border-radius:8px;padding:10px 28px;font-weight:600;border:none;">
+                <i class="bi bi-send-fill me-2"></i>Enviar mensaje
+            </button>
+        </form>
+    </section>
+
+    {# Historial #}
+    <section class="panel">
+        <div class="panel-header">
+            <div><h2>Últimos envíos</h2></div>
+        </div>
+
+        {% if historial %}
+        <ul style="list-style:none;margin:0;padding:0 4px 4px;">
+            {% for h in historial %}
+            <li style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+                <div style="font-weight:600;color:#1e293b;">{{ h["accion"] }}</div>
+                <div style="color:#94a3b8;margin-top:2px;">{{ h["fecha"] }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="color:#94a3b8;font-size:13px;padding:8px 4px;">No se han enviado mensajes aún.</p>
+        {% endif %}
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function actualizarPreview() {
+    const filtro = document.getElementById('sel-destinatarios').value;
+    const countEl = document.getElementById('preview-count');
+    const emailsEl = document.getElementById('preview-emails');
+    countEl.textContent = 'Cargando…';
+    emailsEl.textContent = '';
+
+    fetch('/admin/mensajes/preview?filtro=' + encodeURIComponent(filtro))
+        .then(r => r.json())
+        .then(data => {
+            countEl.textContent = 'Se enviará a ' + data.count + ' cliente' + (data.count !== 1 ? 's' : '') + '.';
+            if (data.emails && data.emails.length > 0) {
+                let muestra = data.emails.join(', ');
+                if (data.count > data.emails.length) muestra += '…';
+                emailsEl.textContent = ' (' + muestra + ')';
+            }
+        })
+        .catch(() => { countEl.textContent = 'No se pudo cargar la vista previa.'; });
+}
+document.addEventListener('DOMContentLoaded', actualizarPreview);
+</script>
+{% endblock %}
