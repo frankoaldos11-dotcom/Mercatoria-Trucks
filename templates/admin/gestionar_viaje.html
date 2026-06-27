@@ -1,4 +1,4 @@
-﻿{% extends "admin/base_admin.html" %}
+{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
@@ -19,6 +19,29 @@
     <div class="estado-badge">
         {{ viaje.estado }}
     </div>
+</div>
+
+<!-- ── Barra de cambio de estado ── -->
+<div class="barra-estado-top">
+    {% if estados_validos %}
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
+          style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;width:100%;"
+          onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
+        <span style="font-size:13px;font-weight:700;color:#d95714;white-space:nowrap;">Cambiar estado:</span>
+        <span class="estado-badge" style="flex-shrink:0;">{{ viaje.estado }}</span>
+        <select name="estado" class="input input-estado-top" required>
+            {% for e in estados_validos %}
+            <option value="{{ e }}">{{ e }}{% if e == "Asignado" %} ⚠ requiere camionero + vehículo{% elif e == "En ruta" %} ⚠ requiere camionero, vehículo y precio{% endif %}</option>
+            {% endfor %}
+        </select>
+        <button class="btn-estado-top" type="submit">Actualizar estado</button>
+    </form>
+    {% else %}
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <span class="estado-badge" style="flex-shrink:0;">{{ viaje.estado }}</span>
+        <span style="font-size:13px;color:#888;">Estado final — sin transiciones disponibles</span>
+    </div>
+    {% endif %}
 </div>
 
 <div class="grid-resumen">
@@ -56,6 +79,44 @@
 <div class="layout-operacion">
 
     <div class="columna-principal">
+
+        <!-- Timeline de pasos -->
+        {% set _pasos_lista = ['Solicitado', 'Asignado', 'En ruta', 'Entregado'] %}
+        {% if viaje.estado == 'Asignado' %}{% set _paso_idx = 1 %}
+        {% elif viaje.estado == 'En ruta' %}{% set _paso_idx = 2 %}
+        {% elif viaje.estado == 'Entregado' %}{% set _paso_idx = 3 %}
+        {% elif viaje.estado == 'Cancelado' %}{% set _paso_idx = -1 %}
+        {% else %}{% set _paso_idx = 0 %}{% endif %}
+
+        <div class="card bloque timeline-card">
+            {% if _paso_idx == -1 %}
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span class="tl-dot-cancel"><i class="bi bi-x-lg"></i></span>
+                <span style="font-size:13px;font-weight:700;color:#c0392b;">Viaje cancelado</span>
+            </div>
+            {% else %}
+            <div class="tl-row">
+                {% for i in range(4) %}
+                {% if i < _paso_idx %}{% set _cls = 'tl-done' %}
+                {% elif i == _paso_idx %}{% set _cls = 'tl-active' %}
+                {% else %}{% set _cls = 'tl-future' %}{% endif %}
+                <div class="tl-step {{ _cls }}">
+                    <div class="tl-node">
+                        {% if i < _paso_idx %}<i class="bi bi-check-lg"></i>
+                        {% elif i == 0 %}<i class="bi bi-send-fill"></i>
+                        {% elif i == 1 %}<i class="bi bi-person-check-fill"></i>
+                        {% elif i == 2 %}<i class="bi bi-truck-front-fill"></i>
+                        {% else %}<i class="bi bi-check-circle-fill"></i>{% endif %}
+                    </div>
+                    <span class="tl-lbl">{{ _pasos_lista[i] }}</span>
+                </div>
+                {% if i < 3 %}
+                <div class="tl-connector {% if i < _paso_idx %}tl-connector-done{% endif %}"></div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
 
         {% if error %}
         <div class="alerta-error">
@@ -270,33 +331,63 @@
             {% endif %}
         </div>
 
+        <!-- Operaciones / PDFs -->
+        <div class="card bloque">
+            <h2><i class="bi bi-file-earmark-text" style="color:#F36B21;margin-right:5px;"></i>Operaciones</h2>
+
+            <div class="ops-grid">
+                {% if orden_carga_ok %}
+                <a href="/admin/viajes/{{ viaje.id }}/orden-carga" class="btn-principal btn-link-operacion">
+                    Ver Orden de Carga
+                </a>
+                <a href="/admin/viaje/{{ viaje.id }}/pdf" class="btn-pdf btn-link-operacion">
+                    Descargar PDF Orden de Carga
+                </a>
+                {% else %}
+                <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">Ver Orden de Carga</button>
+                <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">Descargar PDF Orden de Carga</button>
+                {% endif %}
+
+                {% set _precio_ok = (viaje.precio_final and viaje.precio_final|float > 0)
+                                  or (viaje.precio_cliente and viaje.precio_cliente|float > 0)
+                                  or (viaje.precio and viaje.precio|float > 0) %}
+                {% if viaje.cliente and _precio_ok and viaje.estado|lower != "cancelado" %}
+                <a href="/admin/viaje/{{ viaje.id }}/factura" class="btn-factura btn-link-operacion">
+                    Descargar Factura Cliente
+                </a>
+                {% else %}
+                <button class="btn-secundario" disabled title="Requiere cliente, precio confirmado y estado no cancelado">
+                    Descargar Factura Cliente
+                </button>
+                {% endif %}
+
+                <a href="/admin/viaje/{{ viaje.id }}/carta-porte"
+                   class="btn-factura btn-link-operacion"
+                   style="background:#2563EB;border-color:#2563EB;">
+                    Descargar Carta de Porte
+                </a>
+
+                <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-factura btn-link-operacion">
+                    Descargar Liquidación Camionero
+                </a>
+
+                {% if session.get('rol') == 'admin' %}
+                <div style="grid-column:1/-1;margin-top:4px;border-top:1px solid #eee;padding-top:10px;">
+                    <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
+                          onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje.id }} permanentemente? Esta acción no se puede deshacer.');">
+                        <button type="submit"
+                                style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+                            <i class="bi bi-trash3"></i> Eliminar viaje
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 
     <div class="columna-lateral">
-
-        <div class="card bloque estado-bloque">
-            <h2 class="estado-titulo">Cambiar estado</h2>
-
-            {% if estados_validos %}
-            <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
-                  onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
-                <label>Nuevo estado</label>
-                <select name="estado" class="input input-estado" required>
-                    {% for e in estados_validos %}
-                    <option value="{{ e }}">{{ e }}{% if e == "Asignado" %} ⚠ requiere camionero + vehículo{% elif e == "En ruta" %} ⚠ requiere camionero, vehículo y precio{% endif %}</option>
-                    {% endfor %}
-                </select>
-                <button class="btn-estado" type="submit">
-                    Actualizar estado
-                </button>
-            </form>
-            {% else %}
-            <p style="color:#777;font-size:13px;margin:0;">
-                El viaje está en estado <strong>{{ viaje.estado }}</strong>.<br>
-                No hay transiciones disponibles.
-            </p>
-            {% endif %}
-        </div>
 
         <div class="card bloque">
             <h2>Asignar camionero</h2>
@@ -350,64 +441,6 @@
             }
         });
         </script>
-
-        <div class="card bloque operaciones-box">
-            <h2>Operaciones</h2>
-
-            {% if orden_carga_ok %}
-            <a href="/admin/viajes/{{ viaje.id }}/orden-carga"
-               class="btn-principal btn-link-operacion">
-                Ver Orden de Carga
-            </a>
-            <a href="/admin/viaje/{{ viaje.id }}/pdf"
-               class="btn-pdf btn-link-operacion">
-                Descargar PDF Orden de Carga
-            </a>
-            {% else %}
-            <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">
-                Ver Orden de Carga
-            </button>
-            <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">
-                Descargar PDF Orden de Carga
-            </button>
-            {% endif %}
-
-            {% set _precio_ok = (viaje.precio_final and viaje.precio_final|float > 0)
-                              or (viaje.precio_cliente and viaje.precio_cliente|float > 0)
-                              or (viaje.precio and viaje.precio|float > 0) %}
-            {% if viaje.cliente and _precio_ok and viaje.estado|lower != "cancelado" %}
-            <a href="/admin/viaje/{{ viaje.id }}/factura"
-               class="btn-factura btn-link-operacion">
-                Descargar Factura Cliente
-            </a>
-            {% else %}
-            <button class="btn-secundario" disabled title="Requiere cliente, precio confirmado y estado no cancelado">
-                Descargar Factura Cliente
-            </button>
-            {% endif %}
-
-            <a href="/admin/viaje/{{ viaje.id }}/carta-porte"
-               class="btn-factura btn-link-operacion"
-               style="background:#2563EB;border-color:#2563EB;">
-                Descargar Carta de Porte
-            </a>
-
-            <a href="/admin/viaje/{{ viaje.id }}/liquidacion"
-               class="btn-factura btn-link-operacion">
-                Descargar Liquidación Camionero
-            </a>
-
-            {% if session.get('rol') == 'admin' %}
-            <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
-                  onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje.id }} permanentemente? Esta acción no se puede deshacer.');"
-                  style="margin-top:12px;border-top:1px solid #eee;padding-top:12px;">
-                <button type="submit"
-                        style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
-                    <i class="bi bi-trash3"></i> Eliminar viaje
-                </button>
-            </form>
-            {% endif %}
-        </div>
 
         {% if cliente_info %}
         <div class="card bloque">
@@ -510,6 +543,136 @@
     font-weight: 700;
     text-transform: uppercase;
     font-size: 12px;
+}
+
+/* Barra de estado top */
+.barra-estado-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #fff3ec;
+    border: 1px solid #F36B21;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.input-estado-top {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.btn-estado-top {
+    background: #F36B21;
+    color: white;
+    padding: 11px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 800;
+    white-space: nowrap;
+    letter-spacing: .01em;
+}
+
+.btn-estado-top:hover {
+    background: #d95714;
+}
+
+/* Timeline */
+.timeline-card {
+    padding: 14px 16px !important;
+}
+
+.tl-row {
+    display: flex;
+    align-items: center;
+}
+
+.tl-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.tl-node {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border: 2px solid #D1D5DB;
+    background: #F3F4F6;
+    color: #9CA3AF;
+    transition: all .2s;
+}
+
+.tl-done .tl-node {
+    background: #6B7280;
+    border-color: #6B7280;
+    color: #fff;
+}
+
+.tl-active .tl-node {
+    background: #F36B21;
+    border-color: #F36B21;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(243,107,33,.2);
+}
+
+.tl-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9CA3AF;
+    white-space: nowrap;
+}
+
+.tl-done .tl-lbl  { color: #6B7280; }
+.tl-active .tl-lbl { color: #F36B21; font-weight: 800; }
+
+.tl-connector {
+    flex: 1;
+    height: 3px;
+    background: #E5E7EB;
+    margin-bottom: 18px;
+}
+
+.tl-connector-done {
+    background: #6B7280;
+}
+
+.tl-dot-cancel {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fde8e8;
+    border: 2px solid #e74c3c;
+    color: #c0392b;
+    font-size: 14px;
+}
+
+/* Operaciones grid */
+.ops-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.ops-grid .btn-link-operacion,
+.ops-grid .btn-secundario {
+    margin-bottom: 0;
 }
 
 .grid-resumen {
@@ -666,7 +829,6 @@
     font-size: 13px;
     cursor: not-allowed;
     font-weight: 700;
-    margin-top: 6px;
 }
 
 .btn-pdf {
@@ -690,7 +852,6 @@
     text-align: center;
     text-decoration: none;
     box-sizing: border-box;
-    margin-bottom: 8px;
 }
 
 .btn-factura {
@@ -722,41 +883,6 @@
     font-size: 13px;
 }
 
-.estado-bloque {
-    background: #fff3ec;
-    border: 2px solid #F36B21;
-}
-
-.estado-titulo {
-    font-size: 16px !important;
-    font-weight: 800 !important;
-    color: #d95714;
-    margin-bottom: 12px !important;
-}
-
-.input-estado {
-    font-size: 15px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-}
-
-.btn-estado {
-    width: 100%;
-    background: #F36B21;
-    color: white;
-    padding: 13px 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    font-weight: 800;
-    letter-spacing: .01em;
-}
-
-.btn-estado:hover {
-    background: #d95714;
-}
-
 .whatsapp-box p {
     color: #777;
     margin-bottom: 10px;
@@ -771,6 +897,15 @@
     .layout-operacion {
         grid-template-columns: 1fr;
     }
+
+    .barra-estado-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .input-estado-top {
+        width: 100%;
+    }
 }
 
 @media (max-width: 700px) {
@@ -784,7 +919,8 @@
     }
 
     .detalle-grid,
-    .economia-grid {
+    .economia-grid,
+    .ops-grid {
         grid-template-columns: 1fr;
     }
 }
