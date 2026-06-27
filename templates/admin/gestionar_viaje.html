@@ -233,7 +233,67 @@
         <div class="card bloque">
             <h2>Detalles de la carga</h2>
 
-            {% if obs_parsed.tipo_carga or obs_parsed.peso or obs_parsed.notas %}
+            {% if viaje.tipo_carga %}
+            {# ── Campos estructurados (solicitudes nuevas) ── #}
+
+            {% if (viaje.prioridad and viaje.prioridad != 'Normal') or viaje.referencia_cliente %}
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+                {% if viaje.prioridad and viaje.prioridad != 'Normal' %}
+                <span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;
+                    {% if viaje.prioridad == 'Urgente' %}background:#fef2f2;color:#991b1b;border:1px solid #f87171;
+                    {% else %}background:#fffbeb;color:#92400e;border:1px solid #fcd34d;{% endif %}">
+                    {{ viaje.prioridad }}
+                </span>
+                {% endif %}
+                {% if viaje.referencia_cliente %}
+                <span style="font-size:12px;color:#666;">Ref. cliente: <strong>{{ viaje.referencia_cliente }}</strong></span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:10px;">
+                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
+                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Tipo de carga</div>
+                    <div style="font-size:13px;font-weight:700;">{{ viaje.tipo_carga or "—" }}</div>
+                </div>
+                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
+                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Tipo de transporte</div>
+                    <div style="font-size:13px;font-weight:700;">{{ viaje.tipo_transporte or "—" }}</div>
+                </div>
+                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
+                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Peso (ton)</div>
+                    <div style="font-size:13px;font-weight:700;">{{ viaje.peso_toneladas if viaje.peso_toneladas else "—" }}</div>
+                </div>
+                {% if viaje.cantidad_contenedores %}
+                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
+                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Contenedores</div>
+                    <div style="font-size:13px;font-weight:700;">{{ viaje.cantidad_contenedores }}</div>
+                </div>
+                {% endif %}
+                {% if viaje.numero_contenedor %}
+                <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
+                    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">N° contenedor</div>
+                    <div style="font-size:13px;font-weight:700;">{{ viaje.numero_contenedor }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if viaje.observaciones_operativas %}
+            <div style="background:#f0f7ff;border-left:3px solid #2563EB;border-radius:6px;padding:9px 12px;margin-bottom:8px;">
+                <div style="font-size:10px;color:#2563EB;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Obs. operativas</div>
+                <div style="font-size:13px;white-space:pre-line;">{{ viaje.observaciones_operativas }}</div>
+            </div>
+            {% endif %}
+
+            {% if viaje.observaciones %}
+            <div class="observaciones" style="margin-top:8px;">
+                <div style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px;">Notas adicionales</div>
+                {{ viaje.observaciones }}
+            </div>
+            {% endif %}
+
+            {% elif obs_parsed.tipo_carga or obs_parsed.peso or obs_parsed.notas %}
+            {# ── Datos legacy (formato texto antiguo) ── #}
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;">
                 <div style="background:#f7f7f7;border-radius:8px;padding:10px;">
                     <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Tipo de carga</div>

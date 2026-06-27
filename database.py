@@ -258,7 +258,15 @@ def crear_base_datos(bcrypt):
         fecha_asignacion TEXT,
         fecha_recogida TEXT,
         fecha_entrega TEXT,
-        observaciones TEXT
+        observaciones TEXT,
+        referencia_cliente TEXT,
+        prioridad TEXT DEFAULT 'Normal',
+        tipo_carga TEXT,
+        tipo_transporte TEXT,
+        cantidad_contenedores INTEGER,
+        numero_contenedor TEXT,
+        peso_toneladas REAL,
+        observaciones_operativas TEXT
     )
     """)
 
@@ -326,6 +334,14 @@ def crear_base_datos(bcrypt):
     agregar_columna(cursor, "viajes", "fecha_recogida", "TEXT")
     agregar_columna(cursor, "viajes", "fecha_entrega", "TEXT")
     agregar_columna(cursor, "viajes", "observaciones", "TEXT")
+    agregar_columna(cursor, "viajes", "referencia_cliente", "TEXT")
+    agregar_columna(cursor, "viajes", "prioridad", "TEXT DEFAULT 'Normal'")
+    agregar_columna(cursor, "viajes", "tipo_carga", "TEXT")
+    agregar_columna(cursor, "viajes", "tipo_transporte", "TEXT")
+    agregar_columna(cursor, "viajes", "cantidad_contenedores", "INTEGER")
+    agregar_columna(cursor, "viajes", "numero_contenedor", "TEXT")
+    agregar_columna(cursor, "viajes", "peso_toneladas", "REAL")
+    agregar_columna(cursor, "viajes", "observaciones_operativas", "TEXT")
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS configuracion_texto (

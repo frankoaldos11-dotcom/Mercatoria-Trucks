@@ -288,26 +288,46 @@ def solicitar_envio():
     cur = con.cursor()
 
     if request.method == "POST":
-        ruta_id = request.form.get("ruta_id", "").strip()
-        tipo    = request.form.get("tipo", "").strip()
-        peso    = request.form.get("peso", "").strip()
-        notas   = request.form.get("notas", "").strip()
+        ruta_id            = request.form.get("ruta_id", "").strip()
+        tipo_carga         = request.form.get("tipo_carga", "").strip()
+        tipo_transporte    = request.form.get("tipo_transporte", "").strip()
+        peso_str           = request.form.get("peso_toneladas", "").strip()
+        referencia_cliente = request.form.get("referencia_cliente", "").strip()
+        prioridad          = request.form.get("prioridad", "Normal").strip() or "Normal"
+        cantidad_str       = request.form.get("cantidad_contenedores", "").strip()
+        numero_contenedor  = request.form.get("numero_contenedor", "").strip()
+        notas              = request.form.get("notas", "").strip()
+        obs_operativas     = request.form.get("observaciones_operativas", "").strip()
 
-        if not ruta_id or not tipo or not peso:
-            cur.execute("SELECT id, nombre, origen, destino FROM rutas WHERE activa = 1 ORDER BY nombre",)
-            rutas = cur.fetchall()
+        def _err(msg):
+            cur.execute("SELECT id, nombre, origen, destino FROM rutas WHERE activa = 1 ORDER BY nombre")
+            rutas_err = cur.fetchall()
             con.close()
-            return render_template("cliente/solicitar.html", rutas=rutas,
-                                   error="Selecciona la ruta, tipo de carga y peso aproximado")
+            return render_template("cliente/solicitar.html", rutas=rutas_err, error=msg)
+
+        if not ruta_id or not tipo_carga:
+            return _err("Selecciona la ruta y el tipo de carga")
+
+        if not peso_str:
+            return _err("Indica el peso en toneladas")
+
+        try:
+            peso_toneladas = float(peso_str)
+        except ValueError:
+            return _err("El peso debe ser un número válido (Ej: 2.5)")
+
+        cantidad_contenedores = None
+        if cantidad_str:
+            try:
+                cantidad_contenedores = int(cantidad_str)
+            except ValueError:
+                pass
 
         cur.execute("SELECT origen, destino FROM rutas WHERE id = ? AND activa = 1", (ruta_id,))
         ruta = cur.fetchone()
         if not ruta:
-            cur.execute("SELECT id, nombre, origen, destino FROM rutas WHERE activa = 1 ORDER BY nombre")
-            rutas = cur.fetchall()
-            con.close()
-            return render_template("cliente/solicitar.html", rutas=rutas,
-                                   error="La ruta seleccionada no es válida. Por favor elige una de la lista.")
+            return _err("La ruta seleccionada no es válida. Por favor elige una de la lista.")
+
         origen  = ruta["origen"]
         destino = ruta["destino"]
 
@@ -323,15 +343,28 @@ def solicitar_envio():
             cliente_id = cur.lastrowid
             con.commit()
 
-        obs = f"Tipo de carga: {tipo} | Peso aprox.: {peso}"
-        if notas:
-            obs += f"\nNotas: {notas}"
-
         cur.execute("""
-            INSERT INTO viajes (cliente, cliente_id, ruta_id, origen, destino, precio, combustible,
-                                comision, beneficio, estado, observaciones)
-            VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, 'Solicitado', ?)
-        """, (session["usuario"], cliente_id, ruta_id, origen, destino, obs))
+            INSERT INTO viajes (
+                cliente, cliente_id, ruta_id, origen, destino,
+                precio, combustible, comision, beneficio, estado,
+                observaciones, referencia_cliente, prioridad,
+                tipo_carga, tipo_transporte, cantidad_contenedores,
+                numero_contenedor, peso_toneladas, observaciones_operativas
+            )
+            VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, 'Solicitado',
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            session["usuario"], cliente_id, ruta_id, origen, destino,
+            notas or None,
+            referencia_cliente or None,
+            prioridad,
+            tipo_carga,
+            tipo_transporte or None,
+            cantidad_contenedores,
+            numero_contenedor or None,
+            peso_toneladas,
+            obs_operativas or None,
+        ))
         con.commit()
         con.close()
         return redirect(url_for("cliente.mis_viajes", nuevo=1))

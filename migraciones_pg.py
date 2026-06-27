@@ -27,7 +27,24 @@ def ejecutar_migraciones_pg():
         WHERE table_schema = 'public' AND table_name = 'usuarios'
     """)
     if cur.fetchone()[0] > 0:
-        # Schema ya existe — solo asegurar usuario admin
+        # Schema ya existe — asegurar admin y columnas nuevas
+        nuevas_columnas_viajes = [
+            ("referencia_cliente",      "TEXT"),
+            ("prioridad",               "TEXT DEFAULT 'Normal'"),
+            ("tipo_carga",              "TEXT"),
+            ("tipo_transporte",         "TEXT"),
+            ("cantidad_contenedores",   "INTEGER"),
+            ("numero_contenedor",       "TEXT"),
+            ("peso_toneladas",          "REAL"),
+            ("observaciones_operativas","TEXT"),
+        ]
+        for col, defn in nuevas_columnas_viajes:
+            try:
+                cur.execute(f"ALTER TABLE viajes ADD COLUMN IF NOT EXISTS {col} {defn}")
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
         cur.execute("SELECT id FROM usuarios WHERE usuario = 'admin'")
         if not cur.fetchone():
             from flask_bcrypt import Bcrypt
@@ -39,7 +56,7 @@ def ejecutar_migraciones_pg():
             )
             conn.commit()
         conn.close()
-        print("[migraciones_pg] Schema existente detectado — migraciones omitidas.")
+        print("[migraciones_pg] Schema existente detectado — migraciones incrementales aplicadas.")
         return
 
     print("[migraciones_pg] Schema nuevo — ejecutando migraciones completas.")
@@ -221,7 +238,15 @@ def ejecutar_migraciones_pg():
         fecha_asignacion TEXT,
         fecha_recogida TEXT,
         fecha_entrega TEXT,
-        observaciones TEXT
+        observaciones TEXT,
+        referencia_cliente TEXT,
+        prioridad TEXT DEFAULT 'Normal',
+        tipo_carga TEXT,
+        tipo_transporte TEXT,
+        cantidad_contenedores INTEGER,
+        numero_contenedor TEXT,
+        peso_toneladas REAL,
+        observaciones_operativas TEXT
     )
     """)
 

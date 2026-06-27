@@ -215,7 +215,8 @@ def viajes():
                COALESCE(v.cliente, 'Sin nombre') as cliente,
                v.origen, v.destino, v.estado, v.camionero_nombre,
                COALESCE(v.precio_final, v.precio_cliente, v.precio, 0) as precio,
-               v.fecha_creacion
+               v.fecha_creacion,
+               v.prioridad, v.tipo_carga
         FROM viajes v
         {where}
         ORDER BY v.id DESC

@@ -546,3 +546,23 @@ body {
     color: white !important;
     transform: none;
 }
+
+.badge-prio {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+    margin-top: 3px;
+}
+.badge-prio-alta {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+.badge-prio-urgente {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #f87171;
+}

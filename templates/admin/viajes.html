@@ -98,9 +98,17 @@
                     <td>#{{ v.id }}</td>
                     <td>{{ v.cliente }}</td>
                     <td>{{ v.origen }}</td>
-                    <td>{{ v.destino }}</td>
+                    <td>
+                        {{ v.destino }}
+                        {% if v.tipo_carga %}
+                        <br><span style="font-size:10px;color:#9CA3AF;">{{ v.tipo_carga }}</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <span class="badge {{ bc.get(v.estado|lower, '') }}">{{ v.estado }}</span>
+                        {% if v.prioridad and v.prioridad != 'Normal' %}
+                        <br><span class="badge-prio badge-prio-{{ v.prioridad|lower }}">{{ v.prioridad }}</span>
+                        {% endif %}
                     </td>
                     <td>
                         {% if v.precio and v.precio|float > 0 %}
