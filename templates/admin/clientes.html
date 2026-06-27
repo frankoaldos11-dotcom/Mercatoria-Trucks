@@ -58,6 +58,14 @@
                 <label>Dirección</label>
                 <input type="text" name="direccion" class="input-crud" placeholder="Dirección fiscal">
             </div>
+            <div class="form-crud-field">
+                <label>Categoría</label>
+                <select name="categoria" class="input-crud">
+                    {% for cat in categorias %}
+                    <option value="{{ cat }}">{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="form-crud-field form-crud-submit">
                 <button type="submit" class="btn-crud-primary">Registrar cliente</button>
             </div>
@@ -66,12 +74,18 @@
 </section>
 {% endif %}
 
-<form method="GET" action="/admin/clientes" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+<form method="GET" action="/admin/clientes" style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
     <input type="text" name="buscar" value="{{ buscar_cl or '' }}"
            placeholder="Buscar por nombre, email, empresa o teléfono..."
            style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;min-width:280px;">
+    <select name="categoria" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fafafa;">
+        <option value="">Todas las categorías</option>
+        {% for cat in categorias %}
+        <option value="{{ cat }}" {% if filtro_cat == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+    </select>
     <button type="submit" style="padding:8px 16px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
-    {% if buscar_cl %}
+    {% if buscar_cl or filtro_cat %}
     <a href="/admin/clientes" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
     {% endif %}
 </form>
@@ -90,6 +104,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
+                    <th>Categoría</th>
                     <th>Empresa</th>
                     <th>Contacto</th>
                     {% if session.get('rol') == 'admin' %}
@@ -114,6 +129,7 @@
                         {{ c.nombre }}
                         {% endif %}
                     </td>
+                    <td><span class="badge-cat badge-cat-{{ (c.categoria or 'Normal')|lower|replace('é','e')|replace('ó','o') }}">{{ c.categoria or 'Normal' }}</span></td>
                     <td>{{ c.empresa or "—" }}</td>
                     <td>{{ c.contacto or "—" }}</td>
                     {% if session.get('rol') == 'admin' %}
@@ -136,7 +152,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="8" class="empty-state">No hay clientes registrados.</td>
+                    <td colspan="9" class="empty-state">No hay clientes registrados.</td>
                 </tr>
                 {% endfor %}
             </tbody>

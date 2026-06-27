@@ -60,6 +60,7 @@ def ejecutar_migraciones():
     agregar_columna(cursor, "viajes", "vehiculo_placa", "TEXT")
     agregar_columna(cursor, "viajes", "estado", "TEXT DEFAULT 'Pendiente'")
     agregar_columna(cursor, "viajes", "observaciones", "TEXT")
+    agregar_columna(cursor, "clientes", "categoria", "TEXT DEFAULT 'Normal'")
     agregar_columna(cursor, "viajes", "referencia_cliente",      "TEXT")
     agregar_columna(cursor, "viajes", "prioridad",               "TEXT DEFAULT 'Normal'")
     agregar_columna(cursor, "viajes", "tipo_carga",              "TEXT")

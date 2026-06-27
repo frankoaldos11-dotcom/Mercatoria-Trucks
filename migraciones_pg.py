@@ -28,6 +28,12 @@ def ejecutar_migraciones_pg():
     """)
     if cur.fetchone()[0] > 0:
         # Schema ya existe — asegurar admin y columnas nuevas
+        try:
+            cur.execute("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'Normal'")
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
         nuevas_columnas_viajes = [
             ("referencia_cliente",      "TEXT"),
             ("prioridad",               "TEXT DEFAULT 'Normal'"),
@@ -87,6 +93,7 @@ def ejecutar_migraciones_pg():
         email TEXT,
         direccion TEXT,
         activo INTEGER DEFAULT 1,
+        categoria TEXT DEFAULT 'Normal',
         fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)

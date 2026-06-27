@@ -96,7 +96,13 @@
                 {% for v in lista %}
                 <tr>
                     <td>#{{ v.id }}</td>
-                    <td>{{ v.cliente }}</td>
+                    <td>
+                        {{ v.cliente }}
+                        {% set cat = v.cliente_categoria or 'Normal' %}
+                        {% if cat != 'Normal' %}
+                        <br><span class="badge-cat badge-cat-{{ cat|lower|replace('é','e')|replace('ó','o') }}">{{ cat }}</span>
+                        {% endif %}
+                    </td>
                     <td>{{ v.origen }}</td>
                     <td>
                         {{ v.destino }}

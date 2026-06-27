@@ -193,13 +193,21 @@ def cliente_home():
     if not nombre:
         nombre = session["usuario"].split("@")[0]
 
+    cur.execute("""
+        SELECT COALESCE(categoria, 'Normal') AS categoria
+        FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE usuario = ?)
+    """, (session["usuario"],))
+    cl = cur.fetchone()
+    categoria_cliente = cl["categoria"] if cl else "Normal"
+
     con.close()
     return render_template("cliente/home.html",
                            recientes=recientes,
                            activos=activos,
                            total=total,
                            entregados=entregados,
-                           nombre=nombre)
+                           nombre=nombre,
+                           categoria_cliente=categoria_cliente)
 
 
 @cliente_bp.route("/viajes")

@@ -342,6 +342,12 @@
         {% if cliente_info %}
         <div class="card bloque">
             <h2><i class="bi bi-person-circle" style="color:#E86A2C;margin-right:5px;"></i>Datos del cliente</h2>
+            {% set cat = cliente_info.categoria or 'Normal' %}
+            {% if cat != 'Normal' %}
+            <div style="margin-bottom:10px;">
+                <span class="badge-cat badge-cat-{{ cat|lower|replace('é','e')|replace('ó','o') }}">{{ cat }}</span>
+            </div>
+            {% endif %}
             <table style="width:100%;font-size:12px;border-collapse:collapse;">
                 <tr>
                     <td style="color:#888;padding:5px 0;width:30%;font-size:11px;text-transform:uppercase;">Nombre</td>

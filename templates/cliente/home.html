@@ -8,12 +8,30 @@
 <div class="mt-page-header">
     <div>
         <h1>Hola, {{ session.get('nombre', nombre) }} 👋</h1>
-        <p class="text-muted mb-0" style="font-size:0.85rem;">Bienvenido a tu panel de envíos</p>
+        <p class="text-muted mb-0" style="font-size:0.85rem;">
+            Bienvenido a tu panel de envíos
+            {% if categoria_cliente and categoria_cliente != 'Normal' %}
+            &nbsp;<span class="badge-cat-portal badge-cat-portal-{{ categoria_cliente|lower|replace('é','e')|replace('ó','o') }}">{{ categoria_cliente }}</span>
+            {% endif %}
+        </p>
     </div>
     <a href="/cliente/solicitar" class="btn-mt">
         <i class="bi bi-plus-circle me-1"></i> Nueva Solicitud
     </a>
 </div>
+
+<style>
+.badge-cat-portal {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.badge-cat-portal-vip         { background:#FFFBEB; color:#92400E; border:1px solid #FCD34D; }
+.badge-cat-portal-estrategico { background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; }
+.badge-cat-portal-humanitario { background:#ECFDF5; color:#065F46; border:1px solid #6EE7B7; }
+</style>
 
 <!-- Stat cards -->
 <style>

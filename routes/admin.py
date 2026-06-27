@@ -216,8 +216,10 @@ def viajes():
                v.origen, v.destino, v.estado, v.camionero_nombre,
                COALESCE(v.precio_final, v.precio_cliente, v.precio, 0) as precio,
                v.fecha_creacion,
-               v.prioridad, v.tipo_carga
+               v.prioridad, v.tipo_carga,
+               COALESCE(c.categoria, 'Normal') AS cliente_categoria
         FROM viajes v
+        LEFT JOIN clientes c ON c.id = v.cliente_id
         {where}
         ORDER BY v.id DESC
         LIMIT ? OFFSET ?
@@ -311,7 +313,7 @@ def gestionar_viaje(id):
     cliente_info = None
     if viaje["cliente_id"]:
         cursor.execute(
-            "SELECT nombre, telefono, empresa, email FROM clientes WHERE id = ?",
+            "SELECT nombre, telefono, empresa, email, COALESCE(categoria, 'Normal') AS categoria FROM clientes WHERE id = ?",
             (viaje["cliente_id"],)
         )
         cliente_info = cursor.fetchone()
@@ -1005,6 +1007,8 @@ def admin_clientes():
     conexion = conectar()
     cursor = conexion.cursor()
 
+    CATEGORIAS_CLIENTE = ["Normal", "VIP", "Estratégico", "Humanitario"]
+
     if request.method == "POST":
         if session.get("rol") != "admin":
             conexion.close()
@@ -1016,27 +1020,35 @@ def admin_clientes():
         telefono = request.form.get("telefono", "").strip()
         email = request.form.get("email", "").strip()
         direccion = request.form.get("direccion", "").strip()
+        categoria = request.form.get("categoria", "Normal").strip()
+        if categoria not in CATEGORIAS_CLIENTE:
+            categoria = "Normal"
 
         cursor.execute("""
-            INSERT INTO clientes (nombre, empresa, contacto, telefono, email, direccion)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (nombre, empresa, contacto, telefono, email, direccion))
+            INSERT INTO clientes (nombre, empresa, contacto, telefono, email, direccion, categoria)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (nombre, empresa, contacto, telefono, email, direccion, categoria))
 
         conexion.commit()
         conexion.close()
         return redirect("/admin/clientes?ok=1")
 
     buscar_cl = request.args.get("buscar", "").strip()
+    filtro_cat = request.args.get("categoria", "").strip()
     cond_cl = []
     params_cl = []
     if buscar_cl:
         cond_cl.append("(nombre LIKE ? OR email LIKE ? OR empresa LIKE ? OR telefono LIKE ?)")
         like_cl = f"%{buscar_cl}%"
         params_cl.extend([like_cl, like_cl, like_cl, like_cl])
+    if filtro_cat and filtro_cat in CATEGORIAS_CLIENTE:
+        cond_cl.append("COALESCE(categoria, 'Normal') = ?")
+        params_cl.append(filtro_cat)
     where_cl = ("WHERE " + " AND ".join(cond_cl)) if cond_cl else ""
 
     cursor.execute(f"""
-        SELECT id, nombre, empresa, contacto, telefono, email, direccion, fecha_creacion
+        SELECT id, nombre, empresa, contacto, telefono, email, direccion,
+               COALESCE(categoria, 'Normal') AS categoria, fecha_creacion
         FROM clientes
         {where_cl}
         ORDER BY id DESC
@@ -1045,7 +1057,11 @@ def admin_clientes():
 
     conexion.close()
 
-    return render_template("admin/clientes.html", lista=lista, buscar_cl=buscar_cl)
+    return render_template("admin/clientes.html",
+                           lista=lista,
+                           buscar_cl=buscar_cl,
+                           filtro_cat=filtro_cat,
+                           categorias=CATEGORIAS_CLIENTE)
 
 
 @admin_bp.route("/clientes/<int:id>/editar", methods=["GET", "POST"])
@@ -1058,6 +1074,8 @@ def editar_cliente(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
+    CATEGORIAS_CLIENTE = ["Normal", "VIP", "Estratégico", "Humanitario"]
+
     if request.method == "POST":
         nombre = request.form["nombre"].strip()
         empresa = request.form.get("empresa", "").strip()
@@ -1065,13 +1083,16 @@ def editar_cliente(id):
         telefono = request.form.get("telefono", "").strip()
         email = request.form.get("email", "").strip()
         direccion = request.form.get("direccion", "").strip()
+        categoria = request.form.get("categoria", "Normal").strip()
+        if categoria not in CATEGORIAS_CLIENTE:
+            categoria = "Normal"
 
         cursor.execute("""
             UPDATE clientes
             SET nombre = ?, empresa = ?, contacto = ?, telefono = ?,
-                email = ?, direccion = ?
+                email = ?, direccion = ?, categoria = ?
             WHERE id = ?
-        """, (nombre, empresa, contacto, telefono, email, direccion, id))
+        """, (nombre, empresa, contacto, telefono, email, direccion, categoria, id))
 
         conexion.commit()
         conexion.close()
@@ -1079,7 +1100,8 @@ def editar_cliente(id):
         return redirect("/admin/clientes")
 
     cursor.execute("""
-        SELECT id, nombre, empresa, contacto, telefono, email, direccion
+        SELECT id, nombre, empresa, contacto, telefono, email, direccion,
+               COALESCE(categoria, 'Normal') AS categoria
         FROM clientes
         WHERE id = ?
     """, (id,))
@@ -1090,7 +1112,9 @@ def editar_cliente(id):
     if not cliente:
         return redirect("/admin/clientes")
 
-    return render_template("admin/editar_cliente.html", cliente=cliente)
+    return render_template("admin/editar_cliente.html",
+                           cliente=cliente,
+                           categorias=CATEGORIAS_CLIENTE)
 
 
 @admin_bp.route("/clientes/<int:id>/eliminar", methods=["POST"])

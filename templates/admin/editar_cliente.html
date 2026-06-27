@@ -55,6 +55,18 @@
                 </div>
             </div>
 
+            <div class="edit-row">
+                <div class="edit-field">
+                    <label>Categoría</label>
+                    <select name="categoria" class="input-crud">
+                        {% for cat in categorias %}
+                        <option value="{{ cat }}" {% if (cliente.categoria or 'Normal') == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="edit-field"></div>
+            </div>
+
             <div class="edit-actions">
                 <button type="submit" class="btn-crud-primary">Guardar cambios</button>
                 <a href="/admin/clientes" class="btn-crud-secondary">Cancelar</a>

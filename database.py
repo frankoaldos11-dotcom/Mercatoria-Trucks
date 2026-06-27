@@ -116,6 +116,7 @@ def crear_base_datos(bcrypt):
         email TEXT,
         direccion TEXT,
         activo INTEGER DEFAULT 1,
+        categoria TEXT DEFAULT 'Normal',
         fecha_creacion TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
