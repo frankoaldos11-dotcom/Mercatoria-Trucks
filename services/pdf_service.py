@@ -846,7 +846,7 @@ def _construir_pdf_factura(v: dict, precio: float) -> bytes:
     right_col = Table(
         [
             [Paragraph("FACTURA", es["titulo"])],
-            [Paragraph(f"FAC-{factura_num:04d}", es["numero"])],
+            [Paragraph(f"MT-{factura_num:04d}", es["numero"])],
             [Paragraph(f"Fecha de emisión: {fecha_emision}", es["fecha"])],
         ],
         colWidths=[8 * cm],
@@ -877,15 +877,27 @@ def _construir_pdf_factura(v: dict, precio: float) -> bytes:
     email_cli    = v.get("cli_email")    or "—"
     telefono_cli = v.get("cli_telefono") or "—"
 
-    t = Table(
-        [
-            [Paragraph("NOMBRE", estilo_label_fac),       Paragraph("EMPRESA", estilo_label_fac),
-             Paragraph("EMAIL", estilo_label_fac),         Paragraph("TELÉFONO", estilo_label_fac)],
-            [Paragraph(nombre_cli,   estilo_valor_fac),    Paragraph(empresa_cli,  estilo_valor_fac),
-             Paragraph(email_cli,    estilo_valor_fac),    Paragraph(telefono_cli, estilo_valor_fac)],
-        ],
-        colWidths=[4.5 * cm, 4 * cm, 5 * cm, 3.5 * cm],
-    )
+    if empresa_cli and empresa_cli != "—":
+        t = Table(
+            [
+                [Paragraph("NOMBRE", estilo_label_fac),    Paragraph("EMPRESA", estilo_label_fac),
+                 Paragraph("EMAIL", estilo_label_fac),      Paragraph("TELÉFONO", estilo_label_fac)],
+                [Paragraph(nombre_cli,   estilo_valor_fac), Paragraph(empresa_cli,  estilo_valor_fac),
+                 Paragraph(email_cli,    estilo_valor_fac), Paragraph(telefono_cli, estilo_valor_fac)],
+            ],
+            colWidths=[4.5 * cm, 4 * cm, 5 * cm, 3.5 * cm],
+        )
+    else:
+        t = Table(
+            [
+                [Paragraph("NOMBRE", estilo_label_fac), Paragraph("EMAIL", estilo_label_fac),
+                 Paragraph("TELÉFONO", estilo_label_fac)],
+                [Paragraph(nombre_cli,   estilo_valor_fac),
+                 Paragraph(email_cli,    estilo_valor_fac),
+                 Paragraph(telefono_cli, estilo_valor_fac)],
+            ],
+            colWidths=[5.5 * cm, 6 * cm, 5.5 * cm],
+        )
     t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2)]))
     elems.append(t)
     elems.append(Spacer(1, 12))
@@ -896,17 +908,14 @@ def _construir_pdf_factura(v: dict, precio: float) -> bytes:
 
     ruta        = f"{v.get('origen') or '—'} → {v.get('destino') or '—'}"
     fecha_viaje = _formato_fecha(v.get("fecha_creacion"))
-    tipo_carga  = v.get("tipo_vehiculo_nombre") or v.get("mercancia") or "—"
 
     t = Table(
         [
-            [Paragraph("RUTA", estilo_label_fac),  Paragraph("FECHA DEL VIAJE", estilo_label_fac),
-             Paragraph("TIPO DE CARGA", estilo_label_fac)],
-            [Paragraph(ruta,         estilo_valor_fac),
-             Paragraph(fecha_viaje,  estilo_valor_fac),
-             Paragraph(tipo_carga,   estilo_valor_fac)],
+            [Paragraph("RUTA", estilo_label_fac), Paragraph("FECHA", estilo_label_fac)],
+            [Paragraph(ruta,        estilo_valor_fac),
+             Paragraph(fecha_viaje, estilo_valor_fac)],
         ],
-        colWidths=[7 * cm, 4.5 * cm, 5.5 * cm],
+        colWidths=[10 * cm, 7 * cm],
     )
     t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
     elems.append(t)
@@ -956,6 +965,26 @@ def _construir_pdf_factura(v: dict, precio: float) -> bytes:
         ("ROUNDEDCORNERS", [6]),
     ]))
     elems.append(total_box)
+    elems.append(Spacer(1, 12))
+
+    # ── Condiciones de pago ───────────────────────────────────────────────────
+    cond_text = (
+        "• Pago acordado en USD (dólares americanos)<br/>"
+        "• Este documento es válido como comprobante del servicio prestado<br/>"
+        "• Emitido por MERCATORIA S.R.L. — mercatoria.us"
+    )
+    t_cond = Table(
+        [[Paragraph(cond_text, estilo_condiciones)]],
+        colWidths=[17 * cm],
+    )
+    t_cond.setStyle(TableStyle([
+        ("BACKGROUND",    (0, 0), (-1, -1), GRIS_FONDO),
+        ("TOPPADDING",    (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 12),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 12),
+    ]))
+    elems.append(t_cond)
     elems.append(Spacer(1, 14))
 
     # ── Firmas ────────────────────────────────────────────────────────────────
@@ -985,7 +1014,7 @@ def _construir_pdf_factura(v: dict, precio: float) -> bytes:
     elems.append(Spacer(1, 20))
     elems.append(HRFlowable(width="100%", thickness=1, color=GRIS_FONDO, spaceAfter=6))
     elems.append(Paragraph(
-        f"Mercatoria Truck · Factura N° FAC-{factura_num:04d} · Emitida el {fecha_emision}",
+        f"Mercatoria Truck · Factura N° MT-{factura_num:04d} · Emitida el {fecha_emision}",
         es["pie"],
     ))
 
