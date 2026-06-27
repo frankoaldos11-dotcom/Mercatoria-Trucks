@@ -211,6 +211,23 @@ def reset_admin():
         return f"ERROR: {e}"
 
 
+@app.route("/debug2-tmp-borrar")
+def debug2():
+    try:
+        from extensions import bcrypt as _bcrypt
+        con = conectar()
+        cur = con.cursor()
+        cur.execute("SELECT id, usuario, rol, activo, LEFT(password, 20) as hash_inicio FROM usuarios ORDER BY id")
+        filas = cur.fetchall()
+        con.close()
+        resultado = ""
+        for f in filas:
+            resultado += f"id={f['id']} usuario={f['usuario']} rol={f['rol']} activo={f['activo']} hash={f['hash_inicio']}<br>"
+        return resultado or "Sin usuarios"
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
