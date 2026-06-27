@@ -78,7 +78,7 @@
             <tbody>
                 {% for r in registros %}
                 <tr>
-                    <td style="white-space:nowrap;font-size:12px;color:#666;">{{ r.fecha.strftime('%Y-%m-%d %H:%M') if r.fecha else '—' }}</td>
+                    <td style="white-space:nowrap;font-size:12px;color:#666;">{{ r.fecha | fmt_fecha }}</td>
                     <td style="font-weight:600;font-size:13px;">{{ r.usuario or "—" }}</td>
                     <td style="font-size:12px;color:#888;">{{ r.rol or "—" }}</td>
                     <td>

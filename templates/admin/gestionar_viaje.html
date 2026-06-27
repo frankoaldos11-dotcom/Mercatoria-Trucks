@@ -229,7 +229,7 @@
                 <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
                     <div style="width:10px;height:10px;border-radius:50%;background:#F36B21;flex-shrink:0;"></div>
                     <span style="font-weight:700;min-width:90px;">{{ nombre_estado }}</span>
-                    <span style="color:#888;">{{ fecha.strftime('%Y-%m-%d %H:%M') if fecha else '—' }}</span>
+                    <span style="color:#888;">{{ fecha | fmt_fecha }}</span>
                 </div>
                 {% endif %}
                 {% endfor %}
@@ -259,7 +259,7 @@
                 <div style="background:#f7f7f7;border-radius:8px;padding:10px 12px;border-left:3px solid #F36B21;">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
                         <span style="font-size:11px;font-weight:700;color:#F36B21;">{{ nota.usuario }}</span>
-                        <span style="font-size:11px;color:#999;">{{ nota.fecha.strftime('%Y-%m-%d %H:%M') if nota.fecha else '—' }}</span>
+                        <span style="font-size:11px;color:#999;">{{ nota.fecha | fmt_fecha }}</span>
                     </div>
                     <p style="margin:0;font-size:13px;color:#333;white-space:pre-line;">{{ nota.texto }}</p>
                 </div>

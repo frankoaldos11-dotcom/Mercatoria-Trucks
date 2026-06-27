@@ -37,6 +37,20 @@ app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_DEFAULT_SENDER", "norep
 
 bcrypt.init_app(app)
 mail.init_app(app)
+
+def fmt_fecha(value, fmt='%Y-%m-%d %H:%M'):
+    if not value:
+        return '—'
+    if hasattr(value, 'strftime'):
+        return value.strftime(fmt)
+    try:
+        from datetime import datetime
+        return datetime.strptime(str(value)[:16], '%Y-%m-%d %H:%M').strftime(fmt)
+    except Exception:
+        return str(value)[:16]
+
+app.jinja_env.filters['fmt_fecha'] = fmt_fecha
+
 csrf = CSRFProtect(app)
 
 limiter = Limiter(
