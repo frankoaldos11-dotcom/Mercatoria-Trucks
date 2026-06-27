@@ -291,6 +291,17 @@ def crear_base_datos(bcrypt):
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS notas_viaje (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        viaje_id INTEGER NOT NULL,
+        usuario TEXT NOT NULL,
+        texto TEXT NOT NULL,
+        fecha TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (viaje_id) REFERENCES viajes(id)
+    )
+    """)
+
     cursor.execute("SELECT id FROM usuarios WHERE usuario = ?", ("admin",))
     if not cursor.fetchone():
         hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")

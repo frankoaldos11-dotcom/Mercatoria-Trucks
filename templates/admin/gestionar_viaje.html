@@ -239,6 +239,37 @@
             </div>
         </div>
 
+        <div class="card bloque">
+            <h2><i class="bi bi-journal-text" style="color:#F36B21;margin-right:5px;"></i>Notas internas</h2>
+
+            <form method="POST" action="/admin/viaje/{{ viaje['id'] }}/nota"
+                  style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-start;">
+                <textarea name="texto" rows="2" placeholder="Añadir nota interna (llamada, acuerdo, incidencia...)"
+                          style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;"
+                          required></textarea>
+                <button type="submit"
+                        style="padding:8px 14px;background:#F36B21;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                    <i class="bi bi-plus-lg"></i> Añadir
+                </button>
+            </form>
+
+            {% if notas %}
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                {% for nota in notas %}
+                <div style="background:#f7f7f7;border-radius:8px;padding:10px 12px;border-left:3px solid #F36B21;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                        <span style="font-size:11px;font-weight:700;color:#F36B21;">{{ nota["usuario"] }}</span>
+                        <span style="font-size:11px;color:#999;">{{ nota["fecha"][:16] }}</span>
+                    </div>
+                    <p style="margin:0;font-size:13px;color:#333;white-space:pre-line;">{{ nota["texto"] }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:#999;font-size:13px;margin:0;">Sin notas internas para este viaje.</p>
+            {% endif %}
+        </div>
+
     </div>
 
     <div class="columna-lateral">

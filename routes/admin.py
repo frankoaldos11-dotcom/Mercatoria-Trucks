@@ -215,7 +215,9 @@ def viajes():
     cursor.execute(f"""
         SELECT v.id,
                COALESCE(NULLIF(TRIM(cl.nombre), ''), cl.email, v.cliente, 'Sin nombre') as cliente,
-               v.origen, v.destino, v.estado, v.camionero_nombre
+               v.origen, v.destino, v.estado, v.camionero_nombre,
+               COALESCE(v.precio_final, v.precio_cliente, v.precio, 0) as precio,
+               v.fecha_creacion
         FROM viajes v
         LEFT JOIN clientes cl ON v.cliente_id = cl.id
         {where}
@@ -354,6 +356,17 @@ def gestionar_viaje(id):
     orden_carga_ok = len(orden_faltantes) == 0
     orden_carga_tooltip = "Falta: " + ", ".join(orden_faltantes) if orden_faltantes else ""
 
+    conexion2 = conectar()
+    cursor2 = conexion2.cursor()
+    cursor2.execute("""
+        SELECT usuario, texto, fecha
+        FROM notas_viaje
+        WHERE viaje_id = ?
+        ORDER BY fecha DESC
+    """, (id,))
+    notas = cursor2.fetchall()
+    conexion2.close()
+
     return render_template(
         "admin/gestionar_viaje.html",
         viaje=viaje,
@@ -369,6 +382,7 @@ def gestionar_viaje(id):
         cliente_info=cliente_info,
         ruta_display=ruta_display,
         obs_parsed=obs_parsed,
+        notas=notas,
     )
 
 
@@ -736,6 +750,23 @@ def eliminar_viaje_admin(id):
     return redirect("/admin/viajes")
 
 
+@admin_bp.route("/viaje/<int:id>/nota", methods=["POST"])
+def agregar_nota_viaje(id):
+    if not requiere_admin():
+        return redirect("/login")
+    texto = request.form.get("texto", "").strip()
+    if texto:
+        conexion = conectar()
+        cursor = conexion.cursor()
+        cursor.execute(
+            "INSERT INTO notas_viaje (viaje_id, usuario, texto) VALUES (?, ?, ?)",
+            (id, session.get("usuario", "admin"), texto)
+        )
+        conexion.commit()
+        conexion.close()
+    return redirect(f"/admin/viaje/{id}")
+
+
 @admin_bp.route("/cotizacion/<int:id>/convertir")
 @admin_bp.route("/cotizaciones/<int:id>/convertir")
 def convertir_cotizacion(id):
@@ -913,16 +944,26 @@ def admin_clientes():
 
         conexion.commit()
 
-    cursor.execute("""
-        SELECT id, nombre, empresa, contacto, telefono, email, direccion
+    buscar_cl = request.args.get("buscar", "").strip()
+    cond_cl = []
+    params_cl = []
+    if buscar_cl:
+        cond_cl.append("(nombre LIKE ? OR email LIKE ? OR empresa LIKE ? OR telefono LIKE ?)")
+        like_cl = f"%{buscar_cl}%"
+        params_cl.extend([like_cl, like_cl, like_cl, like_cl])
+    where_cl = ("WHERE " + " AND ".join(cond_cl)) if cond_cl else ""
+
+    cursor.execute(f"""
+        SELECT id, nombre, empresa, contacto, telefono, email, direccion, fecha_creacion
         FROM clientes
+        {where_cl}
         ORDER BY id DESC
-    """)
+    """, params_cl)
     lista = cursor.fetchall()
 
     conexion.close()
 
-    return render_template("admin/clientes.html", lista=lista)
+    return render_template("admin/clientes.html", lista=lista, buscar_cl=buscar_cl)
 
 
 @admin_bp.route("/clientes/<int:id>/editar", methods=["GET", "POST"])
