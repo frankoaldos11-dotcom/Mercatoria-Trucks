@@ -195,6 +195,22 @@ else:
     ejecutar_migraciones()
 
 
+@app.route("/debug-viajes-tmp-borrar")
+def debug_viajes():
+    try:
+        con = conectar()
+        cur = con.cursor()
+        cur.execute("SELECT id, cliente, cliente_id, origen, destino, estado FROM viajes ORDER BY id")
+        filas = cur.fetchall()
+        con.close()
+        resultado = ""
+        for f in filas:
+            resultado += f"id={f['id']} cliente={f['cliente']} cliente_id={f['cliente_id']} origen={f['origen']} destino={f['destino']} estado={f['estado']}<br>"
+        return resultado or "Sin viajes"
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
