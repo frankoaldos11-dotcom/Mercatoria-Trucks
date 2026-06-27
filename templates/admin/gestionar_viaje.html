@@ -21,29 +21,6 @@
     </div>
 </div>
 
-<!-- ── Barra de cambio de estado ── -->
-<div class="barra-estado-top">
-    {% if estados_validos %}
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
-          style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;width:100%;"
-          onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
-        <span style="font-size:13px;font-weight:700;color:#d95714;white-space:nowrap;">Cambiar estado:</span>
-        <span class="estado-badge" style="flex-shrink:0;">{{ viaje.estado }}</span>
-        <select name="estado" class="input input-estado-top" required>
-            {% for e in estados_validos %}
-            <option value="{{ e }}">{{ e }}{% if e == "Asignado" %} ⚠ requiere camionero + vehículo{% elif e == "En ruta" %} ⚠ requiere camionero, vehículo y precio{% endif %}</option>
-            {% endfor %}
-        </select>
-        <button class="btn-estado-top" type="submit">Actualizar estado</button>
-    </form>
-    {% else %}
-    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-        <span class="estado-badge" style="flex-shrink:0;">{{ viaje.estado }}</span>
-        <span style="font-size:13px;color:#888;">Estado final — sin transiciones disponibles</span>
-    </div>
-    {% endif %}
-</div>
-
 <div class="grid-resumen">
 
     <div class="card resumen-card">
@@ -78,6 +55,7 @@
 
 <div class="layout-operacion">
 
+    <!-- ══ COLUMNA PRINCIPAL — solo informativo ══ -->
     <div class="columna-principal">
 
         <!-- Timeline de pasos -->
@@ -300,6 +278,30 @@
             </div>
         </div>
 
+        {% if cliente_info %}
+        <div class="card bloque">
+            <h2><i class="bi bi-person-circle" style="color:#F36B21;margin-right:5px;"></i>Datos del cliente</h2>
+            <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                <tr>
+                    <td style="color:#888;padding:5px 0;width:30%;font-size:11px;text-transform:uppercase;">Nombre</td>
+                    <td style="font-weight:700;">{{ cliente_info.nombre or "—" }}</td>
+                </tr>
+                <tr>
+                    <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Teléfono</td>
+                    <td style="font-weight:600;">{{ cliente_info.telefono or "—" }}</td>
+                </tr>
+                <tr>
+                    <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Empresa</td>
+                    <td style="font-weight:600;">{{ cliente_info.empresa or "—" }}</td>
+                </tr>
+                <tr>
+                    <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Email</td>
+                    <td style="font-weight:600;word-break:break-all;">{{ cliente_info.email or viaje.cliente or "—" }}</td>
+                </tr>
+            </table>
+        </div>
+        {% endif %}
+
         <div class="card bloque">
             <h2><i class="bi bi-journal-text" style="color:#F36B21;margin-right:5px;"></i>Notas internas</h2>
 
@@ -331,64 +333,35 @@
             {% endif %}
         </div>
 
-        <!-- Operaciones / PDFs -->
-        <div class="card bloque">
-            <h2><i class="bi bi-file-earmark-text" style="color:#F36B21;margin-right:5px;"></i>Operaciones</h2>
-
-            <div class="ops-grid">
-                {% if orden_carga_ok %}
-                <a href="/admin/viajes/{{ viaje.id }}/orden-carga" class="btn-principal btn-link-operacion">
-                    Ver Orden de Carga
-                </a>
-                <a href="/admin/viaje/{{ viaje.id }}/pdf" class="btn-pdf btn-link-operacion">
-                    Descargar PDF Orden de Carga
-                </a>
-                {% else %}
-                <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">Ver Orden de Carga</button>
-                <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">Descargar PDF Orden de Carga</button>
-                {% endif %}
-
-                {% set _precio_ok = (viaje.precio_final and viaje.precio_final|float > 0)
-                                  or (viaje.precio_cliente and viaje.precio_cliente|float > 0)
-                                  or (viaje.precio and viaje.precio|float > 0) %}
-                {% if viaje.cliente and _precio_ok and viaje.estado|lower != "cancelado" %}
-                <a href="/admin/viaje/{{ viaje.id }}/factura" class="btn-factura btn-link-operacion">
-                    Descargar Factura Cliente
-                </a>
-                {% else %}
-                <button class="btn-secundario" disabled title="Requiere cliente, precio confirmado y estado no cancelado">
-                    Descargar Factura Cliente
-                </button>
-                {% endif %}
-
-                <a href="/admin/viaje/{{ viaje.id }}/carta-porte"
-                   class="btn-factura btn-link-operacion"
-                   style="background:#2563EB;border-color:#2563EB;">
-                    Descargar Carta de Porte
-                </a>
-
-                <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-factura btn-link-operacion">
-                    Descargar Liquidación Camionero
-                </a>
-
-                {% if session.get('rol') == 'admin' %}
-                <div style="grid-column:1/-1;margin-top:4px;border-top:1px solid #eee;padding-top:10px;">
-                    <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
-                          onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje.id }} permanentemente? Esta acción no se puede deshacer.');">
-                        <button type="submit"
-                                style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
-                            <i class="bi bi-trash3"></i> Eliminar viaje
-                        </button>
-                    </form>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
     </div>
 
+    <!-- ══ COLUMNA LATERAL — solo accionable ══ -->
     <div class="columna-lateral">
 
+        <!-- Cambiar estado -->
+        <div class="card bloque estado-bloque">
+            <h2 class="estado-titulo">Cambiar estado</h2>
+
+            {% if estados_validos %}
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
+                  onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
+                <label>Nuevo estado</label>
+                <select name="estado" class="input input-estado" required>
+                    {% for e in estados_validos %}
+                    <option value="{{ e }}">{{ e }}{% if e == "Asignado" %} ⚠ requiere camionero + vehículo{% elif e == "En ruta" %} ⚠ requiere camionero, vehículo y precio{% endif %}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn-estado" type="submit">Actualizar estado</button>
+            </form>
+            {% else %}
+            <p style="color:#777;font-size:13px;margin:0;">
+                El viaje está en estado <strong>{{ viaje.estado }}</strong>.<br>
+                No hay transiciones disponibles.
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Asignar camionero -->
         <div class="card bloque">
             <h2>Asignar camionero</h2>
 
@@ -442,30 +415,60 @@
         });
         </script>
 
-        {% if cliente_info %}
-        <div class="card bloque">
-            <h2><i class="bi bi-person-circle" style="color:#F36B21;margin-right:5px;"></i>Datos del cliente</h2>
-            <table style="width:100%;font-size:12px;border-collapse:collapse;">
-                <tr>
-                    <td style="color:#888;padding:5px 0;width:40%;font-size:11px;text-transform:uppercase;">Nombre</td>
-                    <td style="font-weight:700;">{{ cliente_info.nombre or "—" }}</td>
-                </tr>
-                <tr>
-                    <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Teléfono</td>
-                    <td style="font-weight:600;">{{ cliente_info.telefono or "—" }}</td>
-                </tr>
-                <tr>
-                    <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Empresa</td>
-                    <td style="font-weight:600;">{{ cliente_info.empresa or "—" }}</td>
-                </tr>
-                <tr>
-                    <td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Email</td>
-                    <td style="font-weight:600;word-break:break-all;">{{ cliente_info.email or viaje.cliente or "—" }}</td>
-                </tr>
-            </table>
-        </div>
-        {% endif %}
+        <!-- Operaciones / PDFs -->
+        <div class="card bloque operaciones-box">
+            <h2><i class="bi bi-file-earmark-text" style="color:#F36B21;margin-right:5px;"></i>Operaciones</h2>
 
+            <div class="ops-grid">
+                {% if orden_carga_ok %}
+                <a href="/admin/viajes/{{ viaje.id }}/orden-carga" class="btn-principal btn-link-operacion">
+                    Ver Orden de Carga
+                </a>
+                <a href="/admin/viaje/{{ viaje.id }}/pdf" class="btn-pdf btn-link-operacion">
+                    PDF Orden de Carga
+                </a>
+                {% else %}
+                <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">Ver Orden de Carga</button>
+                <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">PDF Orden de Carga</button>
+                {% endif %}
+
+                {% set _precio_ok = (viaje.precio_final and viaje.precio_final|float > 0)
+                                  or (viaje.precio_cliente and viaje.precio_cliente|float > 0)
+                                  or (viaje.precio and viaje.precio|float > 0) %}
+                {% if viaje.cliente and _precio_ok and viaje.estado|lower != "cancelado" %}
+                <a href="/admin/viaje/{{ viaje.id }}/factura" class="btn-factura btn-link-operacion">
+                    Factura Cliente
+                </a>
+                {% else %}
+                <button class="btn-secundario" disabled title="Requiere cliente, precio confirmado y estado no cancelado">
+                    Factura Cliente
+                </button>
+                {% endif %}
+
+                <a href="/admin/viaje/{{ viaje.id }}/carta-porte"
+                   class="btn-factura btn-link-operacion"
+                   style="background:#2563EB;border-color:#2563EB;">
+                    Carta de Porte
+                </a>
+
+                <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-factura btn-link-operacion">
+                    Liquidación Camionero
+                </a>
+
+                {% if session.get('rol') == 'admin' %}
+                <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
+                      onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje.id }} permanentemente? Esta acción no se puede deshacer.');"
+                      style="margin-top:4px;border-top:1px solid #eee;padding-top:10px;">
+                    <button type="submit"
+                            style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+                        <i class="bi bi-trash3"></i> Eliminar viaje
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- WhatsApp -->
         <div class="card bloque whatsapp-box">
             <h2><i class="bi bi-whatsapp" style="color:#25D366;margin-right:6px;"></i>WhatsApp</h2>
 
@@ -543,45 +546,6 @@
     font-weight: 700;
     text-transform: uppercase;
     font-size: 12px;
-}
-
-/* Barra de estado top */
-.barra-estado-top {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    background: #fff3ec;
-    border: 1px solid #F36B21;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 16px;
-}
-
-.input-estado-top {
-    flex: 1;
-    min-width: 200px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-}
-
-.btn-estado-top {
-    background: #F36B21;
-    color: white;
-    padding: 11px 22px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 800;
-    white-space: nowrap;
-    letter-spacing: .01em;
-}
-
-.btn-estado-top:hover {
-    background: #d95714;
 }
 
 /* Timeline */
@@ -663,10 +627,10 @@
     font-size: 14px;
 }
 
-/* Operaciones grid */
+/* Operaciones grid — columna única en lateral */
 .ops-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
 }
 
@@ -883,6 +847,41 @@
     font-size: 13px;
 }
 
+.estado-bloque {
+    background: #fff3ec;
+    border: 2px solid #F36B21;
+}
+
+.estado-titulo {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: #d95714;
+    margin-bottom: 12px !important;
+}
+
+.input-estado {
+    font-size: 15px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+
+.btn-estado {
+    width: 100%;
+    background: #F36B21;
+    color: white;
+    padding: 13px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 800;
+    letter-spacing: .01em;
+}
+
+.btn-estado:hover {
+    background: #d95714;
+}
+
 .whatsapp-box p {
     color: #777;
     margin-bottom: 10px;
@@ -893,16 +892,13 @@
     .grid-resumen {
         grid-template-columns: repeat(2, 1fr);
     }
-
     .layout-operacion {
         grid-template-columns: 1fr;
     }
-
     .barra-estado-top {
         flex-direction: column;
         align-items: flex-start;
     }
-
     .input-estado-top {
         width: 100%;
     }
@@ -913,11 +909,9 @@
         flex-direction: column;
         align-items: flex-start;
     }
-
     .grid-resumen {
         grid-template-columns: 1fr;
     }
-
     .detalle-grid,
     .economia-grid,
     .ops-grid {
