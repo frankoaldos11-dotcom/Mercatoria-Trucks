@@ -239,21 +239,31 @@ def detalle_viaje(viaje_id):
 
     con = conectar()
     cur = con.cursor()
+
+    # Obtener cliente_id del usuario en sesión
+    cur.execute("SELECT id FROM clientes WHERE usuario_id = ?", (session["user_id"],))
+    cliente_row = cur.fetchone()
+    cliente_id = cliente_row["id"] if cliente_row else None
+
+    if not cliente_id:
+        con.close()
+        return redirect(url_for("cliente.mis_viajes"))
+
     cur.execute("""
         SELECT v.id, v.origen, v.destino, v.estado, v.camionero_nombre,
                v.fecha_creacion, v.fecha_asignacion, v.fecha_recogida, v.fecha_entrega,
                v.observaciones,
-               COALESCE(v.precio_final, v.precio_cliente, v.precio, 0) as precio_confirmado,
+               COALESCE(NULLIF(v.precio_final,0), NULLIF(v.precio_cliente,0), NULLIF(v.precio,0), 0) as precio_confirmado,
                COALESCE(veh.marca, '') as vehiculo_marca,
                COALESCE(veh.modelo, '') as vehiculo_modelo,
-               COALESCE(veh.matricula, veh.placa, '') as vehiculo_placa,
+               COALESCE(veh.matricula, '') as vehiculo_placa,
                COALESCE(r.nombre, '') as ruta_nombre,
                COALESCE(r.km_oficiales, 0) as km_ruta
         FROM viajes v
         LEFT JOIN vehiculos veh ON v.vehiculo_id = veh.id
         LEFT JOIN rutas r ON v.ruta_id = r.id
-        WHERE v.id = ? AND v.cliente = ?
-    """, (viaje_id, session["usuario"]))
+        WHERE v.id = ? AND v.cliente_id = ?
+    """, (viaje_id, cliente_id))
     viaje = cur.fetchone()
     con.close()
 
