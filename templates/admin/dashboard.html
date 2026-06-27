@@ -72,6 +72,7 @@
     </div>
     </a>
 
+    {% if session.get('rol') == 'admin' %}
     <a href="/admin/reportes" style="text-decoration:none;color:inherit;display:block;">
     <div class="kpi-card">
         <div class="kpi-icon success">
@@ -93,6 +94,7 @@
             <strong>{{ camionero_top }}</strong>
         </div>
     </div>
+    {% endif %}
 
 </div>
 

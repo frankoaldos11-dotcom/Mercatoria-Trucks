@@ -119,26 +119,29 @@ def dashboard():
     """)
     lista = cursor.fetchall()
 
-    # Ingresos del mes actual
-    cursor.execute("""
-        SELECT COALESCE(SUM(COALESCE(NULLIF(precio_final,0), NULLIF(precio_cliente,0), NULLIF(precio,0), 0)), 0) AS total
-        FROM viajes
-        WHERE TO_CHAR(fecha_creacion, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')
-          AND LOWER(estado) != 'cancelado'
-    """)
-    ingresos_mes = round(cursor.fetchone()["total"], 2)
+    # Ingresos y camionero top: solo para admin
+    if session.get("rol") == "admin":
+        cursor.execute("""
+            SELECT COALESCE(SUM(COALESCE(NULLIF(precio_final,0), NULLIF(precio_cliente,0), NULLIF(precio,0), 0)), 0) AS total
+            FROM viajes
+            WHERE TO_CHAR(fecha_creacion, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')
+              AND LOWER(estado) != 'cancelado'
+        """)
+        ingresos_mes = round(cursor.fetchone()["total"], 2)
 
-    # Camionero más activo (viajes totales)
-    cursor.execute("""
-        SELECT camionero_nombre, COUNT(*) as total
-        FROM viajes
-        WHERE camionero_nombre IS NOT NULL AND camionero_nombre != ''
-          AND LOWER(estado) != 'cancelado'
-        GROUP BY camionero_nombre
-        ORDER BY total DESC LIMIT 1
-    """)
-    row = cursor.fetchone()
-    camionero_top = row["camionero_nombre"] if row else "—"
+        cursor.execute("""
+            SELECT camionero_nombre, COUNT(*) as total
+            FROM viajes
+            WHERE camionero_nombre IS NOT NULL AND camionero_nombre != ''
+              AND LOWER(estado) != 'cancelado'
+            GROUP BY camionero_nombre
+            ORDER BY total DESC LIMIT 1
+        """)
+        row = cursor.fetchone()
+        camionero_top = row["camionero_nombre"] if row else "—"
+    else:
+        ingresos_mes = None
+        camionero_top = None
 
     # Clientes sin nombre (para aviso)
     cursor.execute("""
