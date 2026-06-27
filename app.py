@@ -7,7 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 
 from extensions import bcrypt, mail
 from database import conectar, crear_base_datos
-from migraciones import ejecutar_migraciones
+from db_config import USE_POSTGRES
 from utils.constants import ROLES
 
 from routes.home import home_bp
@@ -61,13 +61,13 @@ def sidebar_badges():
         conexion = conectar()
         cursor = conexion.cursor()
         cursor.execute(
-            "SELECT COUNT(*) FROM viajes WHERE estado IN ('Pendiente', 'Solicitado')"
+            "SELECT COUNT(*) AS total FROM viajes WHERE estado IN ('Pendiente', 'Solicitado')"
         )
-        viajes_urgentes = cursor.fetchone()[0]
+        viajes_urgentes = cursor.fetchone()["total"]
         cursor.execute(
-            "SELECT COUNT(*) FROM viajes WHERE estado = 'Solicitado'"
+            "SELECT COUNT(*) AS total FROM viajes WHERE estado = 'Solicitado'"
         )
-        dashboard_urgentes = cursor.fetchone()[0]
+        dashboard_urgentes = cursor.fetchone()["total"]
         conexion.close()
     except Exception:
         viajes_urgentes = 0
@@ -98,7 +98,9 @@ def login():
         conexion.close()
 
         if fila:
-            user_id, hash_guardado, rol = fila
+            user_id = fila["id"]
+            hash_guardado = fila["password"]
+            rol = fila["rol"]
 
             if bcrypt.check_password_hash(hash_guardado, password):
                 session.permanent = True
@@ -184,8 +186,13 @@ app.register_blueprint(vehiculos_bp)
 app.register_blueprint(comercial_bp)
 app.register_blueprint(finanzas_bp)
 
-crear_base_datos(bcrypt)
-ejecutar_migraciones()
+if USE_POSTGRES:
+    from migraciones_pg import ejecutar_migraciones_pg
+    ejecutar_migraciones_pg()
+else:
+    crear_base_datos(bcrypt)
+    from migraciones import ejecutar_migraciones
+    ejecutar_migraciones()
 
 
 @app.errorhandler(404)

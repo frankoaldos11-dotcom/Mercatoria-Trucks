@@ -1,12 +1,19 @@
+import os
 import sqlite3
+
+from db_config import USE_POSTGRES
 
 DATABASE_NAME = "mercatoria.db"
 
 
 def conectar():
-    con = sqlite3.connect(DATABASE_NAME)
-    con.row_factory = sqlite3.Row
-    return con
+    if USE_POSTGRES:
+        from database_pg import conectar_pg
+        return conectar_pg()
+    else:
+        conexion = sqlite3.connect(DATABASE_NAME)
+        conexion.row_factory = sqlite3.Row
+        return conexion
 
 
 def agregar_columna(cursor, tabla, columna, definicion):
