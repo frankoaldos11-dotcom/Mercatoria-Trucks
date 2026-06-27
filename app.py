@@ -195,6 +195,33 @@ else:
     ejecutar_migraciones()
 
 
+@app.route("/fix-viaje-tmp-borrar")
+def fix_viaje():
+    try:
+        con = conectar()
+        cur = con.cursor()
+        cur.execute("SELECT id FROM usuarios WHERE usuario = 'juan@gmail.com'")
+        u = cur.fetchone()
+        if not u:
+            return "Usuario no encontrado"
+        cur.execute("SELECT id FROM clientes WHERE usuario_id = ?", (u["id"],))
+        cl = cur.fetchone()
+        if not cl:
+            cur.execute("""
+                INSERT INTO clientes (usuario_id, nombre, email, contacto, telefono)
+                VALUES (?, 'juan', 'juan@gmail.com', 'juan', '')
+            """, (u["id"],))
+            con.commit()
+            cur.execute("SELECT id FROM clientes WHERE usuario_id = ?", (u["id"],))
+            cl = cur.fetchone()
+        cur.execute("UPDATE viajes SET cliente_id = ? WHERE id = 1", (cl["id"],))
+        con.commit()
+        con.close()
+        return f"OK — viaje #1 actualizado con cliente_id={cl['id']}"
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
 @app.route("/debug-viajes-tmp-borrar")
 def debug_viajes():
     try:

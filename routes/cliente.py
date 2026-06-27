@@ -292,7 +292,15 @@ def solicitar_envio():
 
         cur.execute("SELECT id FROM clientes WHERE usuario_id = ?", (session["user_id"],))
         cliente_row = cur.fetchone()
-        cliente_id = cliente_row["id"] if cliente_row else None
+        if cliente_row:
+            cliente_id = cliente_row["id"]
+        else:
+            cur.execute("""
+                INSERT INTO clientes (usuario_id, nombre, email, contacto, telefono)
+                VALUES (?, ?, ?, ?, '')
+            """, (session["user_id"], session.get("nombre", ""), session.get("usuario", "")))
+            cliente_id = cur.lastrowid
+            con.commit()
 
         obs = f"Tipo de carga: {tipo} | Peso aprox.: {peso}"
         if notas:
