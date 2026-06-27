@@ -174,18 +174,18 @@ def cliente_home():
     recientes = cur.fetchall()
 
     cur.execute("""
-        SELECT COUNT(*) FROM viajes
+        SELECT COUNT(*) AS total FROM viajes
         WHERE cliente = ? AND estado NOT IN ('Entregado', 'Cancelado')
     """, (session["usuario"],))
-    activos = cur.fetchone()[0]
+    activos = cur.fetchone()["total"]
 
-    cur.execute("SELECT COUNT(*) FROM viajes WHERE cliente = ?", (session["usuario"],))
-    total = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS total FROM viajes WHERE cliente = ?", (session["usuario"],))
+    total = cur.fetchone()["total"]
 
     cur.execute("""
-        SELECT COUNT(*) FROM viajes WHERE cliente = ? AND estado = 'Entregado'
+        SELECT COUNT(*) AS total FROM viajes WHERE cliente = ? AND estado = 'Entregado'
     """, (session["usuario"],))
-    entregados = cur.fetchone()[0]
+    entregados = cur.fetchone()["total"]
 
     cur.execute("SELECT nombre, apellidos FROM usuarios WHERE usuario = ?",
                 (session["usuario"],))
