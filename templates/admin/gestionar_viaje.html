@@ -7,7 +7,7 @@
         <a href="/admin/viajes" class="btn-volver">← Volver a viajes</a>
         <h1>
             Gestionar Viaje #{{ viaje.id }}
-            <button onclick="navigator.clipboard.writeText('{{ viaje[\"id\"] }}');this.textContent='✓';setTimeout(()=>this.textContent='#',1200);return false;"
+            <button onclick="navigator.clipboard.writeText('{{ viaje.id }}');this.textContent='✓';setTimeout(()=>this.textContent='#',1200);return false;"
                     title="Copiar ID"
                     style="background:none;border:1px solid #ddd;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;color:#888;margin-left:6px;vertical-align:middle;">
                 #
@@ -398,7 +398,7 @@
             </a>
 
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
-                  onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje[\"id\"] }} permanentemente? Esta acción no se puede deshacer.');"
+                  onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje.id }} permanentemente? Esta acción no se puede deshacer.');"
                   style="margin-top:12px;border-top:1px solid #eee;padding-top:12px;">
                 <button type="submit"
                         style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
