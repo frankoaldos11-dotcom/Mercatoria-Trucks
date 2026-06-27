@@ -222,6 +222,27 @@ def fix_viaje():
         return f"ERROR: {e}"
 
 
+@app.route("/debug-viajes2-tmp-borrar")
+def debug_viajes2():
+    try:
+        con = conectar()
+        cur = con.cursor()
+        cur.execute("""
+            SELECT v.id, v.origen, v.destino, v.estado, v.cliente,
+                   v.cliente_id, v.camionero_nombre
+            FROM viajes v
+            ORDER BY v.id DESC
+        """)
+        filas = cur.fetchall()
+        con.close()
+        resultado = ""
+        for f in filas:
+            resultado += str(dict(f)) + "<br>"
+        return resultado or "Sin viajes"
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
 @app.route("/debug-viajes-tmp-borrar")
 def debug_viajes():
     try:
