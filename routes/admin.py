@@ -157,7 +157,7 @@ def viajes():
 
     if buscar:
         condiciones.append("""(
-            COALESCE(cl.nombre, v.cliente, '') LIKE ?
+            COALESCE(NULLIF(TRIM(cl.nombre), ''), cl.email, v.cliente, '') LIKE ?
             OR COALESCE(v.origen, '') LIKE ?
             OR COALESCE(v.destino, '') LIKE ?
             OR COALESCE(v.camionero_nombre, '') LIKE ?
@@ -183,7 +183,7 @@ def viajes():
 
     cursor.execute(f"""
         SELECT v.id,
-               COALESCE(cl.nombre, v.cliente, 'Sin cliente') as cliente,
+               COALESCE(NULLIF(TRIM(cl.nombre), ''), cl.email, v.cliente, 'Sin nombre') as cliente,
                v.origen, v.destino, v.estado, v.camionero_nombre
         FROM viajes v
         LEFT JOIN clientes cl ON v.cliente_id = cl.id
