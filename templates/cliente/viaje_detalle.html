@@ -166,25 +166,25 @@
                 <tr>
                     <td style="color:#9CA3AF;padding:6px 0;width:50%;">Solicitud</td>
                     <td style="font-weight:600;color:#1F2937;">
-                        {{ viaje.fecha_creacion.strftime('%Y-%m-%d') if viaje.fecha_creacion else '—' }}
+                        {{ viaje.fecha_creacion | fmt_fecha('%Y-%m-%d') }}
                     </td>
                 </tr>
                 <tr>
                     <td style="color:#9CA3AF;padding:6px 0;">Asignación</td>
                     <td style="font-weight:600;color:#1F2937;">
-                        {{ viaje.fecha_asignacion.strftime('%Y-%m-%d') if viaje.fecha_asignacion else '—' }}
+                        {{ viaje.fecha_asignacion | fmt_fecha('%Y-%m-%d') }}
                     </td>
                 </tr>
                 <tr>
                     <td style="color:#9CA3AF;padding:6px 0;">Recogida</td>
                     <td style="font-weight:600;color:#1F2937;">
-                        {{ viaje.fecha_recogida.strftime('%Y-%m-%d') if viaje.fecha_recogida else '—' }}
+                        {{ viaje.fecha_recogida | fmt_fecha('%Y-%m-%d') }}
                     </td>
                 </tr>
                 <tr>
                     <td style="color:#9CA3AF;padding:6px 0;">Entrega</td>
                     <td style="font-weight:600;color:#1F2937;">
-                        {{ viaje.fecha_entrega.strftime('%Y-%m-%d') if viaje.fecha_entrega else '—' }}
+                        {{ viaje.fecha_entrega | fmt_fecha('%Y-%m-%d') }}
                     </td>
                 </tr>
             </table>
