@@ -217,6 +217,7 @@ def viajes():
         LIMIT ? OFFSET ?
     """, params + [por_pagina, offset])
     lista = cursor.fetchall()
+    print(f"DEBUG VIAJES: total={total}, lista_len={len(lista)}, where={where}, params={params}", flush=True)
 
     conexion.close()
 
