@@ -16,10 +16,9 @@
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
         <a href="/admin/exportar/camioneros" class="btn-excel-export">⬇ Exportar Excel</a>
-        <form method="POST" action="/admin/importar/camioneros" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;">
-            <input type="file" name="archivo" accept=".xlsx" required style="font-size:12px;">
-            <button type="submit" class="btn-excel-import">⬆ Importar</button>
-        </form>
+        <button class="btn-excel-import" data-bs-toggle="modal" data-bs-target="#modalImportarCamioneros">
+            <i class="bi bi-upload"></i> Importar Excel
+        </button>
     </div>
 </div>
 
@@ -318,6 +317,47 @@
     color: #bbb;
     font-style: italic;
 }
+</style>
+
+<!-- Modal Importar Camioneros -->
+<div class="modal fade" id="modalImportarCamioneros" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-crud">
+            <div class="modal-header modal-crud-header">
+                <h5 class="modal-title">Importar camioneros desde Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/admin/importar/camioneros" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">
+                        El archivo Excel debe tener las siguientes columnas en orden:
+                        <strong>nombre, telefono, licencia, estado, matricula, marca, modelo, tipo, capacidad</strong>.
+                        La primera fila debe ser el encabezado.
+                    </p>
+                    <div class="form-crud-field">
+                        <label>Archivo Excel (.xlsx)</label>
+                        <input type="file" name="archivo" accept=".xlsx" required class="input-crud">
+                    </div>
+                </div>
+                <div class="modal-footer modal-crud-footer">
+                    <button type="button" class="btn-cancelar-modal" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-crud-primary">Confirmar importación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.modal-crud { border-radius: 12px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,.12); }
+.modal-crud-header { border-bottom: 1px solid #f0f0f0; padding: 20px 24px; }
+.modal-crud-header .modal-title { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+.modal-crud-footer { border-top: 1px solid #f0f0f0; padding: 16px 24px; gap: 8px; }
+.btn-cancelar-modal {
+    background: #f0f0f0; color: #555; padding: 10px 20px;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn-cancelar-modal:hover { background: #e0e0e0; }
 </style>
 
 {% endblock %}
