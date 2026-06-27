@@ -68,6 +68,7 @@ def login():
             (email,)
         )
         fila = cur.fetchone()
+        print(f"DEBUG LOGIN: buscando usuario={email}, fila={fila}", flush=True)
 
         if fila and bcrypt.check_password_hash(fila["password"], password):
             cur.execute("SELECT nombre, apellidos FROM usuarios WHERE id = ?", (fila["id"],))
