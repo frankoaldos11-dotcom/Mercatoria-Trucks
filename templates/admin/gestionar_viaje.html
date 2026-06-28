@@ -70,13 +70,13 @@
 {% set _miss_desc   = not viaje.fecha_entrega %}
 {% if _miss_cam or _miss_veh or _miss_precio or _miss_pago or _miss_comb or _miss_ext or _miss_desc %}
 <div class="alertas-bloque">
-    {% if _miss_cam %}<div class="alerta-item alerta-roja"><i class="bi bi-exclamation-triangle-fill"></i> Falta: Camionero asignado</div>{% endif %}
-    {% if _miss_veh %}<div class="alerta-item alerta-roja"><i class="bi bi-exclamation-triangle-fill"></i> Falta: Vehículo</div>{% endif %}
-    {% if _miss_precio %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Precio cliente</div>{% endif %}
-    {% if _miss_pago %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Pago camionero</div>{% endif %}
-    {% if _miss_comb %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Combustible asignado</div>{% endif %}
-    {% if _miss_ext %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Fecha de extracción</div>{% endif %}
-    {% if _miss_desc %}<div class="alerta-item alerta-amarilla"><i class="bi bi-exclamation-circle-fill"></i> Falta: Fecha de descarga</div>{% endif %}
+    {% if _miss_cam %}<div class="alerta-item alerta-roja" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-triangle-fill"></i> Falta: Camionero asignado</div>{% endif %}
+    {% if _miss_veh %}<div class="alerta-item alerta-roja" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-triangle-fill"></i> Falta: Vehículo</div>{% endif %}
+    {% if _miss_precio %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Precio cliente</div>{% endif %}
+    {% if _miss_pago %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Pago camionero</div>{% endif %}
+    {% if _miss_comb %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Combustible asignado</div>{% endif %}
+    {% if _miss_ext %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Fecha de extracción</div>{% endif %}
+    {% if _miss_desc %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Fecha de descarga</div>{% endif %}
 </div>
 {% endif %}
 
@@ -534,8 +534,10 @@
                         Confirmar precio calculado
                     </button>
                 </div>
+                {% if session.get('rol') == 'admin' %}
                 <a href="#" onclick="editarPrecioViaje('{{ viaje.id }}');return false;"
                    style="font-size:11px;color:#aaa;text-decoration:underline;">Modificar</a>
+                {% endif %}
                 {% else %}
                 <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
                     <input type="number" name="precio_cliente" step="0.01" min="0.01" placeholder="0.00"

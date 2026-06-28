@@ -200,6 +200,32 @@ def cliente_home():
     cl = cur.fetchone()
     categoria_cliente = cl["categoria"] if cl else "Normal"
 
+    cur.execute("""
+        SELECT
+            COALESCE(SUM(
+                CASE WHEN LOWER(v.estado) = 'entregado'
+                THEN COALESCE(r.km_oficiales, v.km, v.kilometros, 0)
+                ELSE 0 END
+            ), 0) AS km_recorridos,
+            COALESCE(SUM(COALESCE(v.peso_toneladas, 0)), 0) AS toneladas,
+            COALESCE(SUM(
+                CASE WHEN LOWER(v.estado) NOT IN ('cancelado')
+                THEN CASE
+                    WHEN v.precio_final IS NOT NULL AND v.precio_final > 0 THEN v.precio_final
+                    WHEN v.precio_cliente IS NOT NULL AND v.precio_cliente > 0 THEN v.precio_cliente
+                    WHEN v.precio IS NOT NULL AND v.precio > 0 THEN v.precio
+                    ELSE 0 END
+                ELSE 0 END
+            ), 0) AS gasto_total
+        FROM viajes v
+        LEFT JOIN rutas r ON v.ruta_id = r.id
+        WHERE v.cliente = ?
+    """, (session["usuario"],))
+    m = cur.fetchone()
+    km_recorridos = int(m["km_recorridos"]) if m else 0
+    toneladas = float(m["toneladas"]) if m else 0.0
+    gasto_total = float(m["gasto_total"]) if m else 0.0
+
     con.close()
     return render_template("cliente/home.html",
                            recientes=recientes,
@@ -207,7 +233,10 @@ def cliente_home():
                            total=total,
                            entregados=entregados,
                            nombre=nombre,
-                           categoria_cliente=categoria_cliente)
+                           categoria_cliente=categoria_cliente,
+                           km_recorridos=km_recorridos,
+                           toneladas=toneladas,
+                           gasto_total=gasto_total)
 
 
 @cliente_bp.route("/viajes")

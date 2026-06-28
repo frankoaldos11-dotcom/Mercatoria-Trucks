@@ -579,3 +579,62 @@ body {
 .badge-cat-vip         { background:#FFFBEB; color:#92400E; border:1px solid #FCD34D; }
 .badge-cat-estrategico { background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; }
 .badge-cat-humanitario { background:#ECFDF5; color:#065F46; border:1px solid #6EE7B7; }
+
+/* ── Mobile layout ── */
+@media (max-width: 768px) {
+    .app-shell {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        min-height: auto;
+        padding: 10px 14px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    .brand {
+        margin-bottom: 8px;
+    }
+    .sidebar-nav {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        height: auto;
+        gap: 2px;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
+    }
+    .nav-section {
+        display: none;
+    }
+    .nav-item {
+        flex-shrink: 0;
+        padding: 7px 10px;
+        font-size: 12px;
+        border-radius: 8px;
+        white-space: nowrap;
+        gap: 5px;
+    }
+    .nav-item i {
+        font-size: 14px;
+    }
+    .main-content {
+        overflow-y: visible;
+        padding: 16px;
+    }
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .page-header h1 {
+        font-size: 22px;
+        letter-spacing: -0.5px;
+    }
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
