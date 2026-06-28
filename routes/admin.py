@@ -395,6 +395,41 @@ def gestionar_viaje(id):
     incidencias = cursor2.fetchall()
     conexion2.close()
 
+    # Determine which checklist items are auto-completed based on current viaje state
+    def _flt(row, *keys):
+        for k in keys:
+            try:
+                v = row[k]
+                if v is not None:
+                    f = float(v)
+                    if f > 0:
+                        return f
+            except (KeyError, IndexError, TypeError, ValueError):
+                pass
+        return 0.0
+
+    _e = (viaje["estado"] or "").lower().strip()
+    auto_completados = set()
+    if _flt(viaje, "km", "kilometros") > 0:
+        auto_completados.add("Km calculados")
+    if _flt(viaje, "combustible", "combustible_estimado") > 0:
+        auto_completados.add("Combustible calculado")
+    if _flt(viaje, "pago_camionero", "camionero") > 0:
+        auto_completados.add("Pago camionero calculado")
+    if viaje["camionero_id"]:
+        auto_completados.add("Camionero asignado")
+    if viaje["vehiculo_id"]:
+        auto_completados.add("Vehículo confirmado")
+    if _e in {"carga recogida", "en ruta", "en_ruta", "entregado"}:
+        auto_completados.add("Contenedor extraído / carga recogida")
+    if _e == "entregado":
+        auto_completados.add("Descarga realizada")
+    try:
+        if (viaje["estado_pago_camionero"] or "") == "Pagado":
+            auto_completados.add("Pago camionero confirmado")
+    except (KeyError, IndexError):
+        pass
+
     return render_template(
         "admin/gestionar_viaje.html",
         viaje=viaje,
@@ -415,6 +450,7 @@ def gestionar_viaje(id):
         incidencias=incidencias,
         incidencias_categorias=INCIDENCIAS_CATEGORIAS,
         incidencias_estados=INCIDENCIAS_ESTADOS,
+        auto_completados=auto_completados,
     )
 
 

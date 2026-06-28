@@ -432,17 +432,23 @@
 
         {# ── Checklist operativo ── #}
         <div class="card bloque cl-card">
+            {% set cl_ns = namespace(done=0) %}
+            {% for item in checklist %}
+                {% if item.completado or item.item in auto_completados %}
+                    {% set cl_ns.done = cl_ns.done + 1 %}
+                {% endif %}
+            {% endfor %}
+
             <div class="cl-header">
                 <h2 style="margin:0;"><i class="bi bi-check2-square" style="color:#E86A2C;margin-right:6px;"></i>Checklist operativo</h2>
                 <span class="cl-progreso" id="cl-counter">
-                    {% set cl_done = checklist | selectattr('completado') | list | length %}
-                    {{ cl_done }}/{{ checklist | length }} completados
+                    {{ cl_ns.done }}/{{ checklist | length }} completados
                 </span>
             </div>
 
             <div class="cl-barra-wrap">
                 <div class="cl-barra" id="cl-barra"
-                     style="width:{{ ((cl_done / checklist|length * 100) if checklist else 0)|int }}%"></div>
+                     style="width:{{ ((cl_ns.done / checklist|length * 100) if checklist else 0)|int }}%"></div>
             </div>
 
             <input type="hidden" id="cl-csrf" value="{{ csrf_token() }}">
@@ -450,7 +456,15 @@
 
             <ul class="cl-lista">
                 {% for item in checklist %}
-                <li class="cl-row {% if item.completado %}cl-done{% endif %}" id="cl-row-{{ item.id }}">
+                {% set _auto = item.item in auto_completados %}
+                {% set _activo = item.completado or _auto %}
+                <li class="cl-row {% if _activo %}cl-done{% endif %}" id="cl-row-{{ item.id }}">
+                    {% if _auto %}
+                    <button class="cl-toggle cl-auto" disabled
+                            title="Completado automáticamente por el sistema">
+                        <i class="bi bi-check-square-fill" style="color:#16a34a;"></i>
+                    </button>
+                    {% else %}
                     <button class="cl-toggle"
                             onclick="toggleChecklist({{ item.id }}, this)"
                             title="{% if item.completado %}Desmarcar{% else %}Marcar como completado{% endif %}">
@@ -460,8 +474,11 @@
                         <i class="bi bi-square"></i>
                         {% endif %}
                     </button>
+                    {% endif %}
                     <span class="cl-label">{{ item.item }}</span>
-                    {% if item.completado and item.completado_por %}
+                    {% if _auto %}
+                    <span class="cl-meta" style="color:#16a34a;font-size:10px;">auto</span>
+                    {% elif item.completado and item.completado_por %}
                     <span class="cl-meta">{{ item.completado_por }}{% if item.fecha_completado %} · {{ item.fecha_completado | fmt_fecha }}{% endif %}</span>
                     {% endif %}
                 </li>
@@ -968,6 +985,9 @@ if (selCam) {
 }
 .cl-done .cl-toggle { color: #E86A2C; }
 .cl-toggle:hover { color: #E86A2C; }
+.cl-auto { cursor: not-allowed; opacity: 0.8; }
+.cl-auto:hover { color: #16a34a; }
+.cl-done.cl-auto-row .cl-label { text-decoration: line-through; color: #9CA3AF; }
 .cl-label {
     font-size: 13px;
     font-weight: 600;
