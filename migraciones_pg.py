@@ -106,6 +106,24 @@ def ejecutar_migraciones_pg():
         except Exception:
             conn.rollback()
 
+        _indices = [
+            ("idx_viajes_estado",         "viajes",     "estado"),
+            ("idx_viajes_cliente_id",      "viajes",     "cliente_id"),
+            ("idx_viajes_camionero_id",    "viajes",     "camionero_id"),
+            ("idx_viajes_fecha_creacion",  "viajes",     "fecha_creacion"),
+            ("idx_clientes_activo",        "clientes",   "activo"),
+            ("idx_camioneros_estado",      "camioneros", "estado"),
+            ("idx_auditoria_fecha",        "auditoria",  "fecha"),
+        ]
+        for _nombre, _tabla, _col in _indices:
+            try:
+                cur.execute(
+                    f"CREATE INDEX IF NOT EXISTS {_nombre} ON {_tabla}({_col})"
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
         cur.execute("SELECT id FROM usuarios WHERE usuario = 'admin'")
         if not cur.fetchone():
             from flask_bcrypt import Bcrypt
@@ -429,6 +447,18 @@ def ejecutar_migraciones_pg():
         FOREIGN KEY (viaje_id) REFERENCES viajes(id)
     )
     """)
+
+    _indices = [
+        ("idx_viajes_estado",         "viajes",     "estado"),
+        ("idx_viajes_cliente_id",      "viajes",     "cliente_id"),
+        ("idx_viajes_camionero_id",    "viajes",     "camionero_id"),
+        ("idx_viajes_fecha_creacion",  "viajes",     "fecha_creacion"),
+        ("idx_clientes_activo",        "clientes",   "activo"),
+        ("idx_camioneros_estado",      "camioneros", "estado"),
+        ("idx_auditoria_fecha",        "auditoria",  "fecha"),
+    ]
+    for _nombre, _tabla, _col in _indices:
+        cur.execute(f"CREATE INDEX IF NOT EXISTS {_nombre} ON {_tabla}({_col})")
 
     cur.execute("SELECT id FROM usuarios WHERE usuario = %s", ("admin",))
     if not cur.fetchone():

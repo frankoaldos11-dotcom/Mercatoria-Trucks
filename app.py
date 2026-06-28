@@ -1,6 +1,8 @@
 import os
+import time
+import logging
 from datetime import timedelta
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, g
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
@@ -63,11 +65,19 @@ limiter = Limiter(
 )
 
 
+@app.before_request
+def _record_start_time():
+    g.start_time = time.monotonic()
+
+
 @app.after_request
 def set_security_headers(response):
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-XSS-Protection"] = "1; mode=block"
+    if app.debug:
+        ms = (time.monotonic() - getattr(g, "start_time", time.monotonic())) * 1000
+        app.logger.debug("[%s] %s %.1fms", request.method, request.path, ms)
     return response
 
 
@@ -76,14 +86,16 @@ def sidebar_badges():
     try:
         conexion = conectar()
         cursor = conexion.cursor()
-        cursor.execute(
-            "SELECT COUNT(*) AS total FROM viajes WHERE estado IN ('Pendiente', 'Solicitado')"
-        )
-        viajes_urgentes = cursor.fetchone()["total"]
-        cursor.execute(
-            "SELECT COUNT(*) AS total FROM viajes WHERE estado = 'Solicitado'"
-        )
-        dashboard_urgentes = cursor.fetchone()["total"]
+        cursor.execute("""
+            SELECT
+                COUNT(*) AS urgentes,
+                COUNT(CASE WHEN estado = 'Solicitado' THEN 1 END) AS solicitados
+            FROM viajes
+            WHERE estado IN ('Pendiente', 'Solicitado')
+        """)
+        row = cursor.fetchone()
+        viajes_urgentes    = row["urgentes"]    if row else 0
+        dashboard_urgentes = row["solicitados"] if row else 0
         conexion.close()
     except Exception:
         viajes_urgentes = 0

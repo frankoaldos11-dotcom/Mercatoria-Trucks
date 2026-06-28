@@ -90,26 +90,34 @@ def dashboard():
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) IN ('pendiente', 'solicitado')")
-    pendientes = cursor.fetchone()["total"]
-
-    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) IN ('en ruta', 'en_ruta')")
-    en_curso = cursor.fetchone()["total"]
-
-    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) = 'entregado'")
-    entregados = cursor.fetchone()["total"]
-
-    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) = 'asignado'")
-    asignados = cursor.fetchone()["total"]
-
-    cursor.execute("SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) = 'cancelado'")
-    cancelados = cursor.fetchone()["total"]
+    cursor.execute("""
+        SELECT
+            COUNT(CASE WHEN LOWER(estado) IN ('pendiente','solicitado') THEN 1 END) AS pendientes,
+            COUNT(CASE WHEN LOWER(estado) IN ('en ruta','en_ruta')      THEN 1 END) AS en_curso,
+            COUNT(CASE WHEN LOWER(estado) = 'entregado'                 THEN 1 END) AS entregados,
+            COUNT(CASE WHEN LOWER(estado) = 'asignado'                  THEN 1 END) AS asignados,
+            COUNT(CASE WHEN LOWER(estado) = 'cancelado'                 THEN 1 END) AS cancelados
+        FROM viajes
+    """)
+    _est = cursor.fetchone()
+    pendientes = _est["pendientes"]
+    en_curso   = _est["en_curso"]
+    entregados = _est["entregados"]
+    asignados  = _est["asignados"]
+    cancelados = _est["cancelados"]
 
     cursor.execute("SELECT COUNT(*) AS total FROM camioneros")
     camioneros = cursor.fetchone()["total"]
 
-    cursor.execute("SELECT COUNT(*) AS total FROM clientes")
-    clientes = cursor.fetchone()["total"]
+    cursor.execute("""
+        SELECT
+            COUNT(*) AS total,
+            COUNT(CASE WHEN nombre IS NULL OR TRIM(nombre) = '' THEN 1 END) AS sin_nombre
+        FROM clientes
+    """)
+    _cl = cursor.fetchone()
+    clientes           = _cl["total"]
+    clientes_sin_nombre = _cl["sin_nombre"]
 
     cursor.execute("""
         SELECT id, cliente, origen, destino, estado
@@ -142,13 +150,6 @@ def dashboard():
     else:
         ingresos_mes = None
         camionero_top = None
-
-    # Clientes sin nombre (para aviso)
-    cursor.execute("""
-        SELECT COUNT(*) AS total FROM clientes
-        WHERE nombre IS NULL OR TRIM(nombre) = ''
-    """)
-    clientes_sin_nombre = cursor.fetchone()["total"]
 
     conexion.close()
 
@@ -1344,8 +1345,11 @@ def admin_clientes():
         conexion.close()
         return redirect("/admin/clientes?ok=1")
 
-    buscar_cl = request.args.get("buscar", "").strip()
+    buscar_cl  = request.args.get("buscar", "").strip()
     filtro_cat = request.args.get("categoria", "").strip()
+    pagina     = max(1, int(request.args.get("pagina", 1) or 1))
+    por_pagina = 25
+
     cond_cl = []
     params_cl = []
     if buscar_cl:
@@ -1357,13 +1361,20 @@ def admin_clientes():
         params_cl.append(filtro_cat)
     where_cl = ("WHERE " + " AND ".join(cond_cl)) if cond_cl else ""
 
+    cursor.execute(f"SELECT COUNT(*) AS total FROM clientes {where_cl}", params_cl)
+    total_cl = cursor.fetchone()["total"]
+    total_paginas_cl = max(1, (total_cl + por_pagina - 1) // por_pagina)
+    pagina = min(pagina, total_paginas_cl)
+    offset_cl = (pagina - 1) * por_pagina
+
     cursor.execute(f"""
         SELECT id, nombre, empresa, contacto, telefono, email, direccion,
                COALESCE(categoria, 'Normal') AS categoria, fecha_creacion
         FROM clientes
         {where_cl}
         ORDER BY id DESC
-    """, params_cl)
+        LIMIT ? OFFSET ?
+    """, params_cl + [por_pagina, offset_cl])
     lista = cursor.fetchall()
 
     conexion.close()
@@ -1372,7 +1383,10 @@ def admin_clientes():
                            lista=lista,
                            buscar_cl=buscar_cl,
                            filtro_cat=filtro_cat,
-                           categorias=CATEGORIAS_CLIENTE)
+                           categorias=CATEGORIAS_CLIENTE,
+                           pagina_actual=pagina,
+                           total_paginas=total_paginas_cl,
+                           total=total_cl)
 
 
 @admin_bp.route("/clientes/<int:id>/editar", methods=["GET", "POST"])

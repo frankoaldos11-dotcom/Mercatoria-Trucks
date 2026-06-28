@@ -220,5 +220,22 @@ def ejecutar_migraciones():
         )
         """)
 
+    _indices = [
+        ("idx_viajes_estado",         "viajes",     "estado"),
+        ("idx_viajes_cliente_id",      "viajes",     "cliente_id"),
+        ("idx_viajes_camionero_id",    "viajes",     "camionero_id"),
+        ("idx_viajes_fecha_creacion",  "viajes",     "fecha_creacion"),
+        ("idx_clientes_activo",        "clientes",   "activo"),
+        ("idx_camioneros_estado",      "camioneros", "estado"),
+    ]
+    for _nombre, _tabla, _col in _indices:
+        cursor.execute(
+            f"CREATE INDEX IF NOT EXISTS {_nombre} ON {_tabla}({_col})"
+        )
+    if tabla_existe(cursor, "auditoria"):
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_auditoria_fecha ON auditoria(fecha)"
+        )
+
     conexion.commit()
     conexion.close()
