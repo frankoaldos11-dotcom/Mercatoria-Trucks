@@ -83,6 +83,13 @@ def conectar():
         return ConexionWrapper(conexion, use_postgres=False)
 
 
+def sql_mes_actual(columna: str = "fecha_creacion") -> str:
+    """Devuelve un fragmento SQL que filtra por el mes actual, compatible con SQLite y PostgreSQL."""
+    if USE_POSTGRES:
+        return f"TO_CHAR({columna}, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')"
+    return f"strftime('%Y-%m', {columna}) = strftime('%Y-%m', 'now')"
+
+
 def agregar_columna(cursor, tabla, columna, definicion):
     try:
         cursor.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {definicion}")

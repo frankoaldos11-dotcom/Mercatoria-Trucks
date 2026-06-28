@@ -1,96 +1,74 @@
 # Reporte de Pruebas — 2026-06-28
 
-## Tipo de auditoría
-Auditoría de compatibilidad SQLite/PostgreSQL — búsqueda y corrección de funciones SQL exclusivas de PostgreSQL sin guard `if USE_POSTGRES`.
+## Tipo de sesión
+Corrección de 4 issues detectados en auditoría anterior + verificación Playwright.
+
+---
+
+## Cambios aplicados
+
+### 1. Favicon (nuevo)
+- Creado `static/favicon.ico` a partir de `static/icons/icon-192.png` (32×32, 48×48, 64×64 px) usando Pillow
+- Añadido `<link rel="icon" href="/static/favicon.ico" type="image/x-icon">` en:
+  - `templates/admin/base_admin.html`
+  - `templates/base_cliente.html`
+
+### 2. Meta PWA — `mobile-web-app-capable` añadida
+- Añadida `<meta name="mobile-web-app-capable" content="yes">` en ambos templates base
+- Se conserva `apple-mobile-web-app-capable` para compatibilidad con iOS Safari
+- Eliminado el warning de consola de Chrome: *"apple-mobile-web-app-capable is deprecated"*
+
+### 3. Helper `sql_mes_actual()` en `database.py`
+- Nueva función que devuelve el fragmento SQL correcto según el motor:
+  - PostgreSQL: `TO_CHAR(col, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')`
+  - SQLite: `strftime('%Y-%m', col) = strftime('%Y-%m', 'now')`
+- Acepta el nombre de columna como parámetro (default: `fecha_creacion`)
+- Exportada e importada en `routes/admin.py` — reemplaza el bloque `if USE_POSTGRES` manual
+
+### 4. Sidebar links (ya estaban correctos)
+- Los links en `base_admin.html` ya apuntaban a `/admin/comercial/cotizaciones` y `/admin/comercial/rutas`
+- Las 404 detectadas en la auditoría anterior eran por navegación manual a URLs incorrectas, no por el sidebar
 
 ---
 
 ## Páginas probadas
 
-### Panel Admin (usuario: `admin`)
-| Ruta | Estado | Errores consola |
-|------|--------|----------------|
-| `/admin/` | ✅ OK | 0 |
-| `/admin/viajes` | ✅ OK | 0 |
-| `/admin/reportes` | ✅ OK | 0 |
-| `/admin/clientes` | ✅ OK | 0 |
-| `/admin/camioneros` | ✅ OK | 0 |
-| `/admin/vehiculos` | ✅ OK | 0 |
-| `/admin/usuarios` | ✅ OK | 0 |
-| `/admin/auditoria` | ✅ OK | 0 |
-| `/admin/lote` | ✅ OK | 0 |
-| `/admin/comercial/rutas` | ✅ OK | 0 |
-| `/admin/comercial/cotizaciones` | ✅ OK | 0 |
-| `/admin/cotizaciones` | ⚠️ 404 | — (ruta no registrada; sidebar apunta a URL incorrecta) |
-| `/admin/rutas` | ⚠️ 404 | — (idem) |
-
-### Portal Cliente (usuario: `ana2@test.com`)
-| Ruta | Estado | Errores consola |
-|------|--------|----------------|
-| `/cliente/` | ✅ OK | 0 |
-| `/cliente/viajes` | ✅ OK | 0 |
-| `/cliente/solicitar` | ✅ OK | 0 |
-| `/cliente/perfil` | ✅ OK | 0 |
+| Ruta | Rol | Estado HTTP | Errores | Warnings |
+|------|-----|-------------|---------|----------|
+| `/` | — | 200 | 0 | 0 |
+| `/login` | — | 200 | 0 | 0 |
+| `/admin/` | admin | 200 | 0 | 0 |
+| `/admin/reportes` | admin | 200 | 0 | 0 |
+| `/admin/comercial/cotizaciones` | admin | 200 | 0 | 0 |
+| `/admin/comercial/rutas` | admin | 200 | 0 | 0 |
+| `/cliente/` | cliente | 200 | 0 | 0 |
 
 ---
 
-## Resultados de la auditoría de funciones PostgreSQL
-
-### Archivos escaneados
-- `routes/*.py` (11 archivos)
-- `services/*.py` (3 archivos)
-- `app.py`, `database.py`
-- `templates/**/*.html`
-
-### Ocurrencias encontradas en runtime
-
-| Archivo | Línea | Función | Estado |
-|---------|-------|---------|--------|
-| `routes/admin.py` | 133 | `TO_CHAR` | ✅ Corregida (sesión anterior) — guard `if USE_POSTGRES` añadido |
-| `routes/admin.py` | 1769–1772 | `TO_CHAR`, `DATE_TRUNC`, `INTERVAL` | ✅ Ya tenía `if USE_POSTGRES / else SQLite` |
-| `templates/admin/viajes.html` | 129 | `.strftime()` sobre `str` | ✅ Corregida — usa filtro `fmt_fecha` |
-| `templates/admin/clientes.html` | 140 | `.strftime()` sobre `str` | ✅ Corregida — usa filtro `fmt_fecha` |
-| `templates/admin/camionero_economico.html` | 67 | `.strftime()` sobre `str` | ✅ Corregida — usa filtro `fmt_fecha` |
-| `templates/admin/orden_carga.html` | 262 | `.strftime()` sobre `str` | ✅ Corregida — usa filtro `fmt_fecha` |
-| `templates/cliente/viajes.html` | 63, 98 | `.strftime()` sobre `str` | ✅ Corregida — usa filtro `fmt_fecha` |
-
-### Funciones PG-only en archivos de migración
-`ON CONFLICT`, `DATE_TRUNC`, `INTERVAL`, `TO_CHAR` aparecen en `migraciones_pg.py` y `migrations_v11.py` — **correcto**, son archivos exclusivos de PostgreSQL que nunca se ejecutan en SQLite.
-
-### Sin ocurrencias problemáticas en
-- `routes/viajes.py`, `routes/camioneros.py`, `routes/vehiculos.py`
-- `routes/finanzas.py`, `routes/comercial.py`, `routes/dashboard.py`
-- `routes/cliente.py`, `routes/clientes.py`
-- `services/finanzas_service.py`, `services/comercial_service.py`, `services/pdf_service.py`
-- `app.py`, `database.py`
-- Todos los templates (tras las correcciones)
-
----
-
-## Errores encontrados en esta sesión
-**Ninguno nuevo.** Todas las rutas cargaron sin errores HTTP 500 ni excepciones de consola.
-
-### Warnings no bloqueantes (preexistentes)
-- `favicon.ico` → 404 en todas las páginas (cosmético)
-- `<meta name="apple-mobile-web-app-capable">` deprecado en portal cliente (PWA)
+## Errores y warnings en esta sesión
+**Ninguno.** Todas las páginas cargaron con 0 errores y 0 warnings de consola.
 
 ---
 
 ## Screenshots tomados
-- `audit_admin_dashboard.png` — Dashboard admin post-auditoría
-- `audit_admin_reportes.png` — Página de reportes (usa `DATE_TRUNC`/`strftime` según motor)
-- `audit_admin_auditoria.png` — Log de auditoría del sistema
+- `fix_admin_dashboard.png` — Dashboard admin con `sql_mes_actual()` funcionando ($2350.00)
+- `fix_cliente_home.png` — Portal cliente sin warning de meta deprecada
 
 ---
 
-## Recomendaciones
+## Estado del proyecto tras esta sesión
 
-1. **Links rotos en sidebar**: `/admin/cotizaciones` y `/admin/rutas` devuelven 404. Las rutas reales están en `/admin/comercial/cotizaciones` y `/admin/comercial/rutas`. Corregir los href en el template del sidebar.
+| Issue | Estado |
+|-------|--------|
+| Favicon 404 | ✅ Resuelto |
+| `apple-mobile-web-app-capable` deprecado | ✅ Resuelto (añadida versión estándar) |
+| Helper SQL cross-DB | ✅ Implementado (`sql_mes_actual()` en `database.py`) |
+| Links sidebar rotos | ✅ Confirmado que ya estaban correctos |
+| Funciones PG sin guard | ✅ Sin ocurrencias nuevas |
+| Errores HTTP 500 | ✅ Ninguno |
 
-2. **Favicon**: Añadir `static/favicon.ico` y enlazarlo en el `<head>` del template base para eliminar el 404 en cada carga.
+---
 
-3. **Meta PWA**: Reemplazar `apple-mobile-web-app-capable` por `mobile-web-app-capable` en el template del portal cliente.
-
-4. **Helper SQL cross-DB**: Considerar un helper `fecha_mes_actual()` que devuelva el fragmento SQL correcto según `USE_POSTGRES`, para centralizar futuras queries de filtro por mes y evitar repetir el patrón `if USE_POSTGRES / else`.
-
-5. **Test de integración mínimo**: Ejecutar un smoke test de las queries críticas contra SQLite en CI antes de desplegar a Render, para detectar incompatibilidades antes de que lleguen a producción.
+## Recomendaciones pendientes
+- Extender `sql_mes_actual()` con variantes para filtros semanales/anuales si surgen nuevas queries
+- Agregar test de smoke en CI que cargue `/admin/` y `/cliente/` y verifique status 200
