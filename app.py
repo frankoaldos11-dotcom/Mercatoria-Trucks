@@ -217,6 +217,10 @@ app.register_blueprint(finanzas_bp)
 if USE_POSTGRES:
     from migraciones_pg import ejecutar_migraciones_pg
     ejecutar_migraciones_pg()
+    # Migraciones v1.1: corre siempre, ignora SKIP_MIGRATIONS
+    with app.app_context():
+        from migrations_v11 import aplicar_migraciones_v11
+        aplicar_migraciones_v11()
 else:
     crear_base_datos(bcrypt)
     from migraciones import ejecutar_migraciones

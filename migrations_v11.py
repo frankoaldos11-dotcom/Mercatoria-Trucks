@@ -1,21 +1,20 @@
 """
-Script de migración v1.1 para PostgreSQL (producción).
+Migración v1.1 para PostgreSQL (producción).
 
-Ejecutar UNA VEZ manualmente desde el Render Shell:
+Uso desde app.py (automático al arrancar):
+    from migrations_v11 import aplicar_migraciones_v11
+    aplicar_migraciones_v11()
+
+Uso manual desde Render Shell (una sola vez):
     python migrations_v11.py
 
 No depende de SKIP_MIGRATIONS. Idempotente: safe de re-ejecutar.
-Requiere la variable de entorno DATABASE_URL configurada.
 """
 
 import os
 import sys
 import psycopg2
 import psycopg2.extras
-
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL:
-    sys.exit("ERROR: La variable DATABASE_URL no está configurada.")
 
 
 def run(conn, cur, sql, desc=""):
@@ -34,8 +33,33 @@ def run_many(conn, cur, statements):
         run(conn, cur, sql, desc)
 
 
+def aplicar_migraciones_v11():
+    """
+    Función importable: se llama desde app.py al arrancar.
+    No hace sys.exit — si DATABASE_URL falta simplemente avisa y retorna.
+    """
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        print("[migrations_v11] DATABASE_URL no configurada — omitiendo.")
+        return
+    try:
+        conn = psycopg2.connect(database_url)
+    except Exception as e:
+        print(f"[migrations_v11] No se pudo conectar a la BD: {e}")
+        return
+    _ejecutar(conn)
+
+
 def main():
-    conn = psycopg2.connect(DATABASE_URL)
+    """Punto de entrada para ejecución manual desde el shell."""
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        sys.exit("ERROR: La variable DATABASE_URL no está configurada.")
+    conn = psycopg2.connect(database_url)
+    _ejecutar(conn)
+
+
+def _ejecutar(conn):
     conn.autocommit = False
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
