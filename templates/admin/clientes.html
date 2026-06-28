@@ -137,7 +137,7 @@
                     <td>{{ c.email or "—" }}</td>
                     <td>{{ c.direccion or "—" }}</td>
                     {% endif %}
-                    <td style="font-size:11px;color:#999;">{{ c.fecha_creacion.strftime('%Y-%m-%d') if c.fecha_creacion else "—" }}</td>
+                    <td style="font-size:11px;color:#999;">{{ c.fecha_creacion | fmt_fecha('%Y-%m-%d') }}</td>
                     {% if session.get('rol') == 'admin' %}
                     <td class="td-acciones">
                         <a href="/admin/clientes/{{ c.id }}/editar" class="btn-accion-edit">Editar</a>

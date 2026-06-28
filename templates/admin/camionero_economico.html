@@ -64,7 +64,7 @@
                         <br><small style="color:#9CA3AF;font-size:10px;">{{ v.estado }}</small>
                     </td>
                     <td style="font-size:11px;color:#9CA3AF;white-space:nowrap;">
-                        {{ v.fecha_creacion.strftime('%Y-%m-%d') if v.fecha_creacion else '—' }}
+                        {{ v.fecha_creacion | fmt_fecha('%Y-%m-%d') }}
                     </td>
                     <td>{{ v.origen or '—' }} → {{ v.destino or '—' }}</td>
                     <td><strong>${{ "%.2f"|format(v.monto_calculado|float) }}</strong></td>

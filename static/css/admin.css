@@ -580,68 +580,85 @@ body {
 .badge-cat-estrategico { background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; }
 .badge-cat-humanitario { background:#ECFDF5; color:#065F46; border:1px solid #6EE7B7; }
 
-/* ── Mobile layout ── */
+/* ── Mobile-only elements: hidden on desktop ── */
+.mobile-topbar  { display: none; }
+.mobile-overlay { display: none; }
+
+/* ── Mobile layout (max-width: 768px) ── */
 @media (max-width: 768px) {
     html, body {
         height: auto;
     }
 
-    .app-shell {
-        flex-direction: column;
-        min-height: auto;
-    }
-
-    /* Sidebar → compact sticky top bar (~50px) with icon-only nav */
-    .sidebar {
-        width: 100%;
-        min-height: auto;
-        height: auto;
-        padding: 6px 12px;
+    /* Mobile top bar */
+    .mobile-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 52px;
+        padding: 0 16px;
+        background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-soft) 100%);
         position: sticky;
         top: 0;
         z-index: 100;
+        width: 100%;
     }
-    .brand {
-        margin-bottom: 4px;
+    .mobile-topbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #fff;
+        font-weight: 700;
+        font-size: 15px;
     }
-    .brand-name {
-        font-size: 13px;
-    }
-    .sidebar-nav {
-        flex-direction: row;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        height: auto;
-        gap: 2px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-    .sidebar-nav::-webkit-scrollbar {
-        display: none;
-    }
-    .nav-section {
-        display: none;
-    }
-    /* Icons only — hide label text, keep notification badges */
-    .nav-item {
-        flex-shrink: 0;
+    .mobile-hamburger {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 22px;
+        cursor: pointer;
         padding: 6px 8px;
-        border-radius: 8px;
-        white-space: nowrap;
-        gap: 0;
-        min-width: 34px;
-        justify-content: center;
-        transform: none !important;
+        line-height: 1;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
     }
-    .nav-item > span:not(.nav-badge):not(.badge-admin) {
-        display: none;
-    }
-    .nav-item i {
-        font-size: 17px;
-        opacity: 1;
+    .mobile-hamburger:hover {
+        background: rgba(255, 255, 255, 0.12);
     }
 
-    /* Main content: full width, natural document scroll */
+    /* Overlay */
+    .mobile-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 150;
+    }
+    .mobile-overlay.active { display: block; }
+
+    /* App shell: no forced height */
+    .app-shell {
+        min-height: auto;
+    }
+
+    /* Sidebar: off-screen drawer, slides in from left */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -290px;
+        width: 280px;
+        height: 100%;
+        min-height: 100%;
+        z-index: 200;
+        overflow-y: auto;
+        transition: left 0.25s ease;
+        padding: 26px 20px;
+    }
+    .sidebar.mobile-open {
+        left: 0;
+    }
+
+    /* Main content: full width, natural scroll */
     .main-content {
         width: 100%;
         height: auto;
@@ -649,6 +666,7 @@ body {
         padding: 14px;
     }
 
+    /* Content layout adjustments */
     .page-header {
         flex-direction: column;
         align-items: flex-start;

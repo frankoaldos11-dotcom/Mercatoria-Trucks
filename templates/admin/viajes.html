@@ -126,7 +126,7 @@
                         <span style="color:#ccc;font-size:11px;">Sin precio</span>
                         {% endif %}
                     </td>
-                    <td style="font-size:11px;color:#999;">{{ v.fecha_creacion.strftime('%Y-%m-%d') if v.fecha_creacion else "—" }}</td>
+                    <td style="font-size:11px;color:#999;">{{ v.fecha_creacion | fmt_fecha('%Y-%m-%d') }}</td>
                     <td>{{ v.camionero_nombre if v.camionero_nombre else "Sin asignar" }}</td>
                     <td>
                         <a href="/admin/viaje/{{ v.id }}"

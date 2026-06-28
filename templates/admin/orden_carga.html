@@ -259,7 +259,7 @@
             <p class="fecha">
                 Fecha:
                 {% if viaje.get('fecha_creacion') %}
-                    {{ viaje.fecha_creacion.strftime('%Y-%m-%d') if viaje.fecha_creacion else '' }}
+                    {{ viaje.fecha_creacion | fmt_fecha('%Y-%m-%d') }}
                 {% else %}
                     Sin fecha
                 {% endif %}

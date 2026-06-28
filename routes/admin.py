@@ -129,10 +129,14 @@ def dashboard():
 
     # Ingresos y camionero top: solo para admin
     if session.get("rol") == "admin":
-        cursor.execute("""
+        if USE_POSTGRES:
+            filtro_mes = "TO_CHAR(fecha_creacion, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')"
+        else:
+            filtro_mes = "strftime('%Y-%m', fecha_creacion) = strftime('%Y-%m', 'now')"
+        cursor.execute(f"""
             SELECT COALESCE(SUM(COALESCE(NULLIF(precio_final,0), NULLIF(precio_cliente,0), NULLIF(precio,0), 0)), 0) AS total
             FROM viajes
-            WHERE TO_CHAR(fecha_creacion, 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM')
+            WHERE {filtro_mes}
               AND LOWER(estado) != 'cancelado'
         """)
         ingresos_mes = round(cursor.fetchone()["total"], 2)
