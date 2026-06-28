@@ -223,6 +223,14 @@ else:
     ejecutar_migraciones()
 
 
+@app.route("/sw.js")
+def service_worker():
+    response = app.send_static_file("sw.js")
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Content-Type"] = "application/javascript"
+    return response
+
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
