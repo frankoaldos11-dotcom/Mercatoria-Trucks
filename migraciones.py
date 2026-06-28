@@ -162,6 +162,19 @@ def ejecutar_migraciones():
         )
         """)
 
+    if not tabla_existe(cursor, "incidencias"):
+        cursor.execute("""
+        CREATE TABLE incidencias (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            viaje_id INTEGER NOT NULL,
+            categoria TEXT NOT NULL,
+            descripcion TEXT,
+            usuario TEXT,
+            fecha_hora TEXT DEFAULT CURRENT_TIMESTAMP,
+            estado TEXT DEFAULT 'Abierta'
+        )
+        """)
+
     if not tabla_existe(cursor, "reset_tokens"):
         cursor.execute("""
         CREATE TABLE reset_tokens (

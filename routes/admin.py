@@ -9,7 +9,7 @@ from urllib.parse import quote_plus
 
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 
-from database import conectar, crear_checklist_viaje
+from database import conectar, crear_checklist_viaje, INCIDENCIAS_CATEGORIAS, INCIDENCIAS_ESTADOS
 from db_config import USE_POSTGRES
 from extensions import bcrypt, mail
 from flask_mail import Message
@@ -217,7 +217,8 @@ def viajes():
                COALESCE(v.precio_final, v.precio_cliente, v.precio, 0) as precio,
                v.fecha_creacion,
                v.prioridad, v.tipo_carga,
-               COALESCE(c.categoria, 'Normal') AS cliente_categoria
+               COALESCE(c.categoria, 'Normal') AS cliente_categoria,
+               (SELECT COUNT(*) FROM incidencias i WHERE i.viaje_id = v.id AND i.estado != 'Resuelta') AS incidencias_abiertas
         FROM viajes v
         LEFT JOIN clientes c ON c.id = v.cliente_id
         {where}
@@ -384,6 +385,13 @@ def gestionar_viaje(id):
         (id,)
     )
     checklist = cursor2.fetchall()
+
+    cursor2.execute(
+        "SELECT id, categoria, descripcion, usuario, fecha_hora, estado "
+        "FROM incidencias WHERE viaje_id = ? ORDER BY fecha_hora DESC",
+        (id,)
+    )
+    incidencias = cursor2.fetchall()
     conexion2.close()
 
     return render_template(
@@ -403,6 +411,9 @@ def gestionar_viaje(id):
         obs_parsed=obs_parsed,
         notas=notas,
         checklist=checklist,
+        incidencias=incidencias,
+        incidencias_categorias=INCIDENCIAS_CATEGORIAS,
+        incidencias_estados=INCIDENCIAS_ESTADOS,
     )
 
 
@@ -440,6 +451,45 @@ def toggle_checklist(viaje_id, item_id):
     con.commit()
     con.close()
     return jsonify({"completado": bool(nuevo)})
+
+
+@admin_bp.route("/viaje/<int:id>/incidencia/nueva", methods=["POST"])
+def nueva_incidencia(id):
+    if not requiere_admin():
+        return redirect("/login")
+    categoria = request.form.get("categoria", "Otro").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+    if not descripcion:
+        return redirect(f"/admin/viaje/{id}#operacion")
+    if categoria not in INCIDENCIAS_CATEGORIAS:
+        categoria = "Otro"
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(
+        "INSERT INTO incidencias (viaje_id, categoria, descripcion, usuario) VALUES (?, ?, ?, ?)",
+        (id, categoria, descripcion, session.get("usuario", "admin"))
+    )
+    con.commit()
+    con.close()
+    return redirect(f"/admin/viaje/{id}#operacion")
+
+
+@admin_bp.route("/viaje/<int:id>/incidencia/<int:inc_id>/estado", methods=["POST"])
+def cambiar_estado_incidencia(id, inc_id):
+    if not requiere_admin():
+        return jsonify({"error": "no auth"}), 401
+    nuevo_estado = request.form.get("estado", "").strip()
+    if nuevo_estado not in INCIDENCIAS_ESTADOS:
+        return jsonify({"error": "estado inválido"}), 400
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(
+        "UPDATE incidencias SET estado = ? WHERE id = ? AND viaje_id = ?",
+        (nuevo_estado, inc_id, id)
+    )
+    con.commit()
+    con.close()
+    return jsonify({"estado": nuevo_estado})
 
 
 @admin_bp.route("/viaje/<int:id>/asignar", methods=["POST"])

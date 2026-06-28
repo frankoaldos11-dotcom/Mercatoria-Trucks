@@ -102,6 +102,9 @@
                         {% if cat != 'Normal' %}
                         <br><span class="badge-cat badge-cat-{{ cat|lower|replace('é','e')|replace('ó','o') }}">{{ cat }}</span>
                         {% endif %}
+                        {% if v.incidencias_abiertas and v.incidencias_abiertas > 0 %}
+                        <br><span style="display:inline-block;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;margin-top:2px;" title="Incidencias abiertas">⚠ {{ v.incidencias_abiertas }} incid.</span>
+                        {% endif %}
                     </td>
                     <td>{{ v.origen }}</td>
                     <td>

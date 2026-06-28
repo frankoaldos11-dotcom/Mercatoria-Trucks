@@ -66,6 +66,22 @@ def ejecutar_migraciones_pg():
         except Exception:
             conn.rollback()
 
+        try:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS incidencias (
+                id SERIAL PRIMARY KEY,
+                viaje_id INTEGER NOT NULL,
+                categoria TEXT NOT NULL,
+                descripcion TEXT,
+                usuario TEXT,
+                fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                estado TEXT DEFAULT 'Abierta'
+            )
+            """)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
         cur.execute("SELECT id FROM usuarios WHERE usuario = 'admin'")
         if not cur.fetchone():
             from flask_bcrypt import Bcrypt
@@ -355,6 +371,19 @@ def ejecutar_migraciones_pg():
         completado INTEGER DEFAULT 0,
         completado_por TEXT,
         fecha_completado TIMESTAMP
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS incidencias (
+        id SERIAL PRIMARY KEY,
+        viaje_id INTEGER NOT NULL,
+        categoria TEXT NOT NULL,
+        descripcion TEXT,
+        usuario TEXT,
+        fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        estado TEXT DEFAULT 'Abierta',
+        FOREIGN KEY (viaje_id) REFERENCES viajes(id)
     )
     """)
 

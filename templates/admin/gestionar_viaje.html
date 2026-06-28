@@ -391,6 +391,37 @@
         {% endif %}
     </div>
 
+    {# Incidencias (lectura) #}
+    <div class="card bloque">
+        <h2><i class="bi bi-exclamation-triangle" style="color:#E86A2C;margin-right:5px;"></i>Incidencias</h2>
+        {% if incidencias %}
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+                <tr style="border-bottom:1px solid #E5E7EB;text-align:left;">
+                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Categoría</th>
+                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Descripción</th>
+                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Usuario</th>
+                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Fecha</th>
+                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inc in incidencias %}
+                <tr style="border-bottom:1px solid #F3F4F6;">
+                    <td style="padding:6px 8px;"><span class="inc-cat-badge inc-cat-{{ inc.categoria|lower|replace(' ','_')|replace('é','e')|replace('ó','o')|replace('á','a') }}">{{ inc.categoria }}</span></td>
+                    <td style="padding:6px 8px;color:#374151;">{{ inc.descripcion }}</td>
+                    <td style="padding:6px 8px;font-size:11px;color:#9CA3AF;">{{ inc.usuario or '—' }}</td>
+                    <td style="padding:6px 8px;font-size:11px;color:#9CA3AF;white-space:nowrap;">{{ inc.fecha_hora | fmt_fecha if inc.fecha_hora else '—' }}</td>
+                    <td style="padding:6px 8px;"><span class="inc-estado-badge inc-estado-{{ inc.estado|lower|replace(' ','_') }}">{{ inc.estado }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#9CA3AF;font-size:13px;margin:0;">Sin incidencias registradas.</p>
+        {% endif %}
+    </div>
+
 </div>{# /tab-info #}
 
 {# ════════════════════════════════════════════════════════════
@@ -583,6 +614,66 @@
             {% endif %}
         </div>
 
+        {# Incidencias operativas #}
+        <div class="card bloque inc-card">
+            <div class="inc-header">
+                <h2 style="margin:0;"><i class="bi bi-exclamation-triangle" style="color:#E86A2C;margin-right:6px;"></i>Incidencias</h2>
+                <button class="btn-principal" style="width:auto;padding:6px 14px;font-size:12px;"
+                        onclick="var w=document.getElementById('inc-form-wrap');w.style.display=w.style.display==='none'?'block':'none';">
+                    <i class="bi bi-plus-lg"></i> Registrar incidencia
+                </button>
+            </div>
+
+            <div id="inc-form-wrap" style="display:none;background:#f9fafb;border:1px solid #E5E7EB;border-radius:10px;padding:14px;margin-bottom:14px;">
+                <form method="POST" action="/admin/viaje/{{ viaje.id }}/incidencia/nueva">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div style="display:grid;grid-template-columns:160px 1fr;gap:10px;margin-bottom:10px;align-items:end;">
+                        <div>
+                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Categoría</label>
+                            <select name="categoria" class="input" style="font-size:13px;">
+                                {% for cat in incidencias_categorias %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Descripción</label>
+                            <input type="text" name="descripcion" class="input" placeholder="Describe la incidencia…" required style="font-size:13px;">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-principal" style="width:auto;padding:6px 14px;font-size:12px;">Guardar</button>
+                    <button type="button" class="btn-secundario" style="width:auto;padding:6px 14px;font-size:12px;margin-left:6px;"
+                            onclick="document.getElementById('inc-form-wrap').style.display='none';">Cancelar</button>
+                </form>
+            </div>
+
+            {% if incidencias %}
+            <div class="inc-lista">
+                {% for inc in incidencias %}
+                <div class="inc-row {% if inc.estado == 'Resuelta' %}inc-resuelta{% endif %}" id="inc-row-{{ inc.id }}">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span class="inc-cat-badge inc-cat-{{ inc.categoria|lower|replace(' ','_')|replace('é','e')|replace('ó','o')|replace('á','a') }}">{{ inc.categoria }}</span>
+                        <span style="font-size:13px;font-weight:600;color:#374151;flex:1;">{{ inc.descripcion }}</span>
+                        <span class="inc-estado-badge inc-estado-{{ inc.estado|lower|replace(' ','_') }}" id="inc-estado-txt-{{ inc.id }}">{{ inc.estado }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                        <span style="font-size:11px;color:#9CA3AF;">{{ inc.usuario or '—' }} · {{ inc.fecha_hora | fmt_fecha if inc.fecha_hora else '—' }}</span>
+                        <div style="margin-left:auto;display:flex;gap:6px;">
+                            <input type="hidden" class="inc-csrf" value="{{ csrf_token() }}">
+                            {% for est in incidencias_estados %}{% if est != inc.estado %}
+                            <button class="btn-inc-estado" data-estado="{{ est }}"
+                                    onclick="cambiarEstadoInc({{ viaje.id }}, {{ inc.id }}, '{{ est }}', this)">{{ est }}</button>
+                            {% endif %}{% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:#9CA3AF;font-size:13px;margin:0;" id="inc-empty">Sin incidencias registradas.</p>
+            {% endif %}
+        </div>
+
     </div>{# /op-grid #}
 </div>{# /tab-operacion #}
 
@@ -641,6 +732,26 @@ function toggleChecklist(itemId, btn) {
         if (barra) barra.style.width = (total > 0 ? Math.round(done / total * 100) : 0) + '%';
     })
     .catch(function(e) { console.error('checklist toggle error:', e); });
+}
+
+function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
+    var row = document.getElementById('inc-row-' + incId);
+    var csrf = row.querySelector('.inc-csrf').value;
+    var fd = new FormData();
+    fd.append('csrf_token', csrf);
+    fd.append('estado', nuevoEstado);
+    fetch('/admin/viaje/' + viajeId + '/incidencia/' + incId + '/estado', {
+        method: 'POST',
+        body: fd
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.estado) {
+            history.replaceState(null, '', location.pathname + '#operacion');
+            location.reload();
+        }
+    })
+    .catch(function(e) { console.error('incidencia estado error:', e); });
 }
 
 var selCam = document.getElementById('sel-camionero');
@@ -948,6 +1059,46 @@ if (selCam) {
 
 /* ── WhatsApp ───────────────────────────────────────────────── */
 .whatsapp-box p { color: #777; margin-bottom: 10px; font-size: 13px; }
+
+/* ── Incidencias ────────────────────────────────────────────── */
+.inc-card { grid-column: 1 / -1; }
+.inc-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+.inc-lista { display:flex; flex-direction:column; gap:10px; }
+.inc-row {
+    background:#f9fafb; border:1px solid #E5E7EB; border-radius:10px; padding:12px 14px;
+    transition: border-color .15s;
+}
+.inc-row:hover { border-color:#D1D5DB; }
+.inc-resuelta { opacity:.5; }
+.inc-cat-badge {
+    display:inline-block; font-size:11px; font-weight:700;
+    padding:2px 8px; border-radius:999px;
+    background:#F3F4F6; color:#6B7280;
+}
+.inc-cat-badge.inc-cat-retraso      { background:#FEE2E2; color:#991B1B; }
+.inc-cat-badge.inc-cat-averia       { background:#FEE2E2; color:#991B1B; }
+.inc-cat-badge.inc-cat-puerto       { background:#DBEAFE; color:#1E40AF; }
+.inc-cat-badge.inc-cat-cliente      { background:#F3E8FF; color:#6B21A8; }
+.inc-cat-badge.inc-cat-combustible  { background:#FEF3C7; color:#92400E; }
+.inc-cat-badge.inc-cat-documentacion{ background:#E0F2FE; color:#0369A1; }
+.inc-cat-badge.inc-cat-pago         { background:#DCFCE7; color:#166534; }
+.inc-cat-badge.inc-cat-cobro        { background:#D1FAE5; color:#065F46; }
+.inc-cat-badge.inc-cat-otro         { background:#F3F4F6; color:#6B7280; }
+.inc-estado-badge {
+    display:inline-block; font-size:11px; font-weight:700;
+    padding:2px 8px; border-radius:999px;
+    background:#FEE2E2; color:#991B1B;
+}
+.inc-estado-badge.inc-estado-abierta        { background:#FEE2E2; color:#991B1B; }
+.inc-estado-badge.inc-estado-en_seguimiento { background:#FEF3C7; color:#92400E; }
+.inc-estado-badge.inc-estado-resuelta       { background:#DCFCE7; color:#166534; }
+.btn-inc-estado {
+    font-size:11px; font-weight:600;
+    border:1px solid #D1D5DB; background:#fff; color:#374151;
+    padding:3px 10px; border-radius:6px; cursor:pointer;
+    transition: background .15s, border-color .15s;
+}
+.btn-inc-estado:hover { background:#f3f4f6; border-color:#9CA3AF; }
 
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 1100px) {

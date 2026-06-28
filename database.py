@@ -398,6 +398,19 @@ def crear_base_datos(bcrypt):
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS incidencias (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        viaje_id INTEGER NOT NULL,
+        categoria TEXT NOT NULL,
+        descripcion TEXT,
+        usuario TEXT,
+        fecha_hora TEXT DEFAULT CURRENT_TIMESTAMP,
+        estado TEXT DEFAULT 'Abierta',
+        FOREIGN KEY (viaje_id) REFERENCES viajes(id)
+    )
+    """)
+
     cursor.execute("SELECT id FROM usuarios WHERE usuario = ?", ("admin",))
     if not cursor.fetchone():
         hash_admin = bcrypt.generate_password_hash("1234").decode("utf-8")
@@ -409,6 +422,9 @@ def crear_base_datos(bcrypt):
     conexion.commit()
     conexion.close()
 
+
+INCIDENCIAS_CATEGORIAS = ["Retraso", "Avería", "Puerto", "Cliente", "Combustible", "Documentación", "Pago", "Cobro", "Otro"]
+INCIDENCIAS_ESTADOS = ["Abierta", "En seguimiento", "Resuelta"]
 
 CHECKLIST_ITEMS_DEFAULT = [
     "Solicitud revisada",
