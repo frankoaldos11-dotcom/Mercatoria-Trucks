@@ -285,7 +285,7 @@ def gestionar_viaje(id):
                COALESCE(v.marca, '')    AS vehiculo_marca,
                COALESCE(v.modelo, '')   AS vehiculo_modelo
         FROM camioneros c
-        LEFT JOIN vehiculos v ON v.camionero_id = c.id AND v.activo = 1
+        INNER JOIN vehiculos v ON v.camionero_id = c.id AND v.activo = 1
         WHERE c.activo = 1 OR c.activo IS NULL
         ORDER BY c.nombre
     """)
@@ -1017,6 +1017,60 @@ def camionero_economico(id):
     )
 
 
+@admin_bp.route("/catalogos/tipo-transporte", methods=["GET", "POST"])
+def catalogo_tipo_transporte_admin():
+    if not requiere_admin():
+        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin")
+
+    con = conectar()
+    cur = con.cursor()
+    error = None
+
+    if request.method == "POST":
+        accion = request.form.get("accion", "")
+        if accion == "nuevo":
+            nombre = request.form.get("nombre", "").strip()
+            if not nombre:
+                error = "El nombre es obligatorio."
+            else:
+                try:
+                    cur.execute(
+                        "INSERT INTO catalogo_tipo_transporte (nombre) VALUES (?)", (nombre,)
+                    )
+                    con.commit()
+                except Exception:
+                    con.rollback()
+                    error = f"'{nombre}' ya existe en el catálogo."
+        elif accion == "toggle":
+            tipo_id = request.form.get("tipo_id", "")
+            if tipo_id:
+                cur.execute(
+                    "SELECT activo FROM catalogo_tipo_transporte WHERE id = ?", (tipo_id,)
+                )
+                row = cur.fetchone()
+                if row:
+                    cur.execute(
+                        "UPDATE catalogo_tipo_transporte SET activo = ? WHERE id = ?",
+                        (0 if row["activo"] else 1, tipo_id)
+                    )
+                    con.commit()
+        if not error:
+            con.close()
+            return redirect("/admin/catalogos/tipo-transporte")
+
+    cur.execute("SELECT id, nombre, activo FROM catalogo_tipo_transporte ORDER BY nombre")
+    tipos = cur.fetchall()
+    con.close()
+
+    return render_template(
+        "admin/catalogo_tipo_transporte.html",
+        tipos=tipos,
+        error=error,
+    )
+
+
 # ── Camioneros CRUD ──────────────────────────────────────────────────────────
 
 @admin_bp.route("/camioneros", methods=["GET", "POST"])
@@ -1069,8 +1123,12 @@ def admin_camioneros():
             conexion.close()
             return redirect("/admin/camioneros?ok=1")
 
-    buscar = request.args.get("buscar", "").strip()
-    filtro_estado = request.args.get("estado", "").strip()
+    buscar           = request.args.get("buscar", "").strip()
+    filtro_estado    = request.args.get("estado", "").strip()
+    filtro_tipo      = request.args.get("tipo_transporte", "").strip()
+    filtro_vehiculo  = request.args.get("vehiculo", "").strip()   # "con" | "sin" | ""
+    pagina           = max(1, int(request.args.get("pagina", 1) or 1))
+    por_pagina       = 20
 
     condiciones = ["(c.activo = 1 OR c.activo IS NULL)"]
     params = []
@@ -1081,20 +1139,46 @@ def admin_camioneros():
     if filtro_estado:
         condiciones.append("LOWER(c.estado) = ?")
         params.append(filtro_estado.lower())
+    if filtro_tipo:
+        condiciones.append("LOWER(COALESCE(v.tipo, '')) = ?")
+        params.append(filtro_tipo.lower())
+    if filtro_vehiculo == "con":
+        condiciones.append("v.id IS NOT NULL")
+    elif filtro_vehiculo == "sin":
+        condiciones.append("v.id IS NULL")
+
     where = "WHERE " + " AND ".join(condiciones)
+
+    cursor.execute(f"""
+        SELECT COUNT(DISTINCT c.id) AS total
+        FROM camioneros c
+        LEFT JOIN vehiculos v ON v.camionero_id = c.id AND v.activo = 1
+        {where}
+    """, params)
+    total = cursor.fetchone()["total"]
+    total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
+    pagina = min(pagina, total_paginas)
+    offset = (pagina - 1) * por_pagina
 
     cursor.execute(f"""
         SELECT c.id, c.nombre, c.telefono, c.licencia, c.estado,
                COALESCE(v.matricula, '—') AS vehiculo_matricula,
                COALESCE(v.marca, '') AS vehiculo_marca,
                COALESCE(v.modelo, '') AS vehiculo_modelo,
-               COALESCE(v.tipo, '') AS vehiculo_tipo
+               COALESCE(v.tipo, '') AS vehiculo_tipo,
+               v.id AS vehiculo_id
         FROM camioneros c
         LEFT JOIN vehiculos v ON v.camionero_id = c.id AND v.activo = 1
         {where}
         ORDER BY c.id DESC
-    """, params)
+        LIMIT ? OFFSET ?
+    """, params + [por_pagina, offset])
     lista = cursor.fetchall()
+
+    cursor.execute(
+        "SELECT id, nombre FROM catalogo_tipo_transporte WHERE activo = 1 ORDER BY nombre"
+    )
+    catalogo_tipos = cursor.fetchall()
 
     conexion.close()
 
@@ -1107,6 +1191,12 @@ def admin_camioneros():
         rutas_por_camionero=rutas_por_camionero,
         buscar=buscar,
         filtro_estado=filtro_estado,
+        filtro_tipo=filtro_tipo,
+        filtro_vehiculo=filtro_vehiculo,
+        catalogo_tipos=catalogo_tipos,
+        pagina_actual=pagina,
+        total_paginas=total_paginas,
+        total=total,
         error=error,
     )
 
@@ -1187,6 +1277,11 @@ def editar_camionero(id):
         (id,)
     )
     vehiculo = cursor.fetchone()
+
+    cursor.execute(
+        "SELECT id, nombre FROM catalogo_tipo_transporte WHERE activo = 1 ORDER BY nombre"
+    )
+    catalogo_tipos = cursor.fetchall()
     conexion.close()
 
     return render_template(
@@ -1194,6 +1289,7 @@ def editar_camionero(id):
         camionero=camionero,
         vehiculo=vehiculo,
         estados=CAMIONERO_ESTADOS,
+        catalogo_tipos=catalogo_tipos,
         error=error,
     )
 

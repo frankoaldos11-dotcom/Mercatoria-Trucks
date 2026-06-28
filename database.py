@@ -189,6 +189,19 @@ def crear_base_datos(bcrypt):
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS catalogo_tipo_transporte (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL UNIQUE,
+        activo INTEGER DEFAULT 1
+    )
+    """)
+    for _t in ["Rastra", "Plancha", "Furgón", "Camión cerrado",
+               "Camión refrigerado", "Portacontenedor", "Camioneta", "Otro"]:
+        cursor.execute(
+            "INSERT OR IGNORE INTO catalogo_tipo_transporte (nombre) VALUES (?)", (_t,)
+        )
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS tarifas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         ruta_id INTEGER NOT NULL,

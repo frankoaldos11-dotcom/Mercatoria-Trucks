@@ -87,6 +87,25 @@ def ejecutar_migraciones_pg():
         except Exception:
             conn.rollback()
 
+        try:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS catalogo_tipo_transporte (
+                id SERIAL PRIMARY KEY,
+                nombre TEXT NOT NULL UNIQUE,
+                activo INTEGER DEFAULT 1
+            )
+            """)
+            conn.commit()
+            for _t in ["Rastra", "Plancha", "Furgón", "Camión cerrado",
+                       "Camión refrigerado", "Portacontenedor", "Camioneta", "Otro"]:
+                cur.execute(
+                    "INSERT INTO catalogo_tipo_transporte (nombre) VALUES (%s) ON CONFLICT (nombre) DO NOTHING",
+                    (_t,)
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
         cur.execute("SELECT id FROM usuarios WHERE usuario = 'admin'")
         if not cur.fetchone():
             from flask_bcrypt import Bcrypt
@@ -202,6 +221,20 @@ def ejecutar_migraciones_pg():
         activo INTEGER DEFAULT 1
     )
     """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS catalogo_tipo_transporte (
+        id SERIAL PRIMARY KEY,
+        nombre TEXT NOT NULL UNIQUE,
+        activo INTEGER DEFAULT 1
+    )
+    """)
+    for _t in ["Rastra", "Plancha", "Furgón", "Camión cerrado",
+               "Camión refrigerado", "Portacontenedor", "Camioneta", "Otro"]:
+        cur.execute(
+            "INSERT INTO catalogo_tipo_transporte (nombre) VALUES (%s) ON CONFLICT (nombre) DO NOTHING",
+            (_t,)
+        )
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS tarifas (

@@ -15,6 +15,12 @@
         <p>Registro operativo de transportistas disponibles para asignaciones.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
+        {% if session.get('rol') == 'admin' %}
+        <a href="/admin/catalogos/tipo-transporte"
+           style="padding:8px 14px;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">
+            <i class="bi bi-tags"></i> Tipos de transporte
+        </a>
+        {% endif %}
         <a href="/admin/exportar/camioneros" class="btn-excel-export">⬇ Exportar Excel</a>
         <button class="btn-excel-import" data-bs-toggle="modal" data-bs-target="#modalImportarCamioneros">
             <i class="bi bi-upload"></i> Importar Excel
@@ -59,7 +65,7 @@
             </div>
             <div class="form-crud-field" style="grid-column:1/-1;">
                 <label style="color:#E86A2C;">Vehículo (opcional)</label>
-                <small style="color:#999;font-size:11px;">Si registras un vehículo, la matrícula es obligatoria.</small>
+                <small style="color:#999;font-size:11px;">Puedes asignar un vehículo ahora o más tarde. Si registras datos del vehículo, la matrícula es obligatoria.</small>
             </div>
             <div class="form-crud-field">
                 <label>Matrícula</label>
@@ -74,8 +80,13 @@
                 <input type="text" name="modelo" class="input-crud" placeholder="Modelo">
             </div>
             <div class="form-crud-field">
-                <label>Tipo</label>
-                <input type="text" name="tipo" class="input-crud" placeholder="Tipo de transporte">
+                <label>Tipo de transporte</label>
+                <select name="tipo" class="input-crud">
+                    <option value="">— Sin especificar —</option>
+                    {% for t in catalogo_tipos %}
+                    <option value="{{ t.nombre }}">{{ t.nombre }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-crud-field">
                 <label>Capacidad</label>
@@ -87,22 +98,17 @@
         </form>
         <script>
         (function() {
-          const camposVehiculo = ['marca', 'modelo', 'tipo', 'capacidad'];
-          const matriculaInp = document.getElementById('campo-matricula');
+          var camposVehiculo = ['marca', 'modelo', 'capacidad'];
+          var matriculaInp = document.getElementById('campo-matricula');
           function checkMatricula() {
-            const alguno = camposVehiculo.some(n => document.querySelector('[name="'+n+'"]').value.trim());
+            var alguno = camposVehiculo.some(function(n) {
+              return document.querySelector('[name="'+n+'"]').value.trim();
+            });
             matriculaInp.required = alguno;
             matriculaInp.style.borderColor = alguno ? '#E86A2C' : '';
           }
-          camposVehiculo.forEach(n => document.querySelector('[name="'+n+'"]').addEventListener('input', checkMatricula));
-          document.querySelector('form[action="/admin/camioneros"]').addEventListener('submit', function(e) {
-            const alguno = camposVehiculo.some(n => document.querySelector('[name="'+n+'"]').value.trim());
-            if (alguno && !matriculaInp.value.trim()) {
-              e.preventDefault();
-              matriculaInp.focus();
-              matriculaInp.style.borderColor = '#e74c3c';
-              alert('La matrícula es obligatoria si registras un vehículo.');
-            }
+          camposVehiculo.forEach(function(n) {
+            document.querySelector('[name="'+n+'"]').addEventListener('input', checkMatricula);
           });
         })();
         </script>
@@ -112,15 +118,26 @@
 <form method="GET" action="/admin/camioneros" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
     <input type="text" name="buscar" value="{{ buscar or '' }}"
            placeholder="Buscar por nombre, teléfono o licencia..."
-           style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;min-width:260px;">
+           style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;min-width:220px;">
     <select name="estado" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
         <option value="">Todos los estados</option>
         {% for e in estados %}
         <option value="{{ e }}" {% if filtro_estado == e %}selected{% endif %}>{{ e }}</option>
         {% endfor %}
     </select>
+    <select name="tipo_transporte" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+        <option value="">Todos los tipos</option>
+        {% for t in catalogo_tipos %}
+        <option value="{{ t.nombre }}" {% if filtro_tipo == t.nombre %}selected{% endif %}>{{ t.nombre }}</option>
+        {% endfor %}
+    </select>
+    <select name="vehiculo" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+        <option value="">Con/sin vehículo</option>
+        <option value="con" {% if filtro_vehiculo == 'con' %}selected{% endif %}>Con vehículo</option>
+        <option value="sin" {% if filtro_vehiculo == 'sin' %}selected{% endif %}>Sin vehículo</option>
+    </select>
     <button type="submit" style="padding:8px 16px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
-    {% if buscar or filtro_estado %}
+    {% if buscar or filtro_estado or filtro_tipo or filtro_vehiculo %}
     <a href="/admin/camioneros" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
     {% endif %}
 </form>
@@ -156,7 +173,7 @@
                     <td>{{ c.telefono or "—" }}</td>
                     <td>{{ c.licencia or "—" }}</td>
                     <td>
-                        {% if c.vehiculo_matricula and c.vehiculo_matricula != '—' %}
+                        {% if c.vehiculo_id %}
                             <strong>{{ c.vehiculo_matricula }}</strong>
                             {% if c.vehiculo_marca or c.vehiculo_modelo %}
                             <br><small style="color:#888;">{{ c.vehiculo_marca }} {{ c.vehiculo_modelo }}</small>
@@ -165,13 +182,17 @@
                             <br><small style="color:#aaa;">{{ c.vehiculo_tipo }}</small>
                             {% endif %}
                         {% else %}
-                            <span style="color:#ccc;font-style:italic;">Sin vehículo</span>
+                            <span class="estado-pill" style="background:#fef3c7;color:#92400e;font-style:italic;">Pendiente de vehículo</span>
                         {% endif %}
                     </td>
                     <td>
-                        <span class="estado-pill estado-{{ c.estado|lower|replace(' ', '-') }}">
-                            {{ c.estado or "—" }}
-                        </span>
+                        {% if not c.vehiculo_id %}
+                            <span class="estado-pill" style="background:#fef3c7;color:#92400e;">Sin vehículo</span>
+                        {% else %}
+                            <span class="estado-pill estado-{{ c.estado|lower|replace(' ', '-') }}">
+                                {{ c.estado or "—" }}
+                            </span>
+                        {% endif %}
                     </td>
                     <td class="td-rutas">
                         {% set rutas_c = rutas_por_camionero[c.id] %}
@@ -207,9 +228,47 @@
             </tbody>
         </table>
     </div>
+
+    {% if total_paginas > 1 %}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-top:1px solid #f0f0f0;flex-wrap:wrap;gap:8px;">
+        <span style="font-size:13px;color:#888;">{{ total }} camionero{{ 's' if total != 1 }} · página {{ pagina_actual }} de {{ total_paginas }}</span>
+        <div style="display:flex;gap:4px;">
+            {% if pagina_actual > 1 %}
+            <a href="?{{ request.query_string.decode().replace('pagina=' ~ pagina_actual, '') }}&pagina={{ pagina_actual - 1 }}" class="pag-btn">‹ Anterior</a>
+            {% endif %}
+            {% for p in range(1, total_paginas + 1) %}
+                {% if p == pagina_actual %}
+                <span class="pag-btn pag-active">{{ p }}</span>
+                {% elif p <= 3 or p >= total_paginas - 2 or (p >= pagina_actual - 2 and p <= pagina_actual + 2) %}
+                <a href="?{{ request.query_string.decode().replace('pagina=' ~ pagina_actual, '') }}&pagina={{ p }}" class="pag-btn">{{ p }}</a>
+                {% elif p == 4 or p == total_paginas - 3 %}
+                <span class="pag-btn" style="color:#ccc;cursor:default;">…</span>
+                {% endif %}
+            {% endfor %}
+            {% if pagina_actual < total_paginas %}
+            <a href="?{{ request.query_string.decode().replace('pagina=' ~ pagina_actual, '') }}&pagina={{ pagina_actual + 1 }}" class="pag-btn">Siguiente ›</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </section>
 
 <style>
+.pag-btn {
+    display: inline-block;
+    padding: 5px 11px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    background: #f5f5f5;
+    text-decoration: none;
+    border: 1px solid #e0e0e0;
+    transition: background .15s;
+}
+.pag-btn:hover { background: #ebebeb; }
+.pag-active { background: #E86A2C !important; color: #fff !important; border-color: #E86A2C !important; }
+
 .form-crud-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));

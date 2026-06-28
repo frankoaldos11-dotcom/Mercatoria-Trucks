@@ -79,10 +79,16 @@
                            placeholder="Modelo">
                 </div>
                 <div class="edit-field">
-                    <label>Tipo</label>
-                    <input type="text" name="tipo" class="input-crud"
-                           value="{{ vehiculo.tipo if vehiculo else '' }}"
-                           placeholder="Tipo de transporte">
+                    <label>Tipo de transporte</label>
+                    <select name="tipo" class="input-crud">
+                        <option value="">— Sin especificar —</option>
+                        {% for t in catalogo_tipos %}
+                        <option value="{{ t.nombre }}"
+                            {% if vehiculo and vehiculo.tipo == t.nombre %}selected{% endif %}>
+                            {{ t.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
 

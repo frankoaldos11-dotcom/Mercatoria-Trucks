@@ -180,6 +180,20 @@ def ejecutar_migraciones():
         )
         """)
 
+    if not tabla_existe(cursor, "catalogo_tipo_transporte"):
+        cursor.execute("""
+        CREATE TABLE catalogo_tipo_transporte (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL UNIQUE,
+            activo INTEGER DEFAULT 1
+        )
+        """)
+        for _t in ["Rastra", "Plancha", "Furgón", "Camión cerrado",
+                   "Camión refrigerado", "Portacontenedor", "Camioneta", "Otro"]:
+            cursor.execute(
+                "INSERT OR IGNORE INTO catalogo_tipo_transporte (nombre) VALUES (?)", (_t,)
+            )
+
     if not tabla_existe(cursor, "reset_tokens"):
         cursor.execute("""
         CREATE TABLE reset_tokens (
