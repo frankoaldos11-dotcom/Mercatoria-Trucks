@@ -187,6 +187,10 @@
                     </td>
                     <td class="td-acciones">
                         <a href="/admin/camioneros/{{ c.id }}/editar" class="btn-accion-edit">Editar</a>
+                        <a href="/admin/camioneros/{{ c.id }}/economico" class="btn-accion-edit"
+                           style="background:#ecfdf5;color:#065f46;" title="Estado económico">
+                            <i class="bi bi-cash-coin"></i>
+                        </a>
                         <form method="POST" action="/admin/camioneros/{{ c.id }}/eliminar"
                               style="display:inline"
                               onsubmit="return confirm('¿Confirmar eliminación?')">

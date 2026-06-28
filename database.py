@@ -343,6 +343,11 @@ def crear_base_datos(bcrypt):
     agregar_columna(cursor, "viajes", "numero_contenedor", "TEXT")
     agregar_columna(cursor, "viajes", "peso_toneladas", "REAL")
     agregar_columna(cursor, "viajes", "observaciones_operativas", "TEXT")
+    agregar_columna(cursor, "viajes", "estado_pago_camionero",  "TEXT DEFAULT 'Pendiente'")
+    agregar_columna(cursor, "viajes", "tipo_pago_camionero",    "TEXT")
+    agregar_columna(cursor, "viajes", "observacion_pago",       "TEXT")
+    agregar_columna(cursor, "viajes", "monto_pagado",           "REAL")
+    agregar_columna(cursor, "viajes", "fecha_pago_camionero",   "TEXT")
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS configuracion_texto (

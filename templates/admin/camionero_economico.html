@@ -1,0 +1,203 @@
+{% extends "admin/base_admin.html" %}
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <a href="/admin/camioneros" class="btn-volver">← Camioneros</a>
+        <h1><i class="bi bi-cash-coin" style="color:#E86A2C;margin-right:8px;"></i>{{ camionero.nombre }}</h1>
+        <p class="subtitulo">Estado económico · seguimiento de pagos</p>
+    </div>
+    <a href="/admin/camioneros/{{ camionero.id }}/editar" class="btn-accion-edit" style="white-space:nowrap;">
+        <i class="bi bi-pencil"></i> Editar perfil
+    </a>
+</div>
+
+{# ── Resumen ────────────────────────────────────────────────────── #}
+<div class="eco-resumen">
+    <div class="card eco-card">
+        <span>Total generado</span>
+        <strong>${{ "%.2f"|format(total_generado) }}</strong>
+        <small>Todos los viajes no cancelados</small>
+    </div>
+    <div class="card eco-card eco-card-pagado">
+        <span>Total pagado</span>
+        <strong>${{ "%.2f"|format(total_pagado) }}</strong>
+        <small>Pagados + parciales abonados</small>
+    </div>
+    <div class="card eco-card {% if pendiente > 0.005 %}eco-card-pendiente{% endif %}">
+        <span>Pendiente por cobrar</span>
+        <strong>${{ "%.2f"|format(pendiente) }}</strong>
+        <small>{{ pendientes|length }} viaje{{ 's' if pendientes|length != 1 }}</small>
+    </div>
+</div>
+
+{# ── Pendientes / Parciales ─────────────────────────────────────── #}
+<section class="panel" style="margin-bottom:24px;">
+    <div class="panel-header">
+        <div>
+            <h2>Pagos pendientes / parciales</h2>
+            <p>Viajes con pago al camionero aún no completado.</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Viaje</th>
+                    <th>Fecha</th>
+                    <th>Ruta</th>
+                    <th>Monto calculado</th>
+                    <th>Abonado</th>
+                    <th>Tipo pago</th>
+                    <th>Estado pago</th>
+                    <th>Observación</th>
+                    {% if es_admin %}<th>Ir a</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in pendientes %}
+                <tr>
+                    <td>
+                        <a href="/admin/viaje/{{ v.id }}#operacion" style="font-weight:700;color:#E86A2C;text-decoration:none;">
+                            #{{ v.id }}
+                        </a>
+                        <br><small style="color:#9CA3AF;font-size:10px;">{{ v.estado }}</small>
+                    </td>
+                    <td style="font-size:11px;color:#9CA3AF;white-space:nowrap;">
+                        {{ v.fecha_creacion.strftime('%Y-%m-%d') if v.fecha_creacion else '—' }}
+                    </td>
+                    <td>{{ v.origen or '—' }} → {{ v.destino or '—' }}</td>
+                    <td><strong>${{ "%.2f"|format(v.monto_calculado|float) }}</strong></td>
+                    <td>
+                        {% if v.monto_pagado and v.monto_pagado|float > 0 %}
+                        <span style="color:#92400e;font-weight:700;">${{ "%.2f"|format(v.monto_pagado|float) }}</span>
+                        {% else %}
+                        <span style="color:#D1D5DB;">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:12px;">{{ v.tipo_pago_camionero or '—' }}</td>
+                    <td>
+                        {% set ep = v.estado_pago_camionero or 'Pendiente' %}
+                        <span class="pago-badge pago-badge-{{ ep|lower|replace(' ','_') }}">{{ ep }}</span>
+                    </td>
+                    <td style="font-size:12px;color:#6B7280;max-width:180px;">{{ v.observacion_pago or '—' }}</td>
+                    {% if es_admin %}
+                    <td>
+                        <a href="/admin/viaje/{{ v.id }}#operacion"
+                           class="btn-accion-edit" title="Gestionar pago">
+                            <i class="bi bi-cash"></i>
+                        </a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ 9 if es_admin else 8 }}" class="empty-state">
+                        <i class="bi bi-check2-circle" style="color:#27ae60;margin-right:6px;"></i>
+                        Sin pagos pendientes. Todo al día.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{# ── Últimos pagados ─────────────────────────────────────────────── #}
+{% if pagados %}
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Últimos pagos completados</h2>
+            <p>Los 10 viajes más recientes con pago confirmado.</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Viaje</th>
+                    <th>Ruta</th>
+                    <th>Monto</th>
+                    <th>Tipo pago</th>
+                    <th>Fecha pago</th>
+                    <th>Observación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in pagados %}
+                <tr>
+                    <td>
+                        <a href="/admin/viaje/{{ v.id }}" style="font-weight:700;color:#27ae60;text-decoration:none;">
+                            #{{ v.id }}
+                        </a>
+                    </td>
+                    <td>{{ v.origen or '—' }} → {{ v.destino or '—' }}</td>
+                    <td><strong>${{ "%.2f"|format(v.monto_calculado|float) }}</strong></td>
+                    <td style="font-size:12px;">{{ v.tipo_pago_camionero or '—' }}</td>
+                    <td style="font-size:11px;color:#9CA3AF;white-space:nowrap;">
+                        {{ v.fecha_pago_camionero | fmt_fecha if v.fecha_pago_camionero else '—' }}
+                    </td>
+                    <td style="font-size:12px;color:#6B7280;">{{ v.observacion_pago or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+<style>
+.page-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.page-header h1 { margin: 0; font-size: 22px; }
+.subtitulo { margin: 2px 0 0; color: #777; font-size: 13px; }
+.btn-volver {
+    color: #E86A2C; text-decoration: none; font-size: 12px;
+    font-weight: 600; display: inline-block; margin-bottom: 4px;
+}
+.btn-volver:hover { text-decoration: underline; }
+.btn-accion-edit {
+    display: inline-block; padding: 7px 14px; border-radius: 6px;
+    font-size: 12px; font-weight: 600; background: #e8f4fd; color: #1a6fa0;
+    text-decoration: none; white-space: nowrap;
+}
+.btn-accion-edit:hover { background: #cce4f7; color: #1a6fa0; }
+
+/* ── Resumen ── */
+.eco-resumen {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; margin-bottom: 24px;
+}
+.eco-card { padding: 22px; text-align: center; }
+.eco-card span {
+    display: block; font-size: 11px; color: #6B7280;
+    text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px;
+}
+.eco-card strong {
+    display: block; font-size: 26px; font-weight: 800;
+    color: #1F2937; margin-bottom: 4px;
+}
+.eco-card small { font-size: 11px; color: #9CA3AF; }
+.eco-card-pagado strong { color: #166534; }
+.eco-card-pendiente { border-left: 3px solid #ef4444; }
+.eco-card-pendiente strong { color: #991B1B; }
+
+/* ── Badges ── */
+.pago-badge {
+    display: inline-block; padding: 3px 9px; border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    background: #FEE2E2; color: #991B1B;
+}
+.pago-badge.pago-badge-pagado    { background: #DCFCE7; color: #166534; }
+.pago-badge.pago-badge-parcial   { background: #FEF3C7; color: #92400E; }
+.pago-badge.pago-badge-pendiente { background: #FEE2E2; color: #991B1B; }
+
+@media (max-width: 700px) {
+    .eco-resumen { grid-template-columns: 1fr; }
+}
+</style>
+
+{% endblock %}

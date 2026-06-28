@@ -71,6 +71,11 @@ def ejecutar_migraciones():
     agregar_columna(cursor, "viajes", "observaciones_operativas","TEXT")
     agregar_columna(cursor, "viajes", "precio_editado",          "INTEGER DEFAULT 0")
     agregar_columna(cursor, "viajes", "motivo_edicion_precio",   "TEXT")
+    agregar_columna(cursor, "viajes", "estado_pago_camionero",   "TEXT DEFAULT 'Pendiente'")
+    agregar_columna(cursor, "viajes", "tipo_pago_camionero",     "TEXT")
+    agregar_columna(cursor, "viajes", "observacion_pago",        "TEXT")
+    agregar_columna(cursor, "viajes", "monto_pagado",            "REAL")
+    agregar_columna(cursor, "viajes", "fecha_pago_camionero",    "TEXT")
 
     agregar_columna(cursor, "vehiculos", "tipo_vehiculo_id", "INTEGER")
     agregar_columna(cursor, "vehiculos", "matricula", "TEXT")

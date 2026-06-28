@@ -903,6 +903,120 @@ def convertir_cotizacion(id):
     return redirect(f"/admin/viajes/{viaje_id}/gestionar")
 
 
+@admin_bp.route("/viaje/<int:id>/pago-camionero", methods=["POST"])
+def pago_camionero(id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    accion     = request.form.get("accion", "").strip()
+    tipo_pago  = request.form.get("tipo_pago", "").strip() or None
+    observacion = request.form.get("observacion", "").strip() or None
+    monto_str  = request.form.get("monto_parcial", "").strip()
+
+    try:
+        monto = float(monto_str) if monto_str else None
+    except ValueError:
+        monto = None
+
+    con = conectar()
+    cur = con.cursor()
+
+    if accion == "pagado" and session.get("rol") == "admin":
+        cur.execute(
+            "UPDATE viajes SET estado_pago_camionero='Pagado', tipo_pago_camionero=?, "
+            "observacion_pago=?, fecha_pago_camionero=CURRENT_TIMESTAMP WHERE id=?",
+            (tipo_pago, observacion, id)
+        )
+        registrar_auditoria("Marcó pago camionero como Pagado", "Viajes", "viaje", id)
+
+    elif accion == "parcial" and session.get("rol") == "admin":
+        cur.execute(
+            "UPDATE viajes SET estado_pago_camionero='Parcial', tipo_pago_camionero=?, "
+            "observacion_pago=?, monto_pagado=? WHERE id=?",
+            (tipo_pago, observacion, monto, id)
+        )
+        registrar_auditoria("Marcó pago camionero como Parcial", "Viajes", "viaje", id)
+
+    elif accion == "revertir" and session.get("rol") == "admin":
+        cur.execute(
+            "UPDATE viajes SET estado_pago_camionero='Pendiente', fecha_pago_camionero=NULL WHERE id=?",
+            (id,)
+        )
+
+    con.commit()
+    con.close()
+    return redirect(f"/admin/viaje/{id}#operacion")
+
+
+@admin_bp.route("/camioneros/<int:id>/economico")
+def camionero_economico(id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    con = conectar()
+    cur = con.cursor()
+
+    cur.execute(
+        "SELECT id, nombre, telefono, licencia, estado FROM camioneros WHERE id = ?", (id,)
+    )
+    camionero = cur.fetchone()
+    if not camionero:
+        con.close()
+        return redirect("/admin/camioneros")
+
+    cur.execute("""
+        SELECT
+            COALESCE(SUM(CASE WHEN LOWER(estado) != 'cancelado'
+                         THEN COALESCE(pago_camionero, camionero, 0) ELSE 0 END), 0) AS total_generado,
+            COALESCE(SUM(CASE
+                WHEN estado_pago_camionero = 'Pagado'  AND LOWER(estado) != 'cancelado'
+                     THEN COALESCE(pago_camionero, camionero, 0)
+                WHEN estado_pago_camionero = 'Parcial' AND LOWER(estado) != 'cancelado'
+                     THEN COALESCE(monto_pagado, 0)
+                ELSE 0 END), 0) AS total_pagado
+        FROM viajes WHERE camionero_id = ?
+    """, (id,))
+    resumen = cur.fetchone()
+    total_generado = float(resumen["total_generado"]) if resumen else 0.0
+    total_pagado   = float(resumen["total_pagado"])   if resumen else 0.0
+    pendiente      = total_generado - total_pagado
+
+    cur.execute("""
+        SELECT id, fecha_creacion, origen, destino,
+               COALESCE(pago_camionero, camionero, 0) AS monto_calculado,
+               tipo_pago_camionero, estado_pago_camionero, monto_pagado, observacion_pago, estado
+        FROM viajes
+        WHERE camionero_id = ?
+          AND LOWER(estado) != 'cancelado'
+          AND (estado_pago_camionero IS NULL OR estado_pago_camionero != 'Pagado')
+        ORDER BY id DESC
+    """, (id,))
+    pendientes = cur.fetchall()
+
+    cur.execute("""
+        SELECT id, fecha_creacion, origen, destino,
+               COALESCE(pago_camionero, camionero, 0) AS monto_calculado,
+               tipo_pago_camionero, monto_pagado, fecha_pago_camionero, observacion_pago, estado
+        FROM viajes
+        WHERE camionero_id = ? AND estado_pago_camionero = 'Pagado'
+        ORDER BY id DESC LIMIT 10
+    """, (id,))
+    pagados = cur.fetchall()
+
+    con.close()
+
+    return render_template(
+        "admin/camionero_economico.html",
+        camionero=camionero,
+        total_generado=total_generado,
+        total_pagado=total_pagado,
+        pendiente=pendiente,
+        pendientes=pendientes,
+        pagados=pagados,
+        es_admin=(session.get("rol") == "admin"),
+    )
+
+
 # ── Camioneros CRUD ──────────────────────────────────────────────────────────
 
 @admin_bp.route("/camioneros", methods=["GET", "POST"])

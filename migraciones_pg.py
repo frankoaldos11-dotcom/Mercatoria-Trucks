@@ -43,6 +43,11 @@ def ejecutar_migraciones_pg():
             ("numero_contenedor",       "TEXT"),
             ("peso_toneladas",          "REAL"),
             ("observaciones_operativas","TEXT"),
+            ("estado_pago_camionero",   "TEXT DEFAULT 'Pendiente'"),
+            ("tipo_pago_camionero",     "TEXT"),
+            ("observacion_pago",        "TEXT"),
+            ("monto_pagado",            "REAL"),
+            ("fecha_pago_camionero",    "TEXT"),
         ]
         for col, defn in nuevas_columnas_viajes:
             try:
@@ -284,7 +289,12 @@ def ejecutar_migraciones_pg():
         cantidad_contenedores INTEGER,
         numero_contenedor TEXT,
         peso_toneladas REAL,
-        observaciones_operativas TEXT
+        observaciones_operativas TEXT,
+        estado_pago_camionero TEXT DEFAULT 'Pendiente',
+        tipo_pago_camionero TEXT,
+        observacion_pago TEXT,
+        monto_pagado REAL,
+        fecha_pago_camionero TEXT
     )
     """)
 

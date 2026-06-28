@@ -548,6 +548,85 @@
             {% endif %}
         </div>
 
+        {# Pago al camionero #}
+        {% set _epc = viaje.estado_pago_camionero or 'Pendiente' %}
+        {% set _pns2 = namespace(monto_cam=0.0) %}
+        {% if liquidacion and liquidacion.pago_camionero %}{% set _pns2.monto_cam = liquidacion.pago_camionero|float %}{% elif viaje.pago_camionero %}{% set _pns2.monto_cam = viaje.pago_camionero|float %}{% endif %}
+        <div class="card bloque pago-cam-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                <h2 style="margin:0;"><i class="bi bi-cash-coin" style="color:#E86A2C;margin-right:6px;"></i>Pago al camionero</h2>
+                {% if viaje.camionero_id %}
+                <a href="/admin/camioneros/{{ viaje.camionero_id }}/economico"
+                   style="font-size:12px;color:#1a6fa0;text-decoration:none;font-weight:600;">
+                    <i class="bi bi-bar-chart"></i> Estado económico
+                </a>
+                {% endif %}
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                <span class="pago-estado-badge pago-estado-{{ _epc|lower|replace(' ','_') }}">{{ _epc }}</span>
+                {% if _epc == 'Pagado' and viaje.fecha_pago_camionero %}
+                <span style="font-size:11px;color:#9CA3AF;">{{ viaje.fecha_pago_camionero | fmt_fecha }}</span>
+                {% endif %}
+                {% if _epc == 'Parcial' and viaje.monto_pagado %}
+                <span style="font-size:12px;color:#92400e;">Abonado: <strong>${{ "%.2f"|format(viaje.monto_pagado|float) }}</strong></span>
+                {% endif %}
+                {% if _pns2.monto_cam > 0 %}
+                <span style="font-size:12px;color:#6B7280;margin-left:auto;">Total calculado: <strong>${{ "%.2f"|format(_pns2.monto_cam) }}</strong></span>
+                {% endif %}
+            </div>
+            {% if viaje.tipo_pago_camionero %}
+            <p style="font-size:12px;color:#6B7280;margin:0 0 6px;">Tipo: <strong>{{ viaje.tipo_pago_camionero }}</strong></p>
+            {% endif %}
+            {% if viaje.observacion_pago %}
+            <p style="font-size:12px;color:#6B7280;margin:0 0 10px;background:#f9fafb;padding:7px 10px;border-radius:6px;border-left:3px solid #E5E7EB;">{{ viaje.observacion_pago }}</p>
+            {% endif %}
+            {% if session.get('rol') == 'admin' %}
+            <hr style="border:none;border-top:1px solid #f0f0f0;margin:10px 0 12px;">
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;align-items:end;">
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Tipo de pago</label>
+                        <select name="tipo_pago" class="input" style="margin:0;font-size:12px;">
+                            {% for tp in ['Efectivo','Compensación combustible','Mixto'] %}
+                            <option value="{{ tp }}"{{ ' selected' if viaje.tipo_pago_camionero == tp else '' }}>{{ tp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Monto parcial (si aplica)</label>
+                        <input type="number" name="monto_parcial" step="0.01" min="0"
+                               value="{{ viaje.monto_pagado if viaje.monto_pagado else '' }}"
+                               class="input" style="margin:0;font-size:12px;" placeholder="0.00">
+                    </div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Observación</label>
+                    <input type="text" name="observacion" value="{{ viaje.observacion_pago or '' }}"
+                           class="input" style="margin:0;font-size:12px;" placeholder="Nota sobre el pago...">
+                </div>
+                {% if _epc != 'Pagado' %}
+                <div style="display:flex;gap:8px;">
+                    <button type="submit" name="accion" value="pagado" class="btn-principal"
+                            style="flex:1;font-size:12px;padding:8px 12px;">
+                        <i class="bi bi-check2-circle"></i> Marcar Pagado
+                    </button>
+                    <button type="submit" name="accion" value="parcial"
+                            style="flex:1;font-size:12px;padding:8px 12px;background:#fff8e6;color:#92400e;border:1px solid #fcd34d;border-radius:8px;cursor:pointer;font-weight:700;">
+                        Parcial
+                    </button>
+                </div>
+                {% else %}
+                <button type="submit" name="accion" value="revertir"
+                        style="background:none;border:1px solid #ddd;color:#888;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;"
+                        onclick="return confirm('¿Revertir pago a Pendiente?')">
+                    Revertir a pendiente
+                </button>
+                {% endif %}
+            </form>
+            {% endif %}
+        </div>
+
         {# Operaciones / PDFs #}
         <div class="card bloque operaciones-box">
             <h2><i class="bi bi-file-earmark-text" style="color:#E86A2C;margin-right:5px;"></i>Operaciones</h2>
@@ -1059,6 +1138,17 @@ if (selCam) {
 
 /* ── WhatsApp ───────────────────────────────────────────────── */
 .whatsapp-box p { color: #777; margin-bottom: 10px; font-size: 13px; }
+
+/* ── Pago camionero ─────────────────────────────────────────── */
+.pago-cam-card { grid-column: 1 / -1; }
+.pago-estado-badge {
+    display:inline-block; padding:3px 10px; border-radius:999px;
+    font-size:11px; font-weight:700;
+    background:#FEE2E2; color:#991B1B;
+}
+.pago-estado-badge.pago-estado-pagado    { background:#DCFCE7; color:#166534; }
+.pago-estado-badge.pago-estado-parcial   { background:#FEF3C7; color:#92400E; }
+.pago-estado-badge.pago-estado-pendiente { background:#FEE2E2; color:#991B1B; }
 
 /* ── Incidencias ────────────────────────────────────────────── */
 .inc-card { grid-column: 1 / -1; }
