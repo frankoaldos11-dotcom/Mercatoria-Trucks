@@ -121,10 +121,13 @@ def dashboard():
 
     cursor.execute("""
         SELECT v.id,
-               COALESCE(NULLIF(TRIM(cl.nombre), ''), v.cliente) AS cliente,
+               COALESCE(NULLIF(TRIM(cl.nombre), ''),
+                        NULLIF(TRIM(u.nombre), ''),
+                        v.cliente) AS cliente,
                v.origen, v.destino, v.estado
         FROM viajes v
         LEFT JOIN clientes cl ON v.cliente_id = cl.id
+        LEFT JOIN usuarios u ON v.cliente = u.usuario
         WHERE LOWER(v.estado) IN ('pendiente', 'solicitado')
           AND v.deleted_at IS NULL
         ORDER BY v.id DESC
@@ -1284,7 +1287,6 @@ def admin_camioneros():
     buscar           = request.args.get("buscar", "").strip()
     filtro_estado    = request.args.get("estado", "").strip()
     filtro_tipo      = request.args.get("tipo_transporte", "").strip()
-    filtro_vehiculo  = request.args.get("vehiculo", "").strip()   # "con" | "sin" | ""
     pagina           = max(1, int(request.args.get("pagina", 1) or 1))
     por_pagina       = 20
 
@@ -1300,10 +1302,6 @@ def admin_camioneros():
     if filtro_tipo:
         condiciones.append(f"LOWER(COALESCE(v.tipo, '')) = {ph()}")
         params.append(filtro_tipo.lower())
-    if filtro_vehiculo == "con":
-        condiciones.append("v.id IS NOT NULL")
-    elif filtro_vehiculo == "sin":
-        condiciones.append("v.id IS NULL")
 
     where = "WHERE " + " AND ".join(condiciones)
 
@@ -1350,7 +1348,6 @@ def admin_camioneros():
         buscar=buscar,
         filtro_estado=filtro_estado,
         filtro_tipo=filtro_tipo,
-        filtro_vehiculo=filtro_vehiculo,
         catalogo_tipos=catalogo_tipos,
         pagina_actual=pagina,
         total_paginas=total_paginas,
