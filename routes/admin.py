@@ -120,10 +120,14 @@ def dashboard():
     clientes_sin_nombre = _cl["sin_nombre"]
 
     cursor.execute("""
-        SELECT id, cliente, origen, destino, estado
-        FROM viajes
-        WHERE LOWER(estado) IN ('pendiente', 'solicitado')
-        ORDER BY id DESC
+        SELECT v.id,
+               COALESCE(NULLIF(TRIM(cl.nombre), ''), v.cliente) AS cliente,
+               v.origen, v.destino, v.estado
+        FROM viajes v
+        LEFT JOIN clientes cl ON v.cliente_id = cl.id
+        WHERE LOWER(v.estado) IN ('pendiente', 'solicitado')
+          AND (v.deleted_at IS NULL OR v.deleted_at = '')
+        ORDER BY v.id DESC
     """)
     lista = cursor.fetchall()
 
@@ -151,6 +155,20 @@ def dashboard():
         ingresos_mes = None
         camionero_top = None
 
+    # Solicitudes de eliminación pendientes (solo admin las ve)
+    solicitudes_pendientes = []
+    if session.get("rol") == "admin":
+        try:
+            cursor.execute("""
+                SELECT id, entidad, entidad_id, nombre_entidad, solicitado_por, fecha_solicitud
+                FROM solicitudes_eliminacion
+                WHERE estado = 'Pendiente'
+                ORDER BY fecha_solicitud DESC
+            """)
+            solicitudes_pendientes = cursor.fetchall()
+        except Exception:
+            pass
+
     conexion.close()
 
     return render_template(
@@ -165,7 +183,8 @@ def dashboard():
         lista=lista,
         ingresos_mes=ingresos_mes,
         camionero_top=camionero_top,
-        clientes_sin_nombre=clientes_sin_nombre
+        clientes_sin_nombre=clientes_sin_nombre,
+        solicitudes_pendientes=solicitudes_pendientes,
     )
 
 
@@ -903,10 +922,29 @@ def eliminar_viaje_admin(id):
         return redirect("/admin/viajes")
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("DELETE FROM viajes WHERE id = ?", (id,))
+    cursor.execute("""
+        UPDATE viajes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ?
+        WHERE id = ?
+    """, (session.get("usuario"), id))
     conexion.commit()
     conexion.close()
+    registrar_auditoria("eliminó (papelera)", "viajes", "viaje", id)
     return redirect("/admin/viajes")
+
+
+@admin_bp.route("/viaje/<int:id>/prioridad", methods=["POST"])
+def actualizar_prioridad_viaje(id):
+    if not requiere_admin():
+        return redirect("/login")
+    prioridad = request.form.get("prioridad", "Normal").strip()
+    if prioridad not in ["Normal", "Alta", "Urgente"]:
+        prioridad = "Normal"
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("UPDATE viajes SET prioridad = ? WHERE id = ?", (prioridad, id))
+    conexion.commit()
+    conexion.close()
+    return redirect(f"/admin/viaje/{id}#operacion")
 
 
 @admin_bp.route("/viaje/<int:id>/nota", methods=["POST"])
@@ -1132,11 +1170,10 @@ def admin_camioneros():
         tipo      = request.form.get("tipo", "").strip()
         capacidad = request.form.get("capacidad", "").strip()
 
-        campos_vehiculo = [marca, modelo, tipo, capacidad]
-        if any(campos_vehiculo) and not matricula:
-            error = "La matrícula es obligatoria si registras datos del vehículo."
+        if not matricula:
+            error = "La matrícula del vehículo es obligatoria."
 
-        if not error and matricula:
+        if not error:
             cursor.execute("SELECT id FROM vehiculos WHERE matricula = ?", (matricula,))
             if cursor.fetchone():
                 error = f"La matrícula '{matricula}' ya está registrada."
@@ -1167,7 +1204,7 @@ def admin_camioneros():
     pagina           = max(1, int(request.args.get("pagina", 1) or 1))
     por_pagina       = 20
 
-    condiciones = ["(c.activo = 1 OR c.activo IS NULL)"]
+    condiciones = ["(c.activo = 1 OR c.activo IS NULL)", "(c.deleted_at IS NULL OR c.deleted_at = '')"]
     params = []
     if buscar:
         condiciones.append("(c.nombre LIKE ? OR c.telefono LIKE ? OR c.licencia LIKE ?)")
@@ -1338,11 +1375,32 @@ def eliminar_camionero(id):
 
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("DELETE FROM camioneros WHERE id = ?", (id,))
-    conexion.commit()
-    conexion.close()
 
-    return redirect("/admin/camioneros")
+    if session.get("rol") == "admin":
+        # Soft delete directo
+        cursor.execute("SELECT nombre FROM camioneros WHERE id = ?", (id,))
+        row = cursor.fetchone()
+        cursor.execute("""
+            UPDATE camioneros SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ?
+            WHERE id = ?
+        """, (session.get("usuario"), id))
+        conexion.commit()
+        conexion.close()
+        registrar_auditoria("eliminó (papelera)", "camioneros", "camionero", id)
+        return redirect("/admin/camioneros")
+    else:
+        # Operario: crea solicitud de aprobación
+        cursor.execute("SELECT nombre FROM camioneros WHERE id = ?", (id,))
+        row = cursor.fetchone()
+        nombre_entidad = row["nombre"] if row else f"#{id}"
+        cursor.execute("""
+            INSERT INTO solicitudes_eliminacion
+                (entidad, entidad_id, nombre_entidad, solicitado_por)
+            VALUES (?, ?, ?, ?)
+        """, ("camionero", id, nombre_entidad, session.get("usuario")))
+        conexion.commit()
+        conexion.close()
+        return redirect("/admin/camioneros?access_error=Solicitud+de+eliminaci%C3%B3n+enviada+al+administrador")
 
 
 # ── Clientes CRUD ────────────────────────────────────────────────────────────
@@ -1386,7 +1444,7 @@ def admin_clientes():
     pagina     = max(1, int(request.args.get("pagina", 1) or 1))
     por_pagina = 25
 
-    cond_cl = []
+    cond_cl = ["(deleted_at IS NULL OR deleted_at = '')"]
     params_cl = []
     if buscar_cl:
         cond_cl.append("(nombre LIKE ? OR email LIKE ? OR empresa LIKE ? OR telefono LIKE ?)")
@@ -1487,10 +1545,13 @@ def eliminar_cliente(id):
 
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("DELETE FROM clientes WHERE id = ?", (id,))
+    cursor.execute("""
+        UPDATE clientes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ?
+        WHERE id = ?
+    """, (session.get("usuario"), id))
     conexion.commit()
     conexion.close()
-
+    registrar_auditoria("eliminó (papelera)", "clientes", "cliente", id)
     return redirect("/admin/clientes")
 
 
@@ -2517,3 +2578,114 @@ def mensajes_enviar():
     )
 
     return redirect(f"/admin/mensajes?enviado={len(emails)}")
+
+
+# ── Papelera de reciclaje ────────────────────────────────────────────────────
+
+@admin_bp.route("/papelera")
+def papelera():
+    if session.get("rol") != "admin":
+        return redirect("/admin?access_error=Acceso+restringido+a+administradores")
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("""
+        SELECT * FROM camioneros
+        WHERE deleted_at IS NOT NULL AND deleted_at != ''
+        ORDER BY deleted_at DESC
+    """)
+    camioneros_eliminados = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT * FROM clientes
+        WHERE deleted_at IS NOT NULL AND deleted_at != ''
+        ORDER BY deleted_at DESC
+    """)
+    clientes_eliminados = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT * FROM viajes
+        WHERE deleted_at IS NOT NULL AND deleted_at != ''
+        ORDER BY deleted_at DESC
+    """)
+    viajes_eliminados = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT * FROM solicitudes_eliminacion
+        WHERE estado = 'Pendiente'
+        ORDER BY fecha_solicitud DESC
+    """)
+    solicitudes = cursor.fetchall()
+
+    conexion.close()
+    return render_template("admin/papelera.html",
+                           camioneros_eliminados=camioneros_eliminados,
+                           clientes_eliminados=clientes_eliminados,
+                           viajes_eliminados=viajes_eliminados,
+                           solicitudes=solicitudes)
+
+
+@admin_bp.route("/papelera/<entidad>/<int:id>/restaurar", methods=["POST"])
+def restaurar_registro(entidad, id):
+    if session.get("rol") != "admin":
+        return redirect("/admin?access_error=Acceso+restringido+a+administradores")
+
+    tablas = {"camionero": "camioneros", "cliente": "clientes", "viaje": "viajes",
+              "camioneros": "camioneros", "clientes": "clientes", "viajes": "viajes"}
+    tabla = tablas.get(entidad)
+    if not tabla:
+        return redirect("/admin/papelera")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute(f"UPDATE {tabla} SET deleted_at = NULL, deleted_by = NULL WHERE id = ?", (id,))
+    conexion.commit()
+    conexion.close()
+    registrar_auditoria("restauró de papelera", tabla, entidad, id)
+    return redirect("/admin/papelera")
+
+
+# ── Solicitudes de eliminación ───────────────────────────────────────────────
+
+@admin_bp.route("/solicitudes-eliminacion/<int:id>/aprobar", methods=["POST"])
+def aprobar_eliminacion(id):
+    if session.get("rol") != "admin":
+        return redirect("/admin?access_error=Acceso+restringido+a+administradores")
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT * FROM solicitudes_eliminacion WHERE id = ?", (id,))
+    sol = cursor.fetchone()
+    if sol and sol["estado"] == "Pendiente":
+        tablas = {"camionero": "camioneros", "cliente": "clientes", "viaje": "viajes"}
+        tabla = tablas.get(sol["entidad"])
+        if tabla:
+            cursor.execute(f"""
+                UPDATE {tabla} SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ?
+                WHERE id = ?
+            """, (session.get("usuario"), sol["entidad_id"]))
+        cursor.execute("""
+            UPDATE solicitudes_eliminacion
+            SET estado = 'Aprobada', revisado_por = ?, fecha_revision = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (session.get("usuario"), id))
+        conexion.commit()
+        registrar_auditoria("aprobó eliminación", sol["entidad"] + "s", sol["entidad"], sol["entidad_id"],
+                            f"Solicitado por {sol['solicitado_por']}")
+    conexion.close()
+    return redirect("/admin")
+
+
+@admin_bp.route("/solicitudes-eliminacion/<int:id>/rechazar", methods=["POST"])
+def rechazar_eliminacion(id):
+    if session.get("rol") != "admin":
+        return redirect("/admin?access_error=Acceso+restringido+a+administradores")
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute("""
+        UPDATE solicitudes_eliminacion
+        SET estado = 'Rechazada', revisado_por = ?, fecha_revision = CURRENT_TIMESTAMP
+        WHERE id = ? AND estado = 'Pendiente'
+    """, (session.get("usuario"), id))
+    conexion.commit()
+    conexion.close()
+    return redirect("/admin")

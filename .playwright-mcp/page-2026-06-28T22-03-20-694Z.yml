@@ -1,0 +1,42 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - link "Mercatoria Truck" [ref=e3] [cursor=pointer]:
+      - /url: /
+      - img [ref=e4]
+      - generic [ref=e13]:
+        - text: Mercatoria
+        - emphasis [ref=e14]: Truck
+    - link "Portal clientes" [ref=e16] [cursor=pointer]:
+      - /url: /cliente/login
+  - generic [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]: 
+      - text: Logística de carga en ruta
+    - heading "Tu mercancía, entregada donde la necesitas" [level=1] [ref=e20]:
+      - text: Tu mercancía,
+      - emphasis [ref=e21]: entregada
+      - text: donde la necesitas
+    - paragraph [ref=e22]: Mercatoria Truck conecta a clientes con transportistas confiables. Solicita un envío, sigue tu carga en tiempo real y recibe confirmación cuando llegue a destino — todo desde un solo portal.
+    - generic [ref=e23]:
+      - link " Soy cliente — entrar a mi portal" [ref=e24] [cursor=pointer]:
+        - /url: /cliente/login
+        - generic [ref=e25]: 
+        - text: Soy cliente — entrar a mi portal
+      - link " Crear cuenta gratuita" [ref=e26] [cursor=pointer]:
+        - /url: /cliente/registro
+        - generic [ref=e27]: 
+        - text: Crear cuenta gratuita
+  - generic [ref=e29]:
+    - generic [ref=e30]:
+      - generic [ref=e32]: 
+      - heading "Rutas establecidas" [level=3] [ref=e33]
+      - paragraph [ref=e34]: Selecciona entre rutas verificadas y obtén un precio estimado al instante, sin sorpresas.
+    - generic [ref=e35]:
+      - generic [ref=e37]: 
+      - heading "Flota propia y verificada" [level=3] [ref=e38]
+      - paragraph [ref=e39]: Trabajamos con camioneros y vehículos registrados. Cada envío queda asignado a un responsable.
+    - generic [ref=e40]:
+      - generic [ref=e42]: 
+      - heading "Seguimiento en tiempo real" [level=3] [ref=e43]
+      - paragraph [ref=e44]: Revisa el estado de tu envío — desde Solicitado hasta Entregado — en cualquier momento desde tu portal.
+  - contentinfo [ref=e46]: © 2025 Mercatoria Truck

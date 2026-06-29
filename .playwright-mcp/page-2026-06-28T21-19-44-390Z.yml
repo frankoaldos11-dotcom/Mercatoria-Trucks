@@ -1,0 +1,167 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]: Operaciones
+        - link " Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e18]: 
+          - generic [ref=e19]: Dashboard
+        - link " Viajes" [ref=e20] [cursor=pointer]:
+          - /url: /admin/viajes
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Viajes
+        - link " Cotizaciones" [ref=e23] [cursor=pointer]:
+          - /url: /admin/comercial/cotizaciones
+          - generic [ref=e24]: 
+          - generic [ref=e25]: Cotizaciones
+        - generic [ref=e26]: Comercial
+        - link " Rutas" [ref=e27] [cursor=pointer]:
+          - /url: /admin/comercial/rutas
+          - generic [ref=e28]: 
+          - generic [ref=e29]: Rutas
+        - link " Tipos de vehículo" [ref=e30] [cursor=pointer]:
+          - /url: /admin/comercial/vehiculos
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Tipos de vehículo
+        - link " Tarifas" [ref=e33] [cursor=pointer]:
+          - /url: /admin/comercial/tarifas
+          - generic [ref=e34]: 
+          - generic [ref=e35]: Tarifas
+        - generic [ref=e36]: Recursos
+        - link " Camioneros" [ref=e37] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e38]: 
+          - generic [ref=e39]: Camioneros
+        - link " Clientes" [ref=e40] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e41]: 
+          - generic [ref=e42]: Clientes
+        - generic [ref=e43]: Sistema
+        - link " Reportes" [ref=e44] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e45]: 
+          - generic [ref=e46]: Reportes
+        - link " Usuarios" [ref=e47] [cursor=pointer]:
+          - /url: /admin/usuarios
+          - generic [ref=e48]: 
+          - generic [ref=e49]: Usuarios
+        - link " Configuración" [ref=e50] [cursor=pointer]:
+          - /url: /admin/configuracion
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Configuración
+        - link " Auditoría" [ref=e53] [cursor=pointer]:
+          - /url: /admin/auditoria
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Auditoría
+        - link " Acciones por lote" [ref=e56] [cursor=pointer]:
+          - /url: /admin/lote
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Acciones por lote
+        - link " Mensajes" [ref=e59] [cursor=pointer]:
+          - /url: /admin/mensajes
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Mensajes
+        - link " Salir" [ref=e62] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Salir
+    - main [ref=e65]:
+      - generic [ref=e67]:
+        - generic [ref=e68]: Operaciones
+        - heading "Viajes" [level=1] [ref=e69]
+        - paragraph [ref=e70]: Seguimiento y gestión de todos los viajes registrados.
+      - generic [ref=e72]:
+        - textbox "Buscar por cliente, origen, destino o camionero…" [ref=e73]
+        - button "" [ref=e74] [cursor=pointer]:
+          - generic [ref=e75]: 
+      - generic [ref=e76]:
+        - link "Todos" [ref=e77] [cursor=pointer]:
+          - /url: /admin/viajes
+        - link "Solicitados" [ref=e78] [cursor=pointer]:
+          - /url: /admin/viajes?estado=solicitado
+        - link "Asignados" [ref=e79] [cursor=pointer]:
+          - /url: /admin/viajes?estado=asignado
+        - link "En ruta" [ref=e80] [cursor=pointer]:
+          - /url: /admin/viajes?estado=en+ruta
+        - link "Entregados" [ref=e81] [cursor=pointer]:
+          - /url: /admin/viajes?estado=entregado
+        - link "Cancelados" [ref=e82] [cursor=pointer]:
+          - /url: /admin/viajes?estado=cancelado
+      - generic [ref=e83]:
+        - generic [ref=e85]:
+          - heading "Listado de viajes" [level=2] [ref=e86]
+          - paragraph [ref=e87]: 4 viajes · Página 1 de 1
+        - table [ref=e89]:
+          - rowgroup [ref=e90]:
+            - row "ID Cliente Origen Destino Estado Precio Fecha Camionero Acción" [ref=e91]:
+              - columnheader "ID" [ref=e92]
+              - columnheader "Cliente" [ref=e93]
+              - columnheader "Origen" [ref=e94]
+              - columnheader "Destino" [ref=e95]
+              - columnheader "Estado" [ref=e96]
+              - columnheader "Precio" [ref=e97]
+              - columnheader "Fecha" [ref=e98]
+              - columnheader "Camionero" [ref=e99]
+              - columnheader "Acción" [ref=e100]
+          - rowgroup [ref=e101]:
+            - row "#4 oniel@gmail.com La Habana Matanzas Asignado Sin precio 2026-06-26 alberto " [ref=e102]:
+              - cell "#4" [ref=e103]
+              - cell "oniel@gmail.com" [ref=e104]
+              - cell "La Habana" [ref=e105]
+              - cell "Matanzas" [ref=e106]
+              - cell "Asignado" [ref=e107]:
+                - generic [ref=e108]: Asignado
+              - cell "Sin precio" [ref=e109]
+              - cell "2026-06-26" [ref=e110]
+              - cell "alberto" [ref=e111]
+              - cell "" [ref=e112]:
+                - link "" [ref=e113] [cursor=pointer]:
+                  - /url: /admin/viaje/4
+                  - generic [ref=e114]: 
+            - row "#3 admin@gmail.com La Habana Holguin Asignado Sin precio 2026-06-26 dalia " [ref=e115]:
+              - cell "#3" [ref=e116]
+              - cell "admin@gmail.com" [ref=e117]
+              - cell "La Habana" [ref=e118]
+              - cell "Holguin" [ref=e119]
+              - cell "Asignado" [ref=e120]:
+                - generic [ref=e121]: Asignado
+              - cell "Sin precio" [ref=e122]
+              - cell "2026-06-26" [ref=e123]
+              - cell "dalia" [ref=e124]
+              - cell "" [ref=e125]:
+                - link "" [ref=e126] [cursor=pointer]:
+                  - /url: /admin/viaje/3
+                  - generic [ref=e127]: 
+            - row "#2 admin@gmail.com La Habana Santiago Asignado Sin precio 2026-06-26 testo " [ref=e128]:
+              - cell "#2" [ref=e129]
+              - cell "admin@gmail.com" [ref=e130]
+              - cell "La Habana" [ref=e131]
+              - cell "Santiago" [ref=e132]
+              - cell "Asignado" [ref=e133]:
+                - generic [ref=e134]: Asignado
+              - cell "Sin precio" [ref=e135]
+              - cell "2026-06-26" [ref=e136]
+              - cell "testo" [ref=e137]
+              - cell "" [ref=e138]:
+                - link "" [ref=e139] [cursor=pointer]:
+                  - /url: /admin/viaje/2
+                  - generic [ref=e140]: 
+            - row "#1 Sin nombre La Habana Santiago Asignado $1000 2026-06-25 juan " [ref=e141]:
+              - cell "#1" [ref=e142]
+              - cell "Sin nombre" [ref=e143]
+              - cell "La Habana" [ref=e144]
+              - cell "Santiago" [ref=e145]
+              - cell "Asignado" [ref=e146]:
+                - generic [ref=e147]: Asignado
+              - cell "$1000" [ref=e148]
+              - cell "2026-06-25" [ref=e149]
+              - cell "juan" [ref=e150]
+              - cell "" [ref=e151]:
+                - link "" [ref=e152] [cursor=pointer]:
+                  - /url: /admin/viaje/1
+                  - generic [ref=e153]: 

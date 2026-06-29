@@ -448,6 +448,22 @@ def perfil():
     """, (session["usuario"],))
     datos = cur.fetchone()
 
+    cur.execute("""
+        SELECT
+            COALESCE(SUM(
+                CASE WHEN LOWER(v.estado) = 'entregado'
+                THEN COALESCE(r.km_oficiales, v.km, v.kilometros, 0)
+                ELSE 0 END
+            ), 0) AS km_recorridos,
+            COALESCE(SUM(COALESCE(v.peso_toneladas, 0)), 0) AS toneladas
+        FROM viajes v
+        LEFT JOIN rutas r ON v.ruta_id = r.id
+        WHERE v.cliente = ?
+    """, (session["usuario"],))
+    _m = cur.fetchone()
+    km_recorridos = int(_m["km_recorridos"]) if _m else 0
+    toneladas = float(_m["toneladas"]) if _m else 0.0
+
     if request.method == "POST":
         nombre    = request.form["nombre"].strip()
         apellidos = request.form.get("apellidos", "").strip()
@@ -460,6 +476,7 @@ def perfil():
         if not nombre:
             con.close()
             return render_template("cliente/perfil.html", datos=datos,
+                                   km_recorridos=km_recorridos, toneladas=toneladas,
                                    error="El nombre no puede estar vacío")
 
         cur.execute("""
@@ -472,14 +489,17 @@ def perfil():
             if not bcrypt.check_password_hash(datos["password"], actual):
                 con.close()
                 return render_template("cliente/perfil.html", datos=datos,
+                                       km_recorridos=km_recorridos, toneladas=toneladas,
                                        error="La contraseña actual es incorrecta")
             if nueva != confirmar:
                 con.close()
                 return render_template("cliente/perfil.html", datos=datos,
+                                       km_recorridos=km_recorridos, toneladas=toneladas,
                                        error="Las contraseñas nuevas no coinciden")
             if len(nueva) < 6:
                 con.close()
                 return render_template("cliente/perfil.html", datos=datos,
+                                       km_recorridos=km_recorridos, toneladas=toneladas,
                                        error="La nueva contraseña debe tener al menos 6 caracteres")
             nuevo_hash = bcrypt.generate_password_hash(nueva).decode("utf-8")
             cur.execute("UPDATE usuarios SET password = ? WHERE usuario = ?",
@@ -493,10 +513,12 @@ def perfil():
         datos = cur.fetchone()
         con.close()
         return render_template("cliente/perfil.html", datos=datos,
+                               km_recorridos=km_recorridos, toneladas=toneladas,
                                mensaje="Datos actualizados correctamente")
 
     con.close()
-    return render_template("cliente/perfil.html", datos=datos)
+    return render_template("cliente/perfil.html", datos=datos,
+                           km_recorridos=km_recorridos, toneladas=toneladas)
 
 
 @cliente_bp.route("/recuperar", methods=["GET", "POST"])

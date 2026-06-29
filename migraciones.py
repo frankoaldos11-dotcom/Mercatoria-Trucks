@@ -220,6 +220,29 @@ def ejecutar_migraciones():
         )
         """)
 
+    # v1.2 — papelera de reciclaje
+    agregar_columna(cursor, "camioneros", "deleted_at", "TEXT")
+    agregar_columna(cursor, "camioneros", "deleted_by", "TEXT")
+    agregar_columna(cursor, "clientes",   "deleted_at", "TEXT")
+    agregar_columna(cursor, "clientes",   "deleted_by", "TEXT")
+    agregar_columna(cursor, "viajes",     "deleted_at", "TEXT")
+    agregar_columna(cursor, "viajes",     "deleted_by", "TEXT")
+
+    if not tabla_existe(cursor, "solicitudes_eliminacion"):
+        cursor.execute("""
+        CREATE TABLE solicitudes_eliminacion (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entidad TEXT NOT NULL,
+            entidad_id INTEGER NOT NULL,
+            nombre_entidad TEXT,
+            solicitado_por TEXT NOT NULL,
+            fecha_solicitud TEXT DEFAULT CURRENT_TIMESTAMP,
+            estado TEXT DEFAULT 'Pendiente',
+            revisado_por TEXT,
+            fecha_revision TEXT
+        )
+        """)
+
     _indices = [
         ("idx_viajes_estado",         "viajes",     "estado"),
         ("idx_viajes_cliente_id",      "viajes",     "cliente_id"),

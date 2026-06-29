@@ -14,12 +14,14 @@
         <h1>Clientes</h1>
         <p>Empresas y usuarios registrados para solicitar servicios logísticos.</p>
     </div>
+    {% if session.get('rol') == 'admin' %}
     <div style="display:flex;gap:8px;align-items:center;">
         <a href="/admin/exportar/clientes" class="btn-excel-export">⬇ Exportar Excel</a>
         <button class="btn-excel-import" data-bs-toggle="modal" data-bs-target="#modalImportarClientes">
             <i class="bi bi-upload"></i> Importar Excel
         </button>
     </div>
+    {% endif %}
 </div>
 
 {% if session.get('rol') == 'admin' %}
@@ -107,8 +109,8 @@
                     <th>Categoría</th>
                     <th>Empresa</th>
                     <th>Contacto</th>
-                    {% if session.get('rol') == 'admin' %}
                     <th>Teléfono</th>
+                    {% if session.get('rol') == 'admin' %}
                     <th>Email</th>
                     <th>Dirección</th>
                     {% endif %}
@@ -132,8 +134,17 @@
                     <td><span class="badge-cat badge-cat-{{ (c.categoria or 'Normal')|lower|replace('é','e')|replace('ó','o') }}">{{ c.categoria or 'Normal' }}</span></td>
                     <td>{{ c.empresa or "—" }}</td>
                     <td>{{ c.contacto or "—" }}</td>
+                    <td>
+                        {% if c.telefono %}
+                        {% set _tel = c.telefono|replace(' ','')|replace('-','') %}
+                        {% set _wa = ('53' ~ _tel) if not _tel.startswith('53') and not _tel.startswith('+') else _tel.lstrip('+') %}
+                        <a href="https://wa.me/{{ _wa }}" target="_blank"
+                           style="color:#25D366;font-weight:600;text-decoration:none;">
+                            <i class="bi bi-whatsapp"></i> {{ c.telefono }}
+                        </a>
+                        {% else %}—{% endif %}
+                    </td>
                     {% if session.get('rol') == 'admin' %}
-                    <td>{{ c.telefono or "—" }}</td>
                     <td>{{ c.email or "—" }}</td>
                     <td>{{ c.direccion or "—" }}</td>
                     {% endif %}

@@ -1,0 +1,187 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]: Operaciones
+        - link " Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e18]: 
+          - generic [ref=e19]: Dashboard
+        - link " Viajes" [ref=e20] [cursor=pointer]:
+          - /url: /admin/viajes
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Viajes
+        - link " Cotizaciones" [ref=e23] [cursor=pointer]:
+          - /url: /admin/comercial/cotizaciones
+          - generic [ref=e24]: 
+          - generic [ref=e25]: Cotizaciones
+        - generic [ref=e26]: Comercial
+        - link " Rutas" [ref=e27] [cursor=pointer]:
+          - /url: /admin/comercial/rutas
+          - generic [ref=e28]: 
+          - generic [ref=e29]: Rutas
+        - link " Tipos de vehículo" [ref=e30] [cursor=pointer]:
+          - /url: /admin/comercial/vehiculos
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Tipos de vehículo
+        - link " Tarifas" [ref=e33] [cursor=pointer]:
+          - /url: /admin/comercial/tarifas
+          - generic [ref=e34]: 
+          - generic [ref=e35]: Tarifas
+        - generic [ref=e36]: Recursos
+        - link " Camioneros" [ref=e37] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e38]: 
+          - generic [ref=e39]: Camioneros
+        - link " Clientes" [ref=e40] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e41]: 
+          - generic [ref=e42]: Clientes
+        - generic [ref=e43]: Sistema
+        - link " Reportes" [ref=e44] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e45]: 
+          - generic [ref=e46]: Reportes
+        - link " Usuarios" [ref=e47] [cursor=pointer]:
+          - /url: /admin/usuarios
+          - generic [ref=e48]: 
+          - generic [ref=e49]: Usuarios
+        - link " Configuración" [ref=e50] [cursor=pointer]:
+          - /url: /admin/configuracion
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Configuración
+        - link " Auditoría" [ref=e53] [cursor=pointer]:
+          - /url: /admin/auditoria
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Auditoría
+        - link " Acciones por lote" [ref=e56] [cursor=pointer]:
+          - /url: /admin/lote
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Acciones por lote
+        - link " Mensajes" [ref=e59] [cursor=pointer]:
+          - /url: /admin/mensajes
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Mensajes
+        - link " Salir" [ref=e62] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Salir
+    - main [ref=e65]:
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]: Recursos
+          - heading "Vehículos" [level=1] [ref=e69]
+          - paragraph [ref=e70]: Flota de camiones y unidades de transporte registradas.
+        - generic [ref=e71]:
+          - button " Nuevo vehículo" [ref=e72] [cursor=pointer]:
+            - generic [ref=e73]: 
+            - text: Nuevo vehículo
+          - link "⬇ Exportar Excel" [ref=e74] [cursor=pointer]:
+            - /url: /admin/exportar/vehiculos
+          - generic [ref=e75]:
+            - button "Choose File" [ref=e76]
+            - button "⬆ Importar" [ref=e77] [cursor=pointer]
+      - generic [ref=e78]:
+        - textbox "Buscar por matrícula, marca o modelo..." [ref=e79]
+        - combobox [ref=e80]:
+          - option "Todos los estados" [selected]
+          - option "Disponible"
+          - option "En ruta"
+          - option "En mantenimiento"
+        - button "Filtrar" [ref=e81] [cursor=pointer]
+      - generic [ref=e82]:
+        - generic [ref=e84]:
+          - heading "Flota registrada" [level=2] [ref=e85]
+          - paragraph [ref=e86]: Unidades activas vinculadas a la operación.
+        - table [ref=e88]:
+          - rowgroup [ref=e89]:
+            - row "ID Matrícula Tipo Marca Modelo Capacidad Estado Camionero Acciones" [ref=e90]:
+              - columnheader "ID" [ref=e91]
+              - columnheader "Matrícula" [ref=e92]
+              - columnheader "Tipo" [ref=e93]
+              - columnheader "Marca" [ref=e94]
+              - columnheader "Modelo" [ref=e95]
+              - columnheader "Capacidad" [ref=e96]
+              - columnheader "Estado" [ref=e97]
+              - columnheader "Camionero" [ref=e98]
+              - columnheader "Acciones" [ref=e99]
+          - rowgroup [ref=e100]:
+            - row "#5 202020 m-50 chevy 20201 10 t En viaje testo Editar Dar de baja" [ref=e101]:
+              - cell "#5" [ref=e102]
+              - cell "202020" [ref=e103]:
+                - strong [ref=e104]: "202020"
+              - cell "m-50" [ref=e105]
+              - cell "chevy" [ref=e106]
+              - cell "20201" [ref=e107]
+              - cell "10 t" [ref=e108]
+              - cell "En viaje" [ref=e109]:
+                - generic [ref=e110]: En viaje
+              - cell "testo" [ref=e111]
+              - cell "Editar Dar de baja" [ref=e112]:
+                - link "Editar" [ref=e113] [cursor=pointer]:
+                  - /url: /admin/vehiculos/5/editar
+                - button "Dar de baja" [ref=e115] [cursor=pointer]
+            - row "#4 202020 m-50 chevy 20201 10 t Disponible — Editar Dar de baja" [ref=e116]:
+              - cell "#4" [ref=e117]
+              - cell "202020" [ref=e118]:
+                - strong [ref=e119]: "202020"
+              - cell "m-50" [ref=e120]
+              - cell "chevy" [ref=e121]
+              - cell "20201" [ref=e122]
+              - cell "10 t" [ref=e123]
+              - cell "Disponible" [ref=e124]:
+                - generic [ref=e125]: Disponible
+              - cell "—" [ref=e126]
+              - cell "Editar Dar de baja" [ref=e127]:
+                - link "Editar" [ref=e128] [cursor=pointer]:
+                  - /url: /admin/vehiculos/4/editar
+                - button "Dar de baja" [ref=e130] [cursor=pointer]
+            - row "#3 202020 m-50 chevy 20201 10 t Disponible — Editar Dar de baja" [ref=e131]:
+              - cell "#3" [ref=e132]
+              - cell "202020" [ref=e133]:
+                - strong [ref=e134]: "202020"
+              - cell "m-50" [ref=e135]
+              - cell "chevy" [ref=e136]
+              - cell "20201" [ref=e137]
+              - cell "10 t" [ref=e138]
+              - cell "Disponible" [ref=e139]:
+                - generic [ref=e140]: Disponible
+              - cell "—" [ref=e141]
+              - cell "Editar Dar de baja" [ref=e142]:
+                - link "Editar" [ref=e143] [cursor=pointer]:
+                  - /url: /admin/vehiculos/3/editar
+                - button "Dar de baja" [ref=e145] [cursor=pointer]
+            - row "#2 202020 m-50 chevy 20201 — Disponible — Editar Dar de baja" [ref=e146]:
+              - cell "#2" [ref=e147]
+              - cell "202020" [ref=e148]:
+                - strong [ref=e149]: "202020"
+              - cell "m-50" [ref=e150]
+              - cell "chevy" [ref=e151]
+              - cell "20201" [ref=e152]
+              - cell "—" [ref=e153]
+              - cell "Disponible" [ref=e154]:
+                - generic [ref=e155]: Disponible
+              - cell "—" [ref=e156]
+              - cell "Editar Dar de baja" [ref=e157]:
+                - link "Editar" [ref=e158] [cursor=pointer]:
+                  - /url: /admin/vehiculos/2/editar
+                - button "Dar de baja" [ref=e160] [cursor=pointer]
+            - row "#1 202020 MBenz chevy 20201 10 t En viaje dalia Editar Dar de baja" [ref=e161]:
+              - cell "#1" [ref=e162]
+              - cell "202020" [ref=e163]:
+                - strong [ref=e164]: "202020"
+              - cell "MBenz" [ref=e165]
+              - cell "chevy" [ref=e166]
+              - cell "20201" [ref=e167]
+              - cell "10 t" [ref=e168]
+              - cell "En viaje" [ref=e169]:
+                - generic [ref=e170]: En viaje
+              - cell "dalia" [ref=e171]
+              - cell "Editar Dar de baja" [ref=e172]:
+                - link "Editar" [ref=e173] [cursor=pointer]:
+                  - /url: /admin/vehiculos/1/editar
+                - button "Dar de baja" [ref=e175] [cursor=pointer]

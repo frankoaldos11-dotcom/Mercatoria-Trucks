@@ -1,0 +1,90 @@
+- generic [ref=e2]:
+  - heading "sqlite3.OperationalError" [level=1] [ref=e3]
+  - paragraph [ref=e5] [cursor=pointer]: "sqlite3.OperationalError: no such function: TO_CHAR"
+  - heading "Traceback (most recent call last)" [level=2] [ref=e6] [cursor=pointer]:
+    - text: Traceback
+    - emphasis [ref=e7]: (most recent call last)
+  - generic [ref=e8]:
+    - heading [level=3]
+    - list [ref=e9]:
+      - listitem [ref=e10]:
+        - generic [ref=e11]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 1536, in __call__" [level=4] [ref=e12]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e13]: "1536"
+            - text: ", in"
+            - code [ref=e14]: __call__
+          - generic [ref=e16]: return self.wsgi_app(environ, start_response) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e17]:
+        - generic [ref=e18]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 1514, in wsgi_app" [level=4] [ref=e19]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e20]: "1514"
+            - text: ", in"
+            - code [ref=e21]: wsgi_app
+          - generic [ref=e23]: response = self.handle_exception(e) ^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e24]:
+        - generic [ref=e25]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 1511, in wsgi_app" [level=4] [ref=e26]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e27]: "1511"
+            - text: ", in"
+            - code [ref=e28]: wsgi_app
+          - generic [ref=e30]: response = self.full_dispatch_request() ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e31]:
+        - generic [ref=e32]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 919, in full_dispatch_request" [level=4] [ref=e33]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e34]: "919"
+            - text: ", in"
+            - code [ref=e35]: full_dispatch_request
+          - generic [ref=e37]: rv = self.handle_user_exception(e) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e38]:
+        - generic [ref=e39]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 917, in full_dispatch_request" [level=4] [ref=e40]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e41]: "917"
+            - text: ", in"
+            - code [ref=e42]: full_dispatch_request
+          - generic [ref=e44]: rv = self.dispatch_request() ^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e45]:
+        - generic [ref=e46]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 902, in dispatch_request" [level=4] [ref=e47]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e48]: "902"
+            - text: ", in"
+            - code [ref=e49]: dispatch_request
+          - generic [ref=e51]: "return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args) # type: ignore[no-any-return] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+      - listitem [ref=e52]:
+        - generic [ref=e53]:
+          - heading "File \"E:\\Mercatoria Truck\\routes\\admin.py\", line 132, in dashboard" [level=4] [ref=e54]:
+            - text: File "E:\Mercatoria Truck\routes\admin.py", line
+            - emphasis [ref=e55]: "132"
+            - text: ", in"
+            - code [ref=e56]: dashboard
+          - generic [ref=e58]: cursor.execute(""" ^^^^
+      - listitem [ref=e59]:
+        - generic [ref=e60]:
+          - heading "File \"E:\\Mercatoria Truck\\database.py\", line 20, in execute" [level=4] [ref=e61]:
+            - text: File "E:\Mercatoria Truck\database.py", line
+            - emphasis [ref=e62]: "20"
+            - text: ", in"
+            - code [ref=e63]: execute
+          - generic [ref=e65]: return self._cursor.execute(sql) ^^^^^^^^^^^^^^^^^^^^^^^^^
+    - blockquote [ref=e66]: "sqlite3.OperationalError: no such function: TO_CHAR"
+  - generic [ref=e67]:
+    - text: The debugger caught an exception in your WSGI application. You can now look at the traceback which led to the error.
+    - generic [ref=e68]:
+      - paragraph [ref=e69]: To switch between the interactive traceback and the plaintext one, you can click on the "Traceback" headline. From the text traceback you can also create a paste of it. For code execution mouse-over the frame you want to debug and click on the console icon on the right side.
+      - paragraph [ref=e70]: "You can execute arbitrary Python code in the stack frames and there are some extra helpers available for introspection:"
+      - list [ref=e71]:
+        - listitem [ref=e72]:
+          - code [ref=e73]: dump()
+          - text: shows all variables in the frame
+        - listitem [ref=e74]:
+          - code [ref=e75]: dump(obj)
+          - text: dumps all that's known about the object
+  - generic [ref=e76]:
+    - text: Brought to you by
+    - strong [ref=e77]: DON'T PANIC
+    - text: ", your friendly Werkzeug powered traceback interpreter."

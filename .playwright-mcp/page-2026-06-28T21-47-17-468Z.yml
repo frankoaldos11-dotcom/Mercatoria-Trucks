@@ -1,0 +1,36 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Mercatoria" [ref=e4] [cursor=pointer]:
+        - /url: /cliente
+        - img [ref=e5]
+        - text: Mercatoria
+      - button [ref=e14] [cursor=pointer]
+      - text:      
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - heading " Mis Viajes" [level=1] [ref=e18]:
+        - generic [ref=e19]: 
+        - text: Mis Viajes
+      - link " Nueva Solicitud" [ref=e20] [cursor=pointer]:
+        - /url: /cliente/solicitar
+        - generic [ref=e21]: 
+        - text: Nueva Solicitud
+    - generic [ref=e22]:
+      - link "Todos" [ref=e23] [cursor=pointer]:
+        - /url: /cliente/viajes
+      - link " En curso" [ref=e24] [cursor=pointer]:
+        - /url: /cliente/viajes?estado=activos
+        - generic [ref=e25]: 
+        - text: En curso
+      - link " Entregados" [ref=e26] [cursor=pointer]:
+        - /url: /cliente/viajes?estado=entregados
+        - generic [ref=e27]: 
+        - text: Entregados
+    - generic [ref=e29]:
+      - generic [ref=e30]: 
+      - paragraph [ref=e31]: No tienes viajes registrados.
+      - link " Crear primera solicitud" [ref=e32] [cursor=pointer]:
+        - /url: /cliente/solicitar
+        - generic [ref=e33]: 
+        - text: Crear primera solicitud

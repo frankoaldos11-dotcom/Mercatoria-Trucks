@@ -1,0 +1,217 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]: Operaciones
+        - link " Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e18]: 
+          - generic [ref=e19]: Dashboard
+        - link " Viajes" [ref=e20] [cursor=pointer]:
+          - /url: /admin/viajes
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Viajes
+        - link " Cotizaciones" [ref=e23] [cursor=pointer]:
+          - /url: /admin/comercial/cotizaciones
+          - generic [ref=e24]: 
+          - generic [ref=e25]: Cotizaciones
+        - generic [ref=e26]: Comercial
+        - link " Rutas" [ref=e27] [cursor=pointer]:
+          - /url: /admin/comercial/rutas
+          - generic [ref=e28]: 
+          - generic [ref=e29]: Rutas
+        - link " Tipos de vehículo" [ref=e30] [cursor=pointer]:
+          - /url: /admin/comercial/vehiculos
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Tipos de vehículo
+        - link " Tarifas" [ref=e33] [cursor=pointer]:
+          - /url: /admin/comercial/tarifas
+          - generic [ref=e34]: 
+          - generic [ref=e35]: Tarifas
+        - generic [ref=e36]: Recursos
+        - link " Camioneros" [ref=e37] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e38]: 
+          - generic [ref=e39]: Camioneros
+        - link " Clientes" [ref=e40] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e41]: 
+          - generic [ref=e42]: Clientes
+        - generic [ref=e43]: Sistema
+        - link " Reportes" [ref=e44] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e45]: 
+          - generic [ref=e46]: Reportes
+        - link " Usuarios" [ref=e47] [cursor=pointer]:
+          - /url: /admin/usuarios
+          - generic [ref=e48]: 
+          - generic [ref=e49]: Usuarios
+        - link " Configuración" [ref=e50] [cursor=pointer]:
+          - /url: /admin/configuracion
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Configuración
+        - link " Auditoría" [ref=e53] [cursor=pointer]:
+          - /url: /admin/auditoria
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Auditoría
+        - link " Acciones por lote" [ref=e56] [cursor=pointer]:
+          - /url: /admin/lote
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Acciones por lote
+        - link " Mensajes" [ref=e59] [cursor=pointer]:
+          - /url: /admin/mensajes
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Mensajes
+        - link " Salir" [ref=e62] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Salir
+    - main [ref=e65]:
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - heading "Reportes y Estadísticas" [level=1] [ref=e68]
+          - paragraph [ref=e69]: Panel financiero del período seleccionado
+        - link " Exportar CSV" [ref=e70] [cursor=pointer]:
+          - /url: /admin/reportes/exportar?fecha_desde=2026-06-01&fecha_hasta=2026-06-28
+          - generic [ref=e71]: 
+          - text: Exportar CSV
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - generic [ref=e74]: Desde
+          - textbox [ref=e75]: 2026-06-01
+        - generic [ref=e76]:
+          - generic [ref=e77]: Hasta
+          - textbox [ref=e78]: 2026-06-28
+        - button "Aplicar" [ref=e79] [cursor=pointer]
+      - generic [ref=e80]:
+        - generic [ref=e81]:
+          - generic [ref=e83]: 
+          - generic [ref=e84]:
+            - generic [ref=e85]: Ingresos totales
+            - generic [ref=e86]: $2350.00
+        - generic [ref=e87]:
+          - generic [ref=e89]: 
+          - generic [ref=e90]:
+            - generic [ref=e91]: Pago camioneros
+            - generic [ref=e92]: $720.00
+        - generic [ref=e93]:
+          - generic [ref=e95]: 
+          - generic [ref=e96]:
+            - generic [ref=e97]: Combustible
+            - generic [ref=e98]: $360.00
+        - generic [ref=e99]:
+          - generic [ref=e101]: 
+          - generic [ref=e102]:
+            - generic [ref=e103]: Comisión Mercatoria
+            - generic [ref=e104]: $470.00
+        - generic [ref=e105]:
+          - generic [ref=e107]: 
+          - generic [ref=e108]:
+            - generic [ref=e109]: Utilidad neta
+            - generic [ref=e110]: $800.00
+      - generic [ref=e111]:
+        - heading "Ingresos por mes (últimos 6 meses)" [level=3] [ref=e113]
+        - generic [ref=e115]:
+          - heading "Indicadores adicionales" [level=3] [ref=e116]
+          - generic [ref=e117]:
+            - generic [ref=e119]: 
+            - generic [ref=e120]:
+              - generic [ref=e121]: Viaje promedio
+              - generic [ref=e122]: $587.50
+          - generic [ref=e123]:
+            - generic [ref=e125]: 
+            - generic [ref=e126]:
+              - generic [ref=e127]: Ruta más activa (período)
+              - generic [ref=e128]: La Habana → Santiago
+              - generic [ref=e129]: 2 viajes
+          - generic [ref=e130]:
+            - generic [ref=e132]: 
+            - generic [ref=e133]:
+              - generic [ref=e134]: Camionero más activo (período)
+              - generic [ref=e135]: testo
+              - generic [ref=e136]: 1 viaje
+          - generic [ref=e137]:
+            - generic [ref=e139]: 
+            - generic [ref=e140]:
+              - generic [ref=e141]: Total viajes en período
+              - generic [ref=e142]: "4"
+      - generic [ref=e143]:
+        - generic [ref=e144]:
+          - heading "Viajes del período" [level=3] [ref=e145]
+          - generic [ref=e146]: 4 viajes
+        - table [ref=e148]:
+          - rowgroup [ref=e149]:
+            - row "ID Cliente Ruta Estado Precio cliente Pago camionero Combustible Utilidad" [ref=e150]:
+              - columnheader "ID" [ref=e151]
+              - columnheader "Cliente" [ref=e152]
+              - columnheader "Ruta" [ref=e153]
+              - columnheader "Estado" [ref=e154]
+              - columnheader "Precio cliente" [ref=e155]
+              - columnheader "Pago camionero" [ref=e156]
+              - columnheader "Combustible" [ref=e157]
+              - columnheader "Utilidad" [ref=e158]
+          - rowgroup [ref=e159]:
+            - row "#4 oniel@gmail.com La Habana → Matanzas Asignado $450.00 $180.00 $90.00 $90.00" [ref=e160]:
+              - cell "#4" [ref=e161]:
+                - link "#4" [ref=e162] [cursor=pointer]:
+                  - /url: /admin/viajes/4/gestionar
+              - cell "oniel@gmail.com" [ref=e163]
+              - cell "La Habana → Matanzas" [ref=e164]
+              - cell "Asignado" [ref=e165]:
+                - generic [ref=e166]: Asignado
+              - cell "$450.00" [ref=e167]
+              - cell "$180.00" [ref=e168]
+              - cell "$90.00" [ref=e169]
+              - cell "$90.00" [ref=e170]
+            - row "#3 admin@gmail.com La Habana → Holguin Asignado $450.00 $180.00 $90.00 $90.00" [ref=e171]:
+              - cell "#3" [ref=e172]:
+                - link "#3" [ref=e173] [cursor=pointer]:
+                  - /url: /admin/viajes/3/gestionar
+              - cell "admin@gmail.com" [ref=e174]
+              - cell "La Habana → Holguin" [ref=e175]
+              - cell "Asignado" [ref=e176]:
+                - generic [ref=e177]: Asignado
+              - cell "$450.00" [ref=e178]
+              - cell "$180.00" [ref=e179]
+              - cell "$90.00" [ref=e180]
+              - cell "$90.00" [ref=e181]
+            - row "#2 admin@gmail.com La Habana → Santiago Asignado $450.00 $180.00 $90.00 $90.00" [ref=e182]:
+              - cell "#2" [ref=e183]:
+                - link "#2" [ref=e184] [cursor=pointer]:
+                  - /url: /admin/viajes/2/gestionar
+              - cell "admin@gmail.com" [ref=e185]
+              - cell "La Habana → Santiago" [ref=e186]
+              - cell "Asignado" [ref=e187]:
+                - generic [ref=e188]: Asignado
+              - cell "$450.00" [ref=e189]
+              - cell "$180.00" [ref=e190]
+              - cell "$90.00" [ref=e191]
+              - cell "$90.00" [ref=e192]
+            - row "#1 — La Habana → Santiago Asignado $1000.00 $180.00 $90.00 $530.00" [ref=e193]:
+              - cell "#1" [ref=e194]:
+                - link "#1" [ref=e195] [cursor=pointer]:
+                  - /url: /admin/viajes/1/gestionar
+              - cell "—" [ref=e196]
+              - cell "La Habana → Santiago" [ref=e197]
+              - cell "Asignado" [ref=e198]:
+                - generic [ref=e199]: Asignado
+              - cell "$1000.00" [ref=e200]
+              - cell "$180.00" [ref=e201]
+              - cell "$90.00" [ref=e202]
+              - cell "$530.00" [ref=e203]
+          - rowgroup [ref=e204]:
+            - row "TOTALES $2350.00 $720.00 $360.00 $800.00" [ref=e205]:
+              - cell "TOTALES" [ref=e206]:
+                - strong [ref=e207]: TOTALES
+              - cell "$2350.00" [ref=e208]:
+                - strong [ref=e209]: $2350.00
+              - cell "$720.00" [ref=e210]:
+                - strong [ref=e211]: $720.00
+              - cell "$360.00" [ref=e212]:
+                - strong [ref=e213]: $360.00
+              - cell "$800.00" [ref=e214]:
+                - strong [ref=e215]: $800.00

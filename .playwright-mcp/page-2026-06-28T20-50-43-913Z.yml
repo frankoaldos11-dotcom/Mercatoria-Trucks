@@ -1,0 +1,146 @@
+- generic [ref=e2]:
+  - heading "jinja2.exceptions.UndefinedError" [level=1] [ref=e3]
+  - paragraph [ref=e5] [cursor=pointer]: "jinja2.exceptions.UndefinedError: 'str object' has no attribute 'strftime'"
+  - heading "Traceback (most recent call last)" [level=2] [ref=e6] [cursor=pointer]:
+    - text: Traceback
+    - emphasis [ref=e7]: (most recent call last)
+  - generic [ref=e8]:
+    - heading [level=3]
+    - list [ref=e9]:
+      - listitem [ref=e10]:
+        - generic [ref=e11]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 1536, in __call__" [level=4] [ref=e12]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e13]: "1536"
+            - text: ", in"
+            - code [ref=e14]: __call__
+          - generic [ref=e16]: return self.wsgi_app(environ, start_response) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e17]:
+        - generic [ref=e18]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 1514, in wsgi_app" [level=4] [ref=e19]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e20]: "1514"
+            - text: ", in"
+            - code [ref=e21]: wsgi_app
+          - generic [ref=e23]: response = self.handle_exception(e) ^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e24]:
+        - generic [ref=e25]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 1511, in wsgi_app" [level=4] [ref=e26]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e27]: "1511"
+            - text: ", in"
+            - code [ref=e28]: wsgi_app
+          - generic [ref=e30]: response = self.full_dispatch_request() ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e31]:
+        - generic [ref=e32]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 919, in full_dispatch_request" [level=4] [ref=e33]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e34]: "919"
+            - text: ", in"
+            - code [ref=e35]: full_dispatch_request
+          - generic [ref=e37]: rv = self.handle_user_exception(e) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e38]:
+        - generic [ref=e39]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 917, in full_dispatch_request" [level=4] [ref=e40]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e41]: "917"
+            - text: ", in"
+            - code [ref=e42]: full_dispatch_request
+          - generic [ref=e44]: rv = self.dispatch_request() ^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e45]:
+        - generic [ref=e46]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 902, in dispatch_request" [level=4] [ref=e47]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e48]: "902"
+            - text: ", in"
+            - code [ref=e49]: dispatch_request
+          - generic [ref=e51]: "return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args) # type: ignore[no-any-return] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+      - listitem [ref=e52]:
+        - generic [ref=e53]:
+          - heading "File \"E:\\Mercatoria Truck\\routes\\admin.py\", line 237, in viajes" [level=4] [ref=e54]:
+            - text: File "E:\Mercatoria Truck\routes\admin.py", line
+            - emphasis [ref=e55]: "237"
+            - text: ", in"
+            - code [ref=e56]: viajes
+          - generic [ref=e58]: return render_template(
+      - listitem [ref=e59]:
+        - generic [ref=e60]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\templating.py\", line 151, in render_template" [level=4] [ref=e61]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\templating.py", line
+            - emphasis [ref=e62]: "151"
+            - text: ", in"
+            - code [ref=e63]: render_template
+          - generic [ref=e65]: return _render(app, template, context) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e66]:
+        - generic [ref=e67]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\templating.py\", line 132, in _render" [level=4] [ref=e68]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\templating.py", line
+            - emphasis [ref=e69]: "132"
+            - text: ", in"
+            - code [ref=e70]: _render
+          - generic [ref=e72]: rv = template.render(context) ^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e73]:
+        - generic [ref=e74]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\jinja2\\environment.py\", line 1295, in render" [level=4] [ref=e75]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\jinja2\environment.py", line
+            - emphasis [ref=e76]: "1295"
+            - text: ", in"
+            - code [ref=e77]: render
+          - generic [ref=e79]: self.environment.handle_exception() ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e80]:
+        - generic [ref=e81]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\jinja2\\environment.py\", line 942, in handle_exception" [level=4] [ref=e82]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\jinja2\environment.py", line
+            - emphasis [ref=e83]: "942"
+            - text: ", in"
+            - code [ref=e84]: handle_exception
+          - generic [ref=e86]: raise rewrite_traceback_stack(source=source) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e87]:
+        - generic [ref=e88]:
+          - heading "File \"E:\\Mercatoria Truck\\templates\\admin\\viajes.html\", line 1, in top-level template code" [level=4] [ref=e89]:
+            - text: File "E:\Mercatoria Truck\templates\admin\viajes.html", line
+            - emphasis [ref=e90]: "1"
+            - text: ", in"
+            - code [ref=e91]: top-level template code
+          - generic [ref=e93]: "{% extends \"admin/base_admin.html\" %}"
+      - listitem [ref=e94]:
+        - generic [ref=e95]:
+          - heading "File \"E:\\Mercatoria Truck\\templates\\admin\\base_admin.html\", line 188, in top-level template code" [level=4] [ref=e96]:
+            - text: File "E:\Mercatoria Truck\templates\admin\base_admin.html", line
+            - emphasis [ref=e97]: "188"
+            - text: ", in"
+            - code [ref=e98]: top-level template code
+          - generic [ref=e100]: "{% block contenido %}{% endblock %}"
+      - listitem [ref=e101]:
+        - generic [ref=e102]:
+          - heading "File \"E:\\Mercatoria Truck\\templates\\admin\\viajes.html\", line 129, in block 'contenido'" [level=4] [ref=e103]:
+            - text: File "E:\Mercatoria Truck\templates\admin\viajes.html", line
+            - emphasis [ref=e104]: "129"
+            - text: ", in"
+            - code [ref=e105]: block 'contenido'
+          - generic [ref=e107]: "<td style=\"font-size:11px;color:#999;\">{{ v.fecha_creacion.strftime('%Y-%m-%d') if v.fecha_creacion else \"—\" }}</td>"
+      - listitem [ref=e108]:
+        - generic [ref=e109]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\jinja2\\utils.py\", line 92, in from_obj" [level=4] [ref=e110]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\jinja2\utils.py", line
+            - emphasis [ref=e111]: "92"
+            - text: ", in"
+            - code [ref=e112]: from_obj
+          - generic [ref=e114]: "if hasattr(obj, \"jinja_pass_arg\"): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+    - blockquote [ref=e115]: "jinja2.exceptions.UndefinedError: 'str object' has no attribute 'strftime'"
+  - generic [ref=e116]:
+    - text: The debugger caught an exception in your WSGI application. You can now look at the traceback which led to the error.
+    - generic [ref=e117]:
+      - paragraph [ref=e118]: To switch between the interactive traceback and the plaintext one, you can click on the "Traceback" headline. From the text traceback you can also create a paste of it. For code execution mouse-over the frame you want to debug and click on the console icon on the right side.
+      - paragraph [ref=e119]: "You can execute arbitrary Python code in the stack frames and there are some extra helpers available for introspection:"
+      - list [ref=e120]:
+        - listitem [ref=e121]:
+          - code [ref=e122]: dump()
+          - text: shows all variables in the frame
+        - listitem [ref=e123]:
+          - code [ref=e124]: dump(obj)
+          - text: dumps all that's known about the object
+  - generic [ref=e125]:
+    - text: Brought to you by
+    - strong [ref=e126]: DON'T PANIC
+    - text: ", your friendly Werkzeug powered traceback interpreter."

@@ -287,7 +287,13 @@
         {% endif %}
         <table style="width:100%;font-size:12px;border-collapse:collapse;">
             <tr><td style="color:#888;padding:5px 0;width:30%;font-size:11px;text-transform:uppercase;">Nombre</td><td style="font-weight:700;">{{ cliente_info.nombre or "—" }}</td></tr>
-            <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Teléfono</td><td style="font-weight:600;">{{ cliente_info.telefono or "—" }}</td></tr>
+            <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Teléfono</td><td style="font-weight:600;">
+                {% if cliente_info.telefono %}
+                {% set _tel = cliente_info.telefono|replace(' ','')|replace('-','') %}
+                {% set _wa = ('53' ~ _tel) if not _tel.startswith('53') and not _tel.startswith('+') else _tel.lstrip('+') %}
+                <a href="https://wa.me/{{ _wa }}" target="_blank" style="color:#25D366;text-decoration:none;font-weight:600;"><i class="bi bi-whatsapp"></i> {{ cliente_info.telefono }}</a>
+                {% else %}—{% endif %}
+            </td></tr>
             <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Empresa</td><td style="font-weight:600;">{{ cliente_info.empresa or "—" }}</td></tr>
             <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Email</td><td style="font-weight:600;word-break:break-all;">{{ cliente_info.email or viaje.cliente or "—" }}</td></tr>
         </table>
@@ -346,6 +352,7 @@
                 <span>Pago camionero</span>
                 <strong>${{ "%.2f"|format(liquidacion.pago_camionero) }}</strong>
             </div>
+            {% if session.get('rol') == 'admin' %}
             <div class="economia-item">
                 <span>Comisión Mercatoria ({{ liquidacion.config.comision_mercatoria_porcentaje|int }}%)</span>
                 <strong>${{ "%.2f"|format(liquidacion.comision_mercatoria) }}</strong>
@@ -354,6 +361,7 @@
                 <span>Utilidad Mercatoria</span>
                 <strong>${{ "%.2f"|format(liquidacion.utilidad_mercatoria) }}</strong>
             </div>
+            {% endif %}
         </div>
         {% else %}
         <p class="sin-datos">No se pudo calcular la liquidación para este viaje.</p>
@@ -484,6 +492,28 @@
                 </li>
                 {% endfor %}
             </ul>
+        </div>
+
+        {# Prioridad #}
+        <div class="card bloque">
+            <h2>Prioridad</h2>
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/prioridad">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                    {% for p in ['Normal', 'Alta', 'Urgente'] %}
+                    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;font-weight:600;
+                                  padding:6px 12px;border-radius:8px;border:1px solid #ddd;
+                                  background:{{ '#fff3ec' if (viaje.prioridad or 'Normal') == p else '#fafafa' }};
+                                  color:{{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#555' }};
+                                  border-color:{{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#ddd' }};">
+                        <input type="radio" name="prioridad" value="{{ p }}"
+                               {{ 'checked' if (viaje.prioridad or 'Normal') == p else '' }}
+                               style="display:none;" onchange="this.form.submit()">
+                        {{ p }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </form>
         </div>
 
         {# Cambiar estado #}

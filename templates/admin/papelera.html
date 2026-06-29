@@ -1,0 +1,241 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Sistema</span>
+        <h1><i class="bi bi-trash3" style="color:#E86A2C;margin-right:6px;"></i>Papelera</h1>
+        <p>Registros eliminados que pueden ser restaurados. Las solicitudes de operarios requieren aprobación.</p>
+    </div>
+</div>
+
+{# ── Solicitudes de eliminación pendientes ──────────────────── #}
+{% if solicitudes %}
+<section class="panel" style="margin-bottom:20px;">
+    <div class="panel-header">
+        <div>
+            <h2>Solicitudes de eliminación pendientes</h2>
+            <p>Enviadas por operarios — requieren aprobación del administrador.</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Entidad</th>
+                    <th>Nombre</th>
+                    <th>Solicitado por</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in solicitudes %}
+                <tr>
+                    <td><span style="text-transform:capitalize;font-weight:600;">{{ s.entidad }}</span></td>
+                    <td>{{ s.nombre_entidad }}</td>
+                    <td style="color:#888;font-size:12px;">{{ s.solicitado_por }}</td>
+                    <td style="color:#888;font-size:12px;">{{ s.fecha_solicitud | fmt_fecha if s.fecha_solicitud else "—" }}</td>
+                    <td style="white-space:nowrap;">
+                        <form method="POST" action="/admin/solicitudes-eliminacion/{{ s.id }}/aprobar"
+                              style="display:inline;" onsubmit="return confirm('¿Confirmar eliminación de {{ s.nombre_entidad }}?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-accion-del">Aprobar</button>
+                        </form>
+                        <form method="POST" action="/admin/solicitudes-eliminacion/{{ s.id }}/rechazar"
+                              style="display:inline;margin-left:4px;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-accion-edit">Rechazar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="empty-state">No hay solicitudes pendientes.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+{# ── Camioneros eliminados ──────────────────────────────────── #}
+{% if camioneros_eliminados %}
+<section class="panel" style="margin-bottom:20px;">
+    <div class="panel-header">
+        <div>
+            <h2>Camioneros eliminados</h2>
+            <p>{{ camioneros_eliminados|length }} registro(s) en papelera.</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Eliminado por</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in camioneros_eliminados %}
+                <tr>
+                    <td>#{{ c.id }}</td>
+                    <td>{{ c.nombre }}</td>
+                    <td>{{ c.telefono or "—" }}</td>
+                    <td style="color:#888;font-size:12px;">{{ c.deleted_by or "—" }}</td>
+                    <td style="color:#888;font-size:12px;">{{ c.deleted_at | fmt_fecha if c.deleted_at else "—" }}</td>
+                    <td>
+                        <form method="POST" action="/admin/papelera/camioneros/{{ c.id }}/restaurar">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-restaurar">
+                                <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+{# ── Clientes eliminados ────────────────────────────────────── #}
+{% if clientes_eliminados %}
+<section class="panel" style="margin-bottom:20px;">
+    <div class="panel-header">
+        <div>
+            <h2>Clientes eliminados</h2>
+            <p>{{ clientes_eliminados|length }} registro(s) en papelera.</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Eliminado por</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clientes_eliminados %}
+                <tr>
+                    <td>#{{ c.id }}</td>
+                    <td>{{ c.nombre or "—" }}</td>
+                    <td style="font-size:12px;">{{ c.email or "—" }}</td>
+                    <td style="color:#888;font-size:12px;">{{ c.deleted_by or "—" }}</td>
+                    <td style="color:#888;font-size:12px;">{{ c.deleted_at | fmt_fecha if c.deleted_at else "—" }}</td>
+                    <td>
+                        <form method="POST" action="/admin/papelera/clientes/{{ c.id }}/restaurar">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-restaurar">
+                                <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+{# ── Viajes eliminados ──────────────────────────────────────── #}
+{% if viajes_eliminados %}
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Viajes eliminados</h2>
+            <p>{{ viajes_eliminados|length }} registro(s) en papelera.</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Estado</th>
+                    <th>Eliminado por</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in viajes_eliminados %}
+                <tr>
+                    <td>#{{ v.id }}</td>
+                    <td>{{ v.cliente or "—" }}</td>
+                    <td>{{ v.origen or "—" }}</td>
+                    <td>{{ v.destino or "—" }}</td>
+                    <td style="font-size:12px;">{{ v.estado }}</td>
+                    <td style="color:#888;font-size:12px;">{{ v.deleted_by or "—" }}</td>
+                    <td style="color:#888;font-size:12px;">{{ v.deleted_at | fmt_fecha if v.deleted_at else "—" }}</td>
+                    <td>
+                        <form method="POST" action="/admin/papelera/viajes/{{ v.id }}/restaurar">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-restaurar">
+                                <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+{% if not solicitudes and not camioneros_eliminados and not clientes_eliminados and not viajes_eliminados %}
+<div class="panel" style="padding:48px;text-align:center;color:#9CA3AF;">
+    <i class="bi bi-trash3" style="font-size:2.5rem;display:block;margin-bottom:12px;"></i>
+    <p style="font-size:15px;font-weight:600;margin:0;">La papelera está vacía</p>
+    <p style="font-size:13px;margin-top:4px;">No hay registros eliminados ni solicitudes pendientes.</p>
+</div>
+{% endif %}
+
+<style>
+.btn-restaurar {
+    padding: 5px 12px;
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-restaurar:hover { background: #d1fae5; }
+.btn-accion-edit, .btn-accion-del {
+    display: inline-block;
+    padding: 4px 11px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    margin-right: 4px;
+}
+.btn-accion-edit { background: #e8f4fd; color: #1a6fa0; }
+.btn-accion-edit:hover { background: #cce4f7; }
+.btn-accion-del { background: #fde8e8; color: #c0392b; }
+.btn-accion-del:hover { background: #f7caca; }
+</style>
+
+{% endblock %}

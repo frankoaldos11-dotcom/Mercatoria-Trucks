@@ -102,10 +102,12 @@
                 {% endif %}
             </a>
 
+            {% if session.get('rol') == 'admin' %}
             <a href="/admin/comercial/cotizaciones" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/comercial/cotizacion') else '' }}">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Cotizaciones</span>
             </a>
+            {% endif %}
 
             <div class="nav-section">Comercial</div>
 
@@ -168,6 +170,10 @@
             <a href="/admin/mensajes" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/mensajes') else '' }}">
                 <i class="bi bi-envelope-fill"></i>
                 <span>Mensajes</span>
+            </a>
+            <a href="/admin/papelera" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/papelera') else '' }}">
+                <i class="bi bi-trash3"></i>
+                <span>Papelera</span>
             </a>
             {% endif %}
 

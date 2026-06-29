@@ -9,7 +9,9 @@
         <p>Rutas fijas con kilómetros oficiales y tarifas por km para liquidación.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
+        {% if session.get('rol') == 'admin' %}
         <a href="/admin/exportar/rutas" class="btn-excel-export">⬇ Exportar Excel</a>
+        {% endif %}
         {% if session.get('rol') == 'admin' %}
         <form method="POST" action="/admin/importar/rutas" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

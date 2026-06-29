@@ -1,0 +1,251 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]: Operaciones
+        - link " Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e18]: 
+          - generic [ref=e19]: Dashboard
+        - link " Viajes" [ref=e20] [cursor=pointer]:
+          - /url: /admin/viajes
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Viajes
+        - link " Cotizaciones" [ref=e23] [cursor=pointer]:
+          - /url: /admin/comercial/cotizaciones
+          - generic [ref=e24]: 
+          - generic [ref=e25]: Cotizaciones
+        - generic [ref=e26]: Comercial
+        - link " Rutas" [ref=e27] [cursor=pointer]:
+          - /url: /admin/comercial/rutas
+          - generic [ref=e28]: 
+          - generic [ref=e29]: Rutas
+        - link " Tipos de vehículo" [ref=e30] [cursor=pointer]:
+          - /url: /admin/comercial/vehiculos
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Tipos de vehículo
+        - link " Tarifas" [ref=e33] [cursor=pointer]:
+          - /url: /admin/comercial/tarifas
+          - generic [ref=e34]: 
+          - generic [ref=e35]: Tarifas
+        - generic [ref=e36]: Recursos
+        - link " Camioneros" [ref=e37] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e38]: 
+          - generic [ref=e39]: Camioneros
+        - link " Clientes" [ref=e40] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e41]: 
+          - generic [ref=e42]: Clientes
+        - generic [ref=e43]: Sistema
+        - link " Reportes" [ref=e44] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e45]: 
+          - generic [ref=e46]: Reportes
+        - link " Usuarios" [ref=e47] [cursor=pointer]:
+          - /url: /admin/usuarios
+          - generic [ref=e48]: 
+          - generic [ref=e49]: Usuarios
+        - link " Configuración" [ref=e50] [cursor=pointer]:
+          - /url: /admin/configuracion
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Configuración
+        - link " Auditoría" [ref=e53] [cursor=pointer]:
+          - /url: /admin/auditoria
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Auditoría
+        - link " Acciones por lote" [ref=e56] [cursor=pointer]:
+          - /url: /admin/lote
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Acciones por lote
+        - link " Mensajes" [ref=e59] [cursor=pointer]:
+          - /url: /admin/mensajes
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Mensajes
+        - link " Salir" [ref=e62] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Salir
+    - main [ref=e65]:
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]: Recursos
+          - heading "Camioneros" [level=1] [ref=e69]
+          - paragraph [ref=e70]: Registro operativo de transportistas disponibles para asignaciones.
+        - generic [ref=e71]:
+          - link " Tipos de transporte" [ref=e72] [cursor=pointer]:
+            - /url: /admin/catalogos/tipo-transporte
+            - generic [ref=e73]: 
+            - text: Tipos de transporte
+          - link "⬇ Exportar Excel" [ref=e74] [cursor=pointer]:
+            - /url: /admin/exportar/camioneros
+          - button " Importar Excel" [ref=e75] [cursor=pointer]:
+            - generic [ref=e76]: 
+            - text: Importar Excel
+      - generic [ref=e77]:
+        - generic [ref=e79]:
+          - heading "Nuevo camionero" [level=2] [ref=e80]
+          - paragraph [ref=e81]: Registra un transportista en el sistema.
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - generic [ref=e85]: Nombre *
+            - textbox "Nombre completo" [ref=e86]
+          - generic [ref=e87]:
+            - generic [ref=e88]: Teléfono
+            - textbox "Teléfono de contacto" [ref=e89]
+          - generic [ref=e90]:
+            - generic [ref=e91]: Licencia
+            - textbox "Número de licencia" [ref=e92]
+          - generic [ref=e93]:
+            - generic [ref=e94]: Estado
+            - combobox [ref=e95]:
+              - option "Disponible" [selected]
+              - option "Ocupado"
+              - option "Inactivo"
+              - option "Pendiente de validación"
+          - generic [ref=e96]:
+            - generic [ref=e97]: Vehículo (opcional)
+            - text: Puedes asignar un vehículo ahora o más tarde. Si registras datos del vehículo, la matrícula es obligatoria.
+          - generic [ref=e98]:
+            - generic [ref=e99]: Matrícula
+            - textbox "Matrícula" [ref=e100]
+          - generic [ref=e101]:
+            - generic [ref=e102]: Marca
+            - textbox "Marca" [ref=e103]
+          - generic [ref=e104]:
+            - generic [ref=e105]: Modelo
+            - textbox "Modelo" [ref=e106]
+          - generic [ref=e107]:
+            - generic [ref=e108]: Tipo de transporte
+            - combobox [ref=e109]:
+              - option "— Sin especificar —" [selected]
+              - option "Camioneta"
+              - option "Camión cerrado"
+              - option "Camión refrigerado"
+              - option "Furgón"
+              - option "Otro"
+              - option "Plancha"
+              - option "Portacontenedor"
+              - option "Rastra"
+          - generic [ref=e110]:
+            - generic [ref=e111]: Capacidad
+            - 'textbox "Ej: 10 ton" [ref=e112]'
+          - button "Registrar camionero" [ref=e114] [cursor=pointer]
+      - generic [ref=e115]:
+        - textbox "Buscar por nombre, teléfono o licencia..." [ref=e116]
+        - combobox [ref=e117]:
+          - option "Todos los estados" [selected]
+          - option "Disponible"
+          - option "Ocupado"
+          - option "Inactivo"
+          - option "Pendiente de validación"
+        - combobox [ref=e118]:
+          - option "Todos los tipos" [selected]
+          - option "Camioneta"
+          - option "Camión cerrado"
+          - option "Camión refrigerado"
+          - option "Furgón"
+          - option "Otro"
+          - option "Plancha"
+          - option "Portacontenedor"
+          - option "Rastra"
+        - combobox [ref=e119]:
+          - option "Con/sin vehículo" [selected]
+          - option "Con vehículo"
+          - option "Sin vehículo"
+        - button "Filtrar" [ref=e120] [cursor=pointer]
+      - generic [ref=e121]:
+        - generic [ref=e123]:
+          - heading "Camioneros registrados" [level=2] [ref=e124]
+          - paragraph [ref=e125]: Base de transportistas vinculados a Mercatoria Truck.
+        - table [ref=e127]:
+          - rowgroup [ref=e128]:
+            - row "ID Nombre Teléfono Licencia Vehículo Estado Rutas asignadas Acciones" [ref=e129]:
+              - columnheader "ID" [ref=e130]
+              - columnheader "Nombre" [ref=e131]
+              - columnheader "Teléfono" [ref=e132]
+              - columnheader "Licencia" [ref=e133]
+              - columnheader "Vehículo" [ref=e134]
+              - columnheader "Estado" [ref=e135]
+              - columnheader "Rutas asignadas" [ref=e136]
+              - columnheader "Acciones" [ref=e137]
+          - rowgroup [ref=e138]:
+            - row "#4 testo 55555555 22222222 202020 chevy 20201 m-50 En viaje Sin rutas Editar  Eliminar" [ref=e139]:
+              - cell "#4" [ref=e140]
+              - cell "testo" [ref=e141]
+              - cell "55555555" [ref=e142]
+              - cell "22222222" [ref=e143]
+              - cell "202020 chevy 20201 m-50" [ref=e144]:
+                - strong [ref=e145]: "202020"
+                - text: chevy 20201
+                - text: m-50
+              - cell "En viaje" [ref=e146]:
+                - generic [ref=e147]: En viaje
+              - cell "Sin rutas" [ref=e148]
+              - cell "Editar  Eliminar" [ref=e149]:
+                - link "Editar" [ref=e150] [cursor=pointer]:
+                  - /url: /admin/camioneros/4/editar
+                - link "" [ref=e151] [cursor=pointer]:
+                  - /url: /admin/camioneros/4/economico
+                  - generic [ref=e152]: 
+                - button "Eliminar" [ref=e154] [cursor=pointer]
+            - row "#3 dalia 666666667 22222222 202020 chevy 20201 MBenz En viaje Sin rutas Editar  Eliminar" [ref=e155]:
+              - cell "#3" [ref=e156]
+              - cell "dalia" [ref=e157]
+              - cell "666666667" [ref=e158]
+              - cell "22222222" [ref=e159]
+              - cell "202020 chevy 20201 MBenz" [ref=e160]:
+                - strong [ref=e161]: "202020"
+                - text: chevy 20201
+                - text: MBenz
+              - cell "En viaje" [ref=e162]:
+                - generic [ref=e163]: En viaje
+              - cell "Sin rutas" [ref=e164]
+              - cell "Editar  Eliminar" [ref=e165]:
+                - link "Editar" [ref=e166] [cursor=pointer]:
+                  - /url: /admin/camioneros/3/editar
+                - link "" [ref=e167] [cursor=pointer]:
+                  - /url: /admin/camioneros/3/economico
+                  - generic [ref=e168]: 
+                - button "Eliminar" [ref=e170] [cursor=pointer]
+            - row "#2 juan 666666667 22222222 Pendiente de vehículo Sin vehículo La Habana → Holguin Editar  Eliminar" [ref=e171]:
+              - cell "#2" [ref=e172]
+              - cell "juan" [ref=e173]
+              - cell "666666667" [ref=e174]
+              - cell "22222222" [ref=e175]
+              - cell "Pendiente de vehículo" [ref=e176]:
+                - generic [ref=e177]: Pendiente de vehículo
+              - cell "Sin vehículo" [ref=e178]:
+                - generic [ref=e179]: Sin vehículo
+              - cell "La Habana → Holguin" [ref=e180]:
+                - generic "980.0 km" [ref=e181]: La Habana → Holguin
+              - cell "Editar  Eliminar" [ref=e182]:
+                - link "Editar" [ref=e183] [cursor=pointer]:
+                  - /url: /admin/camioneros/2/editar
+                - link "" [ref=e184] [cursor=pointer]:
+                  - /url: /admin/camioneros/2/economico
+                  - generic [ref=e185]: 
+                - button "Eliminar" [ref=e187] [cursor=pointer]
+            - row "#1 alberto 55555555 22222222 Pendiente de vehículo Sin vehículo La Habana → Holguin La Habana → Santiago Editar  Eliminar" [ref=e188]:
+              - cell "#1" [ref=e189]
+              - cell "alberto" [ref=e190]
+              - cell "55555555" [ref=e191]
+              - cell "22222222" [ref=e192]
+              - cell "Pendiente de vehículo" [ref=e193]:
+                - generic [ref=e194]: Pendiente de vehículo
+              - cell "Sin vehículo" [ref=e195]:
+                - generic [ref=e196]: Sin vehículo
+              - cell "La Habana → Holguin La Habana → Santiago" [ref=e197]:
+                - generic "980.0 km" [ref=e198]: La Habana → Holguin
+                - generic "1020.0 km" [ref=e199]: La Habana → Santiago
+              - cell "Editar  Eliminar" [ref=e200]:
+                - link "Editar" [ref=e201] [cursor=pointer]:
+                  - /url: /admin/camioneros/1/editar
+                - link "" [ref=e202] [cursor=pointer]:
+                  - /url: /admin/camioneros/1/economico
+                  - generic [ref=e203]: 
+                - button "Eliminar" [ref=e205] [cursor=pointer]

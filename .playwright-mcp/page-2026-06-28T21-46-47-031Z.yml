@@ -1,0 +1,209 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]: Operaciones
+        - link " Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e18]: 
+          - generic [ref=e19]: Dashboard
+        - link " Viajes" [ref=e20] [cursor=pointer]:
+          - /url: /admin/viajes
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Viajes
+        - link " Cotizaciones" [ref=e23] [cursor=pointer]:
+          - /url: /admin/comercial/cotizaciones
+          - generic [ref=e24]: 
+          - generic [ref=e25]: Cotizaciones
+        - generic [ref=e26]: Comercial
+        - link " Rutas" [ref=e27] [cursor=pointer]:
+          - /url: /admin/comercial/rutas
+          - generic [ref=e28]: 
+          - generic [ref=e29]: Rutas
+        - link " Tipos de vehículo" [ref=e30] [cursor=pointer]:
+          - /url: /admin/comercial/vehiculos
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Tipos de vehículo
+        - link " Tarifas" [ref=e33] [cursor=pointer]:
+          - /url: /admin/comercial/tarifas
+          - generic [ref=e34]: 
+          - generic [ref=e35]: Tarifas
+        - generic [ref=e36]: Recursos
+        - link " Camioneros" [ref=e37] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e38]: 
+          - generic [ref=e39]: Camioneros
+        - link " Clientes" [ref=e40] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e41]: 
+          - generic [ref=e42]: Clientes
+        - generic [ref=e43]: Sistema
+        - link " Reportes" [ref=e44] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e45]: 
+          - generic [ref=e46]: Reportes
+        - link " Usuarios" [ref=e47] [cursor=pointer]:
+          - /url: /admin/usuarios
+          - generic [ref=e48]: 
+          - generic [ref=e49]: Usuarios
+        - link " Configuración" [ref=e50] [cursor=pointer]:
+          - /url: /admin/configuracion
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Configuración
+        - link " Auditoría" [ref=e53] [cursor=pointer]:
+          - /url: /admin/auditoria
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Auditoría
+        - link " Acciones por lote" [ref=e56] [cursor=pointer]:
+          - /url: /admin/lote
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Acciones por lote
+        - link " Mensajes" [ref=e59] [cursor=pointer]:
+          - /url: /admin/mensajes
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Mensajes
+        - link " Salir" [ref=e62] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Salir
+    - main [ref=e65]:
+      - generic [ref=e67]:
+        - generic [ref=e68]: Sistema
+        - heading "Acciones por lote" [level=1] [ref=e69]
+        - paragraph [ref=e70]: Aplica cambios masivos a múltiples viajes de forma simultánea.
+      - generic [ref=e71]:
+        - generic [ref=e72]: 
+        - strong [ref=e73]: "Atención:"
+        - text: Las acciones por lote son irreversibles. Verifica los filtros antes de aplicar.
+      - generic [ref=e74]:
+        - generic [ref=e76]:
+          - heading "Actualizar precios masivamente" [level=2] [ref=e77]
+          - paragraph [ref=e78]: Aplica un precio cliente a un conjunto de viajes según criterio.
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - generic [ref=e82]:
+              - generic [ref=e83]: Criterio
+              - combobox [ref=e84]:
+                - option "Todos sin precio" [selected]
+                - option "Por estado"
+                - option "Por ruta"
+            - generic [ref=e85]:
+              - generic [ref=e86]: Precio nuevo (USD)
+              - spinbutton [ref=e87]
+            - generic [ref=e88]:
+              - generic [ref=e89]: Motivo (obligatorio)
+              - 'textbox "Ej: Ajuste tarifario Q2" [ref=e90]'
+          - generic [ref=e91]:
+            - button " Aplicar precios" [ref=e92] [cursor=pointer]:
+              - generic [ref=e93]: 
+              - text: Aplicar precios
+            - generic [ref=e94]: Se aplicará a 0 viajes
+      - generic [ref=e95]:
+        - generic [ref=e97]:
+          - heading "Cambiar estados masivamente" [level=2] [ref=e98]
+          - paragraph [ref=e99]: Mueve todos los viajes de un estado a otro de forma simultánea.
+        - generic [ref=e101]:
+          - generic [ref=e102]:
+            - generic [ref=e103]:
+              - generic [ref=e104]: Estado origen (filtro)
+              - combobox [ref=e105]:
+                - option "Solicitado" [selected]
+                - option "Pendiente"
+                - option "Asignado"
+                - option "En ruta"
+                - option "Carga recogida"
+                - option "Entregado"
+                - option "Cancelado"
+            - generic [ref=e106]: →
+            - generic [ref=e107]:
+              - generic [ref=e108]: Estado destino (nuevo)
+              - combobox [ref=e109]:
+                - option "Solicitado" [selected]
+                - option "Pendiente"
+                - option "Asignado"
+                - option "En ruta"
+                - option "Carga recogida"
+                - option "Entregado"
+                - option "Cancelado"
+            - generic [ref=e110]:
+              - generic [ref=e111]: Motivo
+              - 'textbox "Ej: Revisión operativa" [ref=e112]'
+          - button " Cambiar estados" [ref=e114] [cursor=pointer]:
+            - generic [ref=e115]: 
+            - text: Cambiar estados
+      - generic [ref=e116]:
+        - generic [ref=e118]:
+          - heading "Selección manual" [level=2] [ref=e119]
+          - paragraph [ref=e120]: Selecciona viajes individualmente y aplica una acción sobre ellos.
+        - generic [ref=e121]:
+          - generic [ref=e122]:
+            - generic [ref=e123]:
+              - generic [ref=e124]: Acción
+              - combobox [ref=e125]:
+                - option "Actualizar precio (USD)" [selected]
+                - option "Cambiar estado"
+            - generic [ref=e126]:
+              - generic [ref=e127]: Precio nuevo
+              - spinbutton [ref=e128]
+            - generic [ref=e129]:
+              - generic [ref=e130]: Motivo
+              - textbox "Motivo" [ref=e131]
+            - button " Aplicar a seleccionados" [ref=e132] [cursor=pointer]:
+              - generic [ref=e133]: 
+              - text: Aplicar a seleccionados
+          - table [ref=e135]:
+            - rowgroup [ref=e136]:
+              - row "ID Cliente Origen Destino Estado Precio" [ref=e137]:
+                - columnheader [ref=e138]:
+                  - checkbox [ref=e139]
+                - columnheader "ID" [ref=e140]
+                - columnheader "Cliente" [ref=e141]
+                - columnheader "Origen" [ref=e142]
+                - columnheader "Destino" [ref=e143]
+                - columnheader "Estado" [ref=e144]
+                - columnheader "Precio" [ref=e145]
+            - rowgroup [ref=e146]:
+              - row "#4 oniel@gmail.com La Habana Matanzas Asignado $450.00" [ref=e147]:
+                - cell [ref=e148]:
+                  - checkbox [ref=e149]
+                - cell "#4" [ref=e150]
+                - cell "oniel@gmail.com" [ref=e151]
+                - cell "La Habana" [ref=e152]
+                - cell "Matanzas" [ref=e153]
+                - cell "Asignado" [ref=e154]:
+                  - generic [ref=e155]: Asignado
+                - cell "$450.00" [ref=e156]
+              - row "#3 admin@gmail.com La Habana Holguin Asignado $450.00" [ref=e157]:
+                - cell [ref=e158]:
+                  - checkbox [ref=e159]
+                - cell "#3" [ref=e160]
+                - cell "admin@gmail.com" [ref=e161]
+                - cell "La Habana" [ref=e162]
+                - cell "Holguin" [ref=e163]
+                - cell "Asignado" [ref=e164]:
+                  - generic [ref=e165]: Asignado
+                - cell "$450.00" [ref=e166]
+              - row "#2 admin@gmail.com La Habana Santiago Asignado $450.00" [ref=e167]:
+                - cell [ref=e168]:
+                  - checkbox [ref=e169]
+                - cell "#2" [ref=e170]
+                - cell "admin@gmail.com" [ref=e171]
+                - cell "La Habana" [ref=e172]
+                - cell "Santiago" [ref=e173]
+                - cell "Asignado" [ref=e174]:
+                  - generic [ref=e175]: Asignado
+                - cell "$450.00" [ref=e176]
+              - row "#1 — La Habana Santiago Asignado $1000.00" [ref=e177]:
+                - cell [ref=e178]:
+                  - checkbox [ref=e179]
+                - cell "#1" [ref=e180]
+                - cell "—" [ref=e181]
+                - cell "La Habana" [ref=e182]
+                - cell "Santiago" [ref=e183]
+                - cell "Asignado" [ref=e184]:
+                  - generic [ref=e185]: Asignado
+                - cell "$1000.00" [ref=e186]

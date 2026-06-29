@@ -269,6 +269,8 @@ def guardar_cotizacion_view():
 def cotizaciones():
     if not requiere_admin():
         return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin?access_error=Cotizaciones+solo+disponible+para+administradores")
 
     return render_template(
         "admin/comercial/cotizaciones.html",

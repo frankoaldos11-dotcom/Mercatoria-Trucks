@@ -64,12 +64,11 @@
                 </select>
             </div>
             <div class="form-crud-field" style="grid-column:1/-1;">
-                <label style="color:#E86A2C;">Vehículo (opcional)</label>
-                <small style="color:#999;font-size:11px;">Puedes asignar un vehículo ahora o más tarde. Si registras datos del vehículo, la matrícula es obligatoria.</small>
+                <label style="color:#E86A2C;">Vehículo <span style="color:#DC2626;">*</span></label>
             </div>
             <div class="form-crud-field">
-                <label>Matrícula</label>
-                <input type="text" name="matricula" id="campo-matricula" class="input-crud" placeholder="Matrícula">
+                <label>Matrícula <span style="color:#DC2626;">*</span></label>
+                <input type="text" name="matricula" id="campo-matricula" class="input-crud" placeholder="Matrícula" required>
             </div>
             <div class="form-crud-field">
                 <label>Marca</label>
@@ -96,22 +95,6 @@
                 <button type="submit" class="btn-crud-primary">Registrar camionero</button>
             </div>
         </form>
-        <script>
-        (function() {
-          var camposVehiculo = ['marca', 'modelo', 'capacidad'];
-          var matriculaInp = document.getElementById('campo-matricula');
-          function checkMatricula() {
-            var alguno = camposVehiculo.some(function(n) {
-              return document.querySelector('[name="'+n+'"]').value.trim();
-            });
-            matriculaInp.required = alguno;
-            matriculaInp.style.borderColor = alguno ? '#E86A2C' : '';
-          }
-          camposVehiculo.forEach(function(n) {
-            document.querySelector('[name="'+n+'"]').addEventListener('input', checkMatricula);
-          });
-        })();
-        </script>
     </div>
 </section>
 
@@ -131,13 +114,8 @@
         <option value="{{ t.nombre }}" {% if filtro_tipo == t.nombre %}selected{% endif %}>{{ t.nombre }}</option>
         {% endfor %}
     </select>
-    <select name="vehiculo" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
-        <option value="">Con/sin vehículo</option>
-        <option value="con" {% if filtro_vehiculo == 'con' %}selected{% endif %}>Con vehículo</option>
-        <option value="sin" {% if filtro_vehiculo == 'sin' %}selected{% endif %}>Sin vehículo</option>
-    </select>
     <button type="submit" style="padding:8px 16px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
-    {% if buscar or filtro_estado or filtro_tipo or filtro_vehiculo %}
+    {% if buscar or filtro_estado or filtro_tipo %}
     <a href="/admin/camioneros" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
     {% endif %}
 </form>

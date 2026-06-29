@@ -98,6 +98,53 @@
 
 </div>
 
+{% if session.get('rol') == 'admin' and solicitudes_pendientes %}
+<section class="panel" style="margin-bottom:16px;">
+    <div class="panel-header">
+        <div>
+            <h2><i class="bi bi-hourglass-split" style="color:#E86A2C;margin-right:6px;"></i>Solicitudes de eliminación pendientes</h2>
+            <p>Solicitudes enviadas por operarios que requieren tu aprobación.</p>
+        </div>
+        <a href="/admin/papelera" style="font-size:13px;color:#E86A2C;font-weight:600;text-decoration:none;">Ver papelera →</a>
+    </div>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Entidad</th>
+                    <th>Nombre</th>
+                    <th>Solicitado por</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in solicitudes_pendientes %}
+                <tr>
+                    <td><span style="text-transform:capitalize;font-weight:600;">{{ s.entidad }}</span></td>
+                    <td>{{ s.nombre_entidad }}</td>
+                    <td style="color:#888;font-size:12px;">{{ s.solicitado_por }}</td>
+                    <td style="color:#888;font-size:12px;">{{ s.fecha_solicitud | fmt_fecha if s.fecha_solicitud else "—" }}</td>
+                    <td style="white-space:nowrap;">
+                        <form method="POST" action="/admin/solicitudes-eliminacion/{{ s.id }}/aprobar"
+                              style="display:inline;" onsubmit="return confirm('¿Confirmar eliminación?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" style="padding:4px 10px;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Aprobar</button>
+                        </form>
+                        <form method="POST" action="/admin/solicitudes-eliminacion/{{ s.id }}/rechazar"
+                              style="display:inline;margin-left:4px;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" style="padding:4px 10px;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Rechazar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
 {% if clientes_sin_nombre > 0 %}
 <div style="background:#fff8e6;border:1px solid #f5a623;color:#7a5800;border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;">
     <i class="bi bi-exclamation-triangle-fill" style="font-size:18px;color:#f5a623;"></i>

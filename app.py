@@ -221,6 +221,8 @@ if USE_POSTGRES:
     with app.app_context():
         from migrations_v11 import aplicar_migraciones_v11
         aplicar_migraciones_v11()
+        from migrations_v12 import aplicar_migraciones_v12
+        aplicar_migraciones_v12()
 else:
     crear_base_datos(bcrypt)
     from migraciones import ejecutar_migraciones
