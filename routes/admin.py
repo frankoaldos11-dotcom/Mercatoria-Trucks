@@ -126,7 +126,7 @@ def dashboard():
         FROM viajes v
         LEFT JOIN clientes cl ON v.cliente_id = cl.id
         WHERE LOWER(v.estado) IN ('pendiente', 'solicitado')
-          AND (v.deleted_at IS NULL OR v.deleted_at = '')
+          AND v.deleted_at IS NULL
         ORDER BY v.id DESC
     """)
     lista = cursor.fetchall()
@@ -1283,7 +1283,7 @@ def admin_camioneros():
     pagina           = max(1, int(request.args.get("pagina", 1) or 1))
     por_pagina       = 20
 
-    condiciones = ["(c.activo = 1 OR c.activo IS NULL)", "(c.deleted_at IS NULL OR c.deleted_at = '')"]
+    condiciones = ["(c.activo = 1 OR c.activo IS NULL)", "c.deleted_at IS NULL"]
     params = []
     if buscar:
         condiciones.append("(c.nombre LIKE ? OR c.telefono LIKE ? OR c.licencia LIKE ?)")
@@ -1523,7 +1523,7 @@ def admin_clientes():
     pagina     = max(1, int(request.args.get("pagina", 1) or 1))
     por_pagina = 25
 
-    cond_cl = ["(deleted_at IS NULL OR deleted_at = '')"]
+    cond_cl = ["deleted_at IS NULL"]
     params_cl = []
     if buscar_cl:
         cond_cl.append("(nombre LIKE ? OR email LIKE ? OR empresa LIKE ? OR telefono LIKE ?)")
@@ -2670,21 +2670,21 @@ def papelera():
 
     cursor.execute("""
         SELECT * FROM camioneros
-        WHERE deleted_at IS NOT NULL AND deleted_at != ''
+        WHERE deleted_at IS NOT NULL
         ORDER BY deleted_at DESC
     """)
     camioneros_eliminados = cursor.fetchall()
 
     cursor.execute("""
         SELECT * FROM clientes
-        WHERE deleted_at IS NOT NULL AND deleted_at != ''
+        WHERE deleted_at IS NOT NULL
         ORDER BY deleted_at DESC
     """)
     clientes_eliminados = cursor.fetchall()
 
     cursor.execute("""
         SELECT * FROM viajes
-        WHERE deleted_at IS NOT NULL AND deleted_at != ''
+        WHERE deleted_at IS NOT NULL
         ORDER BY deleted_at DESC
     """)
     viajes_eliminados = cursor.fetchall()
