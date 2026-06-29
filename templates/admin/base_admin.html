@@ -91,7 +91,7 @@
                     <i class="bi bi-chevron-down nav-group-arrow"></i>
                 </button>
                 <div class="nav-group-items">
-                    <a href="/admin" class="nav-item {{ 'nav-item-active' if request.path == '/admin' else '' }}">
+                    <a href="/admin" class="nav-item {{ 'nav-item-active' if request.path.rstrip('/') == '/admin' else '' }}">
                         <i class="bi bi-grid-1x2"></i>
                         <span>Dashboard</span>
                         {% if sidebar_dashboard_urgentes > 0 %}

@@ -1,8 +1,9 @@
+import io
 import secrets
 import threading
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, request, session, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, session, redirect, url_for, current_app, send_file
 from flask_mail import Message
 from database import conectar, crear_checklist_viaje
 from extensions import bcrypt, mail
@@ -284,6 +285,49 @@ def detalle_viaje(viaje_id):
         "cliente/viaje_detalle.html",
         viaje=viaje,
         paso_actual=paso_actual
+    )
+
+
+@cliente_bp.route("/viaje/<int:viaje_id>/factura")
+def descargar_factura(viaje_id):
+    if not _requiere_cliente():
+        return redirect(url_for("cliente.login"))
+
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT id FROM clientes WHERE usuario_id = ?", (session["user_id"],))
+    cliente_row = cur.fetchone()
+    if not cliente_row:
+        con.close()
+        return redirect(url_for("cliente.mis_viajes"))
+    cliente_id = cliente_row["id"]
+
+    cur.execute(
+        "SELECT id, estado FROM viajes WHERE id = ? AND cliente_id = ?",
+        (viaje_id, cliente_id)
+    )
+    viaje = cur.fetchone()
+    con.close()
+
+    if not viaje:
+        return redirect(url_for("cliente.mis_viajes"))
+
+    if (viaje["estado"] or "").lower() != "entregado":
+        return redirect(url_for("cliente.detalle_viaje", viaje_id=viaje_id))
+
+    try:
+        from services.pdf_service import generar_factura_cliente
+        pdf_bytes = generar_factura_cliente(viaje_id)
+    except ValueError as e:
+        return redirect(url_for("cliente.detalle_viaje", viaje_id=viaje_id))
+    except Exception:
+        return redirect(url_for("cliente.detalle_viaje", viaje_id=viaje_id))
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"factura-{viaje_id:04d}.pdf",
     )
 
 

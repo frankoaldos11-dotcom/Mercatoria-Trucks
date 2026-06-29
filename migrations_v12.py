@@ -64,6 +64,26 @@ def _ejecutar(conn):
     print("\n[ chapa remolque en vehiculos ]")
     run(conn, cur, "ALTER TABLE vehiculos ADD COLUMN IF NOT EXISTS chapa_remolque TEXT", "chapa_remolque")
 
+    print("\n[ cobro al cliente en viajes ]")
+    run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS forma_cobro TEXT", "forma_cobro")
+    run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS codigo_transaccion TEXT", "codigo_transaccion")
+    run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS comentario_cobro TEXT", "comentario_cobro")
+    run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS fecha_cobro TEXT", "fecha_cobro")
+    run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS monto_cobrado NUMERIC", "monto_cobrado")
+
+    print("\n[ historial de cambios por viaje ]")
+    run(conn, cur, """
+        CREATE TABLE IF NOT EXISTS historial_viaje (
+            id SERIAL PRIMARY KEY,
+            viaje_id INTEGER NOT NULL,
+            usuario TEXT NOT NULL,
+            accion TEXT NOT NULL,
+            detalle TEXT,
+            fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (viaje_id) REFERENCES viajes(id)
+        )
+    """, "CREATE TABLE historial_viaje")
+
     print("\n[ solicitudes_eliminacion ]")
     run(conn, cur, """
         CREATE TABLE IF NOT EXISTS solicitudes_eliminacion (

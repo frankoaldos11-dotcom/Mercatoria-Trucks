@@ -229,6 +229,23 @@
 
 </div>
 
+{% if viaje.estado|lower == "entregado" %}
+<div class="mt-card p-3 mb-3 d-flex align-items-center justify-content-between" style="border:1px solid #d1fae5;background:#f0fdf4;">
+    <div>
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#065f46;">
+            <i class="bi bi-file-earmark-check me-1"></i> Factura disponible
+        </div>
+        <div style="font-size:0.85rem;color:#374151;margin-top:4px;">
+            Tu envío fue entregado. Puedes descargar la factura en PDF.
+        </div>
+    </div>
+    <a href="/cliente/viaje/{{ viaje.id }}/factura"
+       style="background:#059669;color:white;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;">
+        <i class="bi bi-download me-1"></i> Descargar factura
+    </a>
+</div>
+{% endif %}
+
 {% if viaje.estado|lower == "solicitado" %}
 <div class="mt-card p-3 mb-3" style="border:1px solid #fee2e2;background:#fff5f5;">
     <div class="section-title mb-2" style="color:#dc2626;">
