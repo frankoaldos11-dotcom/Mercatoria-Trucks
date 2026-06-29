@@ -34,14 +34,6 @@
         <p style="margin:0;color:#888;font-size:13px;">{{ viaje.origen or '—' }} → {{ viaje.destino or '—' }}</p>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        {% if viaje.prioridad and viaje.prioridad != 'Normal' %}
-        <span style="padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;
-              background:{{ '#fff8e6' if viaje.prioridad=='Alta' else '#fef2f2' }};
-              color:{{ '#92400e' if viaje.prioridad=='Alta' else '#991b1b' }};
-              border:1px solid {{ '#fcd34d' if viaje.prioridad=='Alta' else '#fca5a5' }};">
-            {{ viaje.prioridad }}
-        </span>
-        {% endif %}
         <span style="padding:5px 14px;border-radius:999px;background:#E86A2C;color:#fff;font-weight:700;font-size:12px;text-transform:uppercase;">
             {{ viaje.estado }}
         </span>
@@ -124,34 +116,40 @@
             <div class="info-val">{{ viaje.fecha_entrega | fmt_fecha if viaje.fecha_entrega else '—' }}</div>
         </div>
 
+        {% if liquidacion %}
+        <div>
+            <div class="info-label">Km liquidables</div>
+            <div class="info-val">{{ liquidacion.km_liquidable|int }} km</div>
+        </div>
+        {% endif %}
+
+        <div>
+            <div class="info-label">Prioridad</div>
+            <div class="info-val">
+                <form method="POST" action="/admin/viaje/{{ viaje.id }}/prioridad" style="display:flex;gap:6px;flex-wrap:wrap;margin:0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% for p in ['Normal', 'Alta', 'Urgente'] %}
+                    <label style="cursor:pointer;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;
+                                  border:1px solid {{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#ddd' }};
+                                  background:{{ '#fff3ec' if (viaje.prioridad or 'Normal') == p else '#fafafa' }};
+                                  color:{{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#888' }};">
+                        <input type="radio" name="prioridad" value="{{ p }}"
+                               {{ 'checked' if (viaje.prioridad or 'Normal') == p else '' }}
+                               style="display:none;" onchange="this.form.submit()">
+                        {{ p }}
+                    </label>
+                    {% endfor %}
+                </form>
+            </div>
+        </div>
+
     </div>
 </div>
 
 {# ── STEPS ────────────────────────────────────────────────── #}
 <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
 
-{# STEP 1 — Prioridad (siempre visible) #}
-<div class="card step-active">
-    <div class="step-title-row"><span class="step-num">1</span> Prioridad del viaje</div>
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/prioridad" style="margin-top:10px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            {% for p in ['Normal', 'Alta', 'Urgente'] %}
-            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;font-weight:600;
-                          padding:6px 14px;border-radius:8px;border:1px solid {{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#ddd' }};
-                          background:{{ '#fff3ec' if (viaje.prioridad or 'Normal') == p else '#fafafa' }};
-                          color:{{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#555' }};">
-                <input type="radio" name="prioridad" value="{{ p }}"
-                       {{ 'checked' if (viaje.prioridad or 'Normal') == p else '' }}
-                       style="display:none;" onchange="this.form.submit()">
-                {{ p }}
-            </label>
-            {% endfor %}
-        </div>
-    </form>
-</div>
-
-{# STEP 2 — Asignar camionero #}
+{# STEP 1 — Asignar camionero #}
 {% if done1 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -162,7 +160,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">2</span> Asignar camionero y vehículo</div>
+    <div class="step-title-row"><span class="step-num">1</span> Asignar camionero y vehículo</div>
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <select name="camionero" class="step-input" required style="flex:1;min-width:200px;">
@@ -176,7 +174,7 @@
 </div>
 {% endif %}
 
-{# STEP 3 — Confirmar precio #}
+{# STEP 2 — Confirmar precio #}
 {% if done2 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -184,7 +182,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">3</span> Confirmar precio cliente</div>
+    <div class="step-title-row"><span class="step-num">2</span> Confirmar precio cliente</div>
     {% if liquidacion and liquidacion.precio_cliente > 0 %}
     <p style="font-size:12px;color:#888;margin:8px 0 4px;">Precio calculado: <strong>${{ "%.2f"|format(liquidacion.precio_cliente) }}</strong></p>
     {% endif %}
@@ -198,7 +196,7 @@
 </div>
 {% endif %}
 
-{# STEP 4 — Confirmar combustible #}
+{# STEP 3 — Confirmar combustible #}
 {% if done3 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -206,7 +204,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">4</span> Confirmar combustible asignado</div>
+    <div class="step-title-row"><span class="step-num">3</span> Confirmar combustible asignado</div>
     {% if liquidacion and liquidacion.combustible > 0 %}
     <p style="font-size:12px;color:#888;margin:8px 0 4px;">Estimado por liquidación: <strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong></p>
     {% endif %}
@@ -220,7 +218,7 @@
 </div>
 {% endif %}
 
-{# STEP 5 — Fecha de extracción #}
+{# STEP 4 — Fecha de extracción #}
 {% if done4 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -228,7 +226,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">5</span> Fecha de extracción (recogida de carga)</div>
+    <div class="step-title-row"><span class="step-num">4</span> Fecha de extracción (recogida de carga)</div>
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="date" name="fecha_recogida" class="step-input" required>
@@ -237,7 +235,7 @@
 </div>
 {% endif %}
 
-{# STEP 6 — Fecha de descarga #}
+{# STEP 5 — Fecha de descarga #}
 {% if done5 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -245,7 +243,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">6</span> Fecha de descarga</div>
+    <div class="step-title-row"><span class="step-num">5</span> Fecha de descarga</div>
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="date" name="fecha_entrega" class="step-input" required>
@@ -254,7 +252,7 @@
 </div>
 {% endif %}
 
-{# STEP 7 — Enviar documentación #}
+{# STEP 6 — Enviar documentación #}
 {% if done6 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -262,7 +260,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">7</span> Enviar documentación al camionero</div>
+    <div class="step-title-row"><span class="step-num">6</span> Enviar documentación al camionero</div>
     <p style="font-size:12px;color:#888;margin:8px 0 10px;">Orden de carga, contrato, instrucciones de ruta.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         {% if orden_carga_ok %}
@@ -283,7 +281,7 @@
 </div>
 {% endif %}
 
-{# STEP 8 — Confirmar entrega #}
+{# STEP 7 — Confirmar entrega #}
 {% if done7 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -291,7 +289,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">8</span> Confirmar entrega</div>
+    <div class="step-title-row"><span class="step-num">7</span> Confirmar entrega</div>
     <p style="font-size:12px;color:#888;margin:8px 0 10px;">Confirmar que la carga fue entregada en destino.</p>
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
           onsubmit="return confirm('¿Confirmar entrega? Esto cambiará el estado a Entregado.')">
@@ -304,7 +302,7 @@
 </div>
 {% endif %}
 
-{# STEP 9 — Cerrar operación #}
+{# STEP 8 — Cerrar operación #}
 {% if done_all %}
 <div class="card" style="border:2px solid #27ae60;background:#f0fdf4;padding:16px;">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -376,7 +374,7 @@
                   and liquidacion.km_real|int < liquidacion.km_liquidable|int %}
             <div class="liq-aviso">
                 <i class="bi bi-info-circle"></i>
-                Se aplica el mínimo de {{ liquidacion.km_liquidable|int }} km para esta liquidación porque la ruta tiene menos km registrados ({{ liquidacion.km_real|int }} km reales).
+                Se aplica el mínimo de {{ liquidacion.km_liquidable|int }} km para esta liquidación porque la ruta tiene menos km registrados.
             </div>
             {% endif %}
             <div class="economia-grid">

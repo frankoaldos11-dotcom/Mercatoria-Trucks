@@ -1,70 +1,61 @@
 # Reporte de Pruebas — 2026-06-28
 
-## Páginas probadas — fix ph() PostgreSQL
+## Páginas probadas
 
-### Panel Admin (rol: admin)
 | URL | HTTP | Consola |
 |-----|------|---------|
-| `/admin/` | ✅ 200 | sin errores |
-| `/admin/viajes` | ✅ 200 | sin errores |
-| `/admin/viaje/1` | ✅ 200 | sin errores |
-| `/admin/viaje/1/carta-porte` | ✅ 200 | PDF descargado OK |
-| `/admin/camioneros` | ✅ 200 | sin errores |
-| `/admin/camioneros/1/editar` | ✅ 200 | sin errores |
-| `/admin/clientes` | ✅ 200 | sin errores |
+| `/login` | ✅ 200 | sin errores nuevos |
+| `/admin/` (dashboard) | ✅ 200 | sin errores |
+| `/admin/viaje/1` (flujo rediseñado) | ✅ 200 | sin errores |
+| `/admin/configuracion` (bug fix) | ✅ 200 | sin errores |
 | `/admin/incidencias` | ✅ 200 | sin errores |
-| `/admin/auditoria` | ✅ 200 | sin errores |
-| `/admin/papelera` | ✅ 200 | sin errores |
-| `/admin/usuarios` | ✅ 200 | sin errores |
-| `/admin/reportes` | ✅ 200 | sin errores |
-| `/admin/configuracion` | ✅ 200 | sin errores |
 
 ## Errores encontrados
-Ninguno. Sin errores de consola ni HTTP 4xx/5xx en ninguna ruta real.
+
+- **favicon.ico 404** — sin favicon registrado en Flask (pre-existente, no bloqueante)
+- **500 en `/admin/camioneros/1/editar`** — error de sesión anterior, no reproducido en esta sesión
+
+## Screenshots tomados
+
+- `test_viaje_steps.png` — flujo de viaje rediseñado con pasos 1-7
+- `test_configuracion_fix.png` — formulario configuración sin spinners
 
 ## Correcciones aplicadas
 
-### Fix: `ph()` en `routes/admin.py` — compatibilidad PostgreSQL
+### 1. Flujo de viaje rediseñado (`templates/admin/gestionar_viaje.html`)
+- **Eliminado** el paso 1 "Prioridad" de la lista de pasos secuenciales
+- **Movida** la edición de Prioridad al panel de información superior como control inline (radio buttons compactos)
+- **Añadido** "Km liquidables" al panel de info superior
+- **Renumerados** los pasos: Asignar camionero = 1, Confirmar precio = 2, Combustible = 3, Fecha extracción = 4, Fecha descarga = 5, Enviar documentación = 6, Confirmar entrega = 7, Cerrar operación = 8
+- Pasos completados aparecen colapsados en verde; pasos pendientes aparecen como tarjetas activas
 
-**Problema:** Todo `routes/admin.py` usaba `?` hardcoded como placeholder SQL.
-En SQLite funciona, pero en PostgreSQL el placeholder es `%s` — todas las queries
-del módulo admin fallaban en producción (Render).
+### 2. Campos numéricos sin flechitas
+- `templates/cliente/solicitar.html`: `cantidad_contenedores` ya era `type="text"` con `inputmode="numeric"` ✅
+- `templates/admin/configuracion.html`: CSS `.config-input` ya tenía `-moz-appearance: textfield` y webkit spin-button supresión ✅
 
-**Solución en 3 pasos:**
+### 3. Bug configuración no guarda (`services/finanzas_service.py`)
+- **Root cause**: parámetros invertidos en `guardar_configuracion()` — se pasaba `(float(valor), clave)` en lugar de `(clave, float(valor))` tanto para SQLite como PostgreSQL. La columna `clave` recibía el valor numérico y la columna `valor` recibía el nombre de la clave, por lo que `ON CONFLICT(clave)` nunca encontraba match y se insertaban filas con datos erróneos.
+- **Fix**: invertido a `(clave, float(valor))` en ambas ramas.
+- **Verificado**: se guardó `tarifa_km = 2.25`, se recargó la página, el valor persiste ✅
 
-**1. `db_config.py`** — se añadió `ph()` como función centralizada:
-```python
-def ph():
-    return "%s" if USE_POSTGRES else "?"
-```
+### 4. Mensaje km mínimo (`templates/admin/gestionar_viaje.html`)
+- Simplificado: eliminado el "( X km reales)" del final del aviso
+- Nuevo texto: "Se aplica el mínimo de X km para esta liquidación porque la ruta tiene menos km registrados."
+- Visible para admin y operario (no gateado por rol)
 
-**2. `routes/admin.py`** — se importó `ph` desde `db_config`:
-```python
-from db_config import USE_POSTGRES, ph
-```
+### 5. Logo móvil (`templates/admin/base_admin.html`)
+- Bumpeada versión CSS: `?v=2` → `?v=3` para forzar recarga de caché
+- Añadido `min-width:24px` y `aria-hidden="true"` al SVG del topbar móvil para asegurar renderizado
 
-**3. Transformación automática** — script Python que procesó el archivo en 2 pasadas:
-- Pasada 1 (regex sobre bloque completo): **40 bloques triple-quoted** (`"""..."""`)
-  convertidos a f-strings con `{ph()}`.
-- Pasada 2 (línea a línea): **31 execute() de una línea** + **15 `.append()` de
-  condiciones SQL** convertidos a f-strings con `{ph()}`.
-- Total: **86 strings SQL** migrados de `?` a `{ph()}`.
-- URL strings en `redirect()` (45 líneas con `?`) fueron detectadas y **no tocadas**.
+### 6. Incidencias en sidebar
+- Enlace `/admin/incidencias` ya existía en el sidebar bajo SISTEMA ✅
+- Ruta devuelve HTTP 200 ✅
 
-## Verificación post-fix
-| Check | Resultado |
-|-------|-----------|
-| `?` restantes en execute/append | 0 ✅ |
-| URLs en redirect() intactas | ✅ |
-| `/admin/viaje/1` — carga OK (usa múltiples queries) | ✅ |
-| `/admin/camioneros` — búsqueda con LIKE `?` | ✅ |
-| `/admin/auditoria` — filtros con condiciones dinámicas | ✅ |
-| `/admin/papelera` — queries con `deleted_at IS NOT NULL` | ✅ |
-| PDF carta de porte HTTP 200 | ✅ |
+### 7. Cartel informativo en dashboard admin
+- Bloque de información ya existía en `/admin/` ✅
 
 ## Recomendaciones
-- Los servicios (`pdf_service.py`, `finanzas_service.py`, `comercial_service.py`) definen
-  su propia función `ph()` local. Pueden refactorizarse para importarla de `db_config`
-  en lugar de duplicarla, pero no es urgente.
-- Pendiente de implementar (ver reporte anterior): Excel camioneros sin nuevos campos,
-  manejo de error amigable en carta de porte sin camionero, dashboard financiero.
+
+- **`/admin/camioneros/1/editar` — 500**: Investigar si el error persiste en una sesión limpia; puede ser un dato huérfano en la DB de pruebas
+- **favicon.ico**: Registrar la ruta `/favicon.ico` en Flask o confirmar que el archivo existe en `/static/favicon.ico`
+- Restaurar el valor `tarifa_km` a `1.5` si se usó solo para prueba (actualmente está en `2.25`)

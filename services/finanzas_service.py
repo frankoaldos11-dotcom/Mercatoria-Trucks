@@ -23,13 +23,13 @@ def guardar_configuracion(parametros: dict):
             cur.execute(
                 "INSERT INTO configuracion (clave, valor) VALUES (%s, %s) "
                 "ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor",
-                (float(valor), clave)
+                (clave, float(valor))
             )
         else:
             cur.execute(
                 "INSERT INTO configuracion (clave, valor) VALUES (?, ?) "
                 "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
-                (float(valor), clave)
+                (clave, float(valor))
             )
     con.commit()
     con.close()
