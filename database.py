@@ -391,6 +391,11 @@ def crear_base_datos(bcrypt):
     agregar_columna(cursor, "viajes",     "vehiculo_placa",     "TEXT")
     agregar_columna(cursor, "viajes",     "deleted_at",         "TIMESTAMP")
     agregar_columna(cursor, "viajes",     "deleted_by",         "TEXT")
+    agregar_columna(cursor, "viajes",     "forma_cobro",        "TEXT")
+    agregar_columna(cursor, "viajes",     "codigo_transaccion", "TEXT")
+    agregar_columna(cursor, "viajes",     "comentario_cobro",   "TEXT")
+    agregar_columna(cursor, "viajes",     "fecha_cobro",        "TEXT")
+    agregar_columna(cursor, "viajes",     "monto_cobrado",      "REAL")
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS configuracion_texto (
@@ -455,6 +460,18 @@ def crear_base_datos(bcrypt):
         usuario TEXT,
         fecha_hora TEXT DEFAULT CURRENT_TIMESTAMP,
         estado TEXT DEFAULT 'Abierta',
+        FOREIGN KEY (viaje_id) REFERENCES viajes(id)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS historial_viaje (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        viaje_id INTEGER NOT NULL,
+        usuario TEXT NOT NULL,
+        accion TEXT NOT NULL,
+        detalle TEXT,
+        fecha_hora TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (viaje_id) REFERENCES viajes(id)
     )
     """)

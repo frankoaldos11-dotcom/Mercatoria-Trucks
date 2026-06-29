@@ -40,6 +40,22 @@ def registrar_auditoria(accion, categoria, entidad=None, entidad_id=None, detall
         current_app.logger.error(f"AUDITORIA ERROR: {e}")
 
 
+def _registrar_historial(viaje_id, accion, detalle=""):
+    try:
+        usuario = session.get("usuario", "sistema")
+        con = conectar()
+        cur = con.cursor()
+        cur.execute(
+            f"INSERT INTO historial_viaje (viaje_id, usuario, accion, detalle) "
+            f"VALUES ({ph()}, {ph()}, {ph()}, {ph()})",
+            (viaje_id, usuario, accion, detalle or None)
+        )
+        con.commit()
+        con.close()
+    except Exception:
+        pass
+
+
 def notificar_cliente_estado(viaje_id, nuevo_estado, email_cliente):
     if not email_cliente or "@" not in email_cliente:
         return
@@ -514,6 +530,13 @@ def gestionar_viaje(id):
         (id,)
     )
     incidencias = cursor2.fetchall()
+
+    cursor2.execute(
+        "SELECT usuario, accion, detalle, fecha_hora "
+        f"FROM historial_viaje WHERE viaje_id = {ph()} ORDER BY fecha_hora DESC",
+        (id,)
+    )
+    historial = cursor2.fetchall()
     conexion2.close()
 
     # Determine which checklist items are auto-completed based on current viaje state
@@ -575,6 +598,7 @@ def gestionar_viaje(id):
         incidencias_categorias=INCIDENCIAS_CATEGORIAS,
         incidencias_estados=INCIDENCIAS_ESTADOS,
         auto_completados=auto_completados,
+        historial=historial,
     )
 
 
@@ -632,6 +656,7 @@ def nueva_incidencia(id):
     )
     con.commit()
     con.close()
+    _registrar_historial(id, f"Incidencia registrada: {categoria}", descripcion)
     return redirect(f"/admin/viaje/{id}#operacion")
 
 
@@ -747,6 +772,8 @@ def cambiar_estado(id):
         f"Cambió estado a {estado}", "Viajes", "viaje", id,
         f"Estado anterior: {estado_anterior}"
     )
+    _registrar_historial(id, f"Estado cambiado a {estado}",
+                         f"Estado anterior: {estado_anterior}" if estado_anterior else "")
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -854,6 +881,7 @@ def asignar_camionero_vehiculo(id):
         "Viajes", "viaje", id,
         f"Camionero y vehículo asignados juntos"
     )
+    _registrar_historial(id, f"Camionero asignado: {nombre_cam}", f"Vehículo: {nombre_veh}")
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -1200,6 +1228,45 @@ def pago_camionero(id):
     con.commit()
     con.close()
     return redirect(f"/admin/viaje/{id}#operacion")
+
+
+@admin_bp.route("/viaje/<int:id>/marcar-cobrado", methods=["POST"])
+def marcar_cobrado(id):
+    if session.get("rol") != "admin":
+        return redirect("/login")
+
+    forma_cobro = request.form.get("forma_cobro", "").strip()
+    codigo_transaccion = request.form.get("codigo_transaccion", "").strip() or None
+    comentario_cobro = request.form.get("comentario_cobro", "").strip() or None
+    monto_str = request.form.get("monto_cobrado", "").strip()
+    try:
+        monto_cobrado = float(monto_str) if monto_str else None
+    except ValueError:
+        monto_cobrado = None
+
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(
+        f"UPDATE viajes SET forma_cobro={ph()}, codigo_transaccion={ph()}, "
+        f"comentario_cobro={ph()}, fecha_cobro=CURRENT_TIMESTAMP, monto_cobrado={ph()} "
+        f"WHERE id={ph()}",
+        (forma_cobro, codigo_transaccion, comentario_cobro, monto_cobrado, id)
+    )
+    con.commit()
+    con.close()
+
+    detalle = f"Forma: {forma_cobro}"
+    if monto_cobrado:
+        detalle += f" · Monto: ${monto_cobrado:.2f}"
+    if codigo_transaccion:
+        detalle += f" · Código: {codigo_transaccion}"
+    _registrar_historial(id, "Cobro registrado", detalle)
+    registrar_auditoria("Registró cobro del viaje", "Viajes", "viaje", id, detalle)
+
+    referer = request.form.get("_referer", "")
+    if referer and "reportes" in referer:
+        return redirect(referer)
+    return redirect(f"/admin/viajes/{id}/gestionar")
 
 
 @admin_bp.route("/camioneros/<int:id>/economico")
@@ -1933,17 +2000,31 @@ def _ultimos_6_meses():
     return meses
 
 
-def _calcular_financieros_periodo(fecha_desde, fecha_hasta):
-    """Devuelve (filas_tabla, totales) para el período dado."""
+def _calcular_financieros_periodo(fecha_desde, fecha_hasta,
+                                   estado_cobro=None, forma_pago=None):
+    """Devuelve (filas_tabla, totales) para el período dado con filtros opcionales de cobro."""
     conexion = conectar()
     cursor = conexion.cursor()
+
+    where_extra = ""
+    params = [fecha_desde, fecha_hasta + " 23:59:59"]
+    if estado_cobro == "Cobrado":
+        where_extra += f" AND fecha_cobro IS NOT NULL"
+    elif estado_cobro == "Pendiente":
+        where_extra += f" AND fecha_cobro IS NULL"
+    if forma_pago:
+        where_extra += f" AND forma_cobro = {ph()}"
+        params.append(forma_pago)
+
     cursor.execute(f"""
-        SELECT id, cliente, origen, destino, estado, fecha_creacion
+        SELECT id, cliente, origen, destino, estado, fecha_creacion,
+               forma_cobro, codigo_transaccion, fecha_cobro, monto_cobrado
         FROM viajes
         WHERE (fecha_creacion >= {ph()} AND fecha_creacion <= {ph()})
           AND LOWER(estado) != 'cancelado'
+          {where_extra}
         ORDER BY id DESC
-    """, (fecha_desde, fecha_hasta + " 23:59:59"))
+    """, params)
     viajes_periodo = cursor.fetchall()
     conexion.close()
 
@@ -1973,7 +2054,13 @@ def _calcular_financieros_periodo(fecha_desde, fecha_hasta):
             "precio_cliente": pc,
             "pago_camionero": pag,
             "combustible": comb,
+            "comision": com,
             "utilidad": util,
+            "cobrado": bool(v["fecha_cobro"]),
+            "forma_cobro": v["forma_cobro"] or "",
+            "codigo_transaccion": v["codigo_transaccion"] or "",
+            "fecha_cobro": v["fecha_cobro"] or "",
+            "monto_cobrado": v["monto_cobrado"],
         })
 
     return filas, totales
@@ -1987,8 +2074,14 @@ def reportes():
     hoy = date.today()
     fecha_desde = request.args.get("fecha_desde", hoy.replace(day=1).isoformat())
     fecha_hasta = request.args.get("fecha_hasta", hoy.isoformat())
+    estado_cobro = request.args.get("estado_cobro", "")
+    forma_pago = request.args.get("forma_pago", "")
 
-    filas_tabla, totales = _calcular_financieros_periodo(fecha_desde, fecha_hasta)
+    filas_tabla, totales = _calcular_financieros_periodo(
+        fecha_desde, fecha_hasta,
+        estado_cobro=estado_cobro or None,
+        forma_pago=forma_pago or None,
+    )
 
     # KPIs adicionales
     n = len(filas_tabla)
@@ -2057,6 +2150,8 @@ def reportes():
         totales=totales,
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
+        estado_cobro=estado_cobro,
+        forma_pago=forma_pago,
         chart_labels=json.dumps(chart_labels),
         chart_data=json.dumps(chart_data),
         viaje_promedio=round(viaje_promedio, 2),

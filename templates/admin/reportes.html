@@ -13,7 +13,7 @@
     </a>
 </div>
 
-<!-- Filtro de fechas -->
+<!-- Filtros -->
 <form method="GET" action="/admin/reportes" class="filtro-fechas card">
     <div class="filtro-grupo">
         <label>Desde</label>
@@ -22,6 +22,23 @@
     <div class="filtro-grupo">
         <label>Hasta</label>
         <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="filtro-input">
+    </div>
+    <div class="filtro-grupo">
+        <label>Cobro</label>
+        <select name="estado_cobro" class="filtro-input">
+            <option value="" {{ 'selected' if not estado_cobro else '' }}>Todos</option>
+            <option value="Cobrado" {{ 'selected' if estado_cobro == 'Cobrado' else '' }}>Cobrado</option>
+            <option value="Pendiente" {{ 'selected' if estado_cobro == 'Pendiente' else '' }}>Pendiente</option>
+        </select>
+    </div>
+    <div class="filtro-grupo">
+        <label>Forma pago</label>
+        <select name="forma_pago" class="filtro-input">
+            <option value="" {{ 'selected' if not forma_pago else '' }}>Todas</option>
+            {% for fp in ['Efectivo', 'Transferencia', 'Tropipay', 'Otro'] %}
+            <option value="{{ fp }}" {{ 'selected' if forma_pago == fp else '' }}>{{ fp }}</option>
+            {% endfor %}
+        </select>
     </div>
     <button type="submit" class="btn-filtrar">Aplicar</button>
 </form>
@@ -139,10 +156,13 @@
                     <th>Cliente</th>
                     <th>Ruta</th>
                     <th>Estado</th>
-                    <th class="col-num">Precio cliente</th>
-                    <th class="col-num">Pago camionero</th>
-                    <th class="col-num">Combustible</th>
-                    <th class="col-num">Utilidad</th>
+                    <th class="col-num">Importe bruto</th>
+                    <th class="col-num">Comisión</th>
+                    <th class="col-num">Neto</th>
+                    <th>Estado cobro</th>
+                    <th>Forma pago</th>
+                    <th>Cód. transacción</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -159,10 +179,29 @@
                         </span>
                     </td>
                     <td class="col-num">${{ "%.2f"|format(f.precio_cliente) }}</td>
-                    <td class="col-num">${{ "%.2f"|format(f.pago_camionero) }}</td>
-                    <td class="col-num">${{ "%.2f"|format(f.combustible) }}</td>
+                    <td class="col-num">${{ "%.2f"|format(f.comision) }}</td>
                     <td class="col-num {% if f.utilidad < 0 %}num-negativo{% else %}num-positivo{% endif %}">
                         ${{ "%.2f"|format(f.utilidad) }}
+                    </td>
+                    <td>
+                        {% if f.cobrado %}
+                        <span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;">
+                            <i class="bi bi-check-circle-fill"></i> Cobrado
+                        </span>
+                        {% else %}
+                        <span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;">
+                            Pendiente
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:12px;color:#555;">{{ f.forma_cobro or '—' }}</td>
+                    <td style="font-size:12px;color:#888;">{{ f.codigo_transaccion or '—' }}</td>
+                    <td>
+                        {% if not f.cobrado %}
+                        <button class="btn-cobrar-inline" onclick="abrirModalCobro({{ f.id }}, '{{ f.cliente|replace("'","") }}')">
+                            <i class="bi bi-cash-coin"></i> Cobrar
+                        </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -171,15 +210,57 @@
                 <tr class="fila-totales">
                     <td colspan="4"><strong>TOTALES</strong></td>
                     <td class="col-num"><strong>${{ "%.2f"|format(totales.ingresos) }}</strong></td>
-                    <td class="col-num"><strong>${{ "%.2f"|format(totales.pago_camionero) }}</strong></td>
-                    <td class="col-num"><strong>${{ "%.2f"|format(totales.combustible) }}</strong></td>
+                    <td class="col-num"><strong>${{ "%.2f"|format(totales.comision) }}</strong></td>
                     <td class="col-num {% if totales.utilidad < 0 %}num-negativo{% else %}num-positivo{% endif %}">
                         <strong>${{ "%.2f"|format(totales.utilidad) }}</strong>
                     </td>
+                    <td colspan="4"></td>
                 </tr>
             </tfoot>
         </table>
     </div>
+
+    <!-- Modal cobro rápido desde reportes -->
+    <div id="modal-cobro-rep" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:16px;padding:28px;width:380px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h3 style="margin:0;font-size:16px;">Registrar cobro</h3>
+                <button onclick="cerrarModalCobro()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+            </div>
+            <p id="cobro-rep-subtitulo" style="margin:0 0 16px;font-size:13px;color:#666;"></p>
+            <form id="form-cobro-rep" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="_referer" value="{{ request.url }}">
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div>
+                        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Forma de pago *</label>
+                        <select name="forma_cobro" class="filtro-input" style="width:100%;" required>
+                            <option value="">— Seleccionar —</option>
+                            {% for fp in ['Efectivo', 'Transferencia', 'Tropipay', 'Otro'] %}
+                            <option value="{{ fp }}">{{ fp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Monto cobrado (USD)</label>
+                        <input type="number" name="monto_cobrado" step="0.01" min="0" class="filtro-input" style="width:100%;" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Código transacción</label>
+                        <input type="text" name="codigo_transaccion" class="filtro-input" style="width:100%;" placeholder="Opcional">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Comentario</label>
+                        <input type="text" name="comentario_cobro" class="filtro-input" style="width:100%;" placeholder="Opcional">
+                    </div>
+                    <button type="submit" style="background:#065f46;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;width:100%;">
+                        <i class="bi bi-check2-circle"></i> Confirmar cobro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {% else %}
     <div class="tabla-vacia">
         <i class="bi bi-inbox"></i>
@@ -413,6 +494,21 @@
 .tabla-vacia i { font-size: 40px; display: block; margin-bottom: 12px; }
 .tabla-vacia p { margin: 0; font-size: 15px; }
 
+/* ── Botón cobrar inline ─────────────────────────────────────────────────── */
+.btn-cobrar-inline {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s;
+}
+.btn-cobrar-inline:hover { background: #a7f3d0; }
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
@@ -470,6 +566,20 @@ new Chart(ctx, {
             x: { grid: { display: false } }
         }
     }
+});
+</script>
+<script>
+function abrirModalCobro(id, cliente) {
+    var m = document.getElementById('modal-cobro-rep');
+    document.getElementById('cobro-rep-subtitulo').textContent = 'Viaje #' + id + ' — ' + cliente;
+    document.getElementById('form-cobro-rep').action = '/admin/viaje/' + id + '/marcar-cobrado';
+    m.style.display = 'flex';
+}
+function cerrarModalCobro() {
+    document.getElementById('modal-cobro-rep').style.display = 'none';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModalCobro();
 });
 </script>
 {% endblock %}
