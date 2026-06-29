@@ -1,0 +1,91 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e19]:
+        - heading "Configuración financiera" [level=1] [ref=e20]
+        - paragraph [ref=e21]: Parámetros globales de liquidación
+      - generic [ref=e22]: Configuración guardada correctamente.
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic [ref=e26]:
+              - text: Tarifa por km — valor global por defecto (USD/km)
+              - generic [ref=e27]:
+                - text: Se usa cuando la ruta del viaje no tiene tarifa propia. Cada ruta puede tener su tarifa independiente en
+                - link "Rutas → columna Tarifa/km" [ref=e28] [cursor=pointer]:
+                  - /url: /admin/comercial/rutas
+                - text: .
+            - spinbutton [ref=e29]: "2.25"
+          - generic [ref=e30]:
+            - generic [ref=e31]:
+              - text: Divisor combustible
+              - generic [ref=e32]: combustible = pago_camionero / divisor — default 2
+            - spinbutton [ref=e33]: "2.0"
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - text: Multiplicador precio cliente
+              - generic [ref=e36]: precio_cliente = pago_camionero × multiplicador (cuando no hay precio registrado)
+            - spinbutton [ref=e37]: "2.5"
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - text: Km mínimo garantizado
+              - generic [ref=e40]: Si el viaje tiene menos km, se liquida este mínimo
+            - spinbutton [ref=e41]: "120.0"
+          - generic [ref=e42]:
+            - generic [ref=e43]:
+              - text: Pago mínimo al camionero (USD)
+              - generic [ref=e44]: Garantía mínima independientemente de los km
+            - spinbutton [ref=e45]: "150.0"
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - text: Comisión Mercatoria (%)
+              - generic [ref=e48]: Porcentaje sobre el precio cliente destinado a Mercatoria
+            - spinbutton [ref=e49]: "20.0"
+          - heading "Configuración de email" [level=3] [ref=e51]
+          - paragraph [ref=e52]:
+            - text: Credenciales para enviar notificaciones automáticas al cliente al cambiar el estado de un viaje. Usa una cuenta Gmail con
+            - link "contraseña de aplicación" [ref=e53] [cursor=pointer]:
+              - /url: https://myaccount.google.com/apppasswords
+            - text: .
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - text: Email remitente (MAIL_USERNAME)
+              - generic [ref=e56]: Cuenta Gmail desde la que se envían los emails
+            - textbox "tu@gmail.com" [ref=e57]
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - text: Contraseña de aplicación (MAIL_PASSWORD)
+              - generic [ref=e60]: Contraseña de app de Google, no la contraseña normal de la cuenta
+            - textbox "••••••••••••••••" [ref=e61]
+          - button "Guardar configuración" [ref=e63] [cursor=pointer]
+        - generic [ref=e64]:
+          - heading "Vista previa de liquidación ejemplo" [level=3] [ref=e65]
+          - paragraph [ref=e66]: Con 150 km recorridos y precio cliente registrado de $500 USD
+          - generic [ref=e67]:
+            - generic [ref=e68]: Km real
+            - strong [ref=e69]: 150 km
+          - generic [ref=e70]:
+            - generic [ref=e71]: Km liquidable
+            - strong [ref=e72]: 150 km
+          - generic [ref=e73]:
+            - generic [ref=e74]: Pago camionero
+            - strong [ref=e75]: $337.50
+          - generic [ref=e76]:
+            - generic [ref=e77]: Combustible
+            - strong [ref=e78]: $168.75
+          - generic [ref=e79]:
+            - generic [ref=e80]: Precio cliente
+            - strong [ref=e81]: $500.00
+          - generic [ref=e82]:
+            - generic [ref=e83]: Comisión Mercatoria
+            - strong [ref=e84]: $100.00
+          - generic [ref=e85]:
+            - generic [ref=e86]: Utilidad neta
+            - strong [ref=e87]: $-106.25

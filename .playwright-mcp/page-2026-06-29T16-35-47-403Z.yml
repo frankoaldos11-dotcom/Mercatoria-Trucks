@@ -1,0 +1,166 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]: Operaciones
+        - link " Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e18]: 
+          - generic [ref=e19]: Dashboard
+        - link " Viajes" [ref=e20] [cursor=pointer]:
+          - /url: /admin/viajes
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Viajes
+        - link " Cotizaciones" [ref=e23] [cursor=pointer]:
+          - /url: /admin/comercial/cotizaciones
+          - generic [ref=e24]: 
+          - generic [ref=e25]: Cotizaciones
+        - generic [ref=e26]: Comercial
+        - link " Rutas" [ref=e27] [cursor=pointer]:
+          - /url: /admin/comercial/rutas
+          - generic [ref=e28]: 
+          - generic [ref=e29]: Rutas
+        - link " Tarifas" [ref=e30] [cursor=pointer]:
+          - /url: /admin/comercial/tarifas
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Tarifas
+        - generic [ref=e33]: Recursos
+        - link " Camioneros" [ref=e34] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e35]: 
+          - generic [ref=e36]: Camioneros
+        - link " Clientes" [ref=e37] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e38]: 
+          - generic [ref=e39]: Clientes
+        - generic [ref=e40]: Sistema
+        - link " Reportes" [ref=e41] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e42]: 
+          - generic [ref=e43]: Reportes
+        - link " Usuarios" [ref=e44] [cursor=pointer]:
+          - /url: /admin/usuarios
+          - generic [ref=e45]: 
+          - generic [ref=e46]: Usuarios
+        - link " Configuración" [ref=e47] [cursor=pointer]:
+          - /url: /admin/configuracion
+          - generic [ref=e48]: 
+          - generic [ref=e49]: Configuración
+        - link " Auditoría" [ref=e50] [cursor=pointer]:
+          - /url: /admin/auditoria
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Auditoría
+        - link " Acciones por lote" [ref=e53] [cursor=pointer]:
+          - /url: /admin/lote
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Acciones por lote
+        - link " Mensajes" [ref=e56] [cursor=pointer]:
+          - /url: /admin/mensajes
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Mensajes
+        - link " Papelera" [ref=e59] [cursor=pointer]:
+          - /url: /admin/papelera
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Papelera
+        - link " Incidencias" [ref=e62] [cursor=pointer]:
+          - /url: /admin/incidencias
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Incidencias
+        - link " Salir" [ref=e65] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e66]: 
+          - generic [ref=e67]: Salir
+    - main [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]: Motor Comercial
+          - heading "Rutas" [level=1] [ref=e72]
+          - paragraph [ref=e73]: Rutas fijas con kilómetros oficiales y tarifas por km para liquidación.
+        - generic [ref=e74]:
+          - link "⬇ Exportar Excel" [ref=e75] [cursor=pointer]:
+            - /url: /admin/exportar/rutas
+          - generic [ref=e76]:
+            - button "Choose File" [ref=e77]
+            - button "⬆ Importar" [ref=e78] [cursor=pointer]
+      - generic [ref=e79]:
+        - generic [ref=e81]:
+          - heading "Nueva ruta" [level=2] [ref=e82]
+          - paragraph [ref=e83]: Registra una ruta operativa permanente.
+        - generic [ref=e84]:
+          - combobox "Origen" [ref=e85]
+          - combobox "Destino" [ref=e86]
+          - combobox [ref=e87]:
+            - option "— Zona —" [selected]
+            - option "Occidente"
+            - option "Centro"
+            - option "Oriente"
+          - generic [ref=e88]:
+            - spinbutton [ref=e89]
+            - button "↺ km" [ref=e90] [cursor=pointer]
+          - spinbutton "Tarifa por km para esta ruta. Se calcula automáticamente como km × tarifa global, pero puedes sobreescribirla." [ref=e92]
+          - button "Añadir ruta" [ref=e93] [cursor=pointer]
+      - generic [ref=e94]:
+        - generic [ref=e96]:
+          - heading "Rutas registradas" [level=2] [ref=e97]
+          - paragraph [ref=e98]: Tarifa/km propia sobreescribe la tarifa global en la liquidación. Si está vacía, se usa la global.
+        - table [ref=e100]:
+          - rowgroup [ref=e101]:
+            - row "ID Origen Destino Zona Km oficiales Tarifa/km Camioneros" [ref=e102]:
+              - columnheader "ID" [ref=e103]
+              - columnheader "Origen" [ref=e104]
+              - columnheader "Destino" [ref=e105]
+              - columnheader "Zona" [ref=e106]
+              - columnheader "Km oficiales" [ref=e107]
+              - columnheader "Tarifa/km" [ref=e108]
+              - columnheader "Camioneros" [ref=e109]
+              - columnheader [ref=e110]
+          - rowgroup [ref=e111]:
+            - row "#2 La Habana Holguin — 980.0 Global Editar 2 camioneros ▸ ✎ Editar ruta" [ref=e112]:
+              - cell "#2" [ref=e113]
+              - cell "La Habana" [ref=e114]
+              - cell "Holguin" [ref=e115]
+              - cell "—" [ref=e116]
+              - cell "980.0" [ref=e117]
+              - cell "Global Editar" [ref=e118]:
+                - generic [ref=e120]: Global
+                - button "Editar" [ref=e121] [cursor=pointer]
+              - cell "2 camioneros ▸" [ref=e122]:
+                - button "2 camioneros ▸" [ref=e123] [cursor=pointer]:
+                  - text: 2 camioneros
+                  - generic [ref=e124]: ▸
+              - cell "✎ Editar ruta" [ref=e125]:
+                - button "✎ Editar ruta" [ref=e126] [cursor=pointer]
+            - row "#3 La Habana Matanzas Occidente 98.5 Global Editar 0 camioneros ▸ ✎ Editar ruta" [ref=e127]:
+              - cell "#3" [ref=e128]
+              - cell "La Habana" [ref=e129]
+              - cell "Matanzas" [ref=e130]
+              - cell "Occidente" [ref=e131]
+              - cell "98.5" [ref=e132]
+              - cell "Global Editar" [ref=e133]:
+                - generic [ref=e135]: Global
+                - button "Editar" [ref=e136] [cursor=pointer]
+              - cell "0 camioneros ▸" [ref=e137]:
+                - button "0 camioneros ▸" [ref=e138] [cursor=pointer]:
+                  - text: 0 camioneros
+                  - generic [ref=e139]: ▸
+              - cell "✎ Editar ruta" [ref=e140]:
+                - button "✎ Editar ruta" [ref=e141] [cursor=pointer]
+            - row "#1 La Habana Santiago — 1020.0 Global Editar 1 camionero ▸ ✎ Editar ruta" [ref=e142]:
+              - cell "#1" [ref=e143]
+              - cell "La Habana" [ref=e144]
+              - cell "Santiago" [ref=e145]
+              - cell "—" [ref=e146]
+              - cell "1020.0" [ref=e147]
+              - cell "Global Editar" [ref=e148]:
+                - generic [ref=e150]: Global
+                - button "Editar" [ref=e151] [cursor=pointer]
+              - cell "1 camionero ▸" [ref=e152]:
+                - button "1 camionero ▸" [ref=e153] [cursor=pointer]:
+                  - text: 1 camionero
+                  - generic [ref=e154]: ▸
+              - cell "✎ Editar ruta" [ref=e155]:
+                - button "✎ Editar ruta" [ref=e156] [cursor=pointer]

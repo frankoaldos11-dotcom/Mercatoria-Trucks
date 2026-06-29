@@ -1,0 +1,37 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e19]:
+        - heading "Incidencias" [level=1] [ref=e20]
+        - paragraph [ref=e21]: Todas las incidencias registradas en viajes
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Estado
+          - combobox [ref=e25]:
+            - option "Todos los estados" [selected]
+            - option "Abierta"
+            - option "En seguimiento"
+            - option "Resuelta"
+        - generic [ref=e26]:
+          - generic [ref=e27]: Categoría
+          - combobox [ref=e28]:
+            - option "Todas las categorías" [selected]
+            - option "Retraso"
+            - option "Avería"
+            - option "Puerto"
+            - option "Cliente"
+            - option "Combustible"
+            - option "Documentación"
+            - option "Pago"
+            - option "Cobro"
+            - option "Otro"
+      - generic [ref=e29]:
+        - generic [ref=e30]: 
+        - paragraph [ref=e31]: No hay incidencias registradas.

@@ -1,0 +1,250 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]:
+          - button "Operaciones " [ref=e17] [cursor=pointer]:
+            - generic [ref=e18]: Operaciones
+            - generic [ref=e19]: 
+          - generic [ref=e20]:
+            - link " Dashboard" [ref=e21] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e22]: 
+              - generic [ref=e23]: Dashboard
+            - link " Viajes" [ref=e24] [cursor=pointer]:
+              - /url: /admin/viajes
+              - generic [ref=e25]: 
+              - generic [ref=e26]: Viajes
+            - link " Incidencias" [ref=e27] [cursor=pointer]:
+              - /url: /admin/incidencias
+              - generic [ref=e28]: 
+              - generic [ref=e29]: Incidencias
+        - generic [ref=e30]:
+          - button "Comercial " [ref=e31] [cursor=pointer]:
+            - generic [ref=e32]: Comercial
+            - generic [ref=e33]: 
+          - generic:
+            - link " Rutas" [ref=e34] [cursor=pointer]:
+              - /url: /admin/comercial/rutas
+              - generic [ref=e35]: 
+              - generic [ref=e36]: Rutas
+            - link " Tarifas" [ref=e37] [cursor=pointer]:
+              - /url: /admin/comercial/tarifas
+              - generic [ref=e38]: 
+              - generic [ref=e39]: Tarifas
+            - link " Cotizaciones" [ref=e40] [cursor=pointer]:
+              - /url: /admin/comercial/cotizaciones
+              - generic [ref=e41]: 
+              - generic [ref=e42]: Cotizaciones
+        - generic [ref=e43]:
+          - button "Recursos " [ref=e44] [cursor=pointer]:
+            - generic [ref=e45]: Recursos
+            - generic [ref=e46]: 
+          - generic:
+            - link " Camioneros" [ref=e47] [cursor=pointer]:
+              - /url: /admin/camioneros
+              - generic [ref=e48]: 
+              - generic [ref=e49]: Camioneros
+            - link " Clientes" [ref=e50] [cursor=pointer]:
+              - /url: /admin/clientes
+              - generic [ref=e51]: 
+              - generic [ref=e52]: Clientes
+        - generic [ref=e53]:
+          - button "Finanzas " [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: Finanzas
+            - generic [ref=e56]: 
+          - link " Reportes" [ref=e57] [cursor=pointer]:
+            - /url: /admin/reportes
+            - generic [ref=e58]: 
+            - generic [ref=e59]: Reportes
+        - generic [ref=e60]:
+          - button "Sistema " [ref=e61] [cursor=pointer]:
+            - generic [ref=e62]: Sistema
+            - generic [ref=e63]: 
+          - generic:
+            - link " Usuarios" [ref=e64] [cursor=pointer]:
+              - /url: /admin/usuarios
+              - generic [ref=e65]: 
+              - generic [ref=e66]: Usuarios
+            - link " Configuración" [ref=e67] [cursor=pointer]:
+              - /url: /admin/configuracion
+              - generic [ref=e68]: 
+              - generic [ref=e69]: Configuración
+            - link " Auditoría" [ref=e70] [cursor=pointer]:
+              - /url: /admin/auditoria
+              - generic [ref=e71]: 
+              - generic [ref=e72]: Auditoría
+            - link " Acciones por lote" [ref=e73] [cursor=pointer]:
+              - /url: /admin/lote
+              - generic [ref=e74]: 
+              - generic [ref=e75]: Acciones por lote
+            - link " Mensajes" [ref=e76] [cursor=pointer]:
+              - /url: /admin/mensajes
+              - generic [ref=e77]: 
+              - generic [ref=e78]: Mensajes
+            - link " Papelera" [ref=e79] [cursor=pointer]:
+              - /url: /admin/papelera
+              - generic [ref=e80]: 
+              - generic [ref=e81]: Papelera
+        - link " Salir" [ref=e82] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e83]: 
+          - generic [ref=e84]: Salir
+    - main [ref=e85]:
+      - generic [ref=e86]:
+        - generic [ref=e87]:
+          - link "← Volver a viajes" [ref=e88] [cursor=pointer]:
+            - /url: /admin/viajes
+          - 'heading "Viaje #1" [level=1] [ref=e89]'
+          - paragraph [ref=e90]: La Habana → Santiago
+        - generic [ref=e92]: Asignado
+      - generic [ref=e94]:
+        - generic [ref=e95]:
+          - generic [ref=e96]: Cliente
+          - generic [ref=e97]: —
+        - generic [ref=e98]:
+          - generic [ref=e99]: Ruta
+          - generic [ref=e100]: La Habana → Santiago
+        - generic [ref=e101]:
+          - generic [ref=e102]: Tipo de carga
+          - generic [ref=e103]: —
+        - generic [ref=e104]:
+          - generic [ref=e105]: Camionero
+          - generic [ref=e106]: juan
+        - generic [ref=e107]:
+          - generic [ref=e108]: Vehículo
+          - generic [ref=e109]: "202020"
+        - generic [ref=e110]:
+          - generic [ref=e111]: Precio cliente
+          - generic [ref=e112]: $1000.00
+        - generic [ref=e113]:
+          - generic [ref=e114]: Combustible
+          - generic [ref=e115]: Pendiente
+        - generic [ref=e116]:
+          - generic [ref=e117]: Fecha extracción
+          - generic [ref=e118]: —
+        - generic [ref=e119]:
+          - generic [ref=e120]: Fecha descarga
+          - generic [ref=e121]: —
+        - generic [ref=e122]:
+          - generic [ref=e123]: Km liquidables
+          - generic [ref=e124]: 120 km
+        - generic [ref=e125]:
+          - generic [ref=e126]: Prioridad
+          - generic [ref=e128]:
+            - generic [ref=e129] [cursor=pointer]: Normal
+            - generic [ref=e130] [cursor=pointer]: Alta
+            - generic [ref=e131] [cursor=pointer]: Urgente
+      - generic [ref=e132]:
+        - generic [ref=e133]:
+          - generic [ref=e134]: 
+          - generic [ref=e135]:
+            - strong [ref=e136]: Camionero asignado
+            - text: · juan — 202020
+        - generic [ref=e137]:
+          - generic [ref=e138]: 
+          - generic [ref=e139]:
+            - strong [ref=e140]: Precio cliente confirmado
+            - text: · $1000.00
+        - generic [ref=e141]:
+          - generic [ref=e142]:
+            - generic [ref=e143]: "3"
+            - text: Confirmar combustible asignado
+          - paragraph [ref=e144]:
+            - text: "Estimado por liquidación:"
+            - strong [ref=e145]: $135.00
+          - generic [ref=e146]:
+            - textbox "0.00" [ref=e147]: "135.00"
+            - button "Confirmar" [ref=e148] [cursor=pointer]
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e151]: "4"
+            - text: Fecha de extracción (recogida de carga)
+          - generic [ref=e152]:
+            - textbox [ref=e153]
+            - button "Guardar" [ref=e154] [cursor=pointer]
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - generic [ref=e157]: "5"
+            - text: Fecha de descarga
+          - generic [ref=e158]:
+            - textbox [ref=e159]
+            - button "Guardar" [ref=e160] [cursor=pointer]
+        - generic [ref=e161]:
+          - generic [ref=e162]:
+            - generic [ref=e163]: "6"
+            - text: Enviar documentación al camionero
+          - paragraph [ref=e164]: Orden de carga, contrato, instrucciones de ruta.
+          - button " Marcar como enviada" [ref=e166] [cursor=pointer]:
+            - generic [ref=e167]: 
+            - text: Marcar como enviada
+        - generic [ref=e168]:
+          - generic [ref=e169]:
+            - generic [ref=e170]: "7"
+            - text: Confirmar entrega
+          - paragraph [ref=e171]: Confirmar que la carga fue entregada en destino.
+          - button " Confirmar entrega" [ref=e173] [cursor=pointer]:
+            - generic [ref=e174]: 
+            - text: Confirmar entrega
+      - generic [ref=e175]:
+        - generic [ref=e176]:
+          - generic [ref=e177]:
+            - generic [ref=e178]: 
+            - text: Cobrado
+          - generic [ref=e179]:
+            - text: 2026-06-29 17:29 ·
+            - strong [ref=e180]: Transferencia
+            - text: ·
+            - strong [ref=e181]: $1000.00
+            - text: "· Cód: TRF-2024-001"
+        - paragraph [ref=e182]: Pago recibido por Mercadito S.A.
+      - generic [ref=e183]:
+        - group [ref=e184]:
+          - generic " Cambiar estado ▼" [ref=e185] [cursor=pointer]:
+            - generic [ref=e186]: 
+            - text: Cambiar estado ▼
+          - option "En ruta" [selected]
+          - option "Carga recogida"
+          - option "Entregado"
+          - option "Cancelado"
+        - group [ref=e187]:
+          - generic " Liquidación financiera ▼" [ref=e188] [cursor=pointer]:
+            - generic [ref=e189]: 
+            - text: Liquidación financiera ▼
+          - text: 
+        - group [ref=e190]:
+          - generic " Pago al camionero Pendiente ▼" [ref=e191] [cursor=pointer]:
+            - generic [ref=e192]: 
+            - text: Pago al camionero
+            - generic [ref=e193]: Pendiente
+            - text: ▼
+          - option "Efectivo" [selected]
+          - option "Compensación combustible"
+          - option "Mixto"
+        - group [ref=e194]:
+          - generic " Documentos y operaciones ▼" [ref=e195] [cursor=pointer]:
+            - generic [ref=e196]: 
+            - text: Documentos y operaciones ▼
+          - text: 
+        - group [ref=e197]:
+          - generic " Notas internas (0) ▼" [ref=e198] [cursor=pointer]:
+            - generic [ref=e199]: 
+            - text: Notas internas (0) ▼
+          - text: 
+        - group [ref=e200]:
+          - generic " Incidencias (0) ▼" [ref=e201] [cursor=pointer]:
+            - generic [ref=e202]: 
+            - text: Incidencias (0) ▼
+          - text: 
+      - generic [ref=e203]:
+        - heading " Historial del viaje" [level=4] [ref=e204]:
+          - generic [ref=e205]: 
+          - text: Historial del viaje
+        - generic [ref=e210]:
+          - generic [ref=e211]: Cobro registrado
+          - generic [ref=e212]: "Forma: Transferencia · Monto: $1000.00 · Código: TRF-2024-001"
+          - generic [ref=e213]: admin · 2026-06-29 17:29

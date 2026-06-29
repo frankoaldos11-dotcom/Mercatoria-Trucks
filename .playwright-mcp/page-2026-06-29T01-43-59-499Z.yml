@@ -1,0 +1,81 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]: Recursos
+          - 'heading "Editar Camionero #1" [level=1] [ref=e21]'
+          - paragraph [ref=e22]: Actualiza los datos del transportista.
+        - link "← Volver" [ref=e23] [cursor=pointer]:
+          - /url: /admin/camioneros
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - generic [ref=e29]: Nombre *
+            - textbox [ref=e30]: alberto
+          - generic [ref=e31]:
+            - generic [ref=e32]: Teléfono
+            - textbox [ref=e33]: "55555555"
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: Licencia
+            - textbox [ref=e37]: "22222222"
+          - generic [ref=e38]:
+            - generic [ref=e39]: Carnet de Identidad
+            - textbox "CI / DUI / DNI" [ref=e40]
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - generic [ref=e43]: Licencia Operativa
+            - 'textbox "Ej: LO-2024-001" [ref=e44]'
+          - generic [ref=e45]:
+            - generic [ref=e46]: Empresa
+            - textbox "Empresa o autónomo" [ref=e47]
+        - generic [ref=e49]:
+          - generic [ref=e50]: Estado
+          - combobox [ref=e51]:
+            - option "Disponible" [selected]
+            - option "Ocupado"
+            - option "Inactivo"
+            - option "Pendiente de validación"
+        - paragraph [ref=e52]: Vehículo
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - generic [ref=e55]: Matrícula
+            - textbox "Matrícula" [ref=e56]
+          - generic [ref=e57]:
+            - generic [ref=e58]: Marca
+            - textbox "Marca" [ref=e59]
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - generic [ref=e62]: Modelo
+            - textbox "Modelo" [ref=e63]
+          - generic [ref=e64]:
+            - generic [ref=e65]: Tipo de transporte
+            - combobox [ref=e66]:
+              - option "— Sin especificar —" [selected]
+              - option "Camioneta"
+              - option "Camión cerrado"
+              - option "Camión refrigerado"
+              - option "Furgón"
+              - option "Otro"
+              - option "Plancha"
+              - option "Portacontenedor"
+              - option "Rastra"
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - generic [ref=e69]: Capacidad
+            - 'textbox "Ej: 10 ton" [ref=e70]'
+          - generic [ref=e71]:
+            - generic [ref=e72]: Chapa Remolque
+            - textbox "Matrícula del remolque" [ref=e73]
+        - generic [ref=e74]:
+          - button "Guardar cambios" [ref=e75] [cursor=pointer]
+          - link "Cancelar" [ref=e76] [cursor=pointer]:
+            - /url: /admin/camioneros

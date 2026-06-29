@@ -1,0 +1,16 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]: 
+    - text: Mercatoria Fuel
+    - generic [ref=e5]: Control operacional de combustible
+  - generic [ref=e6]:
+    - generic [ref=e7]: 
+    - text: Credenciales incorrectas
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]: Correo electrónico
+      - textbox "correo@mercatoria.com" [ref=e11]: ana2@test.com
+    - generic [ref=e12]:
+      - generic [ref=e13]: Contraseña
+      - textbox "••••••••" [ref=e14]: "1234"
+    - button "Ingresar" [ref=e15] [cursor=pointer]

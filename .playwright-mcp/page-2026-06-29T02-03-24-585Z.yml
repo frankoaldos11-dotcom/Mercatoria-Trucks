@@ -1,0 +1,65 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Mercatoria" [ref=e4] [cursor=pointer]:
+        - /url: /cliente
+        - img [ref=e5]
+        - text: Mercatoria
+      - button [ref=e14] [cursor=pointer]
+      - text:      
+  - generic [ref=e16]:
+    - heading " Nueva Solicitud de Envío" [level=1] [ref=e18]:
+      - generic [ref=e19]: 
+      - text: Nueva Solicitud de Envío
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]: Ruta *
+        - combobox [ref=e24]:
+          - option "— Selecciona la ruta —" [selected]
+          - option "La Habana → Santiago"
+          - option "La Habana → Holguin"
+          - option "La Habana → Matanzas"
+      - text: 
+      - generic [ref=e25]:
+        - generic [ref=e26]: Tipo de carga *
+        - generic [ref=e27]:
+          - generic [ref=e28] [cursor=pointer]: Seca
+          - generic [ref=e29] [cursor=pointer]: ❄ Refrigerada
+          - generic [ref=e30] [cursor=pointer]: 🧊 Congelada
+          - generic [ref=e31] [cursor=pointer]: Desagrupada
+          - generic [ref=e32] [cursor=pointer]: Frágil
+          - generic [ref=e33] [cursor=pointer]: ⚠ Peligrosa
+          - generic [ref=e34] [cursor=pointer]: Otra
+      - generic [ref=e35]:
+        - generic [ref=e36]: Tipo de transporte
+        - generic [ref=e37]:
+          - generic [ref=e38] [cursor=pointer]: Plancha
+          - generic [ref=e39] [cursor=pointer]: Rastra
+          - generic [ref=e40] [cursor=pointer]: Portacontenedor
+          - generic [ref=e41] [cursor=pointer]: Furgón
+          - generic [ref=e42] [cursor=pointer]: ❄ Refrigerado
+          - generic [ref=e43] [cursor=pointer]: Cerrado
+          - generic [ref=e44] [cursor=pointer]: Abierto
+          - generic [ref=e45] [cursor=pointer]: Otro
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - generic [ref=e48]: Peso (toneladas) *
+          - spinbutton [ref=e49]
+        - generic [ref=e50]:
+          - generic [ref=e51]: Cantidad de contenedores
+          - 'textbox "Ej: 2" [ref=e52]'
+        - generic [ref=e53]:
+          - generic [ref=e54]: N° de contenedor
+          - 'textbox "Ej: ABCU1234567" [ref=e55]'
+      - generic [ref=e56]:
+        - generic [ref=e57]: Observaciones operativas
+        - textbox "Temperatura requerida, instrucciones de manejo, ventanas horarias..." [ref=e58]
+      - generic [ref=e59]:
+        - generic [ref=e60]: Descripción adicional
+        - textbox "Cualquier información adicional (opcional)" [ref=e61]
+      - generic [ref=e62]:
+        - button " Enviar Solicitud" [ref=e63] [cursor=pointer]:
+          - generic [ref=e64]: 
+          - text: Enviar Solicitud
+        - link "Cancelar" [ref=e65] [cursor=pointer]:
+          - /url: /cliente/viajes

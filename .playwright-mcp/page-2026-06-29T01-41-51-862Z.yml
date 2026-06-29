@@ -1,0 +1,84 @@
+- generic [ref=e2]:
+  - heading "NameError" [level=1] [ref=e3]
+  - paragraph [ref=e5] [cursor=pointer]: "NameError: name 'ph' is not defined"
+  - heading "Traceback (most recent call last)" [level=2] [ref=e6] [cursor=pointer]:
+    - text: Traceback
+    - emphasis [ref=e7]: (most recent call last)
+  - generic [ref=e8]:
+    - heading [level=3]
+    - list [ref=e9]:
+      - listitem [ref=e10]:
+        - generic [ref=e11]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 1536, in __call__" [level=4] [ref=e12]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e13]: "1536"
+            - text: ", in"
+            - code [ref=e14]: __call__
+          - generic [ref=e16]: return self.wsgi_app(environ, start_response) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e17]:
+        - generic [ref=e18]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 1514, in wsgi_app" [level=4] [ref=e19]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e20]: "1514"
+            - text: ", in"
+            - code [ref=e21]: wsgi_app
+          - generic [ref=e23]: response = self.handle_exception(e) ^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e24]:
+        - generic [ref=e25]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 1511, in wsgi_app" [level=4] [ref=e26]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e27]: "1511"
+            - text: ", in"
+            - code [ref=e28]: wsgi_app
+          - generic [ref=e30] [cursor=pointer]:
+            - text: response = self.full_dispatch_request() ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            - img "Open an interactive python shell in this frame" [ref=e31]
+      - listitem [ref=e32]:
+        - generic [ref=e33]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 919, in full_dispatch_request" [level=4] [ref=e34]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e35]: "919"
+            - text: ", in"
+            - code [ref=e36]: full_dispatch_request
+          - generic [ref=e38]: rv = self.handle_user_exception(e) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e39]:
+        - generic [ref=e40]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 917, in full_dispatch_request" [level=4] [ref=e41]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e42]: "917"
+            - text: ", in"
+            - code [ref=e43]: full_dispatch_request
+          - generic [ref=e45]: rv = self.dispatch_request() ^^^^^^^^^^^^^^^^^^^^^^^
+      - listitem [ref=e46]:
+        - generic [ref=e47]:
+          - heading "File \"C:\\Users\\Aldo\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\flask\\app.py\", line 902, in dispatch_request" [level=4] [ref=e48]:
+            - text: File "C:\Users\Aldo\AppData\Local\Programs\Python\Python314\Lib\site-packages\flask\app.py", line
+            - emphasis [ref=e49]: "902"
+            - text: ", in"
+            - code [ref=e50]: dispatch_request
+          - generic [ref=e52]: "return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args) # type: ignore[no-any-return] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+      - listitem [ref=e53]:
+        - generic [ref=e54]:
+          - heading "File \"E:\\Mercatoria Truck\\routes\\admin.py\", line 1429, in editar_camionero" [level=4] [ref=e55]:
+            - text: File "E:\Mercatoria Truck\routes\admin.py", line
+            - emphasis [ref=e56]: "1429"
+            - text: ", in"
+            - code [ref=e57]: editar_camionero
+          - generic [ref=e59]: "FROM camioneros WHERE id = {ph()}\"\"\", ^^"
+    - blockquote [ref=e60]: "NameError: name 'ph' is not defined"
+  - generic [ref=e61]:
+    - text: The debugger caught an exception in your WSGI application. You can now look at the traceback which led to the error.
+    - generic [ref=e62]:
+      - paragraph [ref=e63]: To switch between the interactive traceback and the plaintext one, you can click on the "Traceback" headline. From the text traceback you can also create a paste of it. For code execution mouse-over the frame you want to debug and click on the console icon on the right side.
+      - paragraph [ref=e64]: "You can execute arbitrary Python code in the stack frames and there are some extra helpers available for introspection:"
+      - list [ref=e65]:
+        - listitem [ref=e66]:
+          - code [ref=e67]: dump()
+          - text: shows all variables in the frame
+        - listitem [ref=e68]:
+          - code [ref=e69]: dump(obj)
+          - text: dumps all that's known about the object
+  - generic [ref=e70]:
+    - text: Brought to you by
+    - strong [ref=e71]: DON'T PANIC
+    - text: ", your friendly Werkzeug powered traceback interpreter."

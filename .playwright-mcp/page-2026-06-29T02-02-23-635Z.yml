@@ -1,0 +1,146 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e19]:
+        - generic [ref=e20]: Sistema
+        - heading "Acciones por lote" [level=1] [ref=e21]
+        - paragraph [ref=e22]: Aplica cambios masivos a múltiples viajes de forma simultánea.
+      - generic [ref=e23]:
+        - generic [ref=e24]: 
+        - strong [ref=e25]: "Atención:"
+        - text: Las acciones por lote son irreversibles. Verifica los filtros antes de aplicar.
+      - generic [ref=e26]:
+        - generic [ref=e28]:
+          - heading "Actualizar precios masivamente" [level=2] [ref=e29]
+          - paragraph [ref=e30]: Aplica un precio cliente a un conjunto de viajes según criterio.
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - generic [ref=e34]:
+              - generic [ref=e35]: Criterio
+              - combobox [ref=e36]:
+                - option "Todos sin precio" [selected]
+                - option "Por estado"
+                - option "Por ruta"
+            - generic [ref=e37]:
+              - generic [ref=e38]: Precio nuevo (USD)
+              - spinbutton [ref=e39]
+            - generic [ref=e40]:
+              - generic [ref=e41]: Motivo (obligatorio)
+              - 'textbox "Ej: Ajuste tarifario Q2" [ref=e42]'
+          - generic [ref=e43]:
+            - button " Aplicar precios" [ref=e44] [cursor=pointer]:
+              - generic [ref=e45]: 
+              - text: Aplicar precios
+            - generic [ref=e46]: Se aplicará a 0 viajes
+      - generic [ref=e47]:
+        - generic [ref=e49]:
+          - heading "Cambiar estados masivamente" [level=2] [ref=e50]
+          - paragraph [ref=e51]: Mueve todos los viajes de un estado a otro de forma simultánea.
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: Estado origen (filtro)
+              - combobox [ref=e57]:
+                - option "Solicitado" [selected]
+                - option "Pendiente"
+                - option "Asignado"
+                - option "En ruta"
+                - option "Carga recogida"
+                - option "Entregado"
+                - option "Cancelado"
+            - generic [ref=e58]: →
+            - generic [ref=e59]:
+              - generic [ref=e60]: Estado destino (nuevo)
+              - combobox [ref=e61]:
+                - option "Solicitado" [selected]
+                - option "Pendiente"
+                - option "Asignado"
+                - option "En ruta"
+                - option "Carga recogida"
+                - option "Entregado"
+                - option "Cancelado"
+            - generic [ref=e62]:
+              - generic [ref=e63]: Motivo
+              - 'textbox "Ej: Revisión operativa" [ref=e64]'
+          - button " Cambiar estados" [ref=e66] [cursor=pointer]:
+            - generic [ref=e67]: 
+            - text: Cambiar estados
+      - generic [ref=e68]:
+        - generic [ref=e70]:
+          - heading "Selección manual" [level=2] [ref=e71]
+          - paragraph [ref=e72]: Selecciona viajes individualmente y aplica una acción sobre ellos.
+        - generic [ref=e73]:
+          - generic [ref=e74]:
+            - generic [ref=e75]:
+              - generic [ref=e76]: Acción
+              - combobox [ref=e77]:
+                - option "Actualizar precio (USD)" [selected]
+                - option "Cambiar estado"
+            - generic [ref=e78]:
+              - generic [ref=e79]: Precio nuevo
+              - spinbutton [ref=e80]
+            - generic [ref=e81]:
+              - generic [ref=e82]: Motivo
+              - textbox "Motivo" [ref=e83]
+            - button " Aplicar a seleccionados" [ref=e84] [cursor=pointer]:
+              - generic [ref=e85]: 
+              - text: Aplicar a seleccionados
+          - table [ref=e87]:
+            - rowgroup [ref=e88]:
+              - row "ID Cliente Origen Destino Estado Precio" [ref=e89]:
+                - columnheader [ref=e90]:
+                  - checkbox [ref=e91]
+                - columnheader "ID" [ref=e92]
+                - columnheader "Cliente" [ref=e93]
+                - columnheader "Origen" [ref=e94]
+                - columnheader "Destino" [ref=e95]
+                - columnheader "Estado" [ref=e96]
+                - columnheader "Precio" [ref=e97]
+            - rowgroup [ref=e98]:
+              - row "#4 oniel@gmail.com La Habana Matanzas Asignado $450.00" [ref=e99]:
+                - cell [ref=e100]:
+                  - checkbox [ref=e101]
+                - cell "#4" [ref=e102]
+                - cell "oniel@gmail.com" [ref=e103]
+                - cell "La Habana" [ref=e104]
+                - cell "Matanzas" [ref=e105]
+                - cell "Asignado" [ref=e106]:
+                  - generic [ref=e107]: Asignado
+                - cell "$450.00" [ref=e108]
+              - row "#3 admin@gmail.com La Habana Holguin Asignado $450.00" [ref=e109]:
+                - cell [ref=e110]:
+                  - checkbox [ref=e111]
+                - cell "#3" [ref=e112]
+                - cell "admin@gmail.com" [ref=e113]
+                - cell "La Habana" [ref=e114]
+                - cell "Holguin" [ref=e115]
+                - cell "Asignado" [ref=e116]:
+                  - generic [ref=e117]: Asignado
+                - cell "$450.00" [ref=e118]
+              - row "#2 admin@gmail.com La Habana Santiago Asignado $450.00" [ref=e119]:
+                - cell [ref=e120]:
+                  - checkbox [ref=e121]
+                - cell "#2" [ref=e122]
+                - cell "admin@gmail.com" [ref=e123]
+                - cell "La Habana" [ref=e124]
+                - cell "Santiago" [ref=e125]
+                - cell "Asignado" [ref=e126]:
+                  - generic [ref=e127]: Asignado
+                - cell "$450.00" [ref=e128]
+              - row "#1 — La Habana Santiago Asignado $1000.00" [ref=e129]:
+                - cell [ref=e130]:
+                  - checkbox [ref=e131]
+                - cell "#1" [ref=e132]
+                - cell "—" [ref=e133]
+                - cell "La Habana" [ref=e134]
+                - cell "Santiago" [ref=e135]
+                - cell "Asignado" [ref=e136]:
+                  - generic [ref=e137]: Asignado
+                - cell "$1000.00" [ref=e138]

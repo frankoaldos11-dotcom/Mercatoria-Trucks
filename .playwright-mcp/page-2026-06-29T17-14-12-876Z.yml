@@ -1,0 +1,17 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]: 
+    - text: Mercatoria Truck
+    - generic [ref=e5]: Acceso al sistema
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: Usuario o correo electrónico
+      - textbox "usuario o correo@email.com" [ref=e9]: ana2@test.com
+    - generic [ref=e10]:
+      - generic [ref=e11]: Contraseña
+      - textbox "••••••••" [ref=e12]: "1234"
+    - button "Ingresar" [ref=e13] [cursor=pointer]
+  - generic [ref=e14]:
+    - text: ¿No tienes cuenta?
+    - link "Regístrate como cliente" [ref=e15] [cursor=pointer]:
+      - /url: /cliente/registro

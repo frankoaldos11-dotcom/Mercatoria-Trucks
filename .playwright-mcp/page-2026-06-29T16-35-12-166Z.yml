@@ -1,0 +1,150 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]: Operaciones
+        - link " Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e18]: 
+          - generic [ref=e19]: Dashboard
+        - link " Viajes" [ref=e20] [cursor=pointer]:
+          - /url: /admin/viajes
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Viajes
+        - link " Cotizaciones" [ref=e23] [cursor=pointer]:
+          - /url: /admin/comercial/cotizaciones
+          - generic [ref=e24]: 
+          - generic [ref=e25]: Cotizaciones
+        - generic [ref=e26]: Comercial
+        - link " Rutas" [ref=e27] [cursor=pointer]:
+          - /url: /admin/comercial/rutas
+          - generic [ref=e28]: 
+          - generic [ref=e29]: Rutas
+        - link " Tarifas" [ref=e30] [cursor=pointer]:
+          - /url: /admin/comercial/tarifas
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Tarifas
+        - generic [ref=e33]: Recursos
+        - link " Camioneros" [ref=e34] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e35]: 
+          - generic [ref=e36]: Camioneros
+        - link " Clientes" [ref=e37] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e38]: 
+          - generic [ref=e39]: Clientes
+        - generic [ref=e40]: Sistema
+        - link " Reportes" [ref=e41] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e42]: 
+          - generic [ref=e43]: Reportes
+        - link " Usuarios" [ref=e44] [cursor=pointer]:
+          - /url: /admin/usuarios
+          - generic [ref=e45]: 
+          - generic [ref=e46]: Usuarios
+        - link " Configuración" [ref=e47] [cursor=pointer]:
+          - /url: /admin/configuracion
+          - generic [ref=e48]: 
+          - generic [ref=e49]: Configuración
+        - link " Auditoría" [ref=e50] [cursor=pointer]:
+          - /url: /admin/auditoria
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Auditoría
+        - link " Acciones por lote" [ref=e53] [cursor=pointer]:
+          - /url: /admin/lote
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Acciones por lote
+        - link " Mensajes" [ref=e56] [cursor=pointer]:
+          - /url: /admin/mensajes
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Mensajes
+        - link " Papelera" [ref=e59] [cursor=pointer]:
+          - /url: /admin/papelera
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Papelera
+        - link " Incidencias" [ref=e62] [cursor=pointer]:
+          - /url: /admin/incidencias
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Incidencias
+        - link " Salir" [ref=e65] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e66]: 
+          - generic [ref=e67]: Salir
+    - main [ref=e68]:
+      - generic [ref=e70]:
+        - generic [ref=e71]: Panel operativo
+        - heading "Dashboard" [level=1] [ref=e72]
+        - paragraph [ref=e73]: Resumen general de solicitudes, viajes, clientes y recursos activos.
+      - generic [ref=e74]:
+        - link " Solicitudes pendientes 0" [ref=e75] [cursor=pointer]:
+          - /url: /admin/viajes?estado=solicitado
+          - generic [ref=e76]:
+            - generic [ref=e78]: 
+            - generic [ref=e79]:
+              - generic [ref=e80]: Solicitudes pendientes
+              - strong [ref=e81]: "0"
+        - link " Viajes en curso 0" [ref=e82] [cursor=pointer]:
+          - /url: /admin/viajes?estado=en+ruta
+          - generic [ref=e83]:
+            - generic [ref=e85]: 
+            - generic [ref=e86]:
+              - generic [ref=e87]: Viajes en curso
+              - strong [ref=e88]: "0"
+        - link " Entregados 0" [ref=e89] [cursor=pointer]:
+          - /url: /admin/viajes?estado=entregado
+          - generic [ref=e90]:
+            - generic [ref=e92]: 
+            - generic [ref=e93]:
+              - generic [ref=e94]: Entregados
+              - strong [ref=e95]: "0"
+        - link " Camioneros activos 4" [ref=e96] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e97]:
+            - generic [ref=e99]: 
+            - generic [ref=e100]:
+              - generic [ref=e101]: Camioneros activos
+              - strong [ref=e102]: "4"
+        - link " Clientes registrados 4" [ref=e103] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e104]:
+            - generic [ref=e106]: 
+            - generic [ref=e107]:
+              - generic [ref=e108]: Clientes registrados
+              - strong [ref=e109]: "4"
+        - link " Ingresos este mes $2350.00" [ref=e110] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e111]:
+            - generic [ref=e113]: 
+            - generic [ref=e114]:
+              - generic [ref=e115]: Ingresos este mes
+              - strong [ref=e116]: $2350.00
+        - generic [ref=e117]:
+          - generic [ref=e119]: 
+          - generic [ref=e120]:
+            - generic [ref=e121]: Camionero top
+            - strong [ref=e122]: testo
+      - generic [ref=e123]:
+        - generic [ref=e124]: 
+        - generic [ref=e125]:
+          - strong [ref=e126]: "Solo tú (admin) puedes acceder a:"
+          - text: Clientes (editar/eliminar), Rutas, Tarifas, Configuración, Usuarios, Auditoría, Reportes, Incidencias, Cotizaciones, Papelera, Exportar Excel.
+      - generic [ref=e127]:
+        - generic [ref=e129]:
+          - heading "Solicitudes pendientes" [level=2] [ref=e130]
+          - paragraph [ref=e131]: Viajes que necesitan revisión o asignación.
+        - table [ref=e133]:
+          - rowgroup [ref=e134]:
+            - row "ID Cliente Origen Destino Estado Acción" [ref=e135]:
+              - columnheader "ID" [ref=e136]
+              - columnheader "Cliente" [ref=e137]
+              - columnheader "Origen" [ref=e138]
+              - columnheader "Destino" [ref=e139]
+              - columnheader "Estado" [ref=e140]
+              - columnheader "Acción" [ref=e141]
+          - rowgroup [ref=e142]:
+            - row "No hay solicitudes pendientes." [ref=e143]:
+              - cell "No hay solicitudes pendientes." [ref=e144]

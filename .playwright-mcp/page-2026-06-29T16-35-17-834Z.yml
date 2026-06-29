@@ -1,0 +1,226 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]: Operaciones
+        - link " Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e18]: 
+          - generic [ref=e19]: Dashboard
+        - link " Viajes" [ref=e20] [cursor=pointer]:
+          - /url: /admin/viajes
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Viajes
+        - link " Cotizaciones" [ref=e23] [cursor=pointer]:
+          - /url: /admin/comercial/cotizaciones
+          - generic [ref=e24]: 
+          - generic [ref=e25]: Cotizaciones
+        - generic [ref=e26]: Comercial
+        - link " Rutas" [ref=e27] [cursor=pointer]:
+          - /url: /admin/comercial/rutas
+          - generic [ref=e28]: 
+          - generic [ref=e29]: Rutas
+        - link " Tarifas" [ref=e30] [cursor=pointer]:
+          - /url: /admin/comercial/tarifas
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Tarifas
+        - generic [ref=e33]: Recursos
+        - link " Camioneros" [ref=e34] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e35]: 
+          - generic [ref=e36]: Camioneros
+        - link " Clientes" [ref=e37] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e38]: 
+          - generic [ref=e39]: Clientes
+        - generic [ref=e40]: Sistema
+        - link " Reportes" [ref=e41] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e42]: 
+          - generic [ref=e43]: Reportes
+        - link " Usuarios" [ref=e44] [cursor=pointer]:
+          - /url: /admin/usuarios
+          - generic [ref=e45]: 
+          - generic [ref=e46]: Usuarios
+        - link " Configuración" [ref=e47] [cursor=pointer]:
+          - /url: /admin/configuracion
+          - generic [ref=e48]: 
+          - generic [ref=e49]: Configuración
+        - link " Auditoría" [ref=e50] [cursor=pointer]:
+          - /url: /admin/auditoria
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Auditoría
+        - link " Acciones por lote" [ref=e53] [cursor=pointer]:
+          - /url: /admin/lote
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Acciones por lote
+        - link " Mensajes" [ref=e56] [cursor=pointer]:
+          - /url: /admin/mensajes
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Mensajes
+        - link " Papelera" [ref=e59] [cursor=pointer]:
+          - /url: /admin/papelera
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Papelera
+        - link " Incidencias" [ref=e62] [cursor=pointer]:
+          - /url: /admin/incidencias
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Incidencias
+        - link " Salir" [ref=e65] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e66]: 
+          - generic [ref=e67]: Salir
+    - main [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]: Comercial
+          - heading "Clientes" [level=1] [ref=e72]
+          - paragraph [ref=e73]: Empresas y usuarios registrados para solicitar servicios logísticos.
+        - generic [ref=e74]:
+          - link "⬇ Exportar Excel" [ref=e75] [cursor=pointer]:
+            - /url: /admin/exportar/clientes
+          - button " Importar Excel" [ref=e76] [cursor=pointer]:
+            - generic [ref=e77]: 
+            - text: Importar Excel
+      - generic [ref=e78]:
+        - generic [ref=e80]:
+          - heading "Nuevo cliente" [level=2] [ref=e81]
+          - paragraph [ref=e82]: Registra una empresa o persona de contacto en el sistema.
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - generic [ref=e86]: Nombre *
+            - textbox "Nombre completo" [ref=e87]
+          - generic [ref=e88]:
+            - generic [ref=e89]: Empresa
+            - textbox "Razón social" [ref=e90]
+          - generic [ref=e91]:
+            - generic [ref=e92]: Contacto
+            - textbox "Persona de contacto" [ref=e93]
+          - generic [ref=e94]:
+            - generic [ref=e95]: Teléfono
+            - textbox "Teléfono" [ref=e96]
+          - generic [ref=e97]:
+            - generic [ref=e98]: Email
+            - textbox "correo@empresa.com" [ref=e99]
+            - generic [ref=e100]: Requerido si el cliente usará el portal web.
+          - generic [ref=e101]:
+            - generic [ref=e102]: Documento identidad
+            - textbox "CI / NIF / Pasaporte" [ref=e103]
+          - generic [ref=e104]:
+            - generic [ref=e105]: Dirección
+            - textbox "Dirección fiscal" [ref=e106]
+          - generic [ref=e107]:
+            - generic [ref=e108]: Categoría
+            - combobox [ref=e109]:
+              - option "Normal" [selected]
+              - option "VIP"
+              - option "Estratégico"
+              - option "Humanitario"
+          - button "Registrar cliente" [ref=e111] [cursor=pointer]
+      - generic [ref=e112]:
+        - textbox "Buscar por nombre, email, empresa o teléfono..." [ref=e113]
+        - combobox [ref=e114]:
+          - option "Todas las categorías" [selected]
+          - option "Normal"
+          - option "VIP"
+          - option "Estratégico"
+          - option "Humanitario"
+        - button "Filtrar" [ref=e115] [cursor=pointer]
+      - generic [ref=e116]:
+        - generic [ref=e118]:
+          - heading "Clientes registrados" [level=2] [ref=e119]
+          - paragraph [ref=e120]: Base comercial vinculada a solicitudes y viajes.
+        - table [ref=e122]:
+          - rowgroup [ref=e123]:
+            - row "ID Nombre Categoría Empresa Contacto Teléfono Email Dirección Registrado Acciones" [ref=e124]:
+              - columnheader "ID" [ref=e125]
+              - columnheader "Nombre" [ref=e126]
+              - columnheader "Categoría" [ref=e127]
+              - columnheader "Empresa" [ref=e128]
+              - columnheader "Contacto" [ref=e129]
+              - columnheader "Teléfono" [ref=e130]
+              - columnheader "Email" [ref=e131]
+              - columnheader "Dirección" [ref=e132]
+              - columnheader "Registrado" [ref=e133]
+              - columnheader "Acciones" [ref=e134]
+          - rowgroup [ref=e135]:
+            - row "#4 aldo alvarez Normal vesta aldo  666666666 frankoaldos11@gmail.com — 2026-06-26 Editar Eliminar" [ref=e136]:
+              - cell "#4" [ref=e137]
+              - cell "aldo alvarez" [ref=e138]
+              - cell "Normal" [ref=e139]:
+                - generic [ref=e140]: Normal
+              - cell "vesta" [ref=e141]
+              - cell "aldo" [ref=e142]
+              - cell " 666666666" [ref=e143]:
+                - link " 666666666" [ref=e144] [cursor=pointer]:
+                  - /url: https://wa.me/53666666666
+                  - generic [ref=e145]: 
+                  - text: "666666666"
+              - cell "frankoaldos11@gmail.com" [ref=e146]
+              - cell "—" [ref=e147]
+              - cell "2026-06-26" [ref=e148]
+              - cell "Editar Eliminar" [ref=e149]:
+                - link "Editar" [ref=e150] [cursor=pointer]:
+                  - /url: /admin/clientes/4/editar
+                - button "Eliminar" [ref=e152] [cursor=pointer]
+            - row "#3 oniel diaz Normal AUGE oniel  55555555 oniel@gmail.com — 2026-06-26 Editar Eliminar" [ref=e153]:
+              - cell "#3" [ref=e154]
+              - cell "oniel diaz" [ref=e155]
+              - cell "Normal" [ref=e156]:
+                - generic [ref=e157]: Normal
+              - cell "AUGE" [ref=e158]
+              - cell "oniel" [ref=e159]
+              - cell " 55555555" [ref=e160]:
+                - link " 55555555" [ref=e161] [cursor=pointer]:
+                  - /url: https://wa.me/5355555555
+                  - generic [ref=e162]: 
+                  - text: "55555555"
+              - cell "oniel@gmail.com" [ref=e163]
+              - cell "—" [ref=e164]
+              - cell "2026-06-26" [ref=e165]
+              - cell "Editar Eliminar" [ref=e166]:
+                - link "Editar" [ref=e167] [cursor=pointer]:
+                  - /url: /admin/clientes/3/editar
+                - button "Eliminar" [ref=e169] [cursor=pointer]
+            - row "#2 aldo alvarez Normal vesta aldo  +5358050722 admin@gmail.com — 2026-06-26 Editar Eliminar" [ref=e170]:
+              - cell "#2" [ref=e171]
+              - cell "aldo alvarez" [ref=e172]
+              - cell "Normal" [ref=e173]:
+                - generic [ref=e174]: Normal
+              - cell "vesta" [ref=e175]
+              - cell "aldo" [ref=e176]
+              - cell " +5358050722" [ref=e177]:
+                - link " +5358050722" [ref=e178] [cursor=pointer]:
+                  - /url: https://wa.me/5358050722
+                  - generic [ref=e179]: 
+                  - text: "+5358050722"
+              - cell "admin@gmail.com" [ref=e180]
+              - cell "—" [ref=e181]
+              - cell "2026-06-26" [ref=e182]
+              - cell "Editar Eliminar" [ref=e183]:
+                - link "Editar" [ref=e184] [cursor=pointer]:
+                  - /url: /admin/clientes/2/editar
+                - button "Eliminar" [ref=e186] [cursor=pointer]
+            - row "#1 Ana Garcia Normal TestCo Ana  600111222 ana2@test.com — 2026-06-26 Editar Eliminar" [ref=e187]:
+              - cell "#1" [ref=e188]
+              - cell "Ana Garcia" [ref=e189]
+              - cell "Normal" [ref=e190]:
+                - generic [ref=e191]: Normal
+              - cell "TestCo" [ref=e192]
+              - cell "Ana" [ref=e193]
+              - cell " 600111222" [ref=e194]:
+                - link " 600111222" [ref=e195] [cursor=pointer]:
+                  - /url: https://wa.me/53600111222
+                  - generic [ref=e196]: 
+                  - text: "600111222"
+              - cell "ana2@test.com" [ref=e197]
+              - cell "—" [ref=e198]
+              - cell "2026-06-26" [ref=e199]
+              - cell "Editar Eliminar" [ref=e200]:
+                - link "Editar" [ref=e201] [cursor=pointer]:
+                  - /url: /admin/clientes/1/editar
+                - button "Eliminar" [ref=e203] [cursor=pointer]

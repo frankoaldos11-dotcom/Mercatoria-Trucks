@@ -1,0 +1,206 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]:
+          - button "Operaciones " [ref=e17] [cursor=pointer]:
+            - generic [ref=e18]: Operaciones
+            - generic [ref=e19]: 
+          - generic [ref=e20]:
+            - link " Dashboard" [ref=e21] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e22]: 
+              - generic [ref=e23]: Dashboard
+            - link " Viajes" [ref=e24] [cursor=pointer]:
+              - /url: /admin/viajes
+              - generic [ref=e25]: 
+              - generic [ref=e26]: Viajes
+            - link " Incidencias" [ref=e27] [cursor=pointer]:
+              - /url: /admin/incidencias
+              - generic [ref=e28]: 
+              - generic [ref=e29]: Incidencias
+            - link " Clientes" [ref=e30] [cursor=pointer]:
+              - /url: /admin/clientes
+              - generic [ref=e31]: 
+              - generic [ref=e32]: Clientes
+            - link " Camioneros" [ref=e33] [cursor=pointer]:
+              - /url: /admin/camioneros
+              - generic [ref=e34]: 
+              - generic [ref=e35]: Camioneros
+            - link " Rutas" [ref=e36] [cursor=pointer]:
+              - /url: /admin/comercial/rutas
+              - generic [ref=e37]: 
+              - generic [ref=e38]: Rutas
+        - generic [ref=e39]:
+          - button "Finanzas " [ref=e40] [cursor=pointer]:
+            - generic [ref=e41]: Finanzas
+            - generic [ref=e42]: 
+          - link " Reportes" [ref=e43] [cursor=pointer]:
+            - /url: /admin/reportes
+            - generic [ref=e44]: 
+            - generic [ref=e45]: Reportes
+        - generic [ref=e46]:
+          - button "Administración " [ref=e47] [cursor=pointer]:
+            - generic [ref=e48]: Administración
+            - generic [ref=e49]: 
+          - generic [ref=e50]:
+            - link " Cotizaciones" [ref=e51] [cursor=pointer]:
+              - /url: /admin/comercial/cotizaciones
+              - generic [ref=e52]: 
+              - generic [ref=e53]: Cotizaciones
+            - link " Tarifas" [ref=e54] [cursor=pointer]:
+              - /url: /admin/comercial/tarifas
+              - generic [ref=e55]: 
+              - generic [ref=e56]: Tarifas
+        - generic [ref=e57]:
+          - button "Configuración " [ref=e58] [cursor=pointer]:
+            - generic [ref=e59]: Configuración
+            - generic [ref=e60]: 
+          - generic [ref=e61]:
+            - link " Parámetros financieros" [ref=e62] [cursor=pointer]:
+              - /url: /admin/configuracion
+              - generic [ref=e63]: 
+              - generic [ref=e64]: Parámetros financieros
+            - link " Usuarios" [ref=e65] [cursor=pointer]:
+              - /url: /admin/usuarios
+              - generic [ref=e66]: 
+              - generic [ref=e67]: Usuarios
+            - link " Historial de Cambios" [ref=e68] [cursor=pointer]:
+              - /url: /admin/auditoria
+              - generic [ref=e69]: 
+              - generic [ref=e70]: Historial de Cambios
+            - link " Acciones por lote" [ref=e71] [cursor=pointer]:
+              - /url: /admin/lote
+              - generic [ref=e72]: 
+              - generic [ref=e73]: Acciones por lote
+            - link " Mensajes" [ref=e74] [cursor=pointer]:
+              - /url: /admin/mensajes
+              - generic [ref=e75]: 
+              - generic [ref=e76]: Mensajes
+            - link " Papelera" [ref=e77] [cursor=pointer]:
+              - /url: /admin/papelera
+              - generic [ref=e78]: 
+              - generic [ref=e79]: Papelera
+        - link " Salir" [ref=e80] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e81]: 
+          - generic [ref=e82]: Salir
+    - main [ref=e83]:
+      - generic [ref=e85]:
+        - generic [ref=e86]: Administración
+        - heading "Historial de Cambios" [level=1] [ref=e87]
+        - paragraph [ref=e88]: Registro completo de acciones realizadas por los usuarios del sistema.
+      - generic [ref=e91]:
+        - generic [ref=e92]:
+          - generic [ref=e93]: Buscar
+          - textbox "Acción, detalle o usuario..." [ref=e94]
+        - generic [ref=e95]:
+          - generic [ref=e96]: Categoría
+          - combobox [ref=e97]:
+            - option "Todas" [selected]
+            - option "Viajes"
+            - option "Usuarios"
+            - option "Datos"
+        - generic [ref=e98]:
+          - generic [ref=e99]: Usuario
+          - textbox "Nombre de usuario..." [ref=e100]
+        - generic [ref=e101]:
+          - generic [ref=e102]: Desde
+          - textbox [ref=e103]
+        - generic [ref=e104]:
+          - generic [ref=e105]: Hasta
+          - textbox [ref=e106]
+        - button "Filtrar" [ref=e107] [cursor=pointer]
+        - link "Limpiar" [ref=e108] [cursor=pointer]:
+          - /url: /admin/auditoria
+      - generic [ref=e109]:
+        - generic [ref=e111]:
+          - heading "Eventos registrados" [level=2] [ref=e112]
+          - paragraph [ref=e113]: 8 registros encontrados
+        - table [ref=e115]:
+          - rowgroup [ref=e116]:
+            - row "Fecha Usuario Rol Categoría Acción Entidad Detalle" [ref=e117]:
+              - columnheader "Fecha" [ref=e118]
+              - columnheader "Usuario" [ref=e119]
+              - columnheader "Rol" [ref=e120]
+              - columnheader "Categoría" [ref=e121]
+              - columnheader "Acción" [ref=e122]
+              - columnheader "Entidad" [ref=e123]
+              - columnheader "Detalle" [ref=e124]
+          - rowgroup [ref=e125]:
+            - 'row "2026-06-29 17:29 admin admin Viajes Registró cobro del viaje viaje #1 Forma: Transferencia · Monto: $1000.00 · Código: TRF-2024-001" [ref=e126]':
+              - cell "2026-06-29 17:29" [ref=e127]
+              - cell "admin" [ref=e128]
+              - cell "admin" [ref=e129]
+              - cell "Viajes" [ref=e130]:
+                - generic [ref=e131]: Viajes
+              - cell "Registró cobro del viaje" [ref=e132]
+              - 'cell "viaje #1" [ref=e133]'
+              - 'cell "Forma: Transferencia · Monto: $1000.00 · Código: TRF-2024-001" [ref=e134]'
+            - 'row "2026-06-29 02:29 admin admin Viajes Descargó Carta de Porte viaje #1 —" [ref=e135]':
+              - cell "2026-06-29 02:29" [ref=e136]
+              - cell "admin" [ref=e137]
+              - cell "admin" [ref=e138]
+              - cell "Viajes" [ref=e139]:
+                - generic [ref=e140]: Viajes
+              - cell "Descargó Carta de Porte" [ref=e141]
+              - 'cell "viaje #1" [ref=e142]'
+              - cell "—" [ref=e143]
+            - 'row "2026-06-29 01:44 admin admin Viajes Descargó Carta de Porte viaje #1 —" [ref=e144]':
+              - cell "2026-06-29 01:44" [ref=e145]
+              - cell "admin" [ref=e146]
+              - cell "admin" [ref=e147]
+              - cell "Viajes" [ref=e148]:
+                - generic [ref=e149]: Viajes
+              - cell "Descargó Carta de Porte" [ref=e150]
+              - 'cell "viaje #1" [ref=e151]'
+              - cell "—" [ref=e152]
+            - 'row "2026-06-26 21:00 admin admin Viajes Asignó camionero dalia y vehículo chevy 20201 (202020) viaje #3 Camionero y vehículo asignados juntos" [ref=e153]':
+              - cell "2026-06-26 21:00" [ref=e154]
+              - cell "admin" [ref=e155]
+              - cell "admin" [ref=e156]
+              - cell "Viajes" [ref=e157]:
+                - generic [ref=e158]: Viajes
+              - cell "Asignó camionero dalia y vehículo chevy 20201 (202020)" [ref=e159]
+              - 'cell "viaje #3" [ref=e160]'
+              - cell "Camionero y vehículo asignados juntos" [ref=e161]
+            - 'row "2026-06-26 20:52 admin admin Viajes Asignó camionero alberto y vehículo desconocido viaje #4 Camionero y vehículo asignados juntos" [ref=e162]':
+              - cell "2026-06-26 20:52" [ref=e163]
+              - cell "admin" [ref=e164]
+              - cell "admin" [ref=e165]
+              - cell "Viajes" [ref=e166]:
+                - generic [ref=e167]: Viajes
+              - cell "Asignó camionero alberto y vehículo desconocido" [ref=e168]
+              - 'cell "viaje #4" [ref=e169]'
+              - cell "Camionero y vehículo asignados juntos" [ref=e170]
+            - 'row "2026-06-26 20:52 admin admin Viajes Confirmó precio $450.0 viaje #4 —" [ref=e171]':
+              - cell "2026-06-26 20:52" [ref=e172]
+              - cell "admin" [ref=e173]
+              - cell "admin" [ref=e174]
+              - cell "Viajes" [ref=e175]:
+                - generic [ref=e176]: Viajes
+              - cell "Confirmó precio $450.0" [ref=e177]
+              - 'cell "viaje #4" [ref=e178]'
+              - cell "—" [ref=e179]
+            - 'row "2026-06-26 19:48 admin admin Viajes Asignó camionero juan y vehículo desconocido viaje #1 Camionero y vehículo asignados juntos" [ref=e180]':
+              - cell "2026-06-26 19:48" [ref=e181]
+              - cell "admin" [ref=e182]
+              - cell "admin" [ref=e183]
+              - cell "Viajes" [ref=e184]:
+                - generic [ref=e185]: Viajes
+              - cell "Asignó camionero juan y vehículo desconocido" [ref=e186]
+              - 'cell "viaje #1" [ref=e187]'
+              - cell "Camionero y vehículo asignados juntos" [ref=e188]
+            - 'row "2026-06-26 19:21 sistema — Viajes Test accion viaje #1 Test detalle" [ref=e189]':
+              - cell "2026-06-26 19:21" [ref=e190]
+              - cell "sistema" [ref=e191]
+              - cell "—" [ref=e192]
+              - cell "Viajes" [ref=e193]:
+                - generic [ref=e194]: Viajes
+              - cell "Test accion" [ref=e195]
+              - 'cell "viaje #1" [ref=e196]'
+              - cell "Test detalle" [ref=e197]

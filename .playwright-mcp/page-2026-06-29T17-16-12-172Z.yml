@@ -1,0 +1,139 @@
+- generic [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]:
+          - button "Operaciones " [ref=e17] [cursor=pointer]:
+            - generic [ref=e18]: Operaciones
+            - generic [ref=e19]: 
+          - generic [ref=e20]:
+            - link " Dashboard" [ref=e21] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e22]: 
+              - generic [ref=e23]: Dashboard
+            - link " Viajes" [ref=e24] [cursor=pointer]:
+              - /url: /admin/viajes
+              - generic [ref=e25]: 
+              - generic [ref=e26]: Viajes
+            - link " Incidencias" [ref=e27] [cursor=pointer]:
+              - /url: /admin/incidencias
+              - generic [ref=e28]: 
+              - generic [ref=e29]: Incidencias
+        - generic [ref=e30]:
+          - button "Comercial " [ref=e31] [cursor=pointer]:
+            - generic [ref=e32]: Comercial
+            - generic [ref=e33]: 
+          - generic:
+            - link " Rutas" [ref=e34] [cursor=pointer]:
+              - /url: /admin/comercial/rutas
+              - generic [ref=e35]: 
+              - generic [ref=e36]: Rutas
+            - link " Tarifas" [ref=e37] [cursor=pointer]:
+              - /url: /admin/comercial/tarifas
+              - generic [ref=e38]: 
+              - generic [ref=e39]: Tarifas
+            - link " Cotizaciones" [ref=e40] [cursor=pointer]:
+              - /url: /admin/comercial/cotizaciones
+              - generic [ref=e41]: 
+              - generic [ref=e42]: Cotizaciones
+        - generic [ref=e43]:
+          - button "Recursos " [ref=e44] [cursor=pointer]:
+            - generic [ref=e45]: Recursos
+            - generic [ref=e46]: 
+          - generic:
+            - link " Camioneros" [ref=e47] [cursor=pointer]:
+              - /url: /admin/camioneros
+              - generic [ref=e48]: 
+              - generic [ref=e49]: Camioneros
+            - link " Clientes" [ref=e50] [cursor=pointer]:
+              - /url: /admin/clientes
+              - generic [ref=e51]: 
+              - generic [ref=e52]: Clientes
+        - generic [ref=e53]:
+          - button "Finanzas " [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: Finanzas
+            - generic [ref=e56]: 
+          - link " Reportes" [ref=e57] [cursor=pointer]:
+            - /url: /admin/reportes
+            - generic [ref=e58]: 
+            - generic [ref=e59]: Reportes
+        - generic [ref=e60]:
+          - button "Sistema " [ref=e61] [cursor=pointer]:
+            - generic [ref=e62]: Sistema
+            - generic [ref=e63]: 
+          - generic [ref=e64]:
+            - link " Usuarios" [ref=e65] [cursor=pointer]:
+              - /url: /admin/usuarios
+              - generic [ref=e66]: 
+              - generic [ref=e67]: Usuarios
+            - link " Configuración" [ref=e68] [cursor=pointer]:
+              - /url: /admin/configuracion
+              - generic [ref=e69]: 
+              - generic [ref=e70]: Configuración
+            - link " Auditoría" [ref=e71] [cursor=pointer]:
+              - /url: /admin/auditoria
+              - generic [ref=e72]: 
+              - generic [ref=e73]: Auditoría
+            - link " Acciones por lote" [ref=e74] [cursor=pointer]:
+              - /url: /admin/lote
+              - generic [ref=e75]: 
+              - generic [ref=e76]: Acciones por lote
+            - link " Mensajes" [ref=e77] [cursor=pointer]:
+              - /url: /admin/mensajes
+              - generic [ref=e78]: 
+              - generic [ref=e79]: Mensajes
+            - link " Papelera" [ref=e80] [cursor=pointer]:
+              - /url: /admin/papelera
+              - generic [ref=e81]: 
+              - generic [ref=e82]: Papelera
+        - link " Salir" [ref=e83] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e84]: 
+          - generic [ref=e85]: Salir
+    - main [ref=e86]:
+      - generic [ref=e88]:
+        - heading "Configuración" [level=1] [ref=e89]
+        - paragraph [ref=e90]: Centro de control del sistema
+      - generic [ref=e91]:
+        - button "Parámetros financieros" [ref=e92] [cursor=pointer]
+        - button "Tipos de vehículo" [ref=e93] [cursor=pointer]
+        - button "Accesos rápidos" [active] [ref=e94] [cursor=pointer]
+      - generic [ref=e255]:
+        - paragraph [ref=e256]: Atajos directos a las secciones más usadas del panel.
+        - generic [ref=e257]:
+          - link " Usuarios" [ref=e258] [cursor=pointer]:
+            - /url: /admin/usuarios
+            - generic [ref=e259]: 
+            - generic [ref=e260]: Usuarios
+          - link " Rutas" [ref=e261] [cursor=pointer]:
+            - /url: /admin/comercial/rutas
+            - generic [ref=e262]: 
+            - generic [ref=e263]: Rutas
+          - link " Tarifas" [ref=e264] [cursor=pointer]:
+            - /url: /admin/comercial/tarifas
+            - generic [ref=e265]: 
+            - generic [ref=e266]: Tarifas
+          - link " Auditoría" [ref=e267] [cursor=pointer]:
+            - /url: /admin/auditoria
+            - generic [ref=e268]: 
+            - generic [ref=e269]: Auditoría
+          - link " Camioneros" [ref=e270] [cursor=pointer]:
+            - /url: /admin/camioneros
+            - generic [ref=e271]: 
+            - generic [ref=e272]: Camioneros
+          - link " Clientes" [ref=e273] [cursor=pointer]:
+            - /url: /admin/clientes
+            - generic [ref=e274]: 
+            - generic [ref=e275]: Clientes
+          - link " Reportes" [ref=e276] [cursor=pointer]:
+            - /url: /admin/reportes
+            - generic [ref=e277]: 
+            - generic [ref=e278]: Reportes
+          - link " Acciones por lote" [ref=e279] [cursor=pointer]:
+            - /url: /admin/lote
+            - generic [ref=e280]: 
+            - generic [ref=e281]: Acciones por lote

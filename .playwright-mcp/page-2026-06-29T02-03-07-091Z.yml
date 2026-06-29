@@ -1,0 +1,55 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Mercatoria" [ref=e4] [cursor=pointer]:
+        - /url: /cliente
+        - img [ref=e5]
+        - text: Mercatoria
+      - button [ref=e14] [cursor=pointer]
+      - text:      
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - heading "Hola, Ana 👋" [level=1] [ref=e19]
+        - paragraph [ref=e20]: Bienvenido a tu panel de envíos
+      - link " Nueva Solicitud" [ref=e21] [cursor=pointer]:
+        - /url: /cliente/solicitar
+        - generic [ref=e22]: 
+        - text: Nueva Solicitud
+    - generic [ref=e23]:
+      - link " 0 En curso" [ref=e25] [cursor=pointer]:
+        - /url: /cliente/viajes?estado=activos
+        - generic [ref=e26]:
+          - generic [ref=e28]: 
+          - generic [ref=e29]:
+            - generic [ref=e30]: "0"
+            - generic [ref=e31]: En curso
+      - link " 0 Entregados" [ref=e33] [cursor=pointer]:
+        - /url: /cliente/viajes?estado=entregados
+        - generic [ref=e34]:
+          - generic [ref=e36]: 
+          - generic [ref=e37]:
+            - generic [ref=e38]: "0"
+            - generic [ref=e39]: Entregados
+      - link " 0 Total" [ref=e41] [cursor=pointer]:
+        - /url: /cliente/viajes
+        - generic [ref=e42]:
+          - generic [ref=e44]: 
+          - generic [ref=e45]:
+            - generic [ref=e46]: "0"
+            - generic [ref=e47]: Total
+    - generic [ref=e48]:
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]: 
+          - text: Últimos viajes
+        - link "Ver todos " [ref=e52] [cursor=pointer]:
+          - /url: /cliente/viajes
+          - text: Ver todos
+          - generic [ref=e53]: 
+      - generic [ref=e54]:
+        - generic [ref=e55]: 
+        - paragraph [ref=e56]:
+          - text: No tienes viajes aún.
+          - link "Crea tu primera solicitud" [ref=e57] [cursor=pointer]:
+            - /url: /cliente/solicitar

@@ -1,0 +1,143 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - link "← Volver a viajes" [ref=e20] [cursor=pointer]:
+            - /url: /admin/viajes
+          - 'heading "Viaje #2" [level=1] [ref=e21]'
+          - paragraph [ref=e22]: La Habana → Santiago
+        - generic [ref=e24]: Asignado
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Cliente
+          - generic [ref=e29]: admin@gmail.com
+        - generic [ref=e30]:
+          - generic [ref=e31]: Ruta
+          - generic [ref=e32]: La Habana → Santiago
+        - generic [ref=e33]:
+          - generic [ref=e34]: Tipo de carga
+          - generic [ref=e35]: m-50
+        - generic [ref=e36]:
+          - generic [ref=e37]: Camionero
+          - generic [ref=e38]: testo
+        - generic [ref=e39]:
+          - generic [ref=e40]: Vehículo
+          - generic [ref=e41]: "202020"
+        - generic [ref=e42]:
+          - generic [ref=e43]: Precio cliente
+          - generic [ref=e44]: $450.00
+        - generic [ref=e45]:
+          - generic [ref=e46]: Combustible
+          - generic [ref=e47]: Pendiente
+        - generic [ref=e48]:
+          - generic [ref=e49]: Fecha extracción
+          - generic [ref=e50]: 2026-06-26 13:16
+        - generic [ref=e51]:
+          - generic [ref=e52]: Fecha descarga
+          - generic [ref=e53]: 2026-06-26 13:16
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - generic [ref=e57]: "1"
+            - text: Prioridad del viaje
+          - generic [ref=e59]:
+            - generic [ref=e60] [cursor=pointer]: Normal
+            - generic [ref=e61] [cursor=pointer]: Alta
+            - generic [ref=e62] [cursor=pointer]: Urgente
+        - generic [ref=e63]:
+          - generic [ref=e64]: 
+          - generic [ref=e65]:
+            - strong [ref=e66]: Camionero asignado
+            - text: · testo — 202020
+        - generic [ref=e67]:
+          - generic [ref=e68]: 
+          - generic [ref=e69]:
+            - strong [ref=e70]: Precio cliente confirmado
+            - text: · $450.00
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]: "4"
+            - text: Confirmar combustible asignado
+          - paragraph [ref=e74]:
+            - text: "Estimado por liquidación:"
+            - strong [ref=e75]: $90.00
+          - generic [ref=e76]:
+            - textbox "0.00" [ref=e77]: "90.00"
+            - button "Confirmar" [ref=e78] [cursor=pointer]
+        - generic [ref=e79]:
+          - generic [ref=e80]: 
+          - generic [ref=e81]:
+            - strong [ref=e82]: Fecha de extracción
+            - text: · 2026-06-26 13:16
+        - generic [ref=e83]:
+          - generic [ref=e84]: 
+          - generic [ref=e85]:
+            - strong [ref=e86]: Fecha de descarga
+            - text: · 2026-06-26 13:16
+        - generic [ref=e87]:
+          - generic [ref=e88]:
+            - generic [ref=e89]: "7"
+            - text: Enviar documentación al camionero
+          - paragraph [ref=e90]: Orden de carga, contrato, instrucciones de ruta.
+          - generic [ref=e91]:
+            - link " Ver Orden de Carga" [ref=e92] [cursor=pointer]:
+              - /url: /admin/viaje/2/pdf
+              - generic [ref=e93]: 
+              - text: Ver Orden de Carga
+            - button " Marcar como enviada" [ref=e94] [cursor=pointer]:
+              - generic [ref=e95]: 
+              - text: Marcar como enviada
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]: "8"
+            - text: Confirmar entrega
+          - paragraph [ref=e99]: Confirmar que la carga fue entregada en destino.
+          - button " Confirmar entrega" [ref=e101] [cursor=pointer]:
+            - generic [ref=e102]: 
+            - text: Confirmar entrega
+      - generic [ref=e103]:
+        - group [ref=e104]:
+          - generic " Cambiar estado ▼" [ref=e105] [cursor=pointer]:
+            - generic [ref=e106]: 
+            - text: Cambiar estado ▼
+          - option "En ruta" [selected]
+          - option "Carga recogida"
+          - option "Entregado"
+          - option "Cancelado"
+        - group [ref=e107]:
+          - generic " Liquidación financiera ▼" [ref=e108] [cursor=pointer]:
+            - generic [ref=e109]: 
+            - text: Liquidación financiera ▼
+          - text: 
+        - group [ref=e110]:
+          - generic " Pago al camionero Pendiente ▼" [ref=e111] [cursor=pointer]:
+            - generic [ref=e112]: 
+            - text: Pago al camionero
+            - generic [ref=e113]: Pendiente
+            - text: ▼
+          - option "Efectivo" [selected]
+          - option "Compensación combustible"
+          - option "Mixto"
+        - group [ref=e114]:
+          - generic " Documentos y operaciones ▼" [ref=e115] [cursor=pointer]:
+            - generic [ref=e116]: 
+            - text: Documentos y operaciones ▼
+          - text: 
+        - group [ref=e117]:
+          - generic " Notas internas (0) ▼" [ref=e118] [cursor=pointer]:
+            - generic [ref=e119]: 
+            - text: Notas internas (0) ▼
+          - text: 
+        - group [ref=e120]:
+          - generic " Incidencias (0) ▼" [ref=e121] [cursor=pointer]:
+            - generic [ref=e122]: 
+            - text: Incidencias (0) ▼
+          - text: 

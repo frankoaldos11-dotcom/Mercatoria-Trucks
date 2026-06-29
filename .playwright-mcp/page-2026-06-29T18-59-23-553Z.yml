@@ -1,0 +1,86 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Mercatoria" [ref=e4] [cursor=pointer]:
+        - /url: /cliente
+        - img [ref=e5]
+        - text: Mercatoria
+      - button [ref=e14] [cursor=pointer]
+      - text:      
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - heading "Hola, aldo 👋" [level=1] [ref=e19]
+        - paragraph [ref=e20]: Bienvenido a tu panel de envíos
+      - link " Nueva Solicitud" [ref=e21] [cursor=pointer]:
+        - /url: /cliente/solicitar
+        - generic [ref=e22]: 
+        - text: Nueva Solicitud
+    - generic [ref=e23]:
+      - link " 2 En curso" [ref=e25] [cursor=pointer]:
+        - /url: /cliente/viajes?estado=activos
+        - generic [ref=e26]:
+          - generic [ref=e28]: 
+          - generic [ref=e29]:
+            - generic [ref=e30]: "2"
+            - generic [ref=e31]: En curso
+      - link " 0 Entregados" [ref=e33] [cursor=pointer]:
+        - /url: /cliente/viajes?estado=entregados
+        - generic [ref=e34]:
+          - generic [ref=e36]: 
+          - generic [ref=e37]:
+            - generic [ref=e38]: "0"
+            - generic [ref=e39]: Entregados
+      - link " 2 Total" [ref=e41] [cursor=pointer]:
+        - /url: /cliente/viajes
+        - generic [ref=e42]:
+          - generic [ref=e44]: 
+          - generic [ref=e45]:
+            - generic [ref=e46]: "2"
+            - generic [ref=e47]: Total
+    - generic [ref=e48]:
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]: 
+          - text: Últimos viajes
+        - link "Ver todos " [ref=e52] [cursor=pointer]:
+          - /url: /cliente/viajes
+          - text: Ver todos
+          - generic [ref=e53]: 
+      - table [ref=e55]:
+        - rowgroup [ref=e56]:
+          - row "# Ruta Estado Camionero" [ref=e57]:
+            - columnheader "#" [ref=e58]
+            - columnheader "Ruta" [ref=e59]
+            - columnheader "Estado" [ref=e60]
+            - columnheader "Camionero" [ref=e61]
+            - columnheader [ref=e62]
+        - rowgroup [ref=e63]:
+          - row "#3 La Habana  Holguin Asignado dalia Ver " [ref=e64]:
+            - cell "#3" [ref=e65]
+            - cell "La Habana  Holguin" [ref=e66]:
+              - text: La Habana
+              - generic [ref=e67]: 
+              - text: Holguin
+            - cell "Asignado" [ref=e68]:
+              - generic [ref=e69]: Asignado
+            - cell "dalia" [ref=e70]
+            - cell "Ver " [ref=e71]:
+              - link "Ver " [ref=e72] [cursor=pointer]:
+                - /url: /cliente/viaje/3
+                - text: Ver
+                - generic [ref=e73]: 
+          - row "#2 La Habana  Santiago Asignado testo Ver " [ref=e74]:
+            - cell "#2" [ref=e75]
+            - cell "La Habana  Santiago" [ref=e76]:
+              - text: La Habana
+              - generic [ref=e77]: 
+              - text: Santiago
+            - cell "Asignado" [ref=e78]:
+              - generic [ref=e79]: Asignado
+            - cell "testo" [ref=e80]
+            - cell "Ver " [ref=e81]:
+              - link "Ver " [ref=e82] [cursor=pointer]:
+                - /url: /cliente/viaje/2
+                - text: Ver
+                - generic [ref=e83]: 

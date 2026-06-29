@@ -1,0 +1,74 @@
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 768-020-502
+[2026-06-28 20:43:14,809] DEBUG in app: [GET] /login 8.5ms
+127.0.0.1 - - [28/Jun/2026 20:43:14] "GET /login HTTP/1.1" 200 -
+[2026-06-28 20:43:16,421] DEBUG in app: [GET] /sw.js 0.8ms
+127.0.0.1 - - [28/Jun/2026 20:43:16] "GET /sw.js HTTP/1.1" 200 -
+[2026-06-28 20:43:22,077] DEBUG in app: [POST] /login 298.9ms
+127.0.0.1 - - [28/Jun/2026 20:43:22] "POST /login HTTP/1.1" 302 -
+[2026-06-28 20:43:22,149] DEBUG in app: [GET] /admin 6.2ms
+127.0.0.1 - - [28/Jun/2026 20:43:22] "GET /admin HTTP/1.1" 308 -
+[2026-06-28 20:43:22,204] DEBUG in app: [GET] /admin/ 35.6ms
+127.0.0.1 - - [28/Jun/2026 20:43:22] "GET /admin/ HTTP/1.1" 200 -
+[2026-06-28 20:43:23,823] DEBUG in app: [GET] /sw.js 0.9ms
+127.0.0.1 - - [28/Jun/2026 20:43:23] "GET /sw.js HTTP/1.1" 304 -
+[2026-06-28 20:43:33,283] DEBUG in app: [GET] /admin/viajes 47.5ms
+127.0.0.1 - - [28/Jun/2026 20:43:33] "GET /admin/viajes HTTP/1.1" 200 -
+[2026-06-28 20:43:34,921] DEBUG in app: [GET] /sw.js 0.9ms
+127.0.0.1 - - [28/Jun/2026 20:43:34] "GET /sw.js HTTP/1.1" 304 -
+[2026-06-28 20:43:54,164] DEBUG in app: [GET] /admin/viajes 0.1ms
+127.0.0.1 - - [28/Jun/2026 20:43:54] "GET /admin/viajes HTTP/1.1" 302 -
+[2026-06-28 20:44:03,759] DEBUG in app: [GET] /admin/viaje/2 189.4ms
+127.0.0.1 - - [28/Jun/2026 20:44:03] "GET /admin/viaje/2 HTTP/1.1" 200 -
+[2026-06-28 20:44:05,784] DEBUG in app: [GET] /sw.js 1.5ms
+127.0.0.1 - - [28/Jun/2026 20:44:05] "GET /sw.js HTTP/1.1" 304 -
+[2026-06-28 20:44:17,342] DEBUG in app: [GET] /admin/incidencias 19.0ms
+127.0.0.1 - - [28/Jun/2026 20:44:17] "GET /admin/incidencias HTTP/1.1" 200 -
+[2026-06-28 20:44:18,952] DEBUG in app: [GET] /sw.js 1.2ms
+127.0.0.1 - - [28/Jun/2026 20:44:18] "GET /sw.js HTTP/1.1" 304 -
+[2026-06-28 20:44:27,889] DEBUG in app: [GET] /admin/configuracion 13.9ms
+127.0.0.1 - - [28/Jun/2026 20:44:27] "GET /admin/configuracion HTTP/1.1" 200 -
+[2026-06-28 20:44:29,534] DEBUG in app: [GET] /sw.js 1.1ms
+127.0.0.1 - - [28/Jun/2026 20:44:29] "GET /sw.js HTTP/1.1" 304 -
+[2026-06-28 20:44:34,625] DEBUG in app: [GET] /admin/viajes/2/gestionar 8.5ms
+127.0.0.1 - - [28/Jun/2026 20:44:34] "GET /admin/viajes/2/gestionar HTTP/1.1" 200 -
+[2026-06-28 20:44:36,271] DEBUG in app: [GET] /sw.js 1.2ms
+127.0.0.1 - - [28/Jun/2026 20:44:36] "GET /sw.js HTTP/1.1" 304 -
+ * Detected change in 'E:\\Mercatoria Truck\\routes\\admin.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 768-020-502
+ * Detected change in 'E:\\Mercatoria Truck\\routes\\admin.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 768-020-502
+ * Detected change in 'E:\\Mercatoria Truck\\routes\\admin.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 768-020-502
+[2026-06-28 20:52:18,349] DEBUG in app: [GET] / 8.9ms
+127.0.0.1 - - [28/Jun/2026 20:52:18] "GET / HTTP/1.1" 200 -
+[2026-06-28 20:52:43,400] DEBUG in app: [GET] /login 14.5ms
+127.0.0.1 - - [28/Jun/2026 20:52:43] "GET /login HTTP/1.1" 200 -
+[2026-06-28 20:52:43,518] DEBUG in app: [GET] /favicon.ico 6.3ms
+127.0.0.1 - - [28/Jun/2026 20:52:43] "GET /favicon.ico HTTP/1.1" 404 -
+[2026-06-28 20:52:45,228] DEBUG in app: [GET] /sw.js 1.6ms
+127.0.0.1 - - [28/Jun/2026 20:52:45] "GET /sw.js HTTP/1.1" 200 -
+[2026-06-28 20:58:02,458] DEBUG in app: [GET] /login 5.6ms
+127.0.0.1 - - [28/Jun/2026 20:58:02] "GET /login HTTP/1.1" 200 -
+[2026-06-28 20:58:04,150] DEBUG in app: [GET] /sw.js 51.5ms
+127.0.0.1 - - [28/Jun/2026 20:58:04] "GET /sw.js HTTP/1.1" 304 -
+[2026-06-28 21:00:54,753] DEBUG in app: [POST] /login 3.8ms
+127.0.0.1 - - [28/Jun/2026 21:00:54] "POST /login HTTP/1.1" 200 -
+[2026-06-28 21:00:56,319] DEBUG in app: [GET] /sw.js 1.1ms
+127.0.0.1 - - [28/Jun/2026 21:00:56] "GET /sw.js HTTP/1.1" 304 -
+[2026-06-28 21:02:16,876] DEBUG in app: [GET] / 1.7ms
+127.0.0.1 - - [28/Jun/2026 21:02:16] "GET / HTTP/1.1" 200 -
+[2026-06-28 21:02:23,996] DEBUG in app: [GET] /login 3.4ms
+127.0.0.1 - - [28/Jun/2026 21:02:23] "GET /login HTTP/1.1" 200 -
+[2026-06-28 21:02:25,596] DEBUG in app: [GET] /sw.js 1.5ms
+127.0.0.1 - - [28/Jun/2026 21:02:25] "GET /sw.js HTTP/1.1" 304 -

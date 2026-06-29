@@ -1,0 +1,14 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - img "Mercatoria" [ref=e4]
+      - generic [ref=e5]: Mercatoria Truck
+  - generic [ref=e7]:
+    - generic [ref=e9]: 
+    - generic [ref=e10]: "404"
+    - heading "Página no encontrada" [level=2] [ref=e11]
+    - paragraph [ref=e12]: Parece que la ruta que buscás no existe o fue movida. Revisá la URL o volvé al inicio.
+    - link " Volver al inicio" [ref=e13] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e14]: 
+      - text: Volver al inicio

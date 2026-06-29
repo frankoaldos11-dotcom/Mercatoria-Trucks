@@ -1,0 +1,78 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Mercatoria" [ref=e4] [cursor=pointer]:
+        - /url: /cliente
+        - img [ref=e5]
+        - text: Mercatoria
+      - button [ref=e14] [cursor=pointer]
+      - text:      
+  - generic [ref=e16]:
+    - link " Volver a Mis Viajes" [ref=e18] [cursor=pointer]:
+      - /url: /cliente/viajes
+      - generic [ref=e19]: 
+      - text: Volver a Mis Viajes
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: "Viaje #2"
+        - generic [ref=e23]: La Habana → Santiago
+      - generic [ref=e25]: Asignado
+    - generic [ref=e26]:
+      - generic [ref=e27]: Estado del envío
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Solicitado
+        - generic [ref=e33]:
+          - generic [ref=e35]: 
+          - generic [ref=e36]: Asignado
+        - generic [ref=e37]:
+          - generic [ref=e39]: 
+          - generic [ref=e40]: En ruta
+        - generic [ref=e41]:
+          - generic [ref=e43]: 
+          - generic [ref=e44]: Entregado
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - generic [ref=e47]: Precio confirmado
+        - generic [ref=e48]: USD $450.00
+      - generic [ref=e49]: 
+    - generic [ref=e50]:
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - generic [ref=e54]: 
+          - text: Fechas
+        - table [ref=e55]:
+          - rowgroup [ref=e56]:
+            - row "Solicitud 2026-06-26" [ref=e57]:
+              - cell "Solicitud" [ref=e58]
+              - cell "2026-06-26" [ref=e59]
+            - row "Asignación —" [ref=e60]:
+              - cell "Asignación" [ref=e61]
+              - cell "—" [ref=e62]
+            - row "Recogida 2026-06-26" [ref=e63]:
+              - cell "Recogida" [ref=e64]
+              - cell "2026-06-26" [ref=e65]
+            - row "Entrega 2026-06-26" [ref=e66]:
+              - cell "Entrega" [ref=e67]
+              - cell "2026-06-26" [ref=e68]
+      - generic [ref=e70]:
+        - generic [ref=e71]:
+          - generic [ref=e72]: 
+          - text: Transporte
+        - table [ref=e73]:
+          - rowgroup [ref=e74]:
+            - row "Camionero testo" [ref=e75]:
+              - cell "Camionero" [ref=e76]
+              - cell "testo" [ref=e77]
+            - row "Vehículo chevy 20201" [ref=e78]:
+              - cell "Vehículo" [ref=e79]
+              - cell "chevy 20201" [ref=e80]
+            - row "Matrícula 202020" [ref=e81]:
+              - cell "Matrícula" [ref=e82]
+              - cell "202020" [ref=e83]
+    - generic [ref=e84]:
+      - generic [ref=e85]:
+        - generic [ref=e86]: 
+        - text: Detalles de la carga
+      - paragraph [ref=e87]: "Tipo de carga: m-50 | Peso aprox.: 10 Notas: 11111111"

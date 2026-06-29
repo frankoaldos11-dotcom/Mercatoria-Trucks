@@ -1,0 +1,54 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]: Motor Comercial
+          - heading "Cotizaciones" [level=1] [ref=e21]
+          - paragraph [ref=e22]: Listado de cotizaciones generadas por Mercatoria.
+        - generic [ref=e23]:
+          - link " Plantilla Excel" [ref=e24] [cursor=pointer]:
+            - /url: /admin/comercial/cotizaciones/plantilla
+            - generic [ref=e25]: 
+            - text: Plantilla Excel
+          - button " Importar Excel" [ref=e26] [cursor=pointer]:
+            - generic [ref=e27]: 
+            - text: Importar Excel
+          - link " Nueva cotización" [ref=e28] [cursor=pointer]:
+            - /url: /admin/comercial/cotizar
+            - generic [ref=e29]: 
+            - text: Nueva cotización
+      - generic [ref=e30]:
+        - generic [ref=e32]:
+          - heading "Cotizaciones guardadas" [level=2] [ref=e33]
+          - paragraph [ref=e34]: Revisa precios, beneficios y estado comercial.
+        - table [ref=e36]:
+          - rowgroup [ref=e37]:
+            - row "ID Cliente Ruta Vehículo Precio cliente Beneficio Estado Acción" [ref=e38]:
+              - columnheader "ID" [ref=e39]
+              - columnheader "Cliente" [ref=e40]
+              - columnheader "Ruta" [ref=e41]
+              - columnheader "Vehículo" [ref=e42]
+              - columnheader "Precio cliente" [ref=e43]
+              - columnheader "Beneficio" [ref=e44]
+              - columnheader "Estado" [ref=e45]
+              - columnheader "Acción" [ref=e46]
+          - rowgroup [ref=e47]:
+            - row "#1 Sin cliente La Habana → Santiago kmaz $1000.00 $200.00 convertida Ver detalle" [ref=e48]:
+              - cell "#1" [ref=e49]
+              - cell "Sin cliente" [ref=e50]
+              - cell "La Habana → Santiago" [ref=e51]
+              - cell "kmaz" [ref=e52]
+              - cell "$1000.00" [ref=e53]
+              - cell "$200.00" [ref=e54]
+              - cell "convertida" [ref=e55]
+              - cell "Ver detalle" [ref=e56]:
+                - link "Ver detalle" [ref=e57] [cursor=pointer]:
+                  - /url: /admin/comercial/cotizacion/1

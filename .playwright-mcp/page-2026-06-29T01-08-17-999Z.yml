@@ -1,0 +1,83 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [active] [ref=e14] [cursor=pointer]:
+      - generic [ref=e164]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e19]:
+        - generic [ref=e20]: Panel operativo
+        - heading "Dashboard" [level=1] [ref=e21]
+        - paragraph [ref=e22]: Resumen general de solicitudes, viajes, clientes y recursos activos.
+      - generic [ref=e23]:
+        - link " Solicitudes pendientes 0" [ref=e24] [cursor=pointer]:
+          - /url: /admin/viajes?estado=solicitado
+          - generic [ref=e25]:
+            - generic [ref=e27]: 
+            - generic [ref=e28]:
+              - generic [ref=e29]: Solicitudes pendientes
+              - strong [ref=e30]: "0"
+        - link " Viajes en curso 0" [ref=e31] [cursor=pointer]:
+          - /url: /admin/viajes?estado=en+ruta
+          - generic [ref=e32]:
+            - generic [ref=e34]: 
+            - generic [ref=e35]:
+              - generic [ref=e36]: Viajes en curso
+              - strong [ref=e37]: "0"
+        - link " Entregados 0" [ref=e38] [cursor=pointer]:
+          - /url: /admin/viajes?estado=entregado
+          - generic [ref=e39]:
+            - generic [ref=e41]: 
+            - generic [ref=e42]:
+              - generic [ref=e43]: Entregados
+              - strong [ref=e44]: "0"
+        - link " Camioneros activos 4" [ref=e45] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e46]:
+            - generic [ref=e48]: 
+            - generic [ref=e49]:
+              - generic [ref=e50]: Camioneros activos
+              - strong [ref=e51]: "4"
+        - link " Clientes registrados 4" [ref=e52] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e53]:
+            - generic [ref=e55]: 
+            - generic [ref=e56]:
+              - generic [ref=e57]: Clientes registrados
+              - strong [ref=e58]: "4"
+        - link " Ingresos este mes $2350.00" [ref=e59] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e60]:
+            - generic [ref=e62]: 
+            - generic [ref=e63]:
+              - generic [ref=e64]: Ingresos este mes
+              - strong [ref=e65]: $2350.00
+        - generic [ref=e66]:
+          - generic [ref=e68]: 
+          - generic [ref=e69]:
+            - generic [ref=e70]: Camionero top
+            - strong [ref=e71]: testo
+      - generic [ref=e72]:
+        - generic [ref=e73]: 
+        - generic [ref=e74]:
+          - strong [ref=e75]: "Solo tú (admin) puedes acceder a:"
+          - text: Clientes (editar/eliminar), Rutas, Tarifas, Configuración, Usuarios, Auditoría, Reportes, Incidencias, Cotizaciones, Papelera, Exportar Excel.
+      - generic [ref=e76]:
+        - generic [ref=e78]:
+          - heading "Solicitudes pendientes" [level=2] [ref=e79]
+          - paragraph [ref=e80]: Viajes que necesitan revisión o asignación.
+        - table [ref=e82]:
+          - rowgroup [ref=e83]:
+            - row "ID Cliente Origen Destino Estado Acción" [ref=e84]:
+              - columnheader "ID" [ref=e85]
+              - columnheader "Cliente" [ref=e86]
+              - columnheader "Origen" [ref=e87]
+              - columnheader "Destino" [ref=e88]
+              - columnheader "Estado" [ref=e89]
+              - columnheader "Acción" [ref=e90]
+          - rowgroup [ref=e91]:
+            - row "No hay solicitudes pendientes." [ref=e92]:
+              - cell "No hay solicitudes pendientes." [ref=e93]

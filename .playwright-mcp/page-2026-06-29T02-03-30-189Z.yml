@@ -1,0 +1,65 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Mercatoria" [ref=e4] [cursor=pointer]:
+        - /url: /cliente
+        - img [ref=e5]
+        - text: Mercatoria
+      - button [ref=e14] [cursor=pointer]
+      - text:      
+  - generic [ref=e16]:
+    - heading " Mi Perfil" [level=1] [ref=e18]:
+      - generic [ref=e19]: 
+      - text: Mi Perfil
+    - generic [ref=e20]:
+      - generic [ref=e22]:
+        - generic [ref=e24]: 
+        - generic [ref=e25]:
+          - generic [ref=e26]: "0"
+          - generic [ref=e27]: Km recorridos
+      - generic [ref=e29]:
+        - generic [ref=e31]: 
+        - generic [ref=e32]:
+          - generic [ref=e33]: "0.0"
+          - generic [ref=e34]: Toneladas
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]: 
+          - text: Datos personales
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic [ref=e41]: Nombre *
+            - textbox [ref=e42]: Ana
+          - generic [ref=e43]:
+            - generic [ref=e44]: Apellidos
+            - textbox [ref=e45]: Garcia
+        - generic [ref=e46]:
+          - generic [ref=e47]:
+            - generic [ref=e48]: Teléfono
+            - textbox "+34 600 000 000" [ref=e49]: "600111222"
+          - generic [ref=e50]:
+            - generic [ref=e51]: Empresa
+            - textbox [ref=e52]: TestCo
+        - generic [ref=e53]:
+          - generic [ref=e54]: Correo electrónico
+          - textbox [disabled] [ref=e55]: ana2@test.com
+          - generic [ref=e56]: El correo no se puede modificar
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - generic [ref=e59]: 
+          - text: Cambiar contraseña
+        - paragraph [ref=e60]: Deja estos campos en blanco si no quieres cambiar tu contraseña.
+        - generic [ref=e61]:
+          - generic [ref=e62]: Contraseña actual
+          - textbox "••••••••" [ref=e63]
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - generic [ref=e66]: Nueva contraseña
+            - textbox "Mínimo 6 caracteres" [ref=e67]
+          - generic [ref=e68]:
+            - generic [ref=e69]: Confirmar nueva
+            - textbox "••••••••" [ref=e70]
+      - button " Guardar cambios" [ref=e71] [cursor=pointer]:
+        - generic [ref=e72]: 
+        - text: Guardar cambios

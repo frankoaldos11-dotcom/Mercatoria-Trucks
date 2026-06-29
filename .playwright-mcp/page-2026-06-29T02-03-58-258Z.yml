@@ -1,0 +1,161 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e19]:
+        - generic [ref=e20]: Sistema
+        - heading "Usuarios del sistema" [level=1] [ref=e21]
+        - paragraph [ref=e22]: Gestión de accesos, roles y estados de los usuarios registrados.
+      - generic [ref=e23]:
+        - generic [ref=e25]:
+          - heading "Nuevo usuario" [level=2] [ref=e26]
+          - paragraph [ref=e27]: Crea un acceso al sistema con rol y contraseña.
+        - generic [ref=e29]:
+          - generic [ref=e30]:
+            - generic [ref=e31]: Email *
+            - textbox "usuario@empresa.com" [ref=e32]: ana2@test.com
+          - generic [ref=e33]:
+            - generic [ref=e34]: Contraseña *
+            - textbox "Mínimo 6 caracteres" [ref=e35]: "1234"
+          - generic [ref=e36]:
+            - generic [ref=e37]: Rol *
+            - combobox [ref=e38]:
+              - option "Operador" [selected]
+              - option "Admin"
+              - option "Cliente"
+          - button "Crear usuario" [ref=e40] [cursor=pointer]
+      - generic [ref=e41]:
+        - generic [ref=e43]:
+          - heading "Usuarios registrados" [level=2] [ref=e44]
+          - paragraph [ref=e45]: Lista completa de accesos al sistema.
+        - generic [ref=e46]:
+          - generic [ref=e47]:
+            - link "Todos (6)" [ref=e48] [cursor=pointer]:
+              - /url: /admin/usuarios
+            - link "Admin (1)" [ref=e49] [cursor=pointer]:
+              - /url: /admin/usuarios?rol=admin
+            - link "Operadores (1)" [ref=e50] [cursor=pointer]:
+              - /url: /admin/usuarios?rol=operador
+            - link "Clientes (4)" [ref=e51] [cursor=pointer]:
+              - /url: /admin/usuarios?rol=cliente
+          - textbox "Buscar por email..." [ref=e52]
+        - table [ref=e54]:
+          - rowgroup [ref=e55]:
+            - row "ID Usuario Rol Estado Fecha creación Acciones" [ref=e56]:
+              - columnheader "ID" [ref=e57]
+              - columnheader "Usuario" [ref=e58]
+              - columnheader "Rol" [ref=e59]
+              - columnheader "Estado" [ref=e60]
+              - columnheader "Fecha creación" [ref=e61]
+              - columnheader "Acciones" [ref=e62]
+          - rowgroup [ref=e63]:
+            - row "#6 frankoaldos11@gmail.com Cliente Activo 2026-06-26 23:20:37 Cliente Cambiar rol Desactivar 🔑 Resetear" [ref=e64]:
+              - cell "#6" [ref=e65]
+              - cell "frankoaldos11@gmail.com" [ref=e66]
+              - cell "Cliente" [ref=e67]:
+                - generic [ref=e68]: Cliente
+              - cell "Activo" [ref=e69]:
+                - generic [ref=e70]: Activo
+              - cell "2026-06-26 23:20:37" [ref=e71]
+              - cell "Cliente Cambiar rol Desactivar 🔑 Resetear" [ref=e72]:
+                - generic [ref=e73]:
+                  - combobox [ref=e74] [cursor=pointer]:
+                    - option "Admin"
+                    - option "Operador"
+                    - option "Cliente" [selected]
+                  - button "Cambiar rol" [ref=e75] [cursor=pointer]
+                - button "Desactivar" [ref=e77] [cursor=pointer]
+                - generic [ref=e78]:
+                  - textbox "Nueva contraseña" [ref=e79]
+                  - button "🔑 Resetear" [ref=e80] [cursor=pointer]
+            - row "#5 oniel@gmail.com Cliente Activo 2026-06-26 20:51:13 Cliente Cambiar rol Desactivar 🔑 Resetear" [ref=e81]:
+              - cell "#5" [ref=e82]
+              - cell "oniel@gmail.com" [ref=e83]
+              - cell "Cliente" [ref=e84]:
+                - generic [ref=e85]: Cliente
+              - cell "Activo" [ref=e86]:
+                - generic [ref=e87]: Activo
+              - cell "2026-06-26 20:51:13" [ref=e88]
+              - cell "Cliente Cambiar rol Desactivar 🔑 Resetear" [ref=e89]:
+                - generic [ref=e90]:
+                  - combobox [ref=e91] [cursor=pointer]:
+                    - option "Admin"
+                    - option "Operador"
+                    - option "Cliente" [selected]
+                  - button "Cambiar rol" [ref=e92] [cursor=pointer]
+                - button "Desactivar" [ref=e94] [cursor=pointer]
+                - generic [ref=e95]:
+                  - textbox "Nueva contraseña" [ref=e96]
+                  - button "🔑 Resetear" [ref=e97] [cursor=pointer]
+            - row "#4 ari@gmail.com Operador Activo 2026-06-26 18:42:11 Operador Cambiar rol Desactivar 🔑 Resetear" [ref=e98]:
+              - cell "#4" [ref=e99]
+              - cell "ari@gmail.com" [ref=e100]
+              - cell "Operador" [ref=e101]:
+                - generic [ref=e102]: Operador
+              - cell "Activo" [ref=e103]:
+                - generic [ref=e104]: Activo
+              - cell "2026-06-26 18:42:11" [ref=e105]
+              - cell "Operador Cambiar rol Desactivar 🔑 Resetear" [ref=e106]:
+                - generic [ref=e107]:
+                  - combobox [ref=e108] [cursor=pointer]:
+                    - option "Admin"
+                    - option "Operador" [selected]
+                    - option "Cliente"
+                  - button "Cambiar rol" [ref=e109] [cursor=pointer]
+                - button "Desactivar" [ref=e111] [cursor=pointer]
+                - generic [ref=e112]:
+                  - textbox "Nueva contraseña" [ref=e113]
+                  - button "🔑 Resetear" [ref=e114] [cursor=pointer]
+            - row "#3 admin@gmail.com Cliente Activo 2026-06-26 00:54:50 Cliente Cambiar rol Desactivar 🔑 Resetear" [ref=e115]:
+              - cell "#3" [ref=e116]
+              - cell "admin@gmail.com" [ref=e117]
+              - cell "Cliente" [ref=e118]:
+                - generic [ref=e119]: Cliente
+              - cell "Activo" [ref=e120]:
+                - generic [ref=e121]: Activo
+              - cell "2026-06-26 00:54:50" [ref=e122]
+              - cell "Cliente Cambiar rol Desactivar 🔑 Resetear" [ref=e123]:
+                - generic [ref=e124]:
+                  - combobox [ref=e125] [cursor=pointer]:
+                    - option "Admin"
+                    - option "Operador"
+                    - option "Cliente" [selected]
+                  - button "Cambiar rol" [ref=e126] [cursor=pointer]
+                - button "Desactivar" [ref=e128] [cursor=pointer]
+                - generic [ref=e129]:
+                  - textbox "Nueva contraseña" [ref=e130]
+                  - button "🔑 Resetear" [ref=e131] [cursor=pointer]
+            - row "#2 ana2@test.com Cliente Activo 2026-06-26 00:48:51 Cliente Cambiar rol Desactivar 🔑 Resetear" [ref=e132]:
+              - cell "#2" [ref=e133]
+              - cell "ana2@test.com" [ref=e134]
+              - cell "Cliente" [ref=e135]:
+                - generic [ref=e136]: Cliente
+              - cell "Activo" [ref=e137]:
+                - generic [ref=e138]: Activo
+              - cell "2026-06-26 00:48:51" [ref=e139]
+              - cell "Cliente Cambiar rol Desactivar 🔑 Resetear" [ref=e140]:
+                - generic [ref=e141]:
+                  - combobox [ref=e142] [cursor=pointer]:
+                    - option "Admin"
+                    - option "Operador"
+                    - option "Cliente" [selected]
+                  - button "Cambiar rol" [ref=e143] [cursor=pointer]
+                - button "Desactivar" [ref=e145] [cursor=pointer]
+                - generic [ref=e146]:
+                  - textbox "Nueva contraseña" [ref=e147]
+                  - button "🔑 Resetear" [ref=e148] [cursor=pointer]
+            - row "#1 admin Admin Activo 2026-06-25 09:11:54 Tu cuenta" [ref=e149]:
+              - cell "#1" [ref=e150]
+              - cell "admin" [ref=e151]
+              - cell "Admin" [ref=e152]:
+                - generic [ref=e153]: Admin
+              - cell "Activo" [ref=e154]:
+                - generic [ref=e155]: Activo
+              - cell "2026-06-25 09:11:54" [ref=e156]
+              - cell "Tu cuenta" [ref=e157]

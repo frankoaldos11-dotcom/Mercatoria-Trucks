@@ -1,0 +1,165 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]:
+          - button "Operaciones " [ref=e17] [cursor=pointer]:
+            - generic [ref=e18]: Operaciones
+            - generic [ref=e19]: 
+          - generic [ref=e20]:
+            - link " Dashboard" [ref=e21] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e22]: 
+              - generic [ref=e23]: Dashboard
+            - link " Viajes" [ref=e24] [cursor=pointer]:
+              - /url: /admin/viajes
+              - generic [ref=e25]: 
+              - generic [ref=e26]: Viajes
+            - link " Incidencias" [ref=e27] [cursor=pointer]:
+              - /url: /admin/incidencias
+              - generic [ref=e28]: 
+              - generic [ref=e29]: Incidencias
+            - link " Clientes" [ref=e30] [cursor=pointer]:
+              - /url: /admin/clientes
+              - generic [ref=e31]: 
+              - generic [ref=e32]: Clientes
+            - link " Camioneros" [ref=e33] [cursor=pointer]:
+              - /url: /admin/camioneros
+              - generic [ref=e34]: 
+              - generic [ref=e35]: Camioneros
+            - link " Rutas" [ref=e36] [cursor=pointer]:
+              - /url: /admin/comercial/rutas
+              - generic [ref=e37]: 
+              - generic [ref=e38]: Rutas
+        - generic [ref=e39]:
+          - button "Finanzas " [ref=e40] [cursor=pointer]:
+            - generic [ref=e41]: Finanzas
+            - generic [ref=e42]: 
+          - link " Reportes" [ref=e43] [cursor=pointer]:
+            - /url: /admin/reportes
+            - generic [ref=e44]: 
+            - generic [ref=e45]: Reportes
+        - generic [ref=e46]:
+          - button "Administración " [ref=e47] [cursor=pointer]:
+            - generic [ref=e48]: Administración
+            - generic [ref=e49]: 
+          - generic [ref=e50]:
+            - link " Cotizaciones" [ref=e51] [cursor=pointer]:
+              - /url: /admin/comercial/cotizaciones
+              - generic [ref=e52]: 
+              - generic [ref=e53]: Cotizaciones
+            - link " Tarifas" [ref=e54] [cursor=pointer]:
+              - /url: /admin/comercial/tarifas
+              - generic [ref=e55]: 
+              - generic [ref=e56]: Tarifas
+        - generic [ref=e57]:
+          - button "Configuración " [ref=e58] [cursor=pointer]:
+            - generic [ref=e59]: Configuración
+            - generic [ref=e60]: 
+          - generic [ref=e61]:
+            - link " Parámetros financieros" [ref=e62] [cursor=pointer]:
+              - /url: /admin/configuracion
+              - generic [ref=e63]: 
+              - generic [ref=e64]: Parámetros financieros
+            - link " Usuarios" [ref=e65] [cursor=pointer]:
+              - /url: /admin/usuarios
+              - generic [ref=e66]: 
+              - generic [ref=e67]: Usuarios
+            - link " Historial de Cambios" [ref=e68] [cursor=pointer]:
+              - /url: /admin/auditoria
+              - generic [ref=e69]: 
+              - generic [ref=e70]: Historial de Cambios
+            - link " Acciones por lote" [ref=e71] [cursor=pointer]:
+              - /url: /admin/lote
+              - generic [ref=e72]: 
+              - generic [ref=e73]: Acciones por lote
+            - link " Mensajes" [ref=e74] [cursor=pointer]:
+              - /url: /admin/mensajes
+              - generic [ref=e75]: 
+              - generic [ref=e76]: Mensajes
+            - link " Papelera" [ref=e77] [cursor=pointer]:
+              - /url: /admin/papelera
+              - generic [ref=e78]: 
+              - generic [ref=e79]: Papelera
+        - link " Salir" [ref=e80] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e81]: 
+          - generic [ref=e82]: Salir
+    - main [ref=e83]:
+      - generic [ref=e85]:
+        - generic [ref=e86]: Panel operativo
+        - heading "Dashboard" [level=1] [ref=e87]
+        - paragraph [ref=e88]: Resumen general de solicitudes, viajes, clientes y recursos activos.
+      - generic [ref=e89]:
+        - link " Solicitudes pendientes 0" [ref=e90] [cursor=pointer]:
+          - /url: /admin/viajes?estado=solicitado
+          - generic [ref=e91]:
+            - generic [ref=e93]: 
+            - generic [ref=e94]:
+              - generic [ref=e95]: Solicitudes pendientes
+              - strong [ref=e96]: "0"
+        - link " Viajes en curso 0" [ref=e97] [cursor=pointer]:
+          - /url: /admin/viajes?estado=en+ruta
+          - generic [ref=e98]:
+            - generic [ref=e100]: 
+            - generic [ref=e101]:
+              - generic [ref=e102]: Viajes en curso
+              - strong [ref=e103]: "0"
+        - link " Entregados 0" [ref=e104] [cursor=pointer]:
+          - /url: /admin/viajes?estado=entregado
+          - generic [ref=e105]:
+            - generic [ref=e107]: 
+            - generic [ref=e108]:
+              - generic [ref=e109]: Entregados
+              - strong [ref=e110]: "0"
+        - link " Camioneros activos 4" [ref=e111] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e112]:
+            - generic [ref=e114]: 
+            - generic [ref=e115]:
+              - generic [ref=e116]: Camioneros activos
+              - strong [ref=e117]: "4"
+        - link " Clientes registrados 4" [ref=e118] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e119]:
+            - generic [ref=e121]: 
+            - generic [ref=e122]:
+              - generic [ref=e123]: Clientes registrados
+              - strong [ref=e124]: "4"
+        - link " Ingresos este mes $2350.00" [ref=e125] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e126]:
+            - generic [ref=e128]: 
+            - generic [ref=e129]:
+              - generic [ref=e130]: Ingresos este mes
+              - strong [ref=e131]: $2350.00
+        - generic [ref=e132]:
+          - generic [ref=e134]: 
+          - generic [ref=e135]:
+            - generic [ref=e136]: Camionero top
+            - strong [ref=e137]: testo
+      - generic [ref=e138]:
+        - generic [ref=e139]: 
+        - generic [ref=e140]:
+          - strong [ref=e141]: "Solo tú (admin) puedes acceder a:"
+          - text: Clientes (editar/eliminar), Rutas, Tarifas, Configuración, Usuarios, Historial de Cambios, Reportes, Incidencias, Cotizaciones, Papelera, Exportar Excel.
+      - generic [ref=e142]:
+        - generic [ref=e144]:
+          - heading "Solicitudes pendientes" [level=2] [ref=e145]
+          - paragraph [ref=e146]: Viajes que necesitan revisión o asignación.
+        - table [ref=e148]:
+          - rowgroup [ref=e149]:
+            - row "ID Cliente Origen Destino Estado Acción" [ref=e150]:
+              - columnheader "ID" [ref=e151]
+              - columnheader "Cliente" [ref=e152]
+              - columnheader "Origen" [ref=e153]
+              - columnheader "Destino" [ref=e154]
+              - columnheader "Estado" [ref=e155]
+              - columnheader "Acción" [ref=e156]
+          - rowgroup [ref=e157]:
+            - row "No hay solicitudes pendientes." [ref=e158]:
+              - cell "No hay solicitudes pendientes." [ref=e159]

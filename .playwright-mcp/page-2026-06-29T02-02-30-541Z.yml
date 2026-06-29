@@ -1,0 +1,42 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e19]:
+        - generic [ref=e20]: Sistema
+        - heading "Mensajes a clientes" [level=1] [ref=e21]
+        - paragraph [ref=e22]: Envía comunicados masivos a segmentos de clientes por correo electrónico.
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic:
+              - heading "Nuevo mensaje" [level=2]
+          - generic [ref=e26]:
+            - generic:
+              - generic: Destinatarios
+              - combobox [ref=e27]:
+                - option "Todos los clientes" [selected]
+                - option "Clientes con viajes activos"
+                - option "Clientes zona Occidente"
+                - option "Clientes zona Centro"
+                - option "Clientes zona Oriente"
+                - option "Clientes sin viajes"
+            - generic [ref=e28]: Se enviará a 4 clientes. (ana2@test.com, admin@gmail.com, oniel@gmail.com…)
+            - generic:
+              - generic: Asunto
+              - textbox "Asunto del correo" [ref=e29]
+            - generic:
+              - generic: Cuerpo del mensaje
+              - textbox "Escribe aquí el contenido del correo…" [ref=e30]
+            - button " Enviar mensaje" [ref=e31] [cursor=pointer]:
+              - generic [ref=e32]: 
+              - text: Enviar mensaje
+        - generic [ref=e33]:
+          - heading "Últimos envíos" [level=2] [ref=e36]
+          - paragraph [ref=e37]: No se han enviado mensajes aún.

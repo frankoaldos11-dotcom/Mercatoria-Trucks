@@ -1,0 +1,154 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - heading "Reportes y Estadísticas" [level=1] [ref=e20]
+          - paragraph [ref=e21]: Panel financiero del período seleccionado
+        - link " Exportar CSV" [ref=e22] [cursor=pointer]:
+          - /url: /admin/reportes/exportar?fecha_desde=2026-06-01&fecha_hasta=2026-06-28
+          - generic [ref=e23]: 
+          - text: Exportar CSV
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]: Desde
+          - textbox [ref=e27]: 2026-06-01
+        - generic [ref=e28]:
+          - generic [ref=e29]: Hasta
+          - textbox [ref=e30]: 2026-06-28
+        - button "Aplicar" [ref=e31] [cursor=pointer]
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e35]: 
+          - generic [ref=e36]:
+            - generic [ref=e37]: Ingresos totales
+            - generic [ref=e38]: $2350.00
+        - generic [ref=e39]:
+          - generic [ref=e41]: 
+          - generic [ref=e42]:
+            - generic [ref=e43]: Pago camioneros
+            - generic [ref=e44]: $720.00
+        - generic [ref=e45]:
+          - generic [ref=e47]: 
+          - generic [ref=e48]:
+            - generic [ref=e49]: Combustible
+            - generic [ref=e50]: $360.00
+        - generic [ref=e51]:
+          - generic [ref=e53]: 
+          - generic [ref=e54]:
+            - generic [ref=e55]: Comisión Mercatoria
+            - generic [ref=e56]: $470.00
+        - generic [ref=e57]:
+          - generic [ref=e59]: 
+          - generic [ref=e60]:
+            - generic [ref=e61]: Utilidad neta
+            - generic [ref=e62]: $800.00
+      - generic [ref=e63]:
+        - heading "Ingresos por mes (últimos 6 meses)" [level=3] [ref=e65]
+        - generic [ref=e67]:
+          - heading "Indicadores adicionales" [level=3] [ref=e68]
+          - generic [ref=e69]:
+            - generic [ref=e71]: 
+            - generic [ref=e72]:
+              - generic [ref=e73]: Viaje promedio
+              - generic [ref=e74]: $587.50
+          - generic [ref=e75]:
+            - generic [ref=e77]: 
+            - generic [ref=e78]:
+              - generic [ref=e79]: Ruta más activa (período)
+              - generic [ref=e80]: La Habana → Santiago
+              - generic [ref=e81]: 2 viajes
+          - generic [ref=e82]:
+            - generic [ref=e84]: 
+            - generic [ref=e85]:
+              - generic [ref=e86]: Camionero más activo (período)
+              - generic [ref=e87]: testo
+              - generic [ref=e88]: 1 viaje
+          - generic [ref=e89]:
+            - generic [ref=e91]: 
+            - generic [ref=e92]:
+              - generic [ref=e93]: Total viajes en período
+              - generic [ref=e94]: "4"
+      - generic [ref=e95]:
+        - generic [ref=e96]:
+          - heading "Viajes del período" [level=3] [ref=e97]
+          - generic [ref=e98]: 4 viajes
+        - table [ref=e100]:
+          - rowgroup [ref=e101]:
+            - row "ID Cliente Ruta Estado Precio cliente Pago camionero Combustible Utilidad" [ref=e102]:
+              - columnheader "ID" [ref=e103]
+              - columnheader "Cliente" [ref=e104]
+              - columnheader "Ruta" [ref=e105]
+              - columnheader "Estado" [ref=e106]
+              - columnheader "Precio cliente" [ref=e107]
+              - columnheader "Pago camionero" [ref=e108]
+              - columnheader "Combustible" [ref=e109]
+              - columnheader "Utilidad" [ref=e110]
+          - rowgroup [ref=e111]:
+            - row "#4 oniel@gmail.com La Habana → Matanzas Asignado $450.00 $180.00 $90.00 $90.00" [ref=e112]:
+              - cell "#4" [ref=e113]:
+                - link "#4" [ref=e114] [cursor=pointer]:
+                  - /url: /admin/viajes/4/gestionar
+              - cell "oniel@gmail.com" [ref=e115]
+              - cell "La Habana → Matanzas" [ref=e116]
+              - cell "Asignado" [ref=e117]:
+                - generic [ref=e118]: Asignado
+              - cell "$450.00" [ref=e119]
+              - cell "$180.00" [ref=e120]
+              - cell "$90.00" [ref=e121]
+              - cell "$90.00" [ref=e122]
+            - row "#3 admin@gmail.com La Habana → Holguin Asignado $450.00 $180.00 $90.00 $90.00" [ref=e123]:
+              - cell "#3" [ref=e124]:
+                - link "#3" [ref=e125] [cursor=pointer]:
+                  - /url: /admin/viajes/3/gestionar
+              - cell "admin@gmail.com" [ref=e126]
+              - cell "La Habana → Holguin" [ref=e127]
+              - cell "Asignado" [ref=e128]:
+                - generic [ref=e129]: Asignado
+              - cell "$450.00" [ref=e130]
+              - cell "$180.00" [ref=e131]
+              - cell "$90.00" [ref=e132]
+              - cell "$90.00" [ref=e133]
+            - row "#2 admin@gmail.com La Habana → Santiago Asignado $450.00 $180.00 $90.00 $90.00" [ref=e134]:
+              - cell "#2" [ref=e135]:
+                - link "#2" [ref=e136] [cursor=pointer]:
+                  - /url: /admin/viajes/2/gestionar
+              - cell "admin@gmail.com" [ref=e137]
+              - cell "La Habana → Santiago" [ref=e138]
+              - cell "Asignado" [ref=e139]:
+                - generic [ref=e140]: Asignado
+              - cell "$450.00" [ref=e141]
+              - cell "$180.00" [ref=e142]
+              - cell "$90.00" [ref=e143]
+              - cell "$90.00" [ref=e144]
+            - row "#1 — La Habana → Santiago Asignado $1000.00 $180.00 $90.00 $530.00" [ref=e145]:
+              - cell "#1" [ref=e146]:
+                - link "#1" [ref=e147] [cursor=pointer]:
+                  - /url: /admin/viajes/1/gestionar
+              - cell "—" [ref=e148]
+              - cell "La Habana → Santiago" [ref=e149]
+              - cell "Asignado" [ref=e150]:
+                - generic [ref=e151]: Asignado
+              - cell "$1000.00" [ref=e152]
+              - cell "$180.00" [ref=e153]
+              - cell "$90.00" [ref=e154]
+              - cell "$530.00" [ref=e155]
+          - rowgroup [ref=e156]:
+            - row "TOTALES $2350.00 $720.00 $360.00 $800.00" [ref=e157]:
+              - cell "TOTALES" [ref=e158]:
+                - strong [ref=e159]: TOTALES
+              - cell "$2350.00" [ref=e160]:
+                - strong [ref=e161]: $2350.00
+              - cell "$720.00" [ref=e162]:
+                - strong [ref=e163]: $720.00
+              - cell "$360.00" [ref=e164]:
+                - strong [ref=e165]: $360.00
+              - cell "$800.00" [ref=e166]:
+                - strong [ref=e167]: $800.00

@@ -1,0 +1,161 @@
+- generic [active] [ref=e1]:
+  - text: 
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e14]: Mercatoria
+      - navigation [ref=e15]:
+        - generic [ref=e16]: Operaciones
+        - link " Dashboard" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e18]: 
+          - generic [ref=e19]: Dashboard
+        - link " Viajes" [ref=e20] [cursor=pointer]:
+          - /url: /admin/viajes
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Viajes
+        - link " Cotizaciones" [ref=e23] [cursor=pointer]:
+          - /url: /admin/comercial/cotizaciones
+          - generic [ref=e24]: 
+          - generic [ref=e25]: Cotizaciones
+        - generic [ref=e26]: Comercial
+        - link " Rutas" [ref=e27] [cursor=pointer]:
+          - /url: /admin/comercial/rutas
+          - generic [ref=e28]: 
+          - generic [ref=e29]: Rutas
+        - link " Tipos de vehículo" [ref=e30] [cursor=pointer]:
+          - /url: /admin/comercial/vehiculos
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Tipos de vehículo
+        - link " Tarifas" [ref=e33] [cursor=pointer]:
+          - /url: /admin/comercial/tarifas
+          - generic [ref=e34]: 
+          - generic [ref=e35]: Tarifas
+        - generic [ref=e36]: Recursos
+        - link " Camioneros" [ref=e37] [cursor=pointer]:
+          - /url: /admin/camioneros
+          - generic [ref=e38]: 
+          - generic [ref=e39]: Camioneros
+        - link " Clientes" [ref=e40] [cursor=pointer]:
+          - /url: /admin/clientes
+          - generic [ref=e41]: 
+          - generic [ref=e42]: Clientes
+        - generic [ref=e43]: Sistema
+        - link " Reportes" [ref=e44] [cursor=pointer]:
+          - /url: /admin/reportes
+          - generic [ref=e45]: 
+          - generic [ref=e46]: Reportes
+        - link " Usuarios" [ref=e47] [cursor=pointer]:
+          - /url: /admin/usuarios
+          - generic [ref=e48]: 
+          - generic [ref=e49]: Usuarios
+        - link " Configuración" [ref=e50] [cursor=pointer]:
+          - /url: /admin/configuracion
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Configuración
+        - link " Auditoría" [ref=e53] [cursor=pointer]:
+          - /url: /admin/auditoria
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Auditoría
+        - link " Incidencias" [ref=e56] [cursor=pointer]:
+          - /url: /admin/incidencias
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Incidencias
+        - link " Acciones por lote" [ref=e59] [cursor=pointer]:
+          - /url: /admin/lote
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Acciones por lote
+        - link " Mensajes" [ref=e62] [cursor=pointer]:
+          - /url: /admin/mensajes
+          - generic [ref=e63]: 
+          - generic [ref=e64]: Mensajes
+        - link " Papelera" [ref=e65] [cursor=pointer]:
+          - /url: /admin/papelera
+          - generic [ref=e66]: 
+          - generic [ref=e67]: Papelera
+        - link " Salir" [ref=e68] [cursor=pointer]:
+          - /url: /logout
+          - generic [ref=e69]: 
+          - generic [ref=e70]: Salir
+    - main [ref=e71]:
+      - generic [ref=e73]:
+        - heading "Configuración financiera" [level=1] [ref=e74]
+        - paragraph [ref=e75]: Parámetros globales de liquidación
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - text: Tarifa por km — valor global por defecto (USD/km)
+              - generic [ref=e80]:
+                - text: Se usa cuando la ruta del viaje no tiene tarifa propia. Cada ruta puede tener su tarifa independiente en
+                - link "Rutas → columna Tarifa/km" [ref=e81] [cursor=pointer]:
+                  - /url: /admin/comercial/rutas
+                - text: .
+            - spinbutton [ref=e82]: "1.5"
+          - generic [ref=e83]:
+            - generic [ref=e84]:
+              - text: Divisor combustible
+              - generic [ref=e85]: combustible = pago_camionero / divisor — default 2
+            - spinbutton [ref=e86]: "2.0"
+          - generic [ref=e87]:
+            - generic [ref=e88]:
+              - text: Multiplicador precio cliente
+              - generic [ref=e89]: precio_cliente = pago_camionero × multiplicador (cuando no hay precio registrado)
+            - spinbutton [ref=e90]: "2.5"
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - text: Km mínimo garantizado
+              - generic [ref=e93]: Si el viaje tiene menos km, se liquida este mínimo
+            - spinbutton [ref=e94]: "120.0"
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - text: Pago mínimo al camionero (USD)
+              - generic [ref=e97]: Garantía mínima independientemente de los km
+            - spinbutton [ref=e98]: "150.0"
+          - generic [ref=e99]:
+            - generic [ref=e100]:
+              - text: Comisión Mercatoria (%)
+              - generic [ref=e101]: Porcentaje sobre el precio cliente destinado a Mercatoria
+            - spinbutton [ref=e102]: "20.0"
+          - heading "Configuración de email" [level=3] [ref=e104]
+          - paragraph [ref=e105]:
+            - text: Credenciales para enviar notificaciones automáticas al cliente al cambiar el estado de un viaje. Usa una cuenta Gmail con
+            - link "contraseña de aplicación" [ref=e106] [cursor=pointer]:
+              - /url: https://myaccount.google.com/apppasswords
+            - text: .
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - text: Email remitente (MAIL_USERNAME)
+              - generic [ref=e109]: Cuenta Gmail desde la que se envían los emails
+            - textbox "tu@gmail.com" [ref=e110]
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - text: Contraseña de aplicación (MAIL_PASSWORD)
+              - generic [ref=e113]: Contraseña de app de Google, no la contraseña normal de la cuenta
+            - textbox "••••••••••••••••" [ref=e114]
+          - button "Guardar configuración" [ref=e116] [cursor=pointer]
+        - generic [ref=e117]:
+          - heading "Vista previa de liquidación ejemplo" [level=3] [ref=e118]
+          - paragraph [ref=e119]: Con 150 km recorridos y precio cliente registrado de $500 USD
+          - generic [ref=e120]:
+            - generic [ref=e121]: Km real
+            - strong [ref=e122]: 150 km
+          - generic [ref=e123]:
+            - generic [ref=e124]: Km liquidable
+            - strong [ref=e125]: 150 km
+          - generic [ref=e126]:
+            - generic [ref=e127]: Pago camionero
+            - strong [ref=e128]: $225.00
+          - generic [ref=e129]:
+            - generic [ref=e130]: Combustible
+            - strong [ref=e131]: $112.50
+          - generic [ref=e132]:
+            - generic [ref=e133]: Precio cliente
+            - strong [ref=e134]: $500.00
+          - generic [ref=e135]:
+            - generic [ref=e136]: Comisión Mercatoria
+            - strong [ref=e137]: $100.00
+          - generic [ref=e138]:
+            - generic [ref=e139]: Utilidad neta
+            - strong [ref=e140]: $62.50

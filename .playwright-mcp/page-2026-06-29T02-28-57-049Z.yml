@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]
+      - generic [ref=e13]: Mercatoria
+    - button "Abrir menú" [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+  - generic [ref=e16]:
+    - text:                 
+    - main [ref=e17]:
+      - generic [ref=e19]:
+        - generic [ref=e20]: Sistema
+        - heading " Papelera" [level=1] [ref=e21]:
+          - generic [ref=e22]: 
+          - text: Papelera
+        - paragraph [ref=e23]: Registros eliminados que pueden ser restaurados. Las solicitudes de operarios requieren aprobación.
+      - generic [ref=e24]:
+        - generic [ref=e25]: 
+        - paragraph [ref=e26]: La papelera está vacía
+        - paragraph [ref=e27]: No hay registros eliminados ni solicitudes pendientes.
