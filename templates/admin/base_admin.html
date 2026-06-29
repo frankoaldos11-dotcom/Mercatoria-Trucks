@@ -163,10 +163,6 @@
                 <i class="bi bi-journal-text"></i>
                 <span>Auditoría</span>
             </a>
-            <a href="/admin/incidencias" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/incidencias') else '' }}">
-                <i class="bi bi-exclamation-triangle"></i>
-                <span>Incidencias</span>
-            </a>
             <a href="/admin/lote" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/lote') else '' }}">
                 <i class="bi bi-lightning-charge"></i>
                 <span>Acciones por lote</span>
@@ -180,6 +176,11 @@
                 <span>Papelera</span>
             </a>
             {% endif %}
+
+            <a href="/admin/incidencias" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/incidencias') else '' }}">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>Incidencias</span>
+            </a>
 
             <a href="/logout" class="nav-item logout">
                 <i class="bi bi-box-arrow-right"></i>

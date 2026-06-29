@@ -80,9 +80,10 @@ def nueva_ruta():
     zona = request.form.get("zona", "")
     km = request.form["km"]
 
-    if not ruta_existe(origen, destino):
-        crear_ruta(origen, destino, zona, km)
+    if ruta_existe(origen, destino):
+        return redirect("/admin/comercial/rutas?access_error=Esta+ruta+ya+existe.+Si+necesitas+modificarla,+búscala+en+el+listado+y+edítala.")
 
+    crear_ruta(origen, destino, zona, km)
     return redirect("/admin/comercial/rutas")
 
 

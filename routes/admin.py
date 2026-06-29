@@ -963,8 +963,6 @@ def guardar_fechas(id):
 def lista_incidencias():
     if not requiere_admin():
         return redirect("/login")
-    if session.get("rol") != "admin":
-        return redirect("/admin?access_error=Solo+admin")
     filtro_estado = request.args.get("estado", "").strip()
     filtro_cat = request.args.get("categoria", "").strip()
     con = conectar()
@@ -1421,7 +1419,7 @@ def editar_camionero(id):
             return redirect("/admin/camioneros")
 
     cursor.execute(
-        """SELECT id, nombre, telefono, licencia, carnet_identidad,
+        f"""SELECT id, nombre, telefono, licencia, carnet_identidad,
                    licencia_operativa, empresa, estado
             FROM camioneros WHERE id = {ph()}""",
         (id,)
@@ -1433,7 +1431,7 @@ def editar_camionero(id):
         return redirect("/admin/camioneros")
 
     cursor.execute(
-        """SELECT id, matricula, marca, modelo, tipo, capacidad, chapa_remolque
+        f"""SELECT id, matricula, marca, modelo, tipo, capacidad, chapa_remolque
            FROM vehiculos WHERE camionero_id = {ph()} AND activo = 1""",
         (id,)
     )
