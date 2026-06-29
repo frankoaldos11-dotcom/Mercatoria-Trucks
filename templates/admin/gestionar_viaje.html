@@ -302,41 +302,6 @@
 </div>
 {% endif %}
 
-{# STEP 8 — Cerrar operación #}
-{% if done_all %}
-<div class="card" style="border:2px solid #27ae60;background:#f0fdf4;padding:16px;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <i class="bi bi-check-circle-fill" style="color:#27ae60;font-size:1.4rem;"></i>
-        <strong style="font-size:15px;color:#065f46;">Operación completada — registrar pago</strong>
-    </div>
-    {% if session.get('rol') == 'admin' %}
-    {% set _epc = viaje.estado_pago_camionero or 'Pendiente' %}
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-        <span class="pago-estado-badge pago-estado-{{ _epc|lower|replace(' ','_') }}">Pago: {{ _epc }}</span>
-        {% if _epc == 'Pagado' and viaje.fecha_pago_camionero %}
-        <span style="font-size:12px;color:#888;">{{ viaje.fecha_pago_camionero | fmt_fecha }}</span>
-        {% endif %}
-    </div>
-    {% if _epc != 'Pagado' %}
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <select name="tipo_pago" class="step-input" style="width:160px;">
-            {% for tp in ['Efectivo','Compensación combustible','Mixto'] %}
-            <option value="{{ tp }}">{{ tp }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" name="accion" value="pagado" class="step-btn" style="background:#27ae60;">
-            <i class="bi bi-check2-circle"></i> Marcar pagado y cerrar
-        </button>
-    </form>
-    {% else %}
-    <p style="font-size:13px;color:#065f46;margin:0;font-weight:600;">Pago al camionero registrado. Operación cerrada.</p>
-    {% endif %}
-    {% else %}
-    <p style="font-size:13px;color:#065f46;margin:0;">Todos los pasos completados. El administrador registrará el pago final.</p>
-    {% endif %}
-</div>
-{% endif %}
 
 </div>{# /steps #}
 
@@ -446,40 +411,30 @@
     </details>
     {% endif %}
 
-    {# Pago camionero (admin, solo si NO está en step 8) #}
-    {% if not done_all and session.get('rol') == 'admin' %}
+    {# Pago camionero (admin) #}
+    {% if session.get('rol') == 'admin' %}
     {% set _epc = viaje.estado_pago_camionero or 'Pendiente' %}
     <details class="detail-block">
         <summary class="detail-summary"><i class="bi bi-cash-coin"></i> Pago al camionero <span class="pago-estado-badge pago-estado-{{ _epc|lower|replace(' ','_') }}" style="margin-left:8px;">{{ _epc }}</span></summary>
         <div style="padding:14px;">
-            <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero">
+            {% if _epc == 'Pagado' %}
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px;background:#dcfce7;border-radius:8px;">
+                <i class="bi bi-check-circle-fill" style="color:#16a34a;"></i>
+                <span style="font-size:13px;font-weight:700;color:#065f46;">Pago registrado</span>
+                {% if viaje.fecha_pago_camionero %}<span style="font-size:12px;color:#6b7280;">{{ viaje.fecha_pago_camionero | fmt_fecha }}</span>{% endif %}
+            </div>
+            {% endif %}
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero" style="display:flex;gap:8px;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;align-items:end;">
-                    <div>
-                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Tipo de pago</label>
-                        <select name="tipo_pago" class="step-input" style="margin:0;">
-                            {% for tp in ['Efectivo','Compensación combustible','Mixto'] %}
-                            <option value="{{ tp }}"{{ ' selected' if viaje.tipo_pago_camionero == tp else '' }}>{{ tp }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Monto parcial</label>
-                        <input type="text" name="monto_parcial" value="{{ viaje.monto_pagado or '' }}" class="step-input" style="margin:0;" placeholder="0.00" inputmode="decimal">
-                    </div>
-                </div>
-                <div style="margin-bottom:10px;">
-                    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Observación</label>
-                    <input type="text" name="observacion" value="{{ viaje.observacion_pago or '' }}" class="step-input" style="margin:0;" placeholder="Nota sobre el pago">
-                </div>
-                {% if _epc != 'Pagado' %}
-                <div style="display:flex;gap:8px;">
-                    <button type="submit" name="accion" value="pagado" class="step-btn" style="background:#27ae60;flex:1;">Marcar Pagado</button>
-                    <button type="submit" name="accion" value="parcial" style="flex:1;padding:8px 12px;background:#fff8e6;color:#92400e;border:1px solid #fcd34d;border-radius:8px;font-weight:700;cursor:pointer;">Parcial</button>
-                </div>
-                {% else %}
-                <button type="submit" name="accion" value="revertir" style="background:none;border:1px solid #ddd;color:#888;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;" onclick="return confirm('¿Revertir pago?')">Revertir</button>
-                {% endif %}
+                <button type="submit" name="accion" value="pagado"
+                        style="flex:1;padding:10px;background:#16a34a;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                    <i class="bi bi-check2-circle"></i> Marcar como pagado
+                </button>
+                <button type="submit" name="accion" value="revertir"
+                        style="flex:1;padding:10px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;"
+                        onclick="return confirm('¿Marcar como pendiente de pago?')">
+                    <i class="bi bi-x-circle"></i> Pendiente de pago
+                </button>
             </form>
         </div>
     </details>
@@ -654,6 +609,37 @@
         </div>
         {% endfor %}
     </div>
+</div>
+{% endif %}
+
+{# ── CERRAR OPERACIÓN — ÚLTIMO BLOQUE ─────────────────────── #}
+{% if done_all and session.get('rol') == 'admin' %}
+{% set _epc_final = viaje.estado_pago_camionero or 'Pendiente' %}
+<div id="operacion" class="card" style="border:2px solid #16a34a;background:#f0fdf4;padding:20px;margin-top:16px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <i class="bi bi-check-circle-fill" style="color:#16a34a;font-size:1.8rem;"></i>
+        <div>
+            <strong style="font-size:16px;color:#065f46;display:block;">Operación completada</strong>
+            <span style="font-size:13px;color:#6b7280;">Todos los pasos del viaje han sido completados.</span>
+        </div>
+    </div>
+    {% if _epc_final == 'Pagado' %}
+    <div style="display:flex;align-items:center;gap:10px;padding:14px;background:#dcfce7;border-radius:10px;">
+        <i class="bi bi-check-circle-fill" style="color:#16a34a;font-size:1.2rem;"></i>
+        <div>
+            <span style="font-size:14px;font-weight:700;color:#065f46;display:block;">Pago al camionero registrado — Operación cerrada</span>
+            {% if viaje.fecha_pago_camionero %}<span style="font-size:12px;color:#6b7280;">{{ viaje.fecha_pago_camionero | fmt_fecha }}</span>{% endif %}
+        </div>
+    </div>
+    {% else %}
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" name="accion" value="pagado"
+                style="width:100%;padding:16px;background:#16a34a;color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:0.01em;">
+            <i class="bi bi-check2-circle"></i> Cerrar operación exitosamente
+        </button>
+    </form>
+    {% endif %}
 </div>
 {% endif %}
 

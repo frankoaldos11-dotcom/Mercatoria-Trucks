@@ -70,6 +70,26 @@ def _record_start_time():
     g.start_time = time.monotonic()
 
 
+@app.before_request
+def _validate_session_role():
+    """Re-valida el rol del usuario en BD para prevenir drift por cookies compartidas."""
+    if "user_id" not in session or "rol" not in session:
+        return
+    try:
+        con = conectar()
+        cur = con.cursor()
+        cur.execute("SELECT rol, activo FROM usuarios WHERE id = ?", (session["user_id"],))
+        row = cur.fetchone()
+        con.close()
+        if not row or not row["activo"]:
+            session.clear()
+            return
+        if row["rol"] != session["rol"]:
+            session["rol"] = row["rol"]
+    except Exception:
+        pass
+
+
 @app.after_request
 def set_security_headers(response):
     response.headers["X-Frame-Options"] = "SAMEORIGIN"

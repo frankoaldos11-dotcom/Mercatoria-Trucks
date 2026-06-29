@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="cam-chip">
                                     <span class="cam-chip-dot estado-{{ c.estado|lower|replace(' ', '-') }}"></span>
                                     {{ c.nombre }}
-                                    {% if session.get('rol') == 'admin' %}
+                                    {% if session.get('rol') in ['admin', 'operador'] %}
                                     <form method="POST"
                                           action="/admin/comercial/rutas/{{ r.id }}/camioneros/{{ c.id }}/desasociar"
                                           style="display:inline;"
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 {% endfor %}
                             </div>
 
-                            {% if session.get('rol') == 'admin' %}
+                            {% if session.get('rol') in ['admin', 'operador'] %}
                             <form method="POST"
                                   action="/admin/comercial/rutas/{{ r.id }}/camioneros/asignar"
                                   class="form-add-cam">

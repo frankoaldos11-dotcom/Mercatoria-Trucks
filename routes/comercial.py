@@ -229,10 +229,15 @@ def cotizar_view():
     from services.finanzas_service import get_configuracion
 
     cfg = get_configuracion()
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT id, nombre FROM catalogo_tipo_transporte WHERE activo = 1 ORDER BY nombre")
+    tipos_catalogo = cur.fetchall()
+    con.close()
     return render_template(
         "admin/comercial/cotizar.html",
         rutas=get_all_rutas(),
-        tipos=get_all_tipos_vehiculo(),
+        tipos=tipos_catalogo,
         clientes=get_all_clientes(),
         tarifa_km_global=cfg.get("tarifa_km", 1.5),
     )
