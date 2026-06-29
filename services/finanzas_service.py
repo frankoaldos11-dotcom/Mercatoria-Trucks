@@ -19,10 +19,18 @@ def guardar_configuracion(parametros: dict):
     con = conectar()
     cur = con.cursor()
     for clave, valor in parametros.items():
-        cur.execute(
-            f"UPDATE configuracion SET valor = {ph()} WHERE clave = {ph()}",
-            (float(valor), clave)
-        )
+        if USE_POSTGRES:
+            cur.execute(
+                "INSERT INTO configuracion (clave, valor) VALUES (%s, %s) "
+                "ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor",
+                (float(valor), clave)
+            )
+        else:
+            cur.execute(
+                "INSERT INTO configuracion (clave, valor) VALUES (?, ?) "
+                "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+                (float(valor), clave)
+            )
     con.commit()
     con.close()
 

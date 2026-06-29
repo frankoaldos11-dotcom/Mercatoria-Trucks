@@ -15,497 +15,412 @@
     {% set _pns.precio_val = "%.2f"|format(viaje.precio|float) %}
 {% endif %}
 
-{# ── HEADER ────────────────────────────────────────────────── #}
-<div class="page-header">
+{# ── Completion flags ──────────────────────────────────────── #}
+{% set done1 = viaje.camionero_id %}
+{% set done2 = _precio_confirmado %}
+{% set done3 = viaje.combustible and viaje.combustible|float > 0 %}
+{% set done4 = viaje.fecha_recogida %}
+{% set done5 = viaje.fecha_entrega %}
+{% set _doc_item = checklist_map.get('Documentación enviada', {}) %}
+{% set done6 = _doc_item.get('completado', false) %}
+{% set done7 = (viaje.estado or '')|lower == 'entregado' %}
+{% set done_all = done1 and done2 and done3 and done4 and done5 and done6 and done7 %}
+
+{# ── HEADER ───────────────────────────────────────────────── #}
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
     <div>
-        <a href="/admin/viajes" class="btn-volver">← Volver a viajes</a>
-        <h1>
-            Gestionar Viaje #{{ viaje.id }}
-            <button onclick="navigator.clipboard.writeText('{{ viaje.id }}');this.textContent='✓';setTimeout(()=>this.textContent='#',1200);return false;"
-                    title="Copiar ID"
-                    style="background:none;border:1px solid #ddd;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;color:#888;margin-left:6px;vertical-align:middle;">
-                #
-            </button>
-        </h1>
-        <p class="subtitulo">Centro operativo del viaje</p>
+        <a href="/admin/viajes" style="font-size:12px;color:#E86A2C;text-decoration:none;font-weight:600;">← Volver a viajes</a>
+        <h1 style="margin:4px 0 2px;font-size:20px;">Viaje #{{ viaje.id }}</h1>
+        <p style="margin:0;color:#888;font-size:13px;">{{ viaje.origen or '—' }} → {{ viaje.destino or '—' }}</p>
     </div>
-    <div class="estado-badge">{{ viaje.estado }}</div>
-</div>
-
-{# ── RESUMEN RÁPIDO ────────────────────────────────────────── #}
-<div class="grid-resumen">
-    <div class="card resumen-card">
-        <span>Cliente</span>
-        {% if cliente_info and cliente_info.nombre %}
-        <strong>{{ cliente_info.nombre }}</strong>
-        <small style="display:block;color:#888;font-size:11px;margin-top:2px;">
-            {% if cliente_info.telefono %}<i class="bi bi-telephone"></i> {{ cliente_info.telefono }}{% endif %}
-            {% if cliente_info.empresa %} · {{ cliente_info.empresa }}{% endif %}
-        </small>
-        {% else %}
-        <strong>{{ viaje.cliente if viaje.cliente else "Sin cliente" }}</strong>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        {% if viaje.prioridad and viaje.prioridad != 'Normal' %}
+        <span style="padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;
+              background:{{ '#fff8e6' if viaje.prioridad=='Alta' else '#fef2f2' }};
+              color:{{ '#92400e' if viaje.prioridad=='Alta' else '#991b1b' }};
+              border:1px solid {{ '#fcd34d' if viaje.prioridad=='Alta' else '#fca5a5' }};">
+            {{ viaje.prioridad }}
+        </span>
         {% endif %}
-    </div>
-    <div class="card resumen-card">
-        <span>Origen</span>
-        <strong>{{ viaje.origen if viaje.origen else "Sin origen" }}</strong>
-    </div>
-    <div class="card resumen-card">
-        <span>Destino</span>
-        <strong>{{ viaje.destino if viaje.destino else "Sin destino" }}</strong>
-    </div>
-    <div class="card resumen-card">
-        <span>Camionero</span>
-        <strong>{{ viaje.camionero_nombre if viaje.camionero_nombre else "Sin asignar" }}</strong>
+        <span style="padding:5px 14px;border-radius:999px;background:#E86A2C;color:#fff;font-weight:700;font-size:12px;text-transform:uppercase;">
+            {{ viaje.estado }}
+        </span>
     </div>
 </div>
 
-{# ── BLOQUE DE ALERTAS ─────────────────────────────────────── #}
-{% set _miss_cam    = not viaje.camionero_id and not viaje.camionero_nombre %}
-{% set _miss_veh    = not viaje.vehiculo_id %}
-{% set _miss_precio = not _precio_confirmado %}
-{% set _miss_pago   = not viaje.pago_camionero or viaje.pago_camionero|float == 0 %}
-{% set _miss_comb   = not viaje.combustible or viaje.combustible|float == 0 %}
-{% set _miss_ext    = not viaje.fecha_recogida %}
-{% set _miss_desc   = not viaje.fecha_entrega %}
-{% if _miss_cam or _miss_veh or _miss_precio or _miss_pago or _miss_comb or _miss_ext or _miss_desc %}
-<div class="alertas-bloque">
-    {% if _miss_cam %}<div class="alerta-item alerta-roja" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-triangle-fill"></i> Falta: Camionero asignado</div>{% endif %}
-    {% if _miss_veh %}<div class="alerta-item alerta-roja" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-triangle-fill"></i> Falta: Vehículo</div>{% endif %}
-    {% if _miss_precio %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Precio cliente</div>{% endif %}
-    {% if _miss_pago %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Pago camionero</div>{% endif %}
-    {% if _miss_comb %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Combustible asignado</div>{% endif %}
-    {% if _miss_ext %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Fecha de extracción</div>{% endif %}
-    {% if _miss_desc %}<div class="alerta-item alerta-amarilla" style="cursor:pointer;" onclick="activarTab('operacion',document.getElementById('btn-operacion'))" title="Ir a Operación"><i class="bi bi-exclamation-circle-fill"></i> Falta: Fecha de descarga</div>{% endif %}
+{% if error %}
+<div style="background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
 </div>
 {% endif %}
 
-{# ── TAB NAV ───────────────────────────────────────────────── #}
-<div class="tab-nav">
-    <button class="tab-btn tab-activo" onclick="activarTab('info',this)" id="btn-info">
-        <i class="bi bi-info-circle"></i> Información
-    </button>
-    <button class="tab-btn" onclick="activarTab('operacion',this)" id="btn-operacion">
-        <i class="bi bi-gear"></i> Operación
-    </button>
-</div>
+{# ── INFO PANEL (always visible, read-only) ───────────────── #}
+<div class="card" style="padding:16px;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">
 
-{# ════════════════════════════════════════════════════════════
-   TAB 1 — INFORMACIÓN
-   ════════════════════════════════════════════════════════════ #}
-<div id="tab-info" class="tab-panel">
-
-    {# Timeline #}
-    {% set _pasos_lista = ['Solicitado', 'Asignado', 'En ruta', 'Entregado'] %}
-    {% if viaje.estado == 'Asignado' %}{% set _paso_idx = 1 %}
-    {% elif viaje.estado == 'En ruta' %}{% set _paso_idx = 2 %}
-    {% elif viaje.estado == 'Entregado' %}{% set _paso_idx = 3 %}
-    {% elif viaje.estado == 'Cancelado' %}{% set _paso_idx = -1 %}
-    {% else %}{% set _paso_idx = 0 %}{% endif %}
-
-    <div class="card bloque timeline-card">
-        {% if _paso_idx == -1 %}
-        <div style="display:flex;align-items:center;gap:10px;">
-            <span class="tl-dot-cancel"><i class="bi bi-x-lg"></i></span>
-            <span style="font-size:13px;font-weight:700;color:#c0392b;">Viaje cancelado</span>
-        </div>
-        {% else %}
-        <div class="tl-row">
-            {% for i in range(4) %}
-            {% if i < _paso_idx %}{% set _cls = 'tl-done' %}
-            {% elif i == _paso_idx %}{% set _cls = 'tl-active' %}
-            {% else %}{% set _cls = 'tl-future' %}{% endif %}
-            <div class="tl-step {{ _cls }}">
-                <div class="tl-node">
-                    {% if i < _paso_idx %}<i class="bi bi-check-lg"></i>
-                    {% elif i == 0 %}<i class="bi bi-send-fill"></i>
-                    {% elif i == 1 %}<i class="bi bi-person-check-fill"></i>
-                    {% elif i == 2 %}<i class="bi bi-truck-front-fill"></i>
-                    {% else %}<i class="bi bi-check-circle-fill"></i>{% endif %}
-                </div>
-                <span class="tl-lbl">{{ _pasos_lista[i] }}</span>
-            </div>
-            {% if i < 3 %}
-            <div class="tl-connector {% if i < _paso_idx %}tl-connector-done{% endif %}"></div>
-            {% endif %}
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-
-    {% if error %}
-    <div class="alerta-error">
-        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
-    </div>
-    {% endif %}
-
-    {# Datos completos del viaje #}
-    <div class="card bloque">
-        <h2>Datos del viaje</h2>
-        <div class="detalle-grid">
-
-            <div>
-                <label>ID viaje</label>
-                <p>#{{ viaje.id }}</p>
-            </div>
-
-            <div>
-                <label>Referencia cliente</label>
-                <p>{{ viaje.referencia_cliente or "—" }}</p>
-            </div>
-
-            <div>
-                <label>Cliente</label>
-                <p>
-                    {% if cliente_info %}{{ cliente_info.nombre or viaje.cliente or "—" }}
-                    {% set _cat = cliente_info.categoria or 'Normal' %}
-                    {% if _cat != 'Normal' %}<br><span class="badge-cat badge-cat-{{ _cat|lower|replace('é','e')|replace('ó','o') }}">{{ _cat }}</span>{% endif %}
-                    {% else %}{{ viaje.cliente or "—" }}{% endif %}
-                </p>
-            </div>
-
-            <div>
-                <label>Origen</label>
-                <p>{{ viaje.origen or "—" }}</p>
-            </div>
-
-            <div>
-                <label>Destino</label>
-                <p>{{ viaje.destino or "—" }}</p>
-            </div>
-
-            <div>
-                <label>Ruta</label>
-                <p>{{ ruta_display or "—" }}</p>
-            </div>
-
-            <div>
-                <label>Tipo de carga</label>
-                <p>{{ viaje.tipo_carga or obs_parsed.tipo_carga or "—" }}</p>
-            </div>
-
-            <div>
-                <label>Tipo de transporte</label>
-                <p>{{ viaje.tipo_transporte or "—" }}</p>
-            </div>
-
-            <div>
-                <label>Peso (ton)</label>
-                <p>{{ viaje.peso_toneladas if viaje.peso_toneladas else "—" }}</p>
-            </div>
-
-            <div>
-                <label>N° contenedor</label>
-                <p>{{ viaje.numero_contenedor or "—" }}</p>
-            </div>
-
-            <div>
-                <label>Cantidad contenedores</label>
-                <p>{{ viaje.cantidad_contenedores if viaje.cantidad_contenedores else "—" }}</p>
-            </div>
-
-            <div>
-                <label>Fecha solicitud</label>
-                <p>{{ viaje.fecha_creacion | fmt_fecha if viaje.fecha_creacion else "—" }}</p>
-            </div>
-
-            <div>
-                <label>Fecha extracción</label>
-                <p>{{ viaje.fecha_recogida | fmt_fecha if viaje.fecha_recogida else "—" }}</p>
-            </div>
-
-            <div>
-                <label>Fecha descarga</label>
-                <p>{{ viaje.fecha_entrega | fmt_fecha if viaje.fecha_entrega else "—" }}</p>
-            </div>
-
-            <div>
-                <label>Camionero asignado</label>
-                <p>{{ viaje.camionero_nombre or "Sin asignar" }}</p>
-            </div>
-
-            <div>
-                <label>Vehículo</label>
-                <p>{% if viaje.vehiculo_id %}{% if viaje.vehiculo_placa %}{{ viaje.vehiculo_placa }}{% else %}#{{ viaje.vehiculo_id }}{% endif %}{% else %}—{% endif %}</p>
-            </div>
-
-            <div>
-                <label>Precio cliente</label>
-                {% if _precio_confirmado %}
-                <p>${{ _pns.precio_val }}</p>
-                {% else %}
-                <p style="color:#e74c3c;font-size:12px;">Pendiente</p>
-                {% endif %}
-            </div>
-
-            <div>
-                <label>Pago camionero</label>
-                {% if viaje.pago_camionero and viaje.pago_camionero|float > 0 %}
-                <p>${{ "%.2f"|format(viaje.pago_camionero|float) }}</p>
-                {% else %}
-                <p style="color:#e74c3c;font-size:12px;">Sin registrar</p>
-                {% endif %}
-            </div>
-
-            <div>
-                <label>Combustible asignado</label>
-                {% if viaje.combustible and viaje.combustible|float > 0 %}
-                <p>${{ "%.2f"|format(viaje.combustible|float) }}</p>
-                {% else %}
-                <p style="color:#e74c3c;font-size:12px;">Sin registrar</p>
-                {% endif %}
-            </div>
-
-        </div>
-
-        {% if viaje.observaciones_operativas %}
-        <div style="background:#f0f7ff;border-left:3px solid #2563EB;border-radius:6px;padding:9px 12px;margin-top:14px;">
-            <div style="font-size:10px;color:#2563EB;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Obs. operativas</div>
-            <div style="font-size:13px;white-space:pre-line;">{{ viaje.observaciones_operativas }}</div>
-        </div>
-        {% endif %}
-
-        {% if viaje.observaciones %}
-        <div class="observaciones" style="margin-top:10px;">
-            <div style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px;">Notas adicionales</div>
-            {{ viaje.observaciones }}
-        </div>
-        {% elif obs_parsed.notas and not viaje.tipo_carga %}
-        <div class="observaciones" style="margin-top:10px;">{{ obs_parsed.notas }}</div>
-        {% endif %}
-    </div>
-
-    {# Datos del cliente #}
-    {% if cliente_info %}
-    <div class="card bloque">
-        <h2><i class="bi bi-person-circle" style="color:#E86A2C;margin-right:5px;"></i>Datos del cliente</h2>
-        {% set _cat = cliente_info.categoria or 'Normal' %}
-        {% if _cat != 'Normal' %}
-        <div style="margin-bottom:10px;">
-            <span class="badge-cat badge-cat-{{ _cat|lower|replace('é','e')|replace('ó','o') }}">{{ _cat }}</span>
-        </div>
-        {% endif %}
-        <table style="width:100%;font-size:12px;border-collapse:collapse;">
-            <tr><td style="color:#888;padding:5px 0;width:30%;font-size:11px;text-transform:uppercase;">Nombre</td><td style="font-weight:700;">{{ cliente_info.nombre or "—" }}</td></tr>
-            <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Teléfono</td><td style="font-weight:600;">
+        <div>
+            <div class="info-label">Cliente</div>
+            <div class="info-val">
+                {% if cliente_info and cliente_info.nombre %}
+                {{ cliente_info.nombre }}
                 {% if cliente_info.telefono %}
+                <br>
                 {% set _tel = cliente_info.telefono|replace(' ','')|replace('-','') %}
                 {% set _wa = ('53' ~ _tel) if not _tel.startswith('53') and not _tel.startswith('+') else _tel.lstrip('+') %}
-                <a href="https://wa.me/{{ _wa }}" target="_blank" style="color:#25D366;text-decoration:none;font-weight:600;"><i class="bi bi-whatsapp"></i> {{ cliente_info.telefono }}</a>
-                {% else %}—{% endif %}
-            </td></tr>
-            <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Empresa</td><td style="font-weight:600;">{{ cliente_info.empresa or "—" }}</td></tr>
-            <tr><td style="color:#888;padding:5px 0;font-size:11px;text-transform:uppercase;">Email</td><td style="font-weight:600;word-break:break-all;">{{ cliente_info.email or viaje.cliente or "—" }}</td></tr>
-        </table>
+                <a href="https://wa.me/{{ _wa }}" target="_blank" style="color:#25D366;font-size:12px;text-decoration:none;"><i class="bi bi-whatsapp"></i> {{ cliente_info.telefono }}</a>
+                {% endif %}
+                {% else %}
+                {{ viaje.cliente or '—' }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div>
+            <div class="info-label">Ruta</div>
+            <div class="info-val">{{ ruta_display or (viaje.origen ~ ' → ' ~ viaje.destino) or '—' }}</div>
+        </div>
+
+        <div>
+            <div class="info-label">Tipo de carga</div>
+            <div class="info-val">{{ viaje.tipo_carga or obs_parsed.tipo_carga or '—' }}</div>
+        </div>
+
+        <div>
+            <div class="info-label">Camionero</div>
+            <div class="info-val">
+                {% if viaje.camionero_nombre %}
+                {{ viaje.camionero_nombre }}
+                {% if viaje.camionero_telefono %}
+                <br>
+                {% set _tct = viaje.camionero_telefono|replace(' ','')|replace('-','') %}
+                <a href="https://wa.me/53{{ _tct }}" target="_blank" style="color:#25D366;font-size:12px;text-decoration:none;"><i class="bi bi-whatsapp"></i> {{ viaje.camionero_telefono }}</a>
+                {% endif %}
+                {% else %}<span style="color:#e74c3c;font-size:12px;">Sin asignar</span>{% endif %}
+            </div>
+        </div>
+
+        <div>
+            <div class="info-label">Vehículo</div>
+            <div class="info-val">{{ viaje.vehiculo_placa or ('—' if not viaje.vehiculo_id else '#' ~ viaje.vehiculo_id) }}</div>
+        </div>
+
+        <div>
+            <div class="info-label">Precio cliente</div>
+            <div class="info-val">{% if _precio_confirmado %}<span style="color:#27ae60;font-weight:800;">${{ _pns.precio_val }}</span>{% else %}<span style="color:#e74c3c;font-size:12px;">Pendiente</span>{% endif %}</div>
+        </div>
+
+        <div>
+            <div class="info-label">Combustible</div>
+            <div class="info-val">{% if done3 %}<span style="color:#27ae60;font-weight:800;">${{ "%.2f"|format(viaje.combustible|float) }}</span>{% else %}<span style="color:#e74c3c;font-size:12px;">Pendiente</span>{% endif %}</div>
+        </div>
+
+        <div>
+            <div class="info-label">Fecha extracción</div>
+            <div class="info-val">{{ viaje.fecha_recogida | fmt_fecha if viaje.fecha_recogida else '—' }}</div>
+        </div>
+
+        <div>
+            <div class="info-label">Fecha descarga</div>
+            <div class="info-val">{{ viaje.fecha_entrega | fmt_fecha if viaje.fecha_entrega else '—' }}</div>
+        </div>
+
     </div>
+</div>
+
+{# ── STEPS ────────────────────────────────────────────────── #}
+<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+
+{# STEP 1 — Asignar camionero #}
+{% if done1 %}
+<div class="step-done">
+    <i class="bi bi-check-circle-fill step-check"></i>
+    <div>
+        <strong>Camionero asignado</strong>
+        <span class="step-done-info"> · {{ viaje.camionero_nombre }}{% if viaje.vehiculo_placa %} — {{ viaje.vehiculo_placa }}{% endif %}</span>
+    </div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">1</span> Asignar camionero y vehículo</div>
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select name="camionero" class="step-input" required style="flex:1;min-width:200px;">
+            <option value="">— Seleccionar camionero —</option>
+            {% for c in camioneros %}
+            <option value="{{ c.id }}">{{ c.nombre }}{% if c.vehiculo_matricula %} ({{ c.vehiculo_matricula }}){% endif %}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="step-btn">Asignar</button>
+    </form>
+</div>
+{% endif %}
+
+{# STEP 2 — Confirmar precio #}
+{% if done2 %}
+<div class="step-done">
+    <i class="bi bi-check-circle-fill step-check"></i>
+    <div><strong>Precio cliente confirmado</strong><span class="step-done-info"> · ${{ _pns.precio_val }}</span></div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">2</span> Confirmar precio cliente</div>
+    {% if liquidacion and liquidacion.precio_cliente > 0 %}
+    <p style="font-size:12px;color:#888;margin:8px 0 4px;">Precio calculado: <strong>${{ "%.2f"|format(liquidacion.precio_cliente) }}</strong></p>
+    {% endif %}
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/confirmar-precio" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="precio_cliente" class="step-input"
+               value="{{ '%.2f'|format(liquidacion.precio_cliente) if liquidacion and liquidacion.precio_cliente > 0 else '' }}"
+               placeholder="0.00" inputmode="decimal" style="width:120px;">
+        <button type="submit" class="step-btn">Confirmar</button>
+    </form>
+</div>
+{% endif %}
+
+{# STEP 3 — Confirmar combustible #}
+{% if done3 %}
+<div class="step-done">
+    <i class="bi bi-check-circle-fill step-check"></i>
+    <div><strong>Combustible confirmado</strong><span class="step-done-info"> · ${{ "%.2f"|format(viaje.combustible|float) }}</span></div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">3</span> Confirmar combustible asignado</div>
+    {% if liquidacion and liquidacion.combustible > 0 %}
+    <p style="font-size:12px;color:#888;margin:8px 0 4px;">Estimado por liquidación: <strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong></p>
+    {% endif %}
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-combustible" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="combustible" class="step-input"
+               value="{{ '%.2f'|format(liquidacion.combustible) if liquidacion and liquidacion.combustible > 0 else '' }}"
+               placeholder="0.00" inputmode="decimal" style="width:120px;">
+        <button type="submit" class="step-btn">Confirmar</button>
+    </form>
+</div>
+{% endif %}
+
+{# STEP 4 — Fecha de extracción #}
+{% if done4 %}
+<div class="step-done">
+    <i class="bi bi-check-circle-fill step-check"></i>
+    <div><strong>Fecha de extracción</strong><span class="step-done-info"> · {{ viaje.fecha_recogida | fmt_fecha }}</span></div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">4</span> Fecha de extracción (recogida de carga)</div>
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="date" name="fecha_recogida" class="step-input" required>
+        <button type="submit" class="step-btn">Guardar</button>
+    </form>
+</div>
+{% endif %}
+
+{# STEP 5 — Fecha de descarga #}
+{% if done5 %}
+<div class="step-done">
+    <i class="bi bi-check-circle-fill step-check"></i>
+    <div><strong>Fecha de descarga</strong><span class="step-done-info"> · {{ viaje.fecha_entrega | fmt_fecha }}</span></div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">5</span> Fecha de descarga</div>
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="date" name="fecha_entrega" class="step-input" required>
+        <button type="submit" class="step-btn">Guardar</button>
+    </form>
+</div>
+{% endif %}
+
+{# STEP 6 — Enviar documentación #}
+{% if done6 %}
+<div class="step-done">
+    <i class="bi bi-check-circle-fill step-check"></i>
+    <div><strong>Documentación enviada</strong></div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">6</span> Enviar documentación al camionero</div>
+    <p style="font-size:12px;color:#888;margin:8px 0 10px;">Orden de carga, contrato, instrucciones de ruta.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        {% if orden_carga_ok %}
+        <a href="/admin/viaje/{{ viaje.id }}/pdf" target="_blank"
+           style="padding:7px 14px;background:#fff;border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#555;text-decoration:none;">
+            <i class="bi bi-file-earmark-text"></i> Ver Orden de Carga
+        </a>
+        {% endif %}
+        {% if _doc_item %}
+        <input type="hidden" id="cl-csrf-doc" value="{{ csrf_token() }}">
+        <button id="btn-doc-enviada"
+                onclick="marcarDocEnviada({{ _doc_item.get('id', '') }}, this); return false;"
+                class="step-btn">
+            <i class="bi bi-send"></i> Marcar como enviada
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{# STEP 7 — Confirmar entrega #}
+{% if done7 %}
+<div class="step-done">
+    <i class="bi bi-check-circle-fill step-check"></i>
+    <div><strong>Entrega confirmada</strong><span class="step-done-info"> · Estado: Entregado</span></div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">7</span> Confirmar entrega</div>
+    <p style="font-size:12px;color:#888;margin:8px 0 10px;">Confirmar que la carga fue entregada en destino.</p>
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
+          onsubmit="return confirm('¿Confirmar entrega? Esto cambiará el estado a Entregado.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="estado" value="Entregado">
+        <button type="submit" class="step-btn">
+            <i class="bi bi-check2-circle"></i> Confirmar entrega
+        </button>
+    </form>
+</div>
+{% endif %}
+
+{# STEP 8 — Cerrar operación #}
+{% if done_all %}
+<div class="card" style="border:2px solid #27ae60;background:#f0fdf4;padding:16px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <i class="bi bi-check-circle-fill" style="color:#27ae60;font-size:1.4rem;"></i>
+        <strong style="font-size:15px;color:#065f46;">Operación completada — registrar pago</strong>
+    </div>
+    {% if session.get('rol') == 'admin' %}
+    {% set _epc = viaje.estado_pago_camionero or 'Pendiente' %}
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <span class="pago-estado-badge pago-estado-{{ _epc|lower|replace(' ','_') }}">Pago: {{ _epc }}</span>
+        {% if _epc == 'Pagado' and viaje.fecha_pago_camionero %}
+        <span style="font-size:12px;color:#888;">{{ viaje.fecha_pago_camionero | fmt_fecha }}</span>
+        {% endif %}
+    </div>
+    {% if _epc != 'Pagado' %}
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select name="tipo_pago" class="step-input" style="width:160px;">
+            {% for tp in ['Efectivo','Compensación combustible','Mixto'] %}
+            <option value="{{ tp }}">{{ tp }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" name="accion" value="pagado" class="step-btn" style="background:#27ae60;">
+            <i class="bi bi-check2-circle"></i> Marcar pagado y cerrar
+        </button>
+    </form>
+    {% else %}
+    <p style="font-size:13px;color:#065f46;margin:0;font-weight:600;">Pago al camionero registrado. Operación cerrada.</p>
+    {% endif %}
+    {% else %}
+    <p style="font-size:13px;color:#065f46;margin:0;">Todos los pasos completados. El administrador registrará el pago final.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+</div>{# /steps #}
+
+{# ── DETAILS ACCORDION ─────────────────────────────────────── #}
+<div style="display:flex;flex-direction:column;gap:10px;">
+
+    {# Cambiar estado #}
+    {% if estados_validos %}
+    <details class="detail-block">
+        <summary class="detail-summary"><i class="bi bi-arrow-repeat"></i> Cambiar estado</summary>
+        <div style="padding:14px;">
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
+                  onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+                    <select name="estado" class="step-input" required style="flex:1;min-width:180px;">
+                        {% for e in estados_validos %}
+                        <option value="{{ e }}">{{ e }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="step-btn">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </details>
     {% endif %}
 
-    {# Historial de estados #}
-    <div class="card bloque">
-        <h2><i class="bi bi-clock-history" style="color:#E86A2C;margin-right:5px;"></i>Historial de estados</h2>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-            {% set estados_hist = [
-                ("Solicitado",  viaje.fecha_creacion),
-                ("Asignado",    viaje.fecha_asignacion),
-                ("En ruta",     viaje.fecha_recogida),
-                ("Entregado",   viaje.fecha_entrega),
-            ] %}
-            {% for nombre_estado, fecha in estados_hist %}
-            {% if fecha %}
-            <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
-                <div style="width:10px;height:10px;border-radius:50%;background:#E86A2C;flex-shrink:0;"></div>
-                <span style="font-weight:700;min-width:90px;">{{ nombre_estado }}</span>
-                <span style="color:#888;">{{ fecha | fmt_fecha }}</span>
-            </div>
-            {% endif %}
-            {% endfor %}
-            {% if not viaje.fecha_creacion %}
-            <p style="color:#999;font-size:12px;margin:0;">Sin historial registrado.</p>
-            {% endif %}
-        </div>
-    </div>
-
     {# Liquidación financiera #}
-    <div class="card bloque">
-        <h2>Liquidación financiera</h2>
-        {% if liquidacion %}
-        {% if liquidacion.minimo_aplicado %}
-        <div class="liq-aviso">
-            <i class="bi bi-info-circle"></i>
-            Km mínimo garantizado aplicado ({{ liquidacion.km_liquidable|int }} km en lugar de {{ liquidacion.km_real|int }} km reales)
-        </div>
-        {% endif %}
-        <div class="economia-grid">
-            <div class="economia-item">
-                <span>Km liquidables</span>
-                <strong>{{ liquidacion.km_liquidable|int }} km</strong>
-            </div>
-            <div class="economia-item">
-                <span>Precio cliente</span>
-                <strong>${{ "%.2f"|format(liquidacion.precio_cliente) }}</strong>
-            </div>
-            <div class="economia-item">
-                <span>Combustible</span>
-                <strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong>
-            </div>
-            <div class="economia-item">
-                <span>Pago camionero</span>
-                <strong>${{ "%.2f"|format(liquidacion.pago_camionero) }}</strong>
-            </div>
-            {% if session.get('rol') == 'admin' %}
-            <div class="economia-item">
-                <span>Comisión Mercatoria ({{ liquidacion.config.comision_mercatoria_porcentaje|int }}%)</span>
-                <strong>${{ "%.2f"|format(liquidacion.comision_mercatoria) }}</strong>
-            </div>
-            <div class="economia-item beneficio">
-                <span>Utilidad Mercatoria</span>
-                <strong>${{ "%.2f"|format(liquidacion.utilidad_mercatoria) }}</strong>
+    {% if liquidacion %}
+    <details class="detail-block">
+        <summary class="detail-summary"><i class="bi bi-calculator"></i> Liquidación financiera</summary>
+        <div style="padding:14px;">
+            {% if liquidacion.minimo_aplicado %}
+            <div class="liq-aviso">
+                <i class="bi bi-info-circle"></i>
+                Se aplica el mínimo de {{ liquidacion.km_liquidable|int }} km para esta liquidación porque la ruta tiene menos km registrados ({{ liquidacion.km_real|int }} km reales).
             </div>
             {% endif %}
-        </div>
-        {% else %}
-        <p class="sin-datos">No se pudo calcular la liquidación para este viaje.</p>
-        {% endif %}
-    </div>
-
-    {# Notas internas #}
-    <div class="card bloque">
-        <h2><i class="bi bi-journal-text" style="color:#E86A2C;margin-right:5px;"></i>Notas internas</h2>
-        <form method="POST" action="/admin/viaje/{{ viaje.id }}/nota"
-              style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-start;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <textarea name="texto" rows="2" placeholder="Añadir nota interna (llamada, acuerdo, incidencia...)"
-                      style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;"
-                      required></textarea>
-            <button type="submit"
-                    style="padding:8px 14px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
-                <i class="bi bi-plus-lg"></i> Añadir
-            </button>
-        </form>
-        {% if notas %}
-        <div style="display:flex;flex-direction:column;gap:8px;">
-            {% for nota in notas %}
-            <div style="background:#f7f7f7;border-radius:8px;padding:10px 12px;border-left:3px solid #E86A2C;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                    <span style="font-size:11px;font-weight:700;color:#E86A2C;">{{ nota.usuario }}</span>
-                    <span style="font-size:11px;color:#999;">{{ nota.fecha | fmt_fecha }}</span>
-                </div>
-                <p style="margin:0;font-size:13px;color:#333;white-space:pre-line;">{{ nota.texto }}</p>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p style="color:#999;font-size:13px;margin:0;">Sin notas internas para este viaje.</p>
-        {% endif %}
-    </div>
-
-    {# Incidencias (lectura) #}
-    <div class="card bloque">
-        <h2><i class="bi bi-exclamation-triangle" style="color:#E86A2C;margin-right:5px;"></i>Incidencias</h2>
-        {% if incidencias %}
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <thead>
-                <tr style="border-bottom:1px solid #E5E7EB;text-align:left;">
-                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Categoría</th>
-                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Descripción</th>
-                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Usuario</th>
-                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Fecha</th>
-                    <th style="padding:5px 8px;font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:600;">Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for inc in incidencias %}
-                <tr style="border-bottom:1px solid #F3F4F6;">
-                    <td style="padding:6px 8px;"><span class="inc-cat-badge inc-cat-{{ inc.categoria|lower|replace(' ','_')|replace('é','e')|replace('ó','o')|replace('á','a') }}">{{ inc.categoria }}</span></td>
-                    <td style="padding:6px 8px;color:#374151;">{{ inc.descripcion }}</td>
-                    <td style="padding:6px 8px;font-size:11px;color:#9CA3AF;">{{ inc.usuario or '—' }}</td>
-                    <td style="padding:6px 8px;font-size:11px;color:#9CA3AF;white-space:nowrap;">{{ inc.fecha_hora | fmt_fecha if inc.fecha_hora else '—' }}</td>
-                    <td style="padding:6px 8px;"><span class="inc-estado-badge inc-estado-{{ inc.estado|lower|replace(' ','_') }}">{{ inc.estado }}</span></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p style="color:#9CA3AF;font-size:13px;margin:0;">Sin incidencias registradas.</p>
-        {% endif %}
-    </div>
-
-</div>{# /tab-info #}
-
-{# ════════════════════════════════════════════════════════════
-   TAB 2 — OPERACIÓN
-   ════════════════════════════════════════════════════════════ #}
-<div id="tab-operacion" class="tab-panel" style="display:none;">
-    <div class="op-grid">
-
-        {# ── Checklist operativo ── #}
-        <div class="card bloque cl-card">
-            {% set cl_ns = namespace(done=0) %}
-            {% for item in checklist %}
-                {% if item.completado or item.item in auto_completados %}
-                    {% set cl_ns.done = cl_ns.done + 1 %}
+            <div class="economia-grid">
+                <div class="economia-item"><span>Km liquidables</span><strong>{{ liquidacion.km_liquidable|int }} km</strong></div>
+                <div class="economia-item"><span>Precio cliente</span><strong>${{ "%.2f"|format(liquidacion.precio_cliente) }}</strong></div>
+                <div class="economia-item"><span>Combustible</span><strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong></div>
+                <div class="economia-item"><span>Pago camionero</span><strong>${{ "%.2f"|format(liquidacion.pago_camionero) }}</strong></div>
+                {% if session.get('rol') == 'admin' %}
+                <div class="economia-item"><span>Comisión Mercatoria ({{ liquidacion.config.comision_mercatoria_porcentaje|int }}%)</span><strong>${{ "%.2f"|format(liquidacion.comision_mercatoria) }}</strong></div>
+                <div class="economia-item beneficio"><span>Utilidad Mercatoria</span><strong>${{ "%.2f"|format(liquidacion.utilidad_mercatoria) }}</strong></div>
                 {% endif %}
-            {% endfor %}
-
-            <div class="cl-header">
-                <h2 style="margin:0;"><i class="bi bi-check2-square" style="color:#E86A2C;margin-right:6px;"></i>Checklist operativo</h2>
-                <span class="cl-progreso" id="cl-counter">
-                    {{ cl_ns.done }}/{{ checklist | length }} completados
-                </span>
             </div>
-
-            <div class="cl-barra-wrap">
-                <div class="cl-barra" id="cl-barra"
-                     style="width:{{ ((cl_ns.done / checklist|length * 100) if checklist else 0)|int }}%"></div>
-            </div>
-
-            <input type="hidden" id="cl-csrf" value="{{ csrf_token() }}">
-            <input type="hidden" id="cl-viaje-id" value="{{ viaje.id }}">
-
-            <ul class="cl-lista">
-                {% for item in checklist %}
-                {% set _auto = item.item in auto_completados %}
-                {% set _activo = item.completado or _auto %}
-                <li class="cl-row {% if _activo %}cl-done{% endif %}" id="cl-row-{{ item.id }}">
-                    {% if _auto %}
-                    <button class="cl-toggle cl-auto" disabled
-                            title="Completado automáticamente por el sistema">
-                        <i class="bi bi-check-square-fill" style="color:#16a34a;"></i>
-                    </button>
-                    {% else %}
-                    <button class="cl-toggle"
-                            onclick="toggleChecklist({{ item.id }}, this)"
-                            title="{% if item.completado %}Desmarcar{% else %}Marcar como completado{% endif %}">
-                        {% if item.completado %}
-                        <i class="bi bi-check-square-fill"></i>
-                        {% else %}
-                        <i class="bi bi-square"></i>
-                        {% endif %}
-                    </button>
-                    {% endif %}
-                    <span class="cl-label">{{ item.item }}</span>
-                    {% if _auto %}
-                    <span class="cl-meta" style="color:#16a34a;font-size:10px;">auto</span>
-                    {% elif item.completado and item.completado_por %}
-                    <span class="cl-meta">{{ item.completado_por }}{% if item.fecha_completado %} · {{ item.fecha_completado | fmt_fecha }}{% endif %}</span>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
         </div>
+    </details>
+    {% endif %}
 
-        {# Prioridad #}
-        <div class="card bloque">
-            <h2>Prioridad</h2>
+    {# Pago camionero (admin, solo si NO está en step 8) #}
+    {% if not done_all and session.get('rol') == 'admin' %}
+    {% set _epc = viaje.estado_pago_camionero or 'Pendiente' %}
+    <details class="detail-block">
+        <summary class="detail-summary"><i class="bi bi-cash-coin"></i> Pago al camionero <span class="pago-estado-badge pago-estado-{{ _epc|lower|replace(' ','_') }}" style="margin-left:8px;">{{ _epc }}</span></summary>
+        <div style="padding:14px;">
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;align-items:end;">
+                    <div>
+                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Tipo de pago</label>
+                        <select name="tipo_pago" class="step-input" style="margin:0;">
+                            {% for tp in ['Efectivo','Compensación combustible','Mixto'] %}
+                            <option value="{{ tp }}"{{ ' selected' if viaje.tipo_pago_camionero == tp else '' }}>{{ tp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Monto parcial</label>
+                        <input type="text" name="monto_parcial" value="{{ viaje.monto_pagado or '' }}" class="step-input" style="margin:0;" placeholder="0.00" inputmode="decimal">
+                    </div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Observación</label>
+                    <input type="text" name="observacion" value="{{ viaje.observacion_pago or '' }}" class="step-input" style="margin:0;" placeholder="Nota sobre el pago">
+                </div>
+                {% if _epc != 'Pagado' %}
+                <div style="display:flex;gap:8px;">
+                    <button type="submit" name="accion" value="pagado" class="step-btn" style="background:#27ae60;flex:1;">Marcar Pagado</button>
+                    <button type="submit" name="accion" value="parcial" style="flex:1;padding:8px 12px;background:#fff8e6;color:#92400e;border:1px solid #fcd34d;border-radius:8px;font-weight:700;cursor:pointer;">Parcial</button>
+                </div>
+                {% else %}
+                <button type="submit" name="accion" value="revertir" style="background:none;border:1px solid #ddd;color:#888;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;" onclick="return confirm('¿Revertir pago?')">Revertir</button>
+                {% endif %}
+            </form>
+        </div>
+    </details>
+    {% endif %}
+
+    {# Prioridad #}
+    <details class="detail-block">
+        <summary class="detail-summary"><i class="bi bi-flag"></i> Prioridad</summary>
+        <div style="padding:14px;">
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/prioridad">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     {% for p in ['Normal', 'Alta', 'Urgente'] %}
                     <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;font-weight:600;
-                                  padding:6px 12px;border-radius:8px;border:1px solid #ddd;
+                                  padding:6px 14px;border-radius:8px;border:1px solid {{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#ddd' }};
                                   background:{{ '#fff3ec' if (viaje.prioridad or 'Normal') == p else '#fafafa' }};
-                                  color:{{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#555' }};
-                                  border-color:{{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#ddd' }};">
+                                  color:{{ '#E86A2C' if (viaje.prioridad or 'Normal') == p else '#555' }};">
                         <input type="radio" name="prioridad" value="{{ p }}"
                                {{ 'checked' if (viaje.prioridad or 'Normal') == p else '' }}
                                style="display:none;" onchange="this.form.submit()">
@@ -515,282 +430,138 @@
                 </div>
             </form>
         </div>
+    </details>
 
-        {# Cambiar estado #}
-        <div class="card bloque estado-bloque">
-            <h2 class="estado-titulo">Cambiar estado</h2>
-            {% if estados_validos %}
-            <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
-                  onsubmit="return confirm('¿Cambiar estado a ' + this.estado.value + '?')">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <label>Nuevo estado</label>
-                <select name="estado" class="input input-estado" required>
-                    {% for e in estados_validos %}
-                    <option value="{{ e }}">{{ e }}{% if e == "Asignado" %} ⚠ requiere camionero + vehículo{% elif e == "En ruta" %} ⚠ requiere camionero, vehículo y precio{% endif %}</option>
-                    {% endfor %}
-                </select>
-                <button class="btn-estado" type="submit">Actualizar estado</button>
-            </form>
+    {# Operaciones (PDFs, factura, eliminar) #}
+    <details class="detail-block">
+        <summary class="detail-summary"><i class="bi bi-file-earmark-text"></i> Documentos y operaciones</summary>
+        <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+            {% if orden_carga_ok %}
+            <a href="/admin/viaje/{{ viaje.id }}/pdf" class="btn-op-link">PDF Orden de Carga</a>
             {% else %}
-            <p style="color:#777;font-size:13px;margin:0;">
-                El viaje está en estado <strong>{{ viaje.estado }}</strong>.<br>No hay transiciones disponibles.
-            </p>
+            <button class="btn-op-link" disabled style="background:#e0e0e0;color:#888;cursor:not-allowed;" title="{{ orden_carga_tooltip }}">Ver Orden de Carga</button>
             {% endif %}
-        </div>
 
-        {# Asignar camionero #}
-        <div class="card bloque">
-            <h2>Asignar camionero</h2>
-            <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <label>Camionero disponible</label>
-                <select name="camionero" id="sel-camionero" class="input" required>
-                    <option value="">Seleccionar camionero</option>
-                    {% for c in camioneros %}
-                    <option value="{{ c.id }}"
-                            data-vehiculo-id="{{ c.vehiculo_id or '' }}"
-                            data-vehiculo-info="{{ (c.vehiculo_matricula ~ ((' – ' ~ c.vehiculo_marca) if c.vehiculo_marca else '') ~ ((' ' ~ c.vehiculo_modelo) if c.vehiculo_modelo else ''))|trim if c.vehiculo_id else 'Sin vehículo asignado' }}">
-                        {{ c.nombre }}{% if c.vehiculo_matricula %} ({{ c.vehiculo_matricula }}{% if c.vehiculo_marca %} — {{ c.vehiculo_marca }}{% endif %}){% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
-                <div id="vehiculo-asignado-box" style="display:none;margin-bottom:10px;padding:8px 10px;background:#f0f7ff;border:1px solid #b3d4f5;border-radius:8px;font-size:12px;color:#1a6fa0;">
-                    <strong>Vehículo:</strong> <span id="vehiculo-asignado-texto"></span>
-                </div>
-                <button class="btn-principal" type="submit">Asignar</button>
-            </form>
-        </div>
+            {% if viaje.cliente and _precio_confirmado and viaje.estado|lower != 'cancelado' %}
+            <a href="/admin/viaje/{{ viaje.id }}/factura" class="btn-op-link" style="background:#27ae60;">Factura Cliente</a>
+            {% endif %}
 
-        {# Confirmar precio cliente #}
-        <div class="card bloque">
-            <h2>Precio cliente</h2>
-            {% if _precio_confirmado %}
-            <p style="font-size:20px;font-weight:800;color:#27ae60;margin:0 0 4px;">${{ _pns.precio_val }}</p>
-            <p style="font-size:12px;color:#888;margin:0;">Precio confirmado</p>
-            {% else %}
-            <form method="POST" action="/admin/viaje/{{ viaje.id }}/confirmar-precio" style="margin:0;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                {% if liquidacion and liquidacion.precio_cliente > 0 %}
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
-                    <input type="number" name="precio_cliente" id="precio-inp-{{ viaje.id }}"
-                           value="{{ '%.2f'|format(liquidacion.precio_cliente) }}"
-                           step="0.01" min="0.01" readonly
-                           style="width:85px;padding:5px 8px;border:2px solid #E86A2C;border-radius:6px;font-size:13px;font-weight:700;background:#fff8f5;color:#222;"
-                           required>
-                    <button type="submit" class="btn-principal" style="width:auto;padding:6px 12px;font-size:12px;">
-                        Confirmar precio calculado
-                    </button>
-                </div>
-                {% if session.get('rol') == 'admin' %}
-                <a href="#" onclick="editarPrecioViaje('{{ viaje.id }}');return false;"
-                   style="font-size:11px;color:#aaa;text-decoration:underline;">Modificar</a>
-                {% endif %}
-                {% else %}
-                <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
-                    <input type="number" name="precio_cliente" step="0.01" min="0.01" placeholder="0.00"
-                           style="width:85px;padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px;" required>
-                    <button type="submit" class="btn-principal" style="width:auto;padding:6px 12px;font-size:12px;">Confirmar</button>
-                </div>
-                {% endif %}
-                <span style="color:#e74c3c;font-size:11px;">Sin precio confirmado</span>
-            </form>
-            {% endif %}
-        </div>
+            <a href="/admin/viaje/{{ viaje.id }}/carta-porte" class="btn-op-link" style="background:#2563EB;">Carta de Porte</a>
+            <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-op-link">Liquidación Camionero</a>
 
-        {# Pago al camionero #}
-        {% set _epc = viaje.estado_pago_camionero or 'Pendiente' %}
-        {% set _pns2 = namespace(monto_cam=0.0) %}
-        {% if liquidacion and liquidacion.pago_camionero %}{% set _pns2.monto_cam = liquidacion.pago_camionero|float %}{% elif viaje.pago_camionero %}{% set _pns2.monto_cam = viaje.pago_camionero|float %}{% endif %}
-        <div class="card bloque pago-cam-card">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-                <h2 style="margin:0;"><i class="bi bi-cash-coin" style="color:#E86A2C;margin-right:6px;"></i>Pago al camionero</h2>
-                {% if viaje.camionero_id %}
-                <a href="/admin/camioneros/{{ viaje.camionero_id }}/economico"
-                   style="font-size:12px;color:#1a6fa0;text-decoration:none;font-weight:600;">
-                    <i class="bi bi-bar-chart"></i> Estado económico
-                </a>
-                {% endif %}
-            </div>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
-                <span class="pago-estado-badge pago-estado-{{ _epc|lower|replace(' ','_') }}">{{ _epc }}</span>
-                {% if _epc == 'Pagado' and viaje.fecha_pago_camionero %}
-                <span style="font-size:11px;color:#9CA3AF;">{{ viaje.fecha_pago_camionero | fmt_fecha }}</span>
-                {% endif %}
-                {% if _epc == 'Parcial' and viaje.monto_pagado %}
-                <span style="font-size:12px;color:#92400e;">Abonado: <strong>${{ "%.2f"|format(viaje.monto_pagado|float) }}</strong></span>
-                {% endif %}
-                {% if _pns2.monto_cam > 0 %}
-                <span style="font-size:12px;color:#6B7280;margin-left:auto;">Total calculado: <strong>${{ "%.2f"|format(_pns2.monto_cam) }}</strong></span>
-                {% endif %}
-            </div>
-            {% if viaje.tipo_pago_camionero %}
-            <p style="font-size:12px;color:#6B7280;margin:0 0 6px;">Tipo: <strong>{{ viaje.tipo_pago_camionero }}</strong></p>
-            {% endif %}
-            {% if viaje.observacion_pago %}
-            <p style="font-size:12px;color:#6B7280;margin:0 0 10px;background:#f9fafb;padding:7px 10px;border-radius:6px;border-left:3px solid #E5E7EB;">{{ viaje.observacion_pago }}</p>
-            {% endif %}
             {% if session.get('rol') == 'admin' %}
-            <hr style="border:none;border-top:1px solid #f0f0f0;margin:10px 0 12px;">
-            <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero">
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
+                  onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje.id }}? Esta acción no se puede deshacer.');"
+                  style="margin-top:6px;border-top:1px solid #eee;padding-top:10px;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;align-items:end;">
-                    <div>
-                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Tipo de pago</label>
-                        <select name="tipo_pago" class="input" style="margin:0;font-size:12px;">
-                            {% for tp in ['Efectivo','Compensación combustible','Mixto'] %}
-                            <option value="{{ tp }}"{{ ' selected' if viaje.tipo_pago_camionero == tp else '' }}>{{ tp }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Monto parcial (si aplica)</label>
-                        <input type="number" name="monto_parcial" step="0.01" min="0"
-                               value="{{ viaje.monto_pagado if viaje.monto_pagado else '' }}"
-                               class="input" style="margin:0;font-size:12px;" placeholder="0.00">
-                    </div>
-                </div>
-                <div style="margin-bottom:10px;">
-                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Observación</label>
-                    <input type="text" name="observacion" value="{{ viaje.observacion_pago or '' }}"
-                           class="input" style="margin:0;font-size:12px;" placeholder="Nota sobre el pago...">
-                </div>
-                {% if _epc != 'Pagado' %}
-                <div style="display:flex;gap:8px;">
-                    <button type="submit" name="accion" value="pagado" class="btn-principal"
-                            style="flex:1;font-size:12px;padding:8px 12px;">
-                        <i class="bi bi-check2-circle"></i> Marcar Pagado
-                    </button>
-                    <button type="submit" name="accion" value="parcial"
-                            style="flex:1;font-size:12px;padding:8px 12px;background:#fff8e6;color:#92400e;border:1px solid #fcd34d;border-radius:8px;cursor:pointer;font-weight:700;">
-                        Parcial
-                    </button>
-                </div>
-                {% else %}
-                <button type="submit" name="accion" value="revertir"
-                        style="background:none;border:1px solid #ddd;color:#888;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;"
-                        onclick="return confirm('¿Revertir pago a Pendiente?')">
-                    Revertir a pendiente
+                <button type="submit" style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+                    <i class="bi bi-trash3"></i> Eliminar viaje
                 </button>
-                {% endif %}
             </form>
             {% endif %}
         </div>
+    </details>
 
-        {# Operaciones / PDFs #}
-        <div class="card bloque operaciones-box">
-            <h2><i class="bi bi-file-earmark-text" style="color:#E86A2C;margin-right:5px;"></i>Operaciones</h2>
-            <div class="ops-grid">
-                {% if orden_carga_ok %}
-                <a href="/admin/viajes/{{ viaje.id }}/orden-carga" class="btn-principal btn-link-operacion">Ver Orden de Carga</a>
-                <a href="/admin/viaje/{{ viaje.id }}/pdf" class="btn-pdf btn-link-operacion">PDF Orden de Carga</a>
-                {% else %}
-                <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">Ver Orden de Carga</button>
-                <button class="btn-secundario" disabled title="{{ orden_carga_tooltip }}">PDF Orden de Carga</button>
-                {% endif %}
-
-                {% if viaje.cliente and _precio_confirmado and viaje.estado|lower != "cancelado" %}
-                <a href="/admin/viaje/{{ viaje.id }}/factura" class="btn-factura btn-link-operacion">Factura Cliente</a>
-                {% else %}
-                <button class="btn-secundario" disabled title="Requiere cliente, precio confirmado y estado no cancelado">Factura Cliente</button>
-                {% endif %}
-
-                <a href="/admin/viaje/{{ viaje.id }}/carta-porte"
-                   class="btn-factura btn-link-operacion"
-                   style="background:#2563EB;border-color:#2563EB;">Carta de Porte</a>
-
-                <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-factura btn-link-operacion">Liquidación Camionero</a>
-
-                {% if session.get('rol') == 'admin' %}
-                <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
-                      onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje.id }} permanentemente? Esta acción no se puede deshacer.');"
-                      style="margin-top:4px;border-top:1px solid #eee;padding-top:10px;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit"
-                            style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
-                        <i class="bi bi-trash3"></i> Eliminar viaje
-                    </button>
-                </form>
-                {% endif %}
-            </div>
-        </div>
-
-        {# WhatsApp #}
-        <div class="card bloque whatsapp-box">
-            <h2><i class="bi bi-whatsapp" style="color:#25D366;margin-right:6px;"></i>WhatsApp</h2>
-            {% if viaje.camionero_nombre and viaje.camionero_telefono %}
+    {# WhatsApp #}
+    {% if viaje.camionero_nombre and viaje.camionero_telefono %}
+    <details class="detail-block">
+        <summary class="detail-summary"><i class="bi bi-whatsapp" style="color:#25D366;"></i> WhatsApp</summary>
+        <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
             {% set tel_camionero = viaje.camionero_telefono|replace(" ","")|replace("-","") %}
-            {% set msg_camionero = "Hola " ~ viaje.camionero_nombre ~ ", tienes asignado el viaje #" ~ viaje.id ~ " de " ~ viaje.origen ~ " a " ~ viaje.destino ~ ". Por favor confirma recepción. — Mercatoria Truck" %}
-            <a href="https://wa.me/53{{ tel_camionero }}?text={{ msg_camionero|urlencode }}"
-               target="_blank" class="btn-principal btn-link-operacion"
-               style="background:#25D366;border-color:#25D366;">
+            {% set msg_cam = "Hola " ~ viaje.camionero_nombre ~ ", tienes asignado el viaje #" ~ viaje.id ~ " de " ~ viaje.origen ~ " a " ~ viaje.destino ~ ". Por favor confirma recepción. — Mercatoria Truck" %}
+            <a href="https://wa.me/53{{ tel_camionero }}?text={{ msg_cam|urlencode }}" target="_blank"
+               class="btn-op-link" style="background:#25D366;">
                 <i class="bi bi-whatsapp me-1"></i> Escribir al camionero
             </a>
-            {% else %}
-            <p style="font-size:12px;color:#9CA3AF;">Sin camionero asignado o sin teléfono registrado.</p>
-            {% endif %}
-            {% if viaje.cliente %}
-            {% set tel_cliente = viaje.cliente_telefono|default("")|replace(" ","")|replace("-","") if viaje.cliente_telefono else "" %}
-            {% if tel_cliente %}
-            {% set msg_cliente = "Hola, le informamos que su viaje #" ~ viaje.id ~ " de " ~ viaje.origen ~ " a " ~ viaje.destino ~ " está en estado: " ~ viaje.estado ~ ". — Mercatoria Truck" %}
-            <a href="https://wa.me/53{{ tel_cliente }}?text={{ msg_cliente|urlencode }}"
-               target="_blank" class="btn-secundario btn-link-operacion" style="margin-top:8px;">
+            {% if cliente_info and cliente_info.telefono %}
+            {% set tel_cli = cliente_info.telefono|replace(' ','')|replace('-','') %}
+            {% set _wac = ('53' ~ tel_cli) if not tel_cli.startswith('53') and not tel_cli.startswith('+') else tel_cli.lstrip('+') %}
+            {% set msg_cli = "Hola, su viaje #" ~ viaje.id ~ " está en estado: " ~ viaje.estado ~ ". — Mercatoria Truck" %}
+            <a href="https://wa.me/{{ _wac }}?text={{ msg_cli|urlencode }}" target="_blank"
+               class="btn-op-link" style="background:#128C7E;">
                 <i class="bi bi-whatsapp me-1"></i> Escribir al cliente
             </a>
-            {% else %}
-            <p style="font-size:12px;color:#9CA3AF;margin-top:8px;">Cliente sin teléfono registrado.</p>
-            {% endif %}
             {% endif %}
         </div>
+    </details>
+    {% endif %}
 
-        {# Incidencias operativas #}
-        <div class="card bloque inc-card">
-            <div class="inc-header">
-                <h2 style="margin:0;"><i class="bi bi-exclamation-triangle" style="color:#E86A2C;margin-right:6px;"></i>Incidencias</h2>
-                <button class="btn-principal" style="width:auto;padding:6px 14px;font-size:12px;"
-                        onclick="var w=document.getElementById('inc-form-wrap');w.style.display=w.style.display==='none'?'block':'none';">
-                    <i class="bi bi-plus-lg"></i> Registrar incidencia
+    {# Notas internas #}
+    <details class="detail-block" {% if notas %}open{% endif %}>
+        <summary class="detail-summary"><i class="bi bi-journal-text"></i> Notas internas ({{ notas|length }})</summary>
+        <div style="padding:14px;">
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/nota"
+                  style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-start;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <textarea name="texto" rows="2" placeholder="Añadir nota interna..."
+                          style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;" required></textarea>
+                <button type="submit" style="padding:8px 14px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                    <i class="bi bi-plus-lg"></i>
                 </button>
+            </form>
+            {% if notas %}
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                {% for nota in notas %}
+                <div style="background:#f7f7f7;border-radius:8px;padding:10px 12px;border-left:3px solid #E86A2C;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                        <span style="font-size:11px;font-weight:700;color:#E86A2C;">{{ nota.usuario }}</span>
+                        <span style="font-size:11px;color:#999;">{{ nota.fecha | fmt_fecha }}</span>
+                    </div>
+                    <p style="margin:0;font-size:13px;white-space:pre-line;">{{ nota.texto }}</p>
+                </div>
+                {% endfor %}
             </div>
+            {% else %}
+            <p style="color:#999;font-size:13px;margin:0;">Sin notas.</p>
+            {% endif %}
+        </div>
+    </details>
 
+    {# Incidencias #}
+    <details class="detail-block" {% if incidencias %}open{% endif %}>
+        <summary class="detail-summary"><i class="bi bi-exclamation-triangle"></i> Incidencias ({{ incidencias|length }})</summary>
+        <div style="padding:14px;">
             <div id="inc-form-wrap" style="display:none;background:#f9fafb;border:1px solid #E5E7EB;border-radius:10px;padding:14px;margin-bottom:14px;">
                 <form method="POST" action="/admin/viaje/{{ viaje.id }}/incidencia/nueva">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div style="display:grid;grid-template-columns:160px 1fr;gap:10px;margin-bottom:10px;align-items:end;">
                         <div>
-                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Categoría</label>
-                            <select name="categoria" class="input" style="font-size:13px;">
+                            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Categoría</label>
+                            <select name="categoria" class="step-input" style="margin:0;font-size:13px;">
                                 {% for cat in incidencias_categorias %}
                                 <option value="{{ cat }}">{{ cat }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div>
-                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Descripción</label>
-                            <input type="text" name="descripcion" class="input" placeholder="Describe la incidencia…" required style="font-size:13px;">
+                            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Descripción</label>
+                            <input type="text" name="descripcion" class="step-input" style="margin:0;" placeholder="Describe la incidencia…" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn-principal" style="width:auto;padding:6px 14px;font-size:12px;">Guardar</button>
-                    <button type="button" class="btn-secundario" style="width:auto;padding:6px 14px;font-size:12px;margin-left:6px;"
-                            onclick="document.getElementById('inc-form-wrap').style.display='none';">Cancelar</button>
+                    <div style="display:flex;gap:8px;">
+                        <button type="submit" class="step-btn">Guardar</button>
+                        <button type="button" style="padding:8px 14px;background:#f0f0f0;color:#555;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;" onclick="document.getElementById('inc-form-wrap').style.display='none'">Cancelar</button>
+                    </div>
                 </form>
             </div>
-
+            <button class="step-btn" style="margin-bottom:12px;width:auto;" onclick="var w=document.getElementById('inc-form-wrap');w.style.display=w.style.display==='none'?'block':'none'">
+                <i class="bi bi-plus-lg"></i> Registrar incidencia
+            </button>
             {% if incidencias %}
-            <div class="inc-lista">
+            <div style="display:flex;flex-direction:column;gap:8px;">
                 {% for inc in incidencias %}
                 <div class="inc-row {% if inc.estado == 'Resuelta' %}inc-resuelta{% endif %}" id="inc-row-{{ inc.id }}">
                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                         <span class="inc-cat-badge inc-cat-{{ inc.categoria|lower|replace(' ','_')|replace('é','e')|replace('ó','o')|replace('á','a') }}">{{ inc.categoria }}</span>
-                        <span style="font-size:13px;font-weight:600;color:#374151;flex:1;">{{ inc.descripcion }}</span>
+                        <span style="font-size:13px;font-weight:600;flex:1;">{{ inc.descripcion }}</span>
                         <span class="inc-estado-badge inc-estado-{{ inc.estado|lower|replace(' ','_') }}" id="inc-estado-txt-{{ inc.id }}">{{ inc.estado }}</span>
                     </div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
                         <span style="font-size:11px;color:#9CA3AF;">{{ inc.usuario or '—' }} · {{ inc.fecha_hora | fmt_fecha if inc.fecha_hora else '—' }}</span>
-                        <div style="margin-left:auto;display:flex;gap:6px;">
+                        <div style="margin-left:auto;display:flex;gap:4px;">
                             <input type="hidden" class="inc-csrf" value="{{ csrf_token() }}">
                             {% for est in incidencias_estados %}{% if est != inc.estado %}
-                            <button class="btn-inc-estado" data-estado="{{ est }}"
-                                    onclick="cambiarEstadoInc({{ viaje.id }}, {{ inc.id }}, '{{ est }}', this)">{{ est }}</button>
+                            <button class="btn-inc-estado" onclick="cambiarEstadoInc({{ viaje.id }}, {{ inc.id }}, '{{ est }}', this)">{{ est }}</button>
                             {% endif %}{% endfor %}
                         </div>
                     </div>
@@ -801,65 +572,23 @@
             <p style="color:#9CA3AF;font-size:13px;margin:0;" id="inc-empty">Sin incidencias registradas.</p>
             {% endif %}
         </div>
+    </details>
 
-    </div>{# /op-grid #}
-</div>{# /tab-operacion #}
+</div>{# /details #}
 
 <script>
-function activarTab(nombre, btn) {
-    document.querySelectorAll('.tab-panel').forEach(function(p) { p.style.display = 'none'; });
-    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('tab-activo'); });
-    document.getElementById('tab-' + nombre).style.display = 'block';
-    btn.classList.add('tab-activo');
-    try { history.replaceState(null, '', location.pathname + '#' + nombre); } catch(e) {}
-}
-
-(function() {
-    var h = location.hash.replace('#', '');
-    if (h === 'operacion') {
-        activarTab('operacion', document.getElementById('btn-operacion'));
-    }
-})();
-
-function editarPrecioViaje(id) {
-    var inp = document.getElementById('precio-inp-' + id);
-    if (!inp) return;
-    inp.readOnly = false;
-    inp.style.border = '1px solid #ccc';
-    inp.style.background = '#fff';
-    inp.style.fontWeight = 'normal';
-    inp.focus();
-    inp.select();
-}
-
-function toggleChecklist(itemId, btn) {
-    var viajeId = document.getElementById('cl-viaje-id').value;
+function marcarDocEnviada(itemId, btn) {
+    if (!itemId) return;
     var fd = new FormData();
-    fd.append('csrf_token', document.getElementById('cl-csrf').value);
-    fetch('/admin/viaje/' + viajeId + '/checklist/' + itemId + '/toggle', {
-        method: 'POST',
-        body: fd
+    fd.append('csrf_token', document.getElementById('cl-csrf-doc').value);
+    fetch('/admin/viaje/{{ viaje.id }}/checklist/' + itemId + '/toggle', {
+        method: 'POST', body: fd
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-        var row = document.getElementById('cl-row-' + itemId);
-        var icon = btn.querySelector('i');
-        if (data.completado) {
-            row.classList.add('cl-done');
-            icon.className = 'bi bi-check-square-fill';
-            btn.title = 'Desmarcar';
-        } else {
-            row.classList.remove('cl-done');
-            icon.className = 'bi bi-square';
-            btn.title = 'Marcar como completado';
-        }
-        var total = document.querySelectorAll('.cl-row').length;
-        var done  = document.querySelectorAll('.cl-row.cl-done').length;
-        document.getElementById('cl-counter').textContent = done + '/' + total + ' completados';
-        var barra = document.getElementById('cl-barra');
-        if (barra) barra.style.width = (total > 0 ? Math.round(done / total * 100) : 0) + '%';
+        if (data.completado) { location.reload(); }
     })
-    .catch(function(e) { console.error('checklist toggle error:', e); });
+    .catch(function(e) { console.error(e); });
 }
 
 function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
@@ -869,257 +598,124 @@ function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
     fd.append('csrf_token', csrf);
     fd.append('estado', nuevoEstado);
     fetch('/admin/viaje/' + viajeId + '/incidencia/' + incId + '/estado', {
-        method: 'POST',
-        body: fd
+        method: 'POST', body: fd
     })
     .then(function(r) { return r.json(); })
-    .then(function(data) {
-        if (data.estado) {
-            history.replaceState(null, '', location.pathname + '#operacion');
-            location.reload();
-        }
-    })
-    .catch(function(e) { console.error('incidencia estado error:', e); });
-}
-
-var selCam = document.getElementById('sel-camionero');
-if (selCam) {
-    selCam.addEventListener('change', function() {
-        var opt = this.options[this.selectedIndex];
-        var box = document.getElementById('vehiculo-asignado-box');
-        var texto = document.getElementById('vehiculo-asignado-texto');
-        if (opt.value) {
-            texto.textContent = opt.dataset.vehiculoInfo || 'Sin vehículo asignado';
-            box.style.display = 'block';
-        } else {
-            box.style.display = 'none';
-        }
-    });
+    .then(function(d) { if (d.estado) location.reload(); })
+    .catch(function(e) { console.error(e); });
 }
 </script>
 
 <style>
-/* ── Tabs ───────────────────────────────────────────────────── */
-.tab-nav {
+/* ── Info labels ─────────────────────────────────────────── */
+.info-label { font-size:10px;color:#888;text-transform:uppercase;font-weight:700;letter-spacing:.04em;margin-bottom:3px; }
+.info-val { font-size:13px;font-weight:700;color:#1a1a1a; }
+
+/* ── Steps ───────────────────────────────────────────────── */
+.step-done {
     display: flex;
-    gap: 0;
-    margin-bottom: 18px;
-    border-bottom: 2px solid #E5E7EB;
+    align-items: center;
+    gap: 10px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #166534;
 }
-.tab-btn {
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    margin-bottom: -2px;
-    padding: 10px 22px;
+.step-check { color:#22c55e; font-size:1.1rem; flex-shrink:0; }
+.step-done-info { color:#4ade80; font-weight:400; }
+.step-active { padding: 14px !important; }
+.step-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 14px;
     font-weight: 700;
-    color: #6B7280;
-    cursor: pointer;
-    transition: color .15s, border-color .15s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    color: #1a1a1a;
 }
-.tab-btn:hover { color: #E86A2C; }
-.tab-activo { color: #E86A2C; border-bottom-color: #E86A2C; }
-
-/* ── Alertas ────────────────────────────────────────────────── */
-.alertas-bloque {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-}
-.alerta-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 11px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-}
-.alerta-roja    { background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; }
-.alerta-amarilla{ background:#fffbeb; border:1px solid #fcd34d; color:#92400e; }
-
-/* ── Op grid (Operación tab) ────────────────────────────────── */
-.op-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    max-width: 860px;
-}
-.cl-card { grid-column: 1 / -1; }
-
-/* ── Checklist ──────────────────────────────────────────────── */
-.cl-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-.cl-progreso {
-    font-size: 13px;
-    font-weight: 700;
-    color: #E86A2C;
-    background: #fff3ec;
-    border: 1px solid #fbd5bb;
-    padding: 3px 10px;
-    border-radius: 999px;
-}
-.cl-barra-wrap {
-    background: #E5E7EB;
-    border-radius: 999px;
-    height: 6px;
-    margin-bottom: 14px;
-    overflow: hidden;
-}
-.cl-barra {
-    height: 100%;
+.step-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
     background: #E86A2C;
-    border-radius: 999px;
-    transition: width .35s ease;
-    min-width: 0;
-}
-.cl-lista {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 4px;
-}
-.cl-row {
-    display: flex;
+    color: #fff;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 8px;
-    transition: background .15s;
-}
-.cl-row:hover { background: #f9fafb; }
-.cl-done .cl-label { text-decoration: line-through; color: #9CA3AF; }
-.cl-toggle {
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font-size: 17px;
-    color: #9CA3AF;
-    line-height: 1;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
     flex-shrink: 0;
-    transition: color .15s;
 }
-.cl-done .cl-toggle { color: #E86A2C; }
-.cl-toggle:hover { color: #E86A2C; }
-.cl-auto { cursor: not-allowed; opacity: 0.8; }
-.cl-auto:hover { color: #16a34a; }
-.cl-done.cl-auto-row .cl-label { text-decoration: line-through; color: #9CA3AF; }
-.cl-label {
+.step-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
     font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    flex: 1;
+    background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0;
 }
-.cl-meta {
-    font-size: 10px;
-    color: #9CA3AF;
+.step-input:focus { outline: none; border-color: #E86A2C; background: #fff; }
+.step-btn {
+    padding: 8px 16px;
+    background: #E86A2C;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
     white-space: nowrap;
 }
+.step-btn:hover { background: #d95714; }
 
-/* ── Page header ────────────────────────────────────────────── */
-.btn-volver {
-    display: inline-block;
-    font-size: 12px;
-    color: #E86A2C;
-    text-decoration: none;
-    font-weight: 600;
-    margin-bottom: 4px;
+/* ── Detail accordion ────────────────────────────────────── */
+.detail-block {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    overflow: hidden;
 }
-.btn-volver:hover { text-decoration: underline; }
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-.page-header h1 { margin: 0; font-size: 22px; }
-.subtitulo { margin: 2px 0 0 0; color: #777; font-size: 13px; }
-
-.estado-badge {
-    background: #E86A2C;
-    color: white;
-    padding: 5px 12px;
-    border-radius: 999px;
+.detail-block[open] { box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.detail-summary {
+    padding: 12px 16px;
+    font-size: 13px;
     font-weight: 700;
-    text-transform: uppercase;
-    font-size: 12px;
+    color: #374151;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+    list-style: none;
 }
+.detail-summary::-webkit-details-marker { display: none; }
+.detail-summary::after { content: '▼'; margin-left: auto; font-size: 10px; color: #9CA3AF; transition: transform .2s; }
+details[open] .detail-summary::after { transform: rotate(180deg); }
+.detail-summary:hover { background: #f9fafb; }
 
-/* ── Resumen cards ──────────────────────────────────────────── */
-.grid-resumen {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 12px;
-}
-.resumen-card { padding: 12px; }
-.resumen-card span {
+/* ── Operation buttons ───────────────────────────────────── */
+.btn-op-link {
     display: block;
-    color: #777;
-    font-size: 11px;
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: .04em;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 9px 14px;
+    background: #E86A2C;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
 }
-.resumen-card strong { font-size: 13px; }
+.btn-op-link:hover { opacity: .88; color: #fff; }
+.btn-op-link[disabled] { cursor: not-allowed; }
 
-/* ── Timeline ───────────────────────────────────────────────── */
-.timeline-card { padding: 14px 16px !important; }
-.tl-row { display: flex; align-items: center; }
-.tl-step { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
-.tl-node {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    border: 2px solid #D1D5DB;
-    background: #F3F4F6; color: #9CA3AF;
-    transition: all .2s;
-}
-.tl-done .tl-node   { background: #6B7280; border-color: #6B7280; color: #fff; }
-.tl-active .tl-node { background: #E86A2C; border-color: #E86A2C; color: #fff; box-shadow: 0 0 0 4px rgba(243,107,33,.2); }
-.tl-lbl { font-size: 11px; font-weight: 600; color: #9CA3AF; white-space: nowrap; }
-.tl-done .tl-lbl    { color: #6B7280; }
-.tl-active .tl-lbl  { color: #E86A2C; font-weight: 800; }
-.tl-connector { flex: 1; height: 3px; background: #E5E7EB; margin-bottom: 18px; }
-.tl-connector-done  { background: #6B7280; }
-.tl-dot-cancel {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: #fde8e8; border: 2px solid #e74c3c; color: #c0392b; font-size: 14px;
-}
-
-/* ── Info cards ─────────────────────────────────────────────── */
-.bloque { padding: 12px; margin-bottom: 12px; }
-.bloque h2 { margin-top: 0; margin-bottom: 10px; font-size: 14px; }
-
-.detalle-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-    gap: 12px;
-}
-.detalle-grid label {
-    display: block; color: #777; font-size: 11px; margin-bottom: 3px; text-transform: uppercase;
-}
-.detalle-grid p { margin: 0; font-weight: 700; font-size: 13px; }
-
-/* ── Liquidación ────────────────────────────────────────────── */
-.economia-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+/* ── Liquidación ─────────────────────────────────────────── */
+.economia-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .economia-item { background: #f7f7f7; border-radius: 10px; padding: 10px; }
 .economia-item span { display: block; color: #777; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; }
 .economia-item strong { font-size: 13px; }
@@ -1129,70 +725,8 @@ if (selCam) {
     border-radius: 8px; padding: 7px 10px; font-size: 12px; margin-bottom: 10px;
     display: flex; align-items: center; gap: 8px;
 }
-.sin-datos { color: #999; font-style: italic; font-size: 13px; }
 
-/* ── Observaciones ──────────────────────────────────────────── */
-.observaciones {
-    background: #f7f7f7; border-radius: 10px; padding: 10px;
-    min-height: 50px; line-height: 1.5; font-size: 13px;
-}
-
-/* ── Inputs / Buttons ───────────────────────────────────────── */
-.input {
-    width: 100%; padding: 7px 10px;
-    margin-top: 4px; margin-bottom: 10px;
-    border-radius: 8px; border: 1px solid #ccc; font-size: 13px;
-}
-.btn-principal {
-    width: 100%; background: #E86A2C; color: white;
-    padding: 8px 14px; border: none; border-radius: 8px;
-    font-size: 13px; cursor: pointer; font-weight: 700;
-}
-.btn-principal:hover { background: #d95714; }
-.btn-secundario {
-    width: 100%; background: #e0e0e0; color: #777;
-    padding: 8px 14px; border: none; border-radius: 8px;
-    font-size: 13px; cursor: not-allowed; font-weight: 700;
-}
-.btn-pdf {
-    width: 100%; background: #fff; color: #E86A2C;
-    border: 2px solid #E86A2C; padding: 8px 14px;
-    border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 700;
-}
-.btn-pdf:hover { background: #fff3ec; }
-.btn-link-operacion { display: block; text-align: center; text-decoration: none; box-sizing: border-box; }
-.btn-factura {
-    width: 100%; background: #27ae60; color: white;
-    padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700;
-}
-.btn-factura:hover { background: #219150; color: white; }
-
-/* ── Ops grid ───────────────────────────────────────────────── */
-.ops-grid { display: flex; flex-direction: column; gap: 8px; }
-
-/* ── Estado block ───────────────────────────────────────────── */
-.estado-bloque { background: #fff3ec; border: 2px solid #E86A2C; }
-.estado-titulo { font-size: 16px !important; font-weight: 800 !important; color: #d95714; margin-bottom: 12px !important; }
-.input-estado { font-size: 15px; padding: 10px 12px; margin-bottom: 12px; }
-.btn-estado {
-    width: 100%; background: #E86A2C; color: white;
-    padding: 13px 14px; border: none; border-radius: 8px;
-    font-size: 16px; cursor: pointer; font-weight: 800; letter-spacing: .01em;
-}
-.btn-estado:hover { background: #d95714; }
-
-/* ── Alerta error (flash) ───────────────────────────────────── */
-.alerta-error {
-    background: #fdf0f0; border: 1px solid #e74c3c; color: #c0392b;
-    border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
-    display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px;
-}
-
-/* ── WhatsApp ───────────────────────────────────────────────── */
-.whatsapp-box p { color: #777; margin-bottom: 10px; font-size: 13px; }
-
-/* ── Pago camionero ─────────────────────────────────────────── */
-.pago-cam-card { grid-column: 1 / -1; }
+/* ── Pago badge ──────────────────────────────────────────── */
 .pago-estado-badge {
     display:inline-block; padding:3px 10px; border-radius:999px;
     font-size:11px; font-weight:700;
@@ -1202,21 +736,10 @@ if (selCam) {
 .pago-estado-badge.pago-estado-parcial   { background:#FEF3C7; color:#92400E; }
 .pago-estado-badge.pago-estado-pendiente { background:#FEE2E2; color:#991B1B; }
 
-/* ── Incidencias ────────────────────────────────────────────── */
-.inc-card { grid-column: 1 / -1; }
-.inc-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
-.inc-lista { display:flex; flex-direction:column; gap:10px; }
-.inc-row {
-    background:#f9fafb; border:1px solid #E5E7EB; border-radius:10px; padding:12px 14px;
-    transition: border-color .15s;
-}
-.inc-row:hover { border-color:#D1D5DB; }
+/* ── Incidencias ─────────────────────────────────────────── */
+.inc-row { background:#f9fafb; border:1px solid #E5E7EB; border-radius:10px; padding:12px 14px; }
 .inc-resuelta { opacity:.5; }
-.inc-cat-badge {
-    display:inline-block; font-size:11px; font-weight:700;
-    padding:2px 8px; border-radius:999px;
-    background:#F3F4F6; color:#6B7280;
-}
+.inc-cat-badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:#F3F4F6; color:#6B7280; }
 .inc-cat-badge.inc-cat-retraso      { background:#FEE2E2; color:#991B1B; }
 .inc-cat-badge.inc-cat-averia       { background:#FEE2E2; color:#991B1B; }
 .inc-cat-badge.inc-cat-puerto       { background:#DBEAFE; color:#1E40AF; }
@@ -1226,32 +749,16 @@ if (selCam) {
 .inc-cat-badge.inc-cat-pago         { background:#DCFCE7; color:#166534; }
 .inc-cat-badge.inc-cat-cobro        { background:#D1FAE5; color:#065F46; }
 .inc-cat-badge.inc-cat-otro         { background:#F3F4F6; color:#6B7280; }
-.inc-estado-badge {
-    display:inline-block; font-size:11px; font-weight:700;
-    padding:2px 8px; border-radius:999px;
-    background:#FEE2E2; color:#991B1B;
-}
+.inc-estado-badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:#FEE2E2; color:#991B1B; }
 .inc-estado-badge.inc-estado-abierta        { background:#FEE2E2; color:#991B1B; }
 .inc-estado-badge.inc-estado-en_seguimiento { background:#FEF3C7; color:#92400E; }
 .inc-estado-badge.inc-estado-resuelta       { background:#DCFCE7; color:#166534; }
-.btn-inc-estado {
-    font-size:11px; font-weight:600;
-    border:1px solid #D1D5DB; background:#fff; color:#374151;
-    padding:3px 10px; border-radius:6px; cursor:pointer;
-    transition: background .15s, border-color .15s;
-}
-.btn-inc-estado:hover { background:#f3f4f6; border-color:#9CA3AF; }
+.btn-inc-estado { font-size:11px; font-weight:600; border:1px solid #D1D5DB; background:#fff; color:#374151; padding:3px 10px; border-radius:6px; cursor:pointer; }
+.btn-inc-estado:hover { background:#f3f4f6; }
 
-/* ── Responsive ─────────────────────────────────────────────── */
-@media (max-width: 1100px) {
-    .grid-resumen { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 700px) {
-    .page-header { flex-direction: column; align-items: flex-start; }
-    .grid-resumen { grid-template-columns: 1fr; }
-    .op-grid { grid-template-columns: 1fr; }
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 600px) {
     .economia-grid { grid-template-columns: 1fr; }
-    .tab-btn { padding: 9px 14px; font-size: 13px; }
 }
 </style>
 

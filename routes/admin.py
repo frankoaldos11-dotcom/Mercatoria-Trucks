@@ -449,6 +449,8 @@ def gestionar_viaje(id):
     except (KeyError, IndexError):
         pass
 
+    checklist_map = {item["item"]: {"id": item["id"], "completado": bool(item["completado"])} for item in checklist}
+
     return render_template(
         "admin/gestionar_viaje.html",
         viaje=viaje,
@@ -466,6 +468,7 @@ def gestionar_viaje(id):
         obs_parsed=obs_parsed,
         notas=notas,
         checklist=checklist,
+        checklist_map=checklist_map,
         incidencias=incidencias,
         incidencias_categorias=INCIDENCIAS_CATEGORIAS,
         incidencias_estados=INCIDENCIAS_ESTADOS,
@@ -914,6 +917,82 @@ def confirmar_precio(id):
     registrar_auditoria(f"Confirmó precio ${precio}", "Viajes", "viaje", id)
 
     return redirect(f"/admin/viajes/{id}/gestionar")
+
+
+@admin_bp.route("/viaje/<int:id>/guardar-combustible", methods=["POST"])
+def guardar_combustible(id):
+    if not requiere_admin():
+        return redirect("/login")
+    val = request.form.get("combustible", "").strip()
+    try:
+        combustible = float(val)
+        if combustible < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return redirect(f"/admin/viaje/{id}?error=Valor+de+combustible+inv%C3%A1lido")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("UPDATE viajes SET combustible = ? WHERE id = ?", (combustible, id))
+    con.commit()
+    con.close()
+    registrar_auditoria(f"Guardó combustible ${combustible:.2f}", "Viajes", "viaje", id)
+    return redirect(f"/admin/viaje/{id}")
+
+
+@admin_bp.route("/viaje/<int:id>/guardar-fechas", methods=["POST"])
+def guardar_fechas(id):
+    if not requiere_admin():
+        return redirect("/login")
+    fecha_recogida = request.form.get("fecha_recogida", "").strip() or None
+    fecha_entrega = request.form.get("fecha_entrega", "").strip() or None
+    con = conectar()
+    cur = con.cursor()
+    if fecha_recogida:
+        cur.execute("UPDATE viajes SET fecha_recogida = ? WHERE id = ?", (fecha_recogida, id))
+    if fecha_entrega:
+        cur.execute("UPDATE viajes SET fecha_entrega = ? WHERE id = ?", (fecha_entrega, id))
+    con.commit()
+    con.close()
+    return redirect(f"/admin/viaje/{id}")
+
+
+@admin_bp.route("/incidencias")
+def lista_incidencias():
+    if not requiere_admin():
+        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin?access_error=Solo+admin")
+    filtro_estado = request.args.get("estado", "").strip()
+    filtro_cat = request.args.get("categoria", "").strip()
+    con = conectar()
+    cur = con.cursor()
+    conds = []
+    params = []
+    if filtro_estado:
+        conds.append("i.estado = ?")
+        params.append(filtro_estado)
+    if filtro_cat:
+        conds.append("i.categoria = ?")
+        params.append(filtro_cat)
+    where = ("WHERE " + " AND ".join(conds)) if conds else ""
+    cur.execute(f"""
+        SELECT i.id, i.viaje_id, i.categoria, i.descripcion,
+               i.usuario, i.fecha_hora, i.estado,
+               v.origen, v.destino, v.estado AS viaje_estado, v.cliente
+        FROM incidencias i
+        LEFT JOIN viajes v ON i.viaje_id = v.id
+        {where}
+        ORDER BY i.fecha_hora DESC
+        LIMIT 500
+    """, params)
+    incidencias = cur.fetchall()
+    con.close()
+    return render_template("admin/incidencias.html",
+                           incidencias=incidencias,
+                           filtro_estado=filtro_estado,
+                           filtro_cat=filtro_cat,
+                           categorias=INCIDENCIAS_CATEGORIAS,
+                           estados=INCIDENCIAS_ESTADOS)
 
 
 @admin_bp.route("/viaje/<int:id>/eliminar", methods=["POST"])

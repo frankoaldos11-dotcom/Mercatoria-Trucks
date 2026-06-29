@@ -46,7 +46,7 @@
 <!-- Mobile top bar — hidden on desktop via CSS -->
 <header class="mobile-topbar" id="mobile-topbar">
     <div class="mobile-topbar-brand">
-        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0;">
             <rect x="2" y="2" width="10" height="4" rx="1" fill="#E86A2C"/>
             <rect x="2" y="2" width="4" height="10" rx="1" fill="#E86A2C"/>
             <rect x="20" y="2" width="10" height="4" rx="1" fill="#F5A623"/>
@@ -56,7 +56,7 @@
             <rect x="20" y="26" width="10" height="4" rx="1" fill="#E86A2C"/>
             <rect x="26" y="20" width="4" height="10" rx="1" fill="#E86A2C"/>
         </svg>
-        <span>Mercatoria</span>
+        <span style="color:#fff;font-weight:700;font-size:15px;white-space:nowrap;">Mercatoria</span>
     </div>
     <button class="mobile-hamburger" id="mobile-hamburger" aria-label="Abrir menú" aria-expanded="false">
         <i class="bi bi-list"></i>
@@ -162,6 +162,10 @@
             <a href="/admin/auditoria" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/auditoria') else '' }}">
                 <i class="bi bi-journal-text"></i>
                 <span>Auditoría</span>
+            </a>
+            <a href="/admin/incidencias" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/incidencias') else '' }}">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>Incidencias</span>
             </a>
             <a href="/admin/lote" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/lote') else '' }}">
                 <i class="bi bi-lightning-charge"></i>
