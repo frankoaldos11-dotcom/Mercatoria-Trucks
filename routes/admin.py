@@ -10,7 +10,7 @@ from urllib.parse import quote_plus
 from flask import Blueprint, render_template, request, redirect, send_file, session, jsonify
 
 from database import conectar, crear_checklist_viaje, INCIDENCIAS_CATEGORIAS, INCIDENCIAS_ESTADOS, sql_mes_actual
-from db_config import USE_POSTGRES
+from db_config import USE_POSTGRES, ph
 from extensions import bcrypt, mail
 from flask_mail import Message
 from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_por_camionero
@@ -25,9 +25,9 @@ def registrar_auditoria(accion, categoria, entidad=None, entidad_id=None, detall
     try:
         conexion = conectar()
         cursor = conexion.cursor()
-        cursor.execute("""
+        cursor.execute(f"""
             INSERT INTO auditoria (usuario, rol, accion, categoria, entidad, entidad_id, detalle)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
         """, (
             session.get("usuario", "sistema"),
             session.get("rol", ""),
@@ -202,7 +202,7 @@ def viajes():
     params = []
 
     if filtro:
-        condiciones.append("LOWER(v.estado) = ?")
+        condiciones.append(f"LOWER(v.estado) = {ph()}")
         params.append(filtro)
 
     if buscar:
@@ -286,11 +286,11 @@ def gestionar_viaje(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT v.*,
                v.camionero_id as camionero_id
         FROM viajes v
-        WHERE v.id = ?
+        WHERE v.id = {ph()}
     """, (id,))
     viaje = cursor.fetchone()
 
@@ -314,17 +314,17 @@ def gestionar_viaje(id):
 
     tipo_vehiculo_nombre = None
     if viaje["tipo_vehiculo_id"]:
-        cursor.execute("SELECT nombre FROM tipos_vehiculo WHERE id = ?", (viaje["tipo_vehiculo_id"],))
+        cursor.execute(f"SELECT nombre FROM tipos_vehiculo WHERE id = {ph()}", (viaje["tipo_vehiculo_id"],))
         row = cursor.fetchone()
         tipo_vehiculo_nombre = row["nombre"] if row else None
 
     tarifa_info = None
     if viaje["tarifa_id"]:
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT t.precio_cliente, tv.nombre AS tipo_nombre
             FROM tarifas t
             LEFT JOIN tipos_vehiculo tv ON t.tipo_vehiculo_id = tv.id
-            WHERE t.id = ?
+            WHERE t.id = {ph()}
         """, (viaje["tarifa_id"],))
         row = cursor.fetchone()
         if row:
@@ -334,7 +334,7 @@ def gestionar_viaje(id):
     cliente_info = None
     if viaje["cliente_id"]:
         cursor.execute(
-            "SELECT nombre, telefono, empresa, email, COALESCE(categoria, 'Normal') AS categoria FROM clientes WHERE id = ?",
+            f"SELECT nombre, telefono, empresa, email, COALESCE(categoria, 'Normal') AS categoria FROM clientes WHERE id = {ph()}",
             (viaje["cliente_id"],)
         )
         cliente_info = cursor.fetchone()
@@ -342,7 +342,7 @@ def gestionar_viaje(id):
     # Nombre legible de la ruta
     ruta_display = None
     if viaje["ruta_id"]:
-        cursor.execute("SELECT origen, destino FROM rutas WHERE id = ?", (viaje["ruta_id"],))
+        cursor.execute(f"SELECT origen, destino FROM rutas WHERE id = {ph()}", (viaje["ruta_id"],))
         ruta_row = cursor.fetchone()
         if ruta_row:
             ruta_display = f"{ruta_row['origen']} → {ruta_row['destino']}"
@@ -384,31 +384,31 @@ def gestionar_viaje(id):
 
     conexion2 = conectar()
     cursor2 = conexion2.cursor()
-    cursor2.execute("""
+    cursor2.execute(f"""
         SELECT usuario, texto, fecha
         FROM notas_viaje
-        WHERE viaje_id = ?
+        WHERE viaje_id = {ph()}
         ORDER BY fecha DESC
     """, (id,))
     notas = cursor2.fetchall()
 
     # Checklist operativo — crear automáticamente si el viaje no lo tiene aún
     cursor2.execute(
-        "SELECT COUNT(*) AS cnt FROM viaje_checklist WHERE viaje_id = ?", (id,)
+        f"SELECT COUNT(*) AS cnt FROM viaje_checklist WHERE viaje_id = {ph()}", (id,)
     )
     if cursor2.fetchone()["cnt"] == 0:
         crear_checklist_viaje(cursor2, id)
         conexion2.commit()
     cursor2.execute(
         "SELECT id, item, completado, completado_por, fecha_completado "
-        "FROM viaje_checklist WHERE viaje_id = ? ORDER BY id",
+        f"FROM viaje_checklist WHERE viaje_id = {ph()} ORDER BY id",
         (id,)
     )
     checklist = cursor2.fetchall()
 
     cursor2.execute(
         "SELECT id, categoria, descripcion, usuario, fecha_hora, estado "
-        "FROM incidencias WHERE viaje_id = ? ORDER BY fecha_hora DESC",
+        f"FROM incidencias WHERE viaje_id = {ph()} ORDER BY fecha_hora DESC",
         (id,)
     )
     incidencias = cursor2.fetchall()
@@ -484,7 +484,7 @@ def toggle_checklist(viaje_id, item_id):
     con = conectar()
     cur = con.cursor()
     cur.execute(
-        "SELECT id, completado FROM viaje_checklist WHERE id = ? AND viaje_id = ?",
+        f"SELECT id, completado FROM viaje_checklist WHERE id = {ph()} AND viaje_id = {ph()}",
         (item_id, viaje_id)
     )
     row = cur.fetchone()
@@ -496,15 +496,15 @@ def toggle_checklist(viaje_id, item_id):
     if nuevo:
         cur.execute(
             "UPDATE viaje_checklist "
-            "SET completado = 1, completado_por = ?, fecha_completado = CURRENT_TIMESTAMP "
-            "WHERE id = ?",
+            f"SET completado = 1, completado_por = {ph()}, fecha_completado = CURRENT_TIMESTAMP "
+            f"WHERE id = {ph()}",
             (session.get("usuario", "admin"), item_id)
         )
     else:
         cur.execute(
             "UPDATE viaje_checklist "
             "SET completado = 0, completado_por = NULL, fecha_completado = NULL "
-            "WHERE id = ?",
+            f"WHERE id = {ph()}",
             (item_id,)
         )
     con.commit()
@@ -525,7 +525,7 @@ def nueva_incidencia(id):
     con = conectar()
     cur = con.cursor()
     cur.execute(
-        "INSERT INTO incidencias (viaje_id, categoria, descripcion, usuario) VALUES (?, ?, ?, ?)",
+        f"INSERT INTO incidencias (viaje_id, categoria, descripcion, usuario) VALUES ({ph()}, {ph()}, {ph()}, {ph()})",
         (id, categoria, descripcion, session.get("usuario", "admin"))
     )
     con.commit()
@@ -543,7 +543,7 @@ def cambiar_estado_incidencia(id, inc_id):
     con = conectar()
     cur = con.cursor()
     cur.execute(
-        "UPDATE incidencias SET estado = ? WHERE id = ? AND viaje_id = ?",
+        f"UPDATE incidencias SET estado = {ph()} WHERE id = {ph()} AND viaje_id = {ph()}",
         (nuevo_estado, inc_id, id)
     )
     con.commit()
@@ -561,14 +561,14 @@ def asignar_camionero(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT nombre FROM camioneros WHERE id = ?", (camionero_id,))
+    cursor.execute(f"SELECT nombre FROM camioneros WHERE id = {ph()}", (camionero_id,))
     fila = cursor.fetchone()
 
     if fila:
-        cursor.execute("""
+        cursor.execute(f"""
             UPDATE viajes
-            SET camionero_id = ?, camionero_nombre = ?, estado = 'Asignado'
-            WHERE id = ?
+            SET camionero_id = {ph()}, camionero_nombre = {ph()}, estado = 'Asignado'
+            WHERE id = {ph()}
         """, (camionero_id, fila["nombre"], id))
 
     conexion.commit()
@@ -592,9 +592,9 @@ def cambiar_estado(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT camionero_id, vehiculo_id, precio_final, precio_cliente, precio, estado, cliente_id
-        FROM viajes WHERE id = ?
+        FROM viajes WHERE id = {ph()}
     """, (id,))
     viaje = cursor.fetchone()
 
@@ -603,26 +603,26 @@ def cambiar_estado(id):
             conexion.close()
             return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+Asignado+debes+asignar+un+camionero+y+un+veh%C3%ADculo")
 
-    cursor.execute("UPDATE viajes SET estado = ? WHERE id = ?", (estado, id))
+    cursor.execute(f"UPDATE viajes SET estado = {ph()} WHERE id = {ph()}", (estado, id))
 
     ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     if estado == "Asignado":
-        cursor.execute("UPDATE viajes SET fecha_asignacion = ? WHERE id = ?", (ahora, id))
+        cursor.execute(f"UPDATE viajes SET fecha_asignacion = {ph()} WHERE id = {ph()}", (ahora, id))
     elif estado in ["En ruta", "Carga recogida"]:
-        cursor.execute("UPDATE viajes SET fecha_recogida = ? WHERE id = ?", (ahora, id))
+        cursor.execute(f"UPDATE viajes SET fecha_recogida = {ph()} WHERE id = {ph()}", (ahora, id))
     elif estado == "Entregado":
-        cursor.execute("UPDATE viajes SET fecha_entrega = ? WHERE id = ?", (ahora, id))
+        cursor.execute(f"UPDATE viajes SET fecha_entrega = {ph()} WHERE id = {ph()}", (ahora, id))
 
     if estado.lower() in ["entregado", "cancelado"]:
         if viaje and viaje["vehiculo_id"]:
             cursor.execute(
-                "UPDATE vehiculos SET estado = 'Disponible' WHERE id = ?",
+                f"UPDATE vehiculos SET estado = 'Disponible' WHERE id = {ph()}",
                 (viaje["vehiculo_id"],)
             )
 
     email_cliente = None
     if viaje and viaje["cliente_id"]:
-        cursor.execute("SELECT email FROM clientes WHERE id = ?", (viaje["cliente_id"],))
+        cursor.execute(f"SELECT email FROM clientes WHERE id = {ph()}", (viaje["cliente_id"],))
         cli = cursor.fetchone()
         email_cliente = cli["email"] if cli else None
 
@@ -659,35 +659,35 @@ def asignar_vehiculo(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT * FROM viajes WHERE id = ?", (id,))
+    cursor.execute(f"SELECT * FROM viajes WHERE id = {ph()}", (id,))
     viaje = cursor.fetchone()
 
     if not viaje:
         conexion.close()
         return redirect("/admin/viajes")
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT v.id, v.matricula, v.tipo_vehiculo_id, v.tipo, v.estado
         FROM vehiculos v
         WHERE
-            v.id = ?
+            v.id = {ph()}
             AND v.activo = 1
             AND LOWER(v.estado) = 'disponible'
             AND (
-                v.tipo_vehiculo_id = ?
-                OR v.tipo = (SELECT nombre FROM tipos_vehiculo WHERE id = ?)
+                v.tipo_vehiculo_id = {ph()}
+                OR v.tipo = (SELECT nombre FROM tipos_vehiculo WHERE id = {ph()})
             )
     """, (vehiculo_id, viaje["tipo_vehiculo_id"], viaje["tipo_vehiculo_id"]))
     vehiculo = cursor.fetchone()
 
     if vehiculo:
-        cursor.execute("""
+        cursor.execute(f"""
             UPDATE viajes
-            SET vehiculo_id = ?, vehiculo_placa = ?, estado = 'Asignado'
-            WHERE id = ?
+            SET vehiculo_id = {ph()}, vehiculo_placa = {ph()}, estado = 'Asignado'
+            WHERE id = {ph()}
         """, (vehiculo["id"], vehiculo["matricula"], id))
 
-        cursor.execute("UPDATE vehiculos SET estado = 'En viaje' WHERE id = ?", (vehiculo["id"],))
+        cursor.execute(f"UPDATE vehiculos SET estado = 'En viaje' WHERE id = {ph()}", (vehiculo["id"],))
 
     conexion.commit()
     conexion.close()
@@ -708,38 +708,38 @@ def asignar_camionero_vehiculo(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT * FROM viajes WHERE id = ?", (id,))
+    cursor.execute(f"SELECT * FROM viajes WHERE id = {ph()}", (id,))
     viaje = cursor.fetchone()
     if not viaje:
         conexion.close()
         return redirect("/admin/viajes")
 
-    cursor.execute("SELECT nombre FROM camioneros WHERE id = ?", (camionero_id,))
+    cursor.execute(f"SELECT nombre FROM camioneros WHERE id = {ph()}", (camionero_id,))
     camionero = cursor.fetchone()
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT id, COALESCE(matricula, '') AS matricula,
                COALESCE(marca, '') AS marca, COALESCE(modelo, '') AS modelo
         FROM vehiculos
-        WHERE camionero_id = ? AND activo = 1
+        WHERE camionero_id = {ph()} AND activo = 1
         LIMIT 1
     """, (camionero_id,))
     vehiculo = cursor.fetchone()
 
     if camionero:
-        cursor.execute("""
-            UPDATE viajes SET camionero_id = ?, camionero_nombre = ? WHERE id = ?
+        cursor.execute(f"""
+            UPDATE viajes SET camionero_id = {ph()}, camionero_nombre = {ph()} WHERE id = {ph()}
         """, (camionero_id, camionero["nombre"], id))
-        cursor.execute("UPDATE camioneros SET estado = 'En viaje' WHERE id = ?", (camionero_id,))
+        cursor.execute(f"UPDATE camioneros SET estado = 'En viaje' WHERE id = {ph()}", (camionero_id,))
 
     if vehiculo:
-        cursor.execute("""
-            UPDATE viajes SET vehiculo_id = ?, vehiculo_placa = ? WHERE id = ?
+        cursor.execute(f"""
+            UPDATE viajes SET vehiculo_id = {ph()}, vehiculo_placa = {ph()} WHERE id = {ph()}
         """, (vehiculo["id"], vehiculo["matricula"], id))
-        cursor.execute("UPDATE vehiculos SET estado = 'En viaje' WHERE id = ?", (vehiculo["id"],))
+        cursor.execute(f"UPDATE vehiculos SET estado = 'En viaje' WHERE id = {ph()}", (vehiculo["id"],))
 
     if camionero:
-        cursor.execute("UPDATE viajes SET estado = 'Asignado' WHERE id = ?", (id,))
+        cursor.execute(f"UPDATE viajes SET estado = 'Asignado' WHERE id = {ph()}", (id,))
 
     nombre_cam = camionero["nombre"] if camionero else "desconocido"
     nombre_veh = f"{vehiculo['marca']} {vehiculo['modelo']} ({vehiculo['matricula']})" if vehiculo else "desconocido"
@@ -764,7 +764,7 @@ def descargar_pdf_orden_carga(id):
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT
             v.*,
             c.telefono  AS camionero_telefono,
@@ -779,7 +779,7 @@ def descargar_pdf_orden_carga(id):
         LEFT JOIN camioneros c   ON v.camionero_id = c.id
         LEFT JOIN vehiculos  veh ON v.vehiculo_id  = veh.id
         LEFT JOIN clientes   cl  ON v.cliente_id   = cl.id
-        WHERE v.id = ?
+        WHERE v.id = {ph()}
     """, (id,))
 
     fila = cursor.fetchone()
@@ -910,7 +910,7 @@ def confirmar_precio(id):
 
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("UPDATE viajes SET precio_cliente = ? WHERE id = ?", (precio, id))
+    cursor.execute(f"UPDATE viajes SET precio_cliente = {ph()} WHERE id = {ph()}", (precio, id))
     conexion.commit()
     conexion.close()
 
@@ -932,7 +932,7 @@ def guardar_combustible(id):
         return redirect(f"/admin/viaje/{id}?error=Valor+de+combustible+inv%C3%A1lido")
     con = conectar()
     cur = con.cursor()
-    cur.execute("UPDATE viajes SET combustible = ? WHERE id = ?", (combustible, id))
+    cur.execute(f"UPDATE viajes SET combustible = {ph()} WHERE id = {ph()}", (combustible, id))
     con.commit()
     con.close()
     registrar_auditoria(f"Guardó combustible ${combustible:.2f}", "Viajes", "viaje", id)
@@ -948,9 +948,9 @@ def guardar_fechas(id):
     con = conectar()
     cur = con.cursor()
     if fecha_recogida:
-        cur.execute("UPDATE viajes SET fecha_recogida = ? WHERE id = ?", (fecha_recogida, id))
+        cur.execute(f"UPDATE viajes SET fecha_recogida = {ph()} WHERE id = {ph()}", (fecha_recogida, id))
     if fecha_entrega:
-        cur.execute("UPDATE viajes SET fecha_entrega = ? WHERE id = ?", (fecha_entrega, id))
+        cur.execute(f"UPDATE viajes SET fecha_entrega = {ph()} WHERE id = {ph()}", (fecha_entrega, id))
     con.commit()
     con.close()
     return redirect(f"/admin/viaje/{id}")
@@ -969,10 +969,10 @@ def lista_incidencias():
     conds = []
     params = []
     if filtro_estado:
-        conds.append("i.estado = ?")
+        conds.append(f"i.estado = {ph()}")
         params.append(filtro_estado)
     if filtro_cat:
-        conds.append("i.categoria = ?")
+        conds.append(f"i.categoria = {ph()}")
         params.append(filtro_cat)
     where = ("WHERE " + " AND ".join(conds)) if conds else ""
     cur.execute(f"""
@@ -1001,9 +1001,9 @@ def eliminar_viaje_admin(id):
         return redirect("/admin/viajes")
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("""
-        UPDATE viajes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ?
-        WHERE id = ?
+    cursor.execute(f"""
+        UPDATE viajes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = {ph()}
+        WHERE id = {ph()}
     """, (session.get("usuario"), id))
     conexion.commit()
     conexion.close()
@@ -1020,7 +1020,7 @@ def actualizar_prioridad_viaje(id):
         prioridad = "Normal"
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("UPDATE viajes SET prioridad = ? WHERE id = ?", (prioridad, id))
+    cursor.execute(f"UPDATE viajes SET prioridad = {ph()} WHERE id = {ph()}", (prioridad, id))
     conexion.commit()
     conexion.close()
     return redirect(f"/admin/viaje/{id}#operacion")
@@ -1035,7 +1035,7 @@ def agregar_nota_viaje(id):
         conexion = conectar()
         cursor = conexion.cursor()
         cursor.execute(
-            "INSERT INTO notas_viaje (viaje_id, usuario, texto) VALUES (?, ?, ?)",
+            f"INSERT INTO notas_viaje (viaje_id, usuario, texto) VALUES ({ph()}, {ph()}, {ph()})",
             (id, session.get("usuario", "admin"), texto)
         )
         conexion.commit()
@@ -1077,23 +1077,23 @@ def pago_camionero(id):
 
     if accion == "pagado" and session.get("rol") == "admin":
         cur.execute(
-            "UPDATE viajes SET estado_pago_camionero='Pagado', tipo_pago_camionero=?, "
-            "observacion_pago=?, fecha_pago_camionero=CURRENT_TIMESTAMP WHERE id=?",
+            f"UPDATE viajes SET estado_pago_camionero='Pagado', tipo_pago_camionero={ph()}, "
+            f"observacion_pago={ph()}, fecha_pago_camionero=CURRENT_TIMESTAMP WHERE id={ph()}",
             (tipo_pago, observacion, id)
         )
         registrar_auditoria("Marcó pago camionero como Pagado", "Viajes", "viaje", id)
 
     elif accion == "parcial" and session.get("rol") == "admin":
         cur.execute(
-            "UPDATE viajes SET estado_pago_camionero='Parcial', tipo_pago_camionero=?, "
-            "observacion_pago=?, monto_pagado=? WHERE id=?",
+            f"UPDATE viajes SET estado_pago_camionero='Parcial', tipo_pago_camionero={ph()}, "
+            f"observacion_pago={ph()}, monto_pagado={ph()} WHERE id={ph()}",
             (tipo_pago, observacion, monto, id)
         )
         registrar_auditoria("Marcó pago camionero como Parcial", "Viajes", "viaje", id)
 
     elif accion == "revertir" and session.get("rol") == "admin":
         cur.execute(
-            "UPDATE viajes SET estado_pago_camionero='Pendiente', fecha_pago_camionero=NULL WHERE id=?",
+            f"UPDATE viajes SET estado_pago_camionero='Pendiente', fecha_pago_camionero=NULL WHERE id={ph()}",
             (id,)
         )
 
@@ -1111,14 +1111,14 @@ def camionero_economico(id):
     cur = con.cursor()
 
     cur.execute(
-        "SELECT id, nombre, telefono, licencia, estado FROM camioneros WHERE id = ?", (id,)
+        f"SELECT id, nombre, telefono, licencia, estado FROM camioneros WHERE id = {ph()}", (id,)
     )
     camionero = cur.fetchone()
     if not camionero:
         con.close()
         return redirect("/admin/camioneros")
 
-    cur.execute("""
+    cur.execute(f"""
         SELECT
             COALESCE(SUM(CASE WHEN LOWER(estado) != 'cancelado'
                          THEN COALESCE(pago_camionero, camionero, 0) ELSE 0 END), 0) AS total_generado,
@@ -1128,31 +1128,31 @@ def camionero_economico(id):
                 WHEN estado_pago_camionero = 'Parcial' AND LOWER(estado) != 'cancelado'
                      THEN COALESCE(monto_pagado, 0)
                 ELSE 0 END), 0) AS total_pagado
-        FROM viajes WHERE camionero_id = ?
+        FROM viajes WHERE camionero_id = {ph()}
     """, (id,))
     resumen = cur.fetchone()
     total_generado = float(resumen["total_generado"]) if resumen else 0.0
     total_pagado   = float(resumen["total_pagado"])   if resumen else 0.0
     pendiente      = total_generado - total_pagado
 
-    cur.execute("""
+    cur.execute(f"""
         SELECT id, fecha_creacion, origen, destino,
                COALESCE(pago_camionero, camionero, 0) AS monto_calculado,
                tipo_pago_camionero, estado_pago_camionero, monto_pagado, observacion_pago, estado
         FROM viajes
-        WHERE camionero_id = ?
+        WHERE camionero_id = {ph()}
           AND LOWER(estado) != 'cancelado'
           AND (estado_pago_camionero IS NULL OR estado_pago_camionero != 'Pagado')
         ORDER BY id DESC
     """, (id,))
     pendientes = cur.fetchall()
 
-    cur.execute("""
+    cur.execute(f"""
         SELECT id, fecha_creacion, origen, destino,
                COALESCE(pago_camionero, camionero, 0) AS monto_calculado,
                tipo_pago_camionero, monto_pagado, fecha_pago_camionero, observacion_pago, estado
         FROM viajes
-        WHERE camionero_id = ? AND estado_pago_camionero = 'Pagado'
+        WHERE camionero_id = {ph()} AND estado_pago_camionero = 'Pagado'
         ORDER BY id DESC LIMIT 10
     """, (id,))
     pagados = cur.fetchall()
@@ -1191,7 +1191,7 @@ def catalogo_tipo_transporte_admin():
             else:
                 try:
                     cur.execute(
-                        "INSERT INTO catalogo_tipo_transporte (nombre) VALUES (?)", (nombre,)
+                        f"INSERT INTO catalogo_tipo_transporte (nombre) VALUES ({ph()})", (nombre,)
                     )
                     con.commit()
                 except Exception:
@@ -1201,12 +1201,12 @@ def catalogo_tipo_transporte_admin():
             tipo_id = request.form.get("tipo_id", "")
             if tipo_id:
                 cur.execute(
-                    "SELECT activo FROM catalogo_tipo_transporte WHERE id = ?", (tipo_id,)
+                    f"SELECT activo FROM catalogo_tipo_transporte WHERE id = {ph()}", (tipo_id,)
                 )
                 row = cur.fetchone()
                 if row:
                     cur.execute(
-                        "UPDATE catalogo_tipo_transporte SET activo = ? WHERE id = ?",
+                        f"UPDATE catalogo_tipo_transporte SET activo = {ph()} WHERE id = {ph()}",
                         (0 if row["activo"] else 1, tipo_id)
                     )
                     con.commit()
@@ -1257,24 +1257,24 @@ def admin_camioneros():
             error = "La matrícula del vehículo es obligatoria."
 
         if not error:
-            cursor.execute("SELECT id FROM vehiculos WHERE matricula = ?", (matricula,))
+            cursor.execute(f"SELECT id FROM vehiculos WHERE matricula = {ph()}", (matricula,))
             if cursor.fetchone():
                 error = f"La matrícula '{matricula}' ya está registrada."
 
         if not error:
-            cursor.execute("""
+            cursor.execute(f"""
                 INSERT INTO camioneros (nombre, telefono, licencia, carnet_identidad,
                     licencia_operativa, empresa, estado, activo)
-                VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+                VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, 1)
             """, (nombre, telefono, licencia, carnet_identidad, licencia_operativa, empresa, estado))
             nuevo_id = cursor.lastrowid
 
             if matricula:
-                cursor.execute("""
+                cursor.execute(f"""
                     INSERT INTO vehiculos
                         (camionero_id, matricula, marca, modelo, tipo, capacidad,
                          chapa_remolque, estado, activo)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 'Disponible', 1)
+                    VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, 'Disponible', 1)
                 """, (nuevo_id, matricula, marca, modelo, tipo, capacidad, chapa_remolque))
 
             conexion.commit()
@@ -1291,14 +1291,14 @@ def admin_camioneros():
     condiciones = ["(c.activo = 1 OR c.activo IS NULL)", "c.deleted_at IS NULL"]
     params = []
     if buscar:
-        condiciones.append("(c.nombre LIKE ? OR c.telefono LIKE ? OR c.licencia LIKE ?)")
+        condiciones.append(f"(c.nombre LIKE {ph()} OR c.telefono LIKE {ph()} OR c.licencia LIKE {ph()})")
         like = f"%{buscar}%"
         params.extend([like, like, like])
     if filtro_estado:
-        condiciones.append("LOWER(c.estado) = ?")
+        condiciones.append(f"LOWER(c.estado) = {ph()}")
         params.append(filtro_estado.lower())
     if filtro_tipo:
-        condiciones.append("LOWER(COALESCE(v.tipo, '')) = ?")
+        condiciones.append(f"LOWER(COALESCE(v.tipo, '')) = {ph()}")
         params.append(filtro_tipo.lower())
     if filtro_vehiculo == "con":
         condiciones.append("v.id IS NOT NULL")
@@ -1385,37 +1385,37 @@ def editar_camionero(id):
         capacidad      = request.form.get("capacidad", "").strip()
         chapa_remolque = request.form.get("chapa_remolque", "").strip()
 
-        cursor.execute("""
-            UPDATE camioneros SET nombre = ?, telefono = ?, licencia = ?,
-                carnet_identidad = ?, licencia_operativa = ?, empresa = ?,
-                estado = ?
-            WHERE id = ?
+        cursor.execute(f"""
+            UPDATE camioneros SET nombre = {ph()}, telefono = {ph()}, licencia = {ph()},
+                carnet_identidad = {ph()}, licencia_operativa = {ph()}, empresa = {ph()},
+                estado = {ph()}
+            WHERE id = {ph()}
         """, (nombre, telefono, licencia, carnet_identidad, licencia_operativa, empresa, estado, id))
 
         cursor.execute(
-            "SELECT id FROM vehiculos WHERE camionero_id = ? AND activo = 1", (id,)
+            f"SELECT id FROM vehiculos WHERE camionero_id = {ph()} AND activo = 1", (id,)
         )
         veh_row = cursor.fetchone()
 
         if veh_row:
-            cursor.execute("""
+            cursor.execute(f"""
                 UPDATE vehiculos
-                SET matricula = ?, marca = ?, modelo = ?, tipo = ?,
-                    capacidad = ?, chapa_remolque = ?
-                WHERE id = ?
+                SET matricula = {ph()}, marca = {ph()}, modelo = {ph()}, tipo = {ph()},
+                    capacidad = {ph()}, chapa_remolque = {ph()}
+                WHERE id = {ph()}
             """, (matricula, marca, modelo, tipo, capacidad, chapa_remolque, veh_row["id"]))
         elif matricula:
             cursor.execute(
-                "SELECT id FROM vehiculos WHERE matricula = ?", (matricula,)
+                f"SELECT id FROM vehiculos WHERE matricula = {ph()}", (matricula,)
             )
             if cursor.fetchone():
                 error = f"La matrícula '{matricula}' ya está registrada."
             else:
-                cursor.execute("""
+                cursor.execute(f"""
                     INSERT INTO vehiculos
                         (camionero_id, matricula, marca, modelo, tipo, capacidad,
                          chapa_remolque, estado, activo)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 'Disponible', 1)
+                    VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, 'Disponible', 1)
                 """, (id, matricula, marca, modelo, tipo, capacidad, chapa_remolque))
 
         if not error:
@@ -1426,7 +1426,7 @@ def editar_camionero(id):
     cursor.execute(
         """SELECT id, nombre, telefono, licencia, carnet_identidad,
                    licencia_operativa, empresa, estado
-            FROM camioneros WHERE id = ?""",
+            FROM camioneros WHERE id = {ph()}""",
         (id,)
     )
     camionero = cursor.fetchone()
@@ -1437,7 +1437,7 @@ def editar_camionero(id):
 
     cursor.execute(
         """SELECT id, matricula, marca, modelo, tipo, capacidad, chapa_remolque
-           FROM vehiculos WHERE camionero_id = ? AND activo = 1""",
+           FROM vehiculos WHERE camionero_id = {ph()} AND activo = 1""",
         (id,)
     )
     vehiculo = cursor.fetchone()
@@ -1468,11 +1468,11 @@ def eliminar_camionero(id):
 
     if session.get("rol") == "admin":
         # Soft delete directo
-        cursor.execute("SELECT nombre FROM camioneros WHERE id = ?", (id,))
+        cursor.execute(f"SELECT nombre FROM camioneros WHERE id = {ph()}", (id,))
         row = cursor.fetchone()
-        cursor.execute("""
-            UPDATE camioneros SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ?
-            WHERE id = ?
+        cursor.execute(f"""
+            UPDATE camioneros SET deleted_at = CURRENT_TIMESTAMP, deleted_by = {ph()}
+            WHERE id = {ph()}
         """, (session.get("usuario"), id))
         conexion.commit()
         conexion.close()
@@ -1480,13 +1480,13 @@ def eliminar_camionero(id):
         return redirect("/admin/camioneros")
     else:
         # Operario: crea solicitud de aprobación
-        cursor.execute("SELECT nombre FROM camioneros WHERE id = ?", (id,))
+        cursor.execute(f"SELECT nombre FROM camioneros WHERE id = {ph()}", (id,))
         row = cursor.fetchone()
         nombre_entidad = row["nombre"] if row else f"#{id}"
-        cursor.execute("""
+        cursor.execute(f"""
             INSERT INTO solicitudes_eliminacion
                 (entidad, entidad_id, nombre_entidad, solicitado_por)
-            VALUES (?, ?, ?, ?)
+            VALUES ({ph()}, {ph()}, {ph()}, {ph()})
         """, ("camionero", id, nombre_entidad, session.get("usuario")))
         conexion.commit()
         conexion.close()
@@ -1520,9 +1520,9 @@ def admin_clientes():
         if categoria not in CATEGORIAS_CLIENTE:
             categoria = "Normal"
 
-        cursor.execute("""
+        cursor.execute(f"""
             INSERT INTO clientes (nombre, empresa, contacto, telefono, email, direccion, categoria)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
         """, (nombre, empresa, contacto, telefono, email, direccion, categoria))
 
         conexion.commit()
@@ -1537,11 +1537,11 @@ def admin_clientes():
     cond_cl = ["deleted_at IS NULL"]
     params_cl = []
     if buscar_cl:
-        cond_cl.append("(nombre LIKE ? OR email LIKE ? OR empresa LIKE ? OR telefono LIKE ?)")
+        cond_cl.append(f"(nombre LIKE {ph()} OR email LIKE {ph()} OR empresa LIKE {ph()} OR telefono LIKE {ph()})")
         like_cl = f"%{buscar_cl}%"
         params_cl.extend([like_cl, like_cl, like_cl, like_cl])
     if filtro_cat and filtro_cat in CATEGORIAS_CLIENTE:
-        cond_cl.append("COALESCE(categoria, 'Normal') = ?")
+        cond_cl.append(f"COALESCE(categoria, 'Normal') = {ph()}")
         params_cl.append(filtro_cat)
     where_cl = ("WHERE " + " AND ".join(cond_cl)) if cond_cl else ""
 
@@ -1596,11 +1596,11 @@ def editar_cliente(id):
         if categoria not in CATEGORIAS_CLIENTE:
             categoria = "Normal"
 
-        cursor.execute("""
+        cursor.execute(f"""
             UPDATE clientes
-            SET nombre = ?, empresa = ?, contacto = ?, telefono = ?,
-                email = ?, direccion = ?, categoria = ?
-            WHERE id = ?
+            SET nombre = {ph()}, empresa = {ph()}, contacto = {ph()}, telefono = {ph()},
+                email = {ph()}, direccion = {ph()}, categoria = {ph()}
+            WHERE id = {ph()}
         """, (nombre, empresa, contacto, telefono, email, direccion, categoria, id))
 
         conexion.commit()
@@ -1608,11 +1608,11 @@ def editar_cliente(id):
 
         return redirect("/admin/clientes")
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT id, nombre, empresa, contacto, telefono, email, direccion,
                COALESCE(categoria, 'Normal') AS categoria
         FROM clientes
-        WHERE id = ?
+        WHERE id = {ph()}
     """, (id,))
     cliente = cursor.fetchone()
 
@@ -1635,9 +1635,9 @@ def eliminar_cliente(id):
 
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("""
-        UPDATE clientes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ?
-        WHERE id = ?
+    cursor.execute(f"""
+        UPDATE clientes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = {ph()}
+        WHERE id = {ph()}
     """, (session.get("usuario"), id))
     conexion.commit()
     conexion.close()
@@ -1664,9 +1664,9 @@ def admin_vehiculos():
         camionero_id = request.form.get("camionero_id") or None
         estado = request.form.get("estado", "Disponible").strip()
 
-        cursor.execute("""
+        cursor.execute(f"""
             INSERT INTO vehiculos (matricula, tipo, marca, modelo, capacidad, camionero_id, estado)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
         """, (matricula, tipo, marca, modelo, capacidad, camionero_id, estado))
         conexion.commit()
         conexion.close()
@@ -1678,11 +1678,11 @@ def admin_vehiculos():
     cond_v = []
     params_v = []
     if buscar_v:
-        cond_v.append("(v.matricula LIKE ? OR v.marca LIKE ? OR v.modelo LIKE ?)")
+        cond_v.append(f"(v.matricula LIKE {ph()} OR v.marca LIKE {ph()} OR v.modelo LIKE {ph()})")
         like_v = f"%{buscar_v}%"
         params_v.extend([like_v, like_v, like_v])
     if filtro_estado_v:
-        cond_v.append("LOWER(v.estado) = ?")
+        cond_v.append(f"LOWER(v.estado) = {ph()}")
         params_v.append(filtro_estado_v.lower())
     where_v = "WHERE v.activo = 1" + (" AND " + " AND ".join(cond_v) if cond_v else "")
 
@@ -1729,20 +1729,20 @@ def editar_vehiculo(id):
         camionero_id = request.form.get("camionero_id") or None
         estado = request.form.get("estado", "Disponible").strip()
 
-        cursor.execute("""
+        cursor.execute(f"""
             UPDATE vehiculos
-            SET matricula = ?, tipo = ?, marca = ?, modelo = ?,
-                capacidad = ?, camionero_id = ?, estado = ?
-            WHERE id = ?
+            SET matricula = {ph()}, tipo = {ph()}, marca = {ph()}, modelo = {ph()},
+                capacidad = {ph()}, camionero_id = {ph()}, estado = {ph()}
+            WHERE id = {ph()}
         """, (matricula, tipo, marca, modelo, capacidad, camionero_id, estado, id))
         conexion.commit()
         conexion.close()
         return redirect("/admin/vehiculos")
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT id, matricula, tipo, marca, modelo, capacidad, camionero_id, estado
         FROM vehiculos
-        WHERE id = ? AND activo = 1
+        WHERE id = {ph()} AND activo = 1
     """, (id,))
     vehiculo = cursor.fetchone()
 
@@ -1777,7 +1777,7 @@ def sugerencias_vehiculos():
     cursor = conexion.cursor()
     cursor.execute(
         f"SELECT DISTINCT {campo} FROM vehiculos"
-        f" WHERE {campo} LIKE ? AND activo = 1 AND {campo} != ''"
+        f" WHERE {campo} LIKE {ph()} AND activo = 1 AND {campo} != ''"
         f" ORDER BY {campo} LIMIT 10",
         (f"%{q}%",)
     )
@@ -1794,7 +1794,7 @@ def eliminar_vehiculo(id):
 
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("UPDATE vehiculos SET activo = 0 WHERE id = ?", (id,))
+    cursor.execute(f"UPDATE vehiculos SET activo = 0 WHERE id = {ph()}", (id,))
     conexion.commit()
     conexion.close()
 
@@ -1825,10 +1825,10 @@ def _calcular_financieros_periodo(fecha_desde, fecha_hasta):
     """Devuelve (filas_tabla, totales) para el período dado."""
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT id, cliente, origen, destino, estado, fecha_creacion
         FROM viajes
-        WHERE (fecha_creacion >= ? AND fecha_creacion <= ?)
+        WHERE (fecha_creacion >= {ph()} AND fecha_creacion <= {ph()})
           AND LOWER(estado) != 'cancelado'
         ORDER BY id DESC
     """, (fecha_desde, fecha_hasta + " 23:59:59"))
@@ -1885,12 +1885,12 @@ def reportes():
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT origen || ' → ' || destino AS ruta,
                COUNT(*) AS viajes,
                SUM(COALESCE(NULLIF(precio_final,0), NULLIF(precio_cliente,0), NULLIF(precio,0), 0)) AS ingresos_proxy
         FROM viajes
-        WHERE (fecha_creacion >= ? AND fecha_creacion <= ?)
+        WHERE (fecha_creacion >= {ph()} AND fecha_creacion <= {ph()})
           AND LOWER(estado) != 'cancelado'
         GROUP BY ruta
         ORDER BY ingresos_proxy DESC
@@ -1898,10 +1898,10 @@ def reportes():
     """, (fecha_desde, fecha_hasta + " 23:59:59"))
     ruta_top = cursor.fetchone()
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT camionero_nombre, COUNT(*) AS total_viajes
         FROM viajes
-        WHERE (fecha_creacion >= ? AND fecha_creacion <= ?)
+        WHERE (fecha_creacion >= {ph()} AND fecha_creacion <= {ph()})
           AND LOWER(estado) != 'cancelado'
           AND camionero_nombre IS NOT NULL AND camionero_nombre != ''
         GROUP BY camionero_nombre
@@ -2004,10 +2004,10 @@ def lista_usuarios():
     cursor = conexion.cursor()
 
     if filtro_rol:
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT id, usuario, rol, activo, fecha_creacion
             FROM usuarios
-            WHERE rol = ?
+            WHERE rol = {ph()}
             ORDER BY id DESC
         """, (filtro_rol,))
     else:
@@ -2054,14 +2054,14 @@ def crear_usuario():
 
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("SELECT id FROM usuarios WHERE usuario = ?", (usuario,))
+    cursor.execute(f"SELECT id FROM usuarios WHERE usuario = {ph()}", (usuario,))
     if cursor.fetchone():
         conexion.close()
         return redirect("/admin/usuarios?error=El+usuario+ya+existe")
 
     hash_pw = bcrypt.generate_password_hash(password).decode("utf-8")
     cursor.execute(
-        "INSERT INTO usuarios (usuario, password, rol) VALUES (?, ?, ?)",
+        f"INSERT INTO usuarios (usuario, password, rol) VALUES ({ph()}, {ph()}, {ph()})",
         (usuario, hash_pw, rol)
     )
     conexion.commit()
@@ -2083,13 +2083,13 @@ def cambiar_rol_usuario(id):
 
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("SELECT usuario FROM usuarios WHERE id = ?", (id,))
+    cursor.execute(f"SELECT usuario FROM usuarios WHERE id = {ph()}", (id,))
     row = cursor.fetchone()
     if row and row["usuario"] == session.get("usuario"):
         conexion.close()
         return redirect("/admin/usuarios?error=No+puedes+cambiar+tu+propio+rol")
 
-    cursor.execute("UPDATE usuarios SET rol = ? WHERE id = ?", (rol, id))
+    cursor.execute(f"UPDATE usuarios SET rol = {ph()} WHERE id = {ph()}", (rol, id))
     conexion.commit()
     conexion.close()
 
@@ -2105,14 +2105,14 @@ def toggle_usuario(id):
 
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("SELECT usuario FROM usuarios WHERE id = ?", (id,))
+    cursor.execute(f"SELECT usuario FROM usuarios WHERE id = {ph()}", (id,))
     row = cursor.fetchone()
     if row and row["usuario"] == session.get("usuario"):
         conexion.close()
         return redirect("/admin/usuarios?error=No+puedes+desactivarte+a+ti+mismo")
 
     cursor.execute(
-        "UPDATE usuarios SET activo = CASE WHEN activo = 1 THEN 0 ELSE 1 END WHERE id = ?",
+        f"UPDATE usuarios SET activo = CASE WHEN activo = 1 THEN 0 ELSE 1 END WHERE id = {ph()}",
         (id,)
     )
     conexion.commit()
@@ -2134,7 +2134,7 @@ def reset_password_usuario(id):
     nuevo_hash = _bcrypt.generate_password_hash(nueva).decode("utf-8")
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (nuevo_hash, id))
+    cursor.execute(f"UPDATE usuarios SET password = {ph()} WHERE id = {ph()}", (nuevo_hash, id))
     conexion.commit()
     conexion.close()
     registrar_auditoria(f"Reseteó contraseña de usuario #{id}", "Usuarios", "usuario", id)
@@ -2231,7 +2231,7 @@ def importar_excel(tabla):
     ws = wb.active
 
     columnas = cfg["columnas"]
-    placeholders = ", ".join(["?"] * len(columnas))
+    placeholders = ", ".join([f"{ph()}"] * len(columnas))
     cols_str = ", ".join(columnas)
 
     conexion = conectar()
@@ -2278,19 +2278,19 @@ def ver_auditoria():
     params = []
 
     if categoria:
-        condiciones.append("categoria = ?")
+        condiciones.append(f"categoria = {ph()}")
         params.append(categoria)
     if usuario_f:
-        condiciones.append("usuario LIKE ?")
+        condiciones.append(f"usuario LIKE {ph()}")
         params.append(f"%{usuario_f}%")
     if fecha_desde:
-        condiciones.append("DATE(fecha) >= ?")
+        condiciones.append(f"DATE(fecha) >= {ph()}")
         params.append(fecha_desde)
     if fecha_hasta:
-        condiciones.append("DATE(fecha) <= ?")
+        condiciones.append(f"DATE(fecha) <= {ph()}")
         params.append(fecha_hasta)
     if buscar:
-        condiciones.append("(accion LIKE ? OR detalle LIKE ? OR usuario LIKE ?)")
+        condiciones.append(f"(accion LIKE {ph()} OR detalle LIKE {ph()} OR usuario LIKE {ph()})")
         params.extend([f"%{buscar}%", f"%{buscar}%", f"%{buscar}%"])
 
     where = ("WHERE " + " AND ".join(condiciones)) if condiciones else ""
@@ -2303,7 +2303,7 @@ def ver_auditoria():
 
     offset = (pagina - 1) * por_pagina
     cursor.execute(
-        f"SELECT * FROM auditoria {where} ORDER BY id DESC LIMIT ? OFFSET ?",
+        f"SELECT * FROM auditoria {where} ORDER BY id DESC LIMIT {ph()} OFFSET {ph()}",
         params + [por_pagina, offset]
     )
     registros = cursor.fetchall()
@@ -2389,11 +2389,11 @@ def lote_preview():
             """)
         elif criterio == "estado" and valor:
             cursor.execute(
-                "SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) = LOWER(?)", (valor,)
+                f"SELECT COUNT(*) AS total FROM viajes WHERE LOWER(estado) = LOWER({ph()})", (valor,)
             )
         elif criterio == "ruta" and valor:
             cursor.execute(
-                "SELECT COUNT(*) AS total FROM viajes WHERE ruta_id = ?", (valor,)
+                f"SELECT COUNT(*) AS total FROM viajes WHERE ruta_id = {ph()}", (valor,)
             )
         else:
             cursor.execute(
@@ -2428,26 +2428,26 @@ def lote_precios():
     cursor = conexion.cursor()
 
     if criterio == "sin_precio":
-        cursor.execute("""
-            UPDATE viajes SET precio_cliente = ?, precio_final = ?
+        cursor.execute(f"""
+            UPDATE viajes SET precio_cliente = {ph()}, precio_final = {ph()}
             WHERE LOWER(estado) NOT IN ('entregado','cancelado')
               AND (precio_cliente IS NULL OR precio_cliente = 0)
               AND (precio_final   IS NULL OR precio_final   = 0)
               AND (precio         IS NULL OR precio         = 0)
         """, (precio_nuevo, precio_nuevo))
     elif criterio == "estado" and valor_criterio:
-        cursor.execute("""
-            UPDATE viajes SET precio_cliente = ?, precio_final = ?
-            WHERE LOWER(estado) = LOWER(?)
+        cursor.execute(f"""
+            UPDATE viajes SET precio_cliente = {ph()}, precio_final = {ph()}
+            WHERE LOWER(estado) = LOWER({ph()})
         """, (precio_nuevo, precio_nuevo, valor_criterio))
     elif criterio == "ruta" and valor_criterio:
-        cursor.execute("""
-            UPDATE viajes SET precio_cliente = ?, precio_final = ?
-            WHERE ruta_id = ?
+        cursor.execute(f"""
+            UPDATE viajes SET precio_cliente = {ph()}, precio_final = {ph()}
+            WHERE ruta_id = {ph()}
         """, (precio_nuevo, precio_nuevo, valor_criterio))
     else:
-        cursor.execute("""
-            UPDATE viajes SET precio_cliente = ?, precio_final = ?
+        cursor.execute(f"""
+            UPDATE viajes SET precio_cliente = {ph()}, precio_final = {ph()}
             WHERE LOWER(estado) NOT IN ('entregado','cancelado')
         """, (precio_nuevo, precio_nuevo))
 
@@ -2478,7 +2478,7 @@ def lote_estados():
     conexion = conectar()
     cursor = conexion.cursor()
     cursor.execute(
-        "UPDATE viajes SET estado = ? WHERE LOWER(estado) = LOWER(?)",
+        f"UPDATE viajes SET estado = {ph()} WHERE LOWER(estado) = LOWER({ph()})",
         (estado_destino, estado_origen)
     )
     n = cursor.rowcount
@@ -2511,7 +2511,7 @@ def lote_seleccionados():
     if not ids:
         return redirect("/admin/lote?resultado=Error:+no+se+seleccionaron+viajes")
 
-    placeholders = ",".join("?" * len(ids))
+    placeholders = ",".join(f"{ph()}" * len(ids))
     conexion = conectar()
     cursor = conexion.cursor()
 
@@ -2522,13 +2522,13 @@ def lote_seleccionados():
             conexion.close()
             return redirect("/admin/lote?resultado=Error:+precio+inválido")
         cursor.execute(
-            f"UPDATE viajes SET precio_cliente = ?, precio_final = ? WHERE id IN ({placeholders})",
+            f"UPDATE viajes SET precio_cliente = {ph()}, precio_final = {ph()} WHERE id IN ({placeholders})",
             [precio, precio] + ids
         )
         detalle = f"precio ${precio}"
     elif accion == "estado":
         cursor.execute(
-            f"UPDATE viajes SET estado = ? WHERE id IN ({placeholders})",
+            f"UPDATE viajes SET estado = {ph()} WHERE id IN ({placeholders})",
             [valor] + ids
         )
         detalle = f"estado '{valor}'"
@@ -2728,7 +2728,7 @@ def restaurar_registro(entidad, id):
 
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute(f"UPDATE {tabla} SET deleted_at = NULL, deleted_by = NULL WHERE id = ?", (id,))
+    cursor.execute(f"UPDATE {tabla} SET deleted_at = NULL, deleted_by = NULL WHERE id = {ph()}", (id,))
     conexion.commit()
     conexion.close()
     registrar_auditoria("restauró de papelera", tabla, entidad, id)
@@ -2743,7 +2743,7 @@ def aprobar_eliminacion(id):
         return redirect("/admin?access_error=Acceso+restringido+a+administradores")
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("SELECT * FROM solicitudes_eliminacion WHERE id = ?", (id,))
+    cursor.execute(f"SELECT * FROM solicitudes_eliminacion WHERE id = {ph()}", (id,))
     sol = cursor.fetchone()
     if sol and sol["estado"] == "Pendiente":
         tablas = {"camionero": "camioneros", "cliente": "clientes", "viaje": "viajes"}
@@ -2753,10 +2753,10 @@ def aprobar_eliminacion(id):
                 UPDATE {tabla} SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ?
                 WHERE id = ?
             """, (session.get("usuario"), sol["entidad_id"]))
-        cursor.execute("""
+        cursor.execute(f"""
             UPDATE solicitudes_eliminacion
-            SET estado = 'Aprobada', revisado_por = ?, fecha_revision = CURRENT_TIMESTAMP
-            WHERE id = ?
+            SET estado = 'Aprobada', revisado_por = {ph()}, fecha_revision = CURRENT_TIMESTAMP
+            WHERE id = {ph()}
         """, (session.get("usuario"), id))
         conexion.commit()
         registrar_auditoria("aprobó eliminación", sol["entidad"] + "s", sol["entidad"], sol["entidad_id"],
@@ -2771,10 +2771,10 @@ def rechazar_eliminacion(id):
         return redirect("/admin?access_error=Acceso+restringido+a+administradores")
     conexion = conectar()
     cursor = conexion.cursor()
-    cursor.execute("""
+    cursor.execute(f"""
         UPDATE solicitudes_eliminacion
-        SET estado = 'Rechazada', revisado_por = ?, fecha_revision = CURRENT_TIMESTAMP
-        WHERE id = ? AND estado = 'Pendiente'
+        SET estado = 'Rechazada', revisado_por = {ph()}, fecha_revision = CURRENT_TIMESTAMP
+        WHERE id = {ph()} AND estado = 'Pendiente'
     """, (session.get("usuario"), id))
     conexion.commit()
     conexion.close()
