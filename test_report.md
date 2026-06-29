@@ -1,62 +1,49 @@
 # Reporte de Pruebas — 2026-06-28
 
-## Páginas probadas
-- http://127.0.0.1:5000/login
-- http://127.0.0.1:5000/admin/ (dashboard)
-- http://127.0.0.1:5000/admin/viajes
-- http://127.0.0.1:5000/admin/viaje/2 (gestionar_viaje — nuevo flujo secuencial)
-- http://127.0.0.1:5000/admin/viajes/2/gestionar (alias — misma vista)
-- http://127.0.0.1:5000/admin/incidencias (nueva vista)
-- http://127.0.0.1:5000/admin/configuracion
+## Páginas probadas (viewport móvil 390×844)
+- http://127.0.0.1:5000/admin/ — dashboard (sidebar cerrado)
+- http://127.0.0.1:5000/admin/ — dashboard (menú overlay abierto con hamburguesa)
+- http://127.0.0.1:5000/admin/viaje/2 — gestionar viaje (flujo secuencial en móvil)
 
 ## Errores encontrados
-Ninguno. Todas las páginas devolvieron HTTP 200. Sin errores de consola ni warnings.
+Ninguno. Sin errores de consola ni HTTP 4xx/5xx.
 
 ## Screenshots tomados
-- `test_admin_dashboard.png` — dashboard admin con cartel informativo
-- `test_gestionar_viaje.png` — nueva vista de viaje con pasos secuenciales
-- `test_incidencias.png` — nueva vista global de incidencias
-- `test_configuracion.png` — configuración financiera
+- `mobile_dashboard_closed.png` — topbar fija visible, sidebar oculto, contenido principal accesible
+- `mobile_menu_open.png` — menú overlay a pantalla completa con links verticales
+- `mobile_viaje_detail.png` — página de viaje con pasos secuenciales en móvil (fullPage)
 
 ## Correcciones aplicadas
 
-### Change 1 — Flujo de viaje rediseñado
-`templates/admin/gestionar_viaje.html` reescrito completamente. Eliminadas las pestañas y el checklist separado. Reemplazado por 8 tarjetas de pasos secuenciales:
-1. Asignar camionero y vehículo
-2. Confirmar precio cliente
-3. Confirmar combustible asignado
-4. Fecha de extracción
-5. Fecha de descarga
-6. Enviar documentación (toggle AJAX sobre checklist)
-7. Confirmar entrega
-8. Cerrar operación (pago camionero — solo admin)
+### CSS admin.css — bloque @media (max-width: 768px) reescrito completamente
 
-Los pasos completados se muestran colapsados en verde. El panel de info (cliente, ruta, camionero, precios, fechas) siempre visible arriba. Los detalles adicionales (liquidación, pago, prioridad, documentos, WhatsApp, notas, incidencias) en acordeones `<details>` al fondo.
+Comportamiento anterior (roto):
+- `.sidebar` usaba `position: fixed; left: -290px` con `transition: left` — el drawer se animaba pero en algunos dispositivos quedaba parcialmente visible bloqueando el contenido
+- `.main-content` tenía `padding: 14px` sin offset del topbar — el contenido quedaba tapado por la barra superior
+- `.mobile-topbar` era `position: sticky` — no quedaba fija al hacer scroll
 
-### Change 2 — Campos numéricos sin flechitas
-- `templates/cliente/solicitar.html`: `cantidad_contenedores` → `type="text" pattern="[0-9]*" inputmode="numeric"`
-- `templates/admin/configuracion.html`: CSS `-moz-appearance:textfield` + `-webkit-appearance:none` para ocultar spinners en todos los `.config-input`
+Comportamiento nuevo:
+1. **Sidebar completamente oculto** por defecto: `display: none`
+2. **Topbar fija**: `position: fixed; top: 0; left: 0; right: 0; z-index: 600` — siempre visible sobre todo el contenido
+3. **Menú overlay a pantalla completa**: al pulsar ☰, el sidebar pasa a `display: flex; position: fixed; top: 52px; width: 100vw; height: calc(100vh - 52px); z-index: 500`
+4. **Overlay oscuro**: `top: 52px` — cubre la zona de contenido sin tapar la topbar
+5. **Contenido principal**: `padding: 66px 14px 32px` — desplazado 66px desde arriba para quedar bajo la topbar de 52px
+6. **html/body**: `height: auto; overflow-y: auto` — sin alturas fijas
 
-### Change 3 — Bug configuración no guarda
-- `services/finanzas_service.py`: `guardar_configuracion` reescrito con UPSERT (`ON CONFLICT(clave) DO UPDATE`) en lugar de `UPDATE` (que no inserta si la fila no existe)
-- `routes/finanzas.py`: `configuracion_texto` INSERT reescrito con UPSERT compatible con PostgreSQL y SQLite, usando `USE_POSTGRES` para seleccionar placeholder
+### Template — cache-buster en CSS
+`base_admin.html`: `admin.css?v=2` para forzar recarga de la hoja de estilos tras el cambio.
 
-### Change 4 — Mensaje km mínimo
-`templates/admin/gestionar_viaje.html`: Mensaje reescrito a "Se aplica el mínimo de X km para esta liquidación porque la ruta tiene menos km registrados (Y km reales)."
-
-### Change 5 — Logo roto en móvil
-`templates/admin/base_admin.html`: SVG inline con `style="display:block;flex-shrink:0;"`, tamaño 24×24. Texto con `style="color:#fff;font-weight:700;font-size:15px;white-space:nowrap;"`.
-
-### Change 6 — Incidencias
-- `routes/admin.py`: Nueva ruta `GET /admin/incidencias` con filtros por estado y categoría
-- `templates/admin/incidencias.html`: Nueva vista con tabla, filtros por select, cambio de estado AJAX sin recarga
-- `templates/admin/base_admin.html`: Enlace "Incidencias" añadido al sidebar bajo SISTEMA (solo admin)
-
-### Change 7 — Cartel informativo en dashboard
-`templates/admin/dashboard.html`: Bloque azul admin-only listando secciones exclusivas del administrador.
+## Comportamiento verificado
+| Check | Resultado |
+|-------|-----------|
+| `.sidebar` display en reposo | `none` ✓ |
+| `.sidebar` width al abrir | `390px` (100vw) ✓ |
+| `.sidebar` top al abrir | `52px` (bajo topbar) ✓ |
+| `.main-content` padding-top | `66px` ✓ |
+| `.mobile-topbar` position | `fixed` ✓ |
+| `.mobile-topbar` z-index | `600` ✓ |
+| Cerrar menú con botón X | Funciona ✓ |
 
 ## Recomendaciones
-- Probar el flujo completo de viaje creando un viaje nuevo y avanzando cada paso en orden
-- Verificar en producción (Render + PostgreSQL) que los UPSERT de configuración persisten correctamente
-- El paso 6 (Documentación enviada) usa toggle AJAX sobre `viaje_checklist`; verificar que el item "Documentación enviada" esté en `CHECKLIST_ITEMS_DEFAULT` y se cree automáticamente al crear un viaje
-- Considerar añadir validación backend para que el paso 7 (estado → Entregado) solo sea posible si los pasos 1–5 están completados
+- El botón X cierra el menú correctamente; el overlay oscuro es visual pero no clickeable (el sidebar cubre todo el ancho). Si se prefiere cerrar tocando fuera del menú, reducir el sidebar a ~85% del ancho para dejar una franja clickeable.
+- Incrementar `?v=3` en la próxima modificación de admin.css para invalidar caché.
