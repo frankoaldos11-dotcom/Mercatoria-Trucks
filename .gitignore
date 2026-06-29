@@ -8,3 +8,7 @@ venv/
 mercatoria.db
 *.db
 *.sqlite3
+.playwright-mcp/
+*.png
+*.log
+test_report.md
