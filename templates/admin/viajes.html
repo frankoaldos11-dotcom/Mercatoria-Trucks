@@ -20,7 +20,162 @@
         <h1>Viajes</h1>
         <p>Seguimiento y gestión de todos los viajes registrados.</p>
     </div>
+    <button class="btn-crud-primary" style="white-space:nowrap;"
+            onclick="document.getElementById('modalNuevoViaje').style.display='flex'">
+        <i class="bi bi-plus-lg"></i> Nuevo viaje
+    </button>
 </div>
+
+<!-- Modal Nuevo Viaje -->
+<div id="modalNuevoViaje" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid #f0f0f0;">
+            <h2 style="margin:0;font-size:18px;">Nueva solicitud de viaje</h2>
+            <button onclick="document.getElementById('modalNuevoViaje').style.display='none'"
+                    style="background:none;border:none;font-size:22px;color:#888;cursor:pointer;">✕</button>
+        </div>
+        <form method="POST" action="/admin/viajes/nuevo" style="padding:24px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Cliente -->
+            <div class="mb-3">
+                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Cliente</label>
+                <select name="cliente_id" class="form-select" style="border-radius:8px;font-size:14px;">
+                    <option value="">— Sin cliente asignado —</option>
+                    {% for c in clientes_list %}
+                    <option value="{{ c.id }}">{{ c.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Ruta -->
+            <div class="mb-3">
+                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Ruta <span style="color:#DC2626;">*</span></label>
+                <select name="ruta_id" id="mvRutaSelect" class="form-select" required style="border-radius:8px;font-size:14px;">
+                    <option value="">— Selecciona la ruta —</option>
+                    {% for r in rutas_list %}
+                    <option value="{{ r.id }}" data-origen="{{ r.origen }}" data-destino="{{ r.destino }}">
+                        {{ r.origen }} → {{ r.destino }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div id="mvRutaPreview" style="display:none;background:#FFF3EC;border:1.5px solid #E86A2C;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:13px;font-weight:600;color:#7C2D12;">
+                    <i class="bi bi-geo-alt-fill" style="color:#E86A2C;"></i>
+                    <span id="mvPrevOrigen"></span> <span style="color:#E86A2C;">→</span> <span id="mvPrevDestino"></span>
+                </div>
+            </div>
+
+            <!-- Tipo de carga -->
+            <div class="mb-3">
+                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Tipo de carga <span style="color:#DC2626;">*</span></label>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    {% for tc in ['Seca','Refrigerada','Congelada','Desagrupada','Frágil','Peligrosa','Otra'] %}
+                    <input type="radio" name="tipo_carga" id="mv_tc_{{ loop.index }}" value="{{ tc }}" style="display:none;" required>
+                    <label for="mv_tc_{{ loop.index }}" class="toggle-btn-mv">{{ tc }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Tipo de transporte -->
+            <div class="mb-3">
+                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Tipo de transporte</label>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    {% for tt in ['Plancha','Rastra','Portacontenedor','Furgón','Refrigerado','Cerrado','Abierto','Otro'] %}
+                    <input type="radio" name="tipo_transporte" id="mv_tt_{{ loop.index }}" value="{{ tt }}" style="display:none;">
+                    <label for="mv_tt_{{ loop.index }}" class="toggle-btn-mv">{{ tt }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Peso y contenedores -->
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                <div style="flex:1;min-width:120px;">
+                    <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Peso (ton.) <span style="color:#DC2626;">*</span></label>
+                    <input type="number" name="peso_toneladas" class="form-control" step="0.01" min="0.01" placeholder="Ej: 2.5" required style="border-radius:8px;font-size:14px;">
+                </div>
+                <div style="flex:1;min-width:120px;">
+                    <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Cant. contenedores</label>
+                    <input type="text" name="cantidad_contenedores" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 2" style="border-radius:8px;font-size:14px;">
+                </div>
+                <div style="flex:1;min-width:140px;">
+                    <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">N° contenedor</label>
+                    <input type="text" name="numero_contenedor" class="form-control" placeholder="Ej: ABCU1234567" style="border-radius:8px;font-size:14px;">
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Observaciones operativas</label>
+                <textarea name="observaciones_operativas" class="form-control" rows="2"
+                          placeholder="Temperatura, instrucciones de manejo, ventanas horarias..." style="border-radius:8px;font-size:14px;"></textarea>
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Notas adicionales</label>
+                <textarea name="notas" class="form-control" rows="2"
+                          placeholder="Información adicional (opcional)" style="border-radius:8px;font-size:14px;"></textarea>
+            </div>
+
+            <div style="display:flex;gap:10px;">
+                <button type="submit" class="btn-crud-primary" style="flex:1;">
+                    <i class="bi bi-send"></i> Crear viaje
+                </button>
+                <button type="button" onclick="document.getElementById('modalNuevoViaje').style.display='none'"
+                        style="background:#f0f0f0;color:#555;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.toggle-btn-mv {
+    display: inline-block;
+    padding: 7px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    background: #f9fafb;
+    color: #374151;
+    transition: border-color .15s, background .15s;
+    user-select: none;
+}
+input[type="radio"]:checked + .toggle-btn-mv {
+    border-color: #E86A2C;
+    background: #fff3ec;
+    color: #c2410c;
+}
+.btn-crud-primary {
+    background: #E86A2C;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-crud-primary:hover { background: #d95714; }
+</style>
+
+<script>
+document.getElementById('mvRutaSelect').addEventListener('change', function() {
+    var opt = this.options[this.selectedIndex];
+    var prev = document.getElementById('mvRutaPreview');
+    if (this.value) {
+        document.getElementById('mvPrevOrigen').textContent = opt.dataset.origen;
+        document.getElementById('mvPrevDestino').textContent = opt.dataset.destino;
+        prev.style.display = 'block';
+    } else {
+        prev.style.display = 'none';
+    }
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') document.getElementById('modalNuevoViaje').style.display = 'none';
+});
+</script>
 
 {# Buscador #}
 <form method="GET" action="/admin/viajes" style="margin-bottom:12px;">

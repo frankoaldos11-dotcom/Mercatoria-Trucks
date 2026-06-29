@@ -118,11 +118,6 @@
             </a>
 
             {% if session.get('rol') == 'admin' %}
-            <a href="/admin/comercial/vehiculos" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/comercial/vehiculos') else '' }}">
-                <i class="bi bi-truck-front"></i>
-                <span>Tipos de vehículo</span>
-            </a>
-
             <a href="/admin/comercial/tarifas" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/comercial/tarifas') else '' }}">
                 <i class="bi bi-table"></i>
                 <span>Tarifas</span>

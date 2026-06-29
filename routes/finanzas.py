@@ -11,6 +11,10 @@ def solo_admin():
     return "usuario" in session and session.get("rol") == "admin"
 
 
+def _requiere_admin_o_operador():
+    return "usuario" in session and session.get("rol") in ["admin", "operador"]
+
+
 @finanzas_bp.route("/configuracion", methods=["GET", "POST"])
 def configuracion():
     if not solo_admin():
@@ -63,6 +67,48 @@ def configuracion():
     cur = con.cursor()
     cur.execute("SELECT clave, valor FROM configuracion_texto")
     config_texto = {r["clave"]: r["valor"] for r in cur.fetchall()}
+    cur.execute("SELECT id, nombre, descripcion, capacidad_ton FROM tipos_vehiculo WHERE activo = 1 ORDER BY nombre")
+    tipos_vehiculo = cur.fetchall()
     con.close()
 
-    return render_template("admin/configuracion.html", config=config, config_texto=config_texto, mensaje=mensaje)
+    return render_template(
+        "admin/configuracion.html",
+        config=config,
+        config_texto=config_texto,
+        mensaje=mensaje,
+        tipos_vehiculo=tipos_vehiculo,
+    )
+
+
+@finanzas_bp.route("/configuracion/tipo-vehiculo/nuevo", methods=["POST"])
+def nuevo_tipo_vehiculo_config():
+    if not solo_admin():
+        return redirect("/login")
+    nombre = request.form.get("nombre", "").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+    capacidad_ton = request.form.get("capacidad_ton", "").strip()
+    if nombre:
+        con = conectar()
+        cur = con.cursor()
+        try:
+            cur.execute(
+                "INSERT INTO tipos_vehiculo (nombre, descripcion, capacidad_ton, activo) VALUES (?, ?, ?, 1)",
+                (nombre, descripcion or None, float(capacidad_ton) if capacidad_ton else None)
+            )
+            con.commit()
+        except Exception:
+            pass
+        con.close()
+    return redirect("/admin/configuracion?ok_tipo=1")
+
+
+@finanzas_bp.route("/configuracion/tipo-vehiculo/<int:id>/eliminar", methods=["POST"])
+def eliminar_tipo_vehiculo_config(id):
+    if not solo_admin():
+        return redirect("/login")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("UPDATE tipos_vehiculo SET activo = 0 WHERE id = ?", (id,))
+    con.commit()
+    con.close()
+    return redirect("/admin/configuracion")

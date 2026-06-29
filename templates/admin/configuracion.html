@@ -163,6 +163,65 @@
 
     </form>
 
+    <div class="card config-form" style="margin-top:28px;">
+        <h3 style="margin:0 0 6px;font-size:16px;">Tipos de vehículo</h3>
+        <p style="margin:0 0 20px;font-size:13px;color:#888;">Catálogo usado en el formulario de camioneros y en cotizaciones.</p>
+
+        {% if request.args.get('ok_tipo') %}
+        <div style="background:#e6f7ee;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:13px;font-weight:600;">
+            Tipo de vehículo añadido correctamente.
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/admin/configuracion/tipo-vehiculo/nuevo" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Nombre *</label>
+                <input type="text" name="nombre" class="config-input" style="width:180px;font-size:14px;" placeholder="Ej: Rastra" required>
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Descripción</label>
+                <input type="text" name="descripcion" class="config-input" style="width:200px;font-size:14px;" placeholder="Opcional">
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Cap. toneladas</label>
+                <input type="number" name="capacidad_ton" class="config-input" style="width:110px;font-size:14px;" step="0.1" placeholder="Ej: 20">
+            </div>
+            <button type="submit" style="background:#E86A2C;color:#fff;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Añadir tipo</button>
+        </form>
+
+        {% if tipos_vehiculo %}
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+                <tr style="border-bottom:2px solid #f0f0f0;">
+                    <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;text-transform:uppercase;">Nombre</th>
+                    <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;text-transform:uppercase;">Descripción</th>
+                    <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;text-transform:uppercase;">Cap. ton.</th>
+                    <th style="text-align:right;padding:6px 8px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tipos_vehiculo %}
+                <tr style="border-bottom:1px solid #f5f5f5;">
+                    <td style="padding:8px;">{{ t.nombre }}</td>
+                    <td style="padding:8px;color:#888;">{{ t.descripcion or '—' }}</td>
+                    <td style="padding:8px;color:#888;">{{ t.capacidad_ton or '—' }}</td>
+                    <td style="padding:8px;text-align:right;">
+                        <form method="POST" action="/admin/configuracion/tipo-vehiculo/{{ t.id }}/eliminar"
+                              style="display:inline" onsubmit="return confirm('¿Eliminar este tipo?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" style="background:#fde8e8;color:#c0392b;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#aaa;font-size:13px;font-style:italic;">No hay tipos de vehículo registrados. Añade uno usando el formulario de arriba.</p>
+        {% endif %}
+    </div>
+
     <div class="card config-preview">
         <h3>Vista previa de liquidación ejemplo</h3>
         <p class="preview-nota">Con 150 km recorridos y precio cliente registrado de $500 USD</p>

@@ -64,7 +64,12 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="edit-field"></div>
+                <div class="edit-field">
+                    <label>Documento identidad</label>
+                    <input type="text" name="documento_identidad" class="input-crud"
+                           value="{{ cliente.documento_identidad or '' }}"
+                           placeholder="CI / NIF / Pasaporte">
+                </div>
             </div>
 
             <div class="edit-actions">

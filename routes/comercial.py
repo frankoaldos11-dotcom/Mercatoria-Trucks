@@ -5,6 +5,7 @@ from openpyxl.styles import PatternFill, Font
 
 from routes.admin import requiere_admin
 from database import conectar
+from services.finanzas_service import get_configuracion
 
 from services.comercial_service import (
     get_all_rutas,
@@ -59,12 +60,20 @@ def rutas():
         r["id"]: {c["id"] for c in camioneros_por_ruta[r["id"]]}
         for r in all_rutas
     }
+    cfg = get_configuracion()
+    tarifa_km_global = cfg.get("tarifa_km", 1.5)
+    origenes_destinos = sorted(
+        {r["origen"] for r in all_rutas if r["origen"]} |
+        {r["destino"] for r in all_rutas if r["destino"]}
+    )
     return render_template(
         "admin/comercial/rutas.html",
         rutas=all_rutas,
         todos_camioneros=todos_camioneros,
         camioneros_por_ruta=camioneros_por_ruta,
         ids_asignados_por_ruta=ids_asignados_por_ruta,
+        tarifa_km_global=tarifa_km_global,
+        origenes_destinos=origenes_destinos,
     )
 
 
@@ -72,18 +81,26 @@ def rutas():
 def nueva_ruta():
     if not requiere_admin():
         return redirect("/login")
-    if session.get("rol") != "admin":
-        return redirect("/admin/comercial/rutas?access_error=No+tienes+permisos+para+modificar+rutas")
 
-    origen = request.form["origen"]
-    destino = request.form["destino"]
+    origen = request.form["origen"].strip()
+    destino = request.form["destino"].strip()
     zona = request.form.get("zona", "")
     km = request.form["km"]
+    tarifa_km = request.form.get("tarifa_km", "").strip()
 
     if ruta_existe(origen, destino):
         return redirect("/admin/comercial/rutas?access_error=Esta+ruta+ya+existe.+Si+necesitas+modificarla,+búscala+en+el+listado+y+edítala.")
 
     crear_ruta(origen, destino, zona, km)
+
+    if tarifa_km:
+        ruta_creada = ruta_existe(origen, destino)
+        if ruta_creada:
+            try:
+                actualizar_tarifa_km_ruta(ruta_creada["id"], float(tarifa_km))
+            except (ValueError, TypeError):
+                pass
+
     return redirect("/admin/comercial/rutas")
 
 
@@ -102,8 +119,6 @@ def actualizar_tarifa_ruta(ruta_id):
 def editar_ruta(ruta_id):
     if not requiere_admin():
         return redirect("/login")
-    if session.get("rol") != "admin":
-        return redirect("/admin/comercial/rutas?access_error=No+tienes+permisos+para+modificar+rutas")
     origen = request.form["origen"].strip()
     destino = request.form["destino"].strip()
     zona = request.form.get("zona", "").strip()

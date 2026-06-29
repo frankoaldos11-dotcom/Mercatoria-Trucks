@@ -191,6 +191,97 @@ def dashboard():
     )
 
 
+@admin_bp.route("/viajes/nuevo", methods=["POST"])
+def nuevo_viaje_admin():
+    if not requiere_admin():
+        return redirect("/login")
+
+    ruta_id = request.form.get("ruta_id", "").strip()
+    tipo_carga = request.form.get("tipo_carga", "").strip()
+    tipo_transporte = request.form.get("tipo_transporte", "").strip()
+    peso_str = request.form.get("peso_toneladas", "").strip()
+    cantidad_str = request.form.get("cantidad_contenedores", "").strip()
+    numero_contenedor = request.form.get("numero_contenedor", "").strip()
+    notas = request.form.get("notas", "").strip()
+    obs_operativas = request.form.get("observaciones_operativas", "").strip()
+    cliente_id_str = request.form.get("cliente_id", "").strip()
+
+    if not ruta_id or not tipo_carga:
+        return redirect("/admin/viajes?access_error=Selecciona+la+ruta+y+el+tipo+de+carga")
+
+    con = conectar()
+    cur = con.cursor()
+
+    cur.execute("SELECT origen, destino FROM rutas WHERE id = ? AND activa = 1", (ruta_id,))
+    ruta = cur.fetchone()
+    if not ruta:
+        con.close()
+        return redirect("/admin/viajes?access_error=Ruta+no+válida")
+
+    cliente_id = int(cliente_id_str) if cliente_id_str else None
+    cliente_nombre = ""
+    if cliente_id:
+        cur.execute("SELECT nombre, email FROM clientes WHERE id = ?", (cliente_id,))
+        c = cur.fetchone()
+        if c:
+            cliente_nombre = c["nombre"] or c["email"] or ""
+
+    peso_toneladas = None
+    try:
+        peso_toneladas = float(peso_str) if peso_str else None
+    except ValueError:
+        pass
+
+    cantidad_contenedores = None
+    if cantidad_str:
+        try:
+            cantidad_contenedores = int(cantidad_str)
+        except ValueError:
+            pass
+
+    cur.execute("""
+        INSERT INTO viajes (
+            cliente, cliente_id, ruta_id, origen, destino,
+            precio, combustible, comision, beneficio, estado,
+            observaciones, prioridad,
+            tipo_carga, tipo_transporte, cantidad_contenedores,
+            numero_contenedor, peso_toneladas, observaciones_operativas
+        )
+        VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, 'Pendiente',
+                ?, 'Normal', ?, ?, ?, ?, ?, ?)
+    """, (
+        cliente_nombre, cliente_id, ruta_id, ruta["origen"], ruta["destino"],
+        notas or None,
+        tipo_carga,
+        tipo_transporte or None,
+        cantidad_contenedores,
+        numero_contenedor or None,
+        peso_toneladas,
+        obs_operativas or None,
+    ))
+    viaje_id = cur.lastrowid
+    crear_checklist_viaje(cur, viaje_id)
+    con.commit()
+    con.close()
+
+    registrar_auditoria("creó viaje", "viajes", "viaje", viaje_id)
+    return redirect(f"/admin/viajes/{viaje_id}/gestionar")
+
+
+@admin_bp.route("/api/origenes-destinos")
+def api_origenes_destinos():
+    if not requiere_admin():
+        return jsonify([])
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT DISTINCT origen FROM rutas WHERE activa = 1 AND origen IS NOT NULL ORDER BY origen")
+    origenes = [r["origen"] for r in cur.fetchall()]
+    cur.execute("SELECT DISTINCT destino FROM rutas WHERE activa = 1 AND destino IS NOT NULL ORDER BY destino")
+    destinos = [r["destino"] for r in cur.fetchall()]
+    con.close()
+    return jsonify(sorted(set(origenes + destinos)))
+
+
 @admin_bp.route("/viajes")
 def viajes():
     if not requiere_admin():
@@ -250,6 +341,12 @@ def viajes():
     """, params + [por_pagina, offset])
     lista = cursor.fetchall()
 
+    cursor.execute("SELECT id, nombre, origen, destino FROM rutas WHERE activa = 1 ORDER BY origen")
+    rutas_list = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre FROM clientes WHERE deleted_at IS NULL ORDER BY nombre")
+    clientes_list = cursor.fetchall()
+
     conexion.close()
 
     return render_template(
@@ -260,6 +357,8 @@ def viajes():
         pagina_actual=pagina,
         total_paginas=total_paginas,
         total=total,
+        rutas_list=rutas_list,
+        clientes_list=clientes_list,
     )
 
 
@@ -1330,9 +1429,9 @@ def admin_camioneros():
     lista = cursor.fetchall()
 
     cursor.execute(
-        "SELECT id, nombre FROM catalogo_tipo_transporte WHERE activo = 1 ORDER BY nombre"
+        "SELECT id, nombre FROM tipos_vehiculo WHERE activo = 1 ORDER BY nombre"
     )
-    catalogo_tipos = cursor.fetchall()
+    tipos_vehiculo = cursor.fetchall()
 
     conexion.close()
 
@@ -1346,7 +1445,7 @@ def admin_camioneros():
         buscar=buscar,
         filtro_estado=filtro_estado,
         filtro_tipo=filtro_tipo,
-        catalogo_tipos=catalogo_tipos,
+        tipos_vehiculo=tipos_vehiculo,
         pagina_actual=pagina,
         total_paginas=total_paginas,
         total=total,
@@ -1438,9 +1537,9 @@ def editar_camionero(id):
     vehiculo = cursor.fetchone()
 
     cursor.execute(
-        "SELECT id, nombre FROM catalogo_tipo_transporte WHERE activo = 1 ORDER BY nombre"
+        "SELECT id, nombre FROM tipos_vehiculo WHERE activo = 1 ORDER BY nombre"
     )
-    catalogo_tipos = cursor.fetchall()
+    tipos_vehiculo = cursor.fetchall()
     conexion.close()
 
     return render_template(
@@ -1448,7 +1547,7 @@ def editar_camionero(id):
         camionero=camionero,
         vehiculo=vehiculo,
         estados=CAMIONERO_ESTADOS,
-        catalogo_tipos=catalogo_tipos,
+        tipos_vehiculo=tipos_vehiculo,
         error=error,
     )
 
@@ -1501,10 +1600,6 @@ def admin_clientes():
     CATEGORIAS_CLIENTE = ["Normal", "VIP", "Estratégico", "Humanitario"]
 
     if request.method == "POST":
-        if session.get("rol") != "admin":
-            conexion.close()
-            return redirect("/admin/clientes?access_error=No+tienes+permisos+para+crear+clientes")
-
         nombre = request.form["nombre"].strip()
         empresa = request.form.get("empresa", "").strip()
         contacto = request.form.get("contacto", "").strip()
@@ -1512,13 +1607,26 @@ def admin_clientes():
         email = request.form.get("email", "").strip()
         direccion = request.form.get("direccion", "").strip()
         categoria = request.form.get("categoria", "Normal").strip()
+        documento_identidad = request.form.get("documento_identidad", "").strip()
         if categoria not in CATEGORIAS_CLIENTE:
             categoria = "Normal"
 
+        if email:
+            cursor.execute(f"SELECT id FROM clientes WHERE email = {ph()} AND deleted_at IS NULL", (email,))
+            if cursor.fetchone():
+                conexion.close()
+                return redirect("/admin/clientes?access_error=Ya+existe+un+cliente+con+ese+email.+Búscalo+y+edítalo.")
+
+        if documento_identidad:
+            cursor.execute(f"SELECT id FROM clientes WHERE documento_identidad = {ph()} AND deleted_at IS NULL", (documento_identidad,))
+            if cursor.fetchone():
+                conexion.close()
+                return redirect("/admin/clientes?access_error=Ya+existe+un+cliente+con+ese+documento+de+identidad.+Búscalo+y+edítalo.")
+
         cursor.execute(f"""
-            INSERT INTO clientes (nombre, empresa, contacto, telefono, email, direccion, categoria)
-            VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
-        """, (nombre, empresa, contacto, telefono, email, direccion, categoria))
+            INSERT INTO clientes (nombre, empresa, contacto, telefono, email, direccion, categoria, documento_identidad)
+            VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
+        """, (nombre, empresa, contacto, telefono, email, direccion, categoria, documento_identidad or None))
 
         conexion.commit()
         conexion.close()
@@ -1572,8 +1680,6 @@ def admin_clientes():
 def editar_cliente(id):
     if not requiere_admin():
         return redirect("/login")
-    if session.get("rol") != "admin":
-        return redirect("/admin/clientes?access_error=No+tienes+permisos+para+editar+clientes")
 
     conexion = conectar()
     cursor = conexion.cursor()
@@ -1588,15 +1694,28 @@ def editar_cliente(id):
         email = request.form.get("email", "").strip()
         direccion = request.form.get("direccion", "").strip()
         categoria = request.form.get("categoria", "Normal").strip()
+        documento_identidad = request.form.get("documento_identidad", "").strip()
         if categoria not in CATEGORIAS_CLIENTE:
             categoria = "Normal"
+
+        if email:
+            cursor.execute(f"SELECT id FROM clientes WHERE email = {ph()} AND deleted_at IS NULL AND id != {ph()}", (email, id))
+            if cursor.fetchone():
+                conexion.close()
+                return redirect(f"/admin/clientes/{id}/editar?access_error=Ya+existe+otro+cliente+con+ese+email.")
+
+        if documento_identidad:
+            cursor.execute(f"SELECT id FROM clientes WHERE documento_identidad = {ph()} AND deleted_at IS NULL AND id != {ph()}", (documento_identidad, id))
+            if cursor.fetchone():
+                conexion.close()
+                return redirect(f"/admin/clientes/{id}/editar?access_error=Ya+existe+otro+cliente+con+ese+documento.")
 
         cursor.execute(f"""
             UPDATE clientes
             SET nombre = {ph()}, empresa = {ph()}, contacto = {ph()}, telefono = {ph()},
-                email = {ph()}, direccion = {ph()}, categoria = {ph()}
+                email = {ph()}, direccion = {ph()}, categoria = {ph()}, documento_identidad = {ph()}
             WHERE id = {ph()}
-        """, (nombre, empresa, contacto, telefono, email, direccion, categoria, id))
+        """, (nombre, empresa, contacto, telefono, email, direccion, categoria, documento_identidad or None, id))
 
         conexion.commit()
         conexion.close()
@@ -1605,7 +1724,7 @@ def editar_cliente(id):
 
     cursor.execute(f"""
         SELECT id, nombre, empresa, contacto, telefono, email, direccion,
-               COALESCE(categoria, 'Normal') AS categoria
+               COALESCE(categoria, 'Normal') AS categoria, documento_identidad
         FROM clientes
         WHERE id = {ph()}
     """, (id,))
@@ -1625,8 +1744,6 @@ def editar_cliente(id):
 def eliminar_cliente(id):
     if not requiere_admin():
         return redirect("/login")
-    if session.get("rol") != "admin":
-        return redirect("/admin/clientes?access_error=No+tienes+permisos+para+eliminar+clientes")
 
     conexion = conectar()
     cursor = conexion.cursor()

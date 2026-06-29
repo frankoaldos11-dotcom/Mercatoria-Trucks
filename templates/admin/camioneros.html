@@ -91,10 +91,10 @@
                 <input type="text" name="modelo" class="input-crud" placeholder="Modelo">
             </div>
             <div class="form-crud-field">
-                <label>Tipo de transporte</label>
+                <label>Tipo de vehículo</label>
                 <select name="tipo" class="input-crud">
                     <option value="">— Sin especificar —</option>
-                    {% for t in catalogo_tipos %}
+                    {% for t in tipos_vehiculo %}
                     <option value="{{ t.nombre }}">{{ t.nombre }}</option>
                     {% endfor %}
                 </select>
@@ -126,7 +126,7 @@
     </select>
     <select name="tipo_transporte" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
         <option value="">Todos los tipos</option>
-        {% for t in catalogo_tipos %}
+        {% for t in tipos_vehiculo %}
         <option value="{{ t.nombre }}" {% if filtro_tipo == t.nombre %}selected{% endif %}>{{ t.nombre }}</option>
         {% endfor %}
     </select>

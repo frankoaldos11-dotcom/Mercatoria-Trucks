@@ -24,7 +24,7 @@
     {% endif %}
 </div>
 
-{% if session.get('rol') == 'admin' %}
+{% if session.get('rol') in ['admin', 'operador'] %}
 <section class="panel" style="margin-bottom: 24px;">
     <div class="panel-header">
         <div>
@@ -52,9 +52,13 @@
                 <input type="text" name="telefono" class="input-crud" placeholder="Teléfono">
             </div>
             <div class="form-crud-field">
-                <label>Email *</label>
-                <input type="email" name="email" class="input-crud" required placeholder="correo@empresa.com">
+                <label>Email</label>
+                <input type="email" name="email" class="input-crud" placeholder="correo@empresa.com">
                 <small style="color:#9CA3AF;font-size:11px;margin-top:4px;display:block;">Requerido si el cliente usará el portal web.</small>
+            </div>
+            <div class="form-crud-field">
+                <label>Documento identidad</label>
+                <input type="text" name="documento_identidad" class="input-crud" placeholder="CI / NIF / Pasaporte">
             </div>
             <div class="form-crud-field">
                 <label>Dirección</label>
@@ -110,12 +114,12 @@
                     <th>Empresa</th>
                     <th>Contacto</th>
                     <th>Teléfono</th>
-                    {% if session.get('rol') == 'admin' %}
                     <th>Email</th>
+                    {% if session.get('rol') == 'admin' %}
                     <th>Dirección</th>
                     {% endif %}
                     <th>Registrado</th>
-                    {% if session.get('rol') == 'admin' %}<th>Acciones</th>{% endif %}
+                    {% if session.get('rol') in ['admin', 'operador'] %}<th>Acciones</th>{% endif %}
                 </tr>
             </thead>
 
@@ -144,12 +148,12 @@
                         </a>
                         {% else %}—{% endif %}
                     </td>
-                    {% if session.get('rol') == 'admin' %}
                     <td>{{ c.email or "—" }}</td>
+                    {% if session.get('rol') == 'admin' %}
                     <td>{{ c.direccion or "—" }}</td>
                     {% endif %}
                     <td style="font-size:11px;color:#999;">{{ c.fecha_creacion | fmt_fecha('%Y-%m-%d') }}</td>
-                    {% if session.get('rol') == 'admin' %}
+                    {% if session.get('rol') in ['admin', 'operador'] %}
                     <td class="td-acciones">
                         <a href="/admin/clientes/{{ c.id }}/editar" class="btn-accion-edit">Editar</a>
                         <form method="POST" action="/admin/clientes/{{ c.id }}/eliminar"
