@@ -56,6 +56,18 @@
                 <input type="text" name="licencia" class="input-crud" placeholder="Número de licencia">
             </div>
             <div class="form-crud-field">
+                <label>Carnet de Identidad</label>
+                <input type="text" name="carnet_identidad" class="input-crud" placeholder="CI / DUI / DNI">
+            </div>
+            <div class="form-crud-field">
+                <label>Licencia Operativa</label>
+                <input type="text" name="licencia_operativa" class="input-crud" placeholder="Ej: LO-2024-001">
+            </div>
+            <div class="form-crud-field">
+                <label>Empresa</label>
+                <input type="text" name="empresa" class="input-crud" placeholder="Empresa o autónomo">
+            </div>
+            <div class="form-crud-field">
                 <label>Estado</label>
                 <select name="estado" class="input-crud">
                     {% for e in estados %}
@@ -90,6 +102,10 @@
             <div class="form-crud-field">
                 <label>Capacidad</label>
                 <input type="text" name="capacidad" class="input-crud" placeholder="Ej: 10 ton">
+            </div>
+            <div class="form-crud-field">
+                <label>Chapa Remolque</label>
+                <input type="text" name="chapa_remolque" class="input-crud" placeholder="Matrícula del remolque">
             </div>
             <div class="form-crud-field form-crud-submit">
                 <button type="submit" class="btn-crud-primary">Registrar camionero</button>

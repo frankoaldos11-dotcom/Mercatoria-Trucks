@@ -510,19 +510,23 @@ def generar_pdf_carta_porte(viaje_id: int) -> bytes:
     cur.execute(f"""
         SELECT
             v.*,
-            c.nombre     AS cam_nombre,
-            c.telefono   AS cam_telefono,
-            c.licencia   AS cam_licencia,
-            cl.nombre    AS cli_nombre,
-            cl.telefono  AS cli_telefono,
-            cl.empresa   AS cli_empresa,
-            cl.email     AS cli_email,
-            veh.marca    AS veh_marca,
-            veh.modelo   AS veh_modelo,
-            veh.matricula AS veh_matricula,
-            veh.tipo     AS veh_tipo,
-            r.nombre     AS ruta_nombre,
-            r.km_oficiales AS ruta_km
+            c.nombre             AS cam_nombre,
+            c.telefono           AS cam_telefono,
+            c.licencia           AS cam_licencia,
+            c.carnet_identidad   AS cam_carnet,
+            c.licencia_operativa AS cam_licencia_op,
+            c.empresa            AS cam_empresa,
+            cl.nombre            AS cli_nombre,
+            cl.telefono          AS cli_telefono,
+            cl.empresa           AS cli_empresa,
+            cl.email             AS cli_email,
+            veh.marca            AS veh_marca,
+            veh.modelo           AS veh_modelo,
+            veh.matricula        AS veh_matricula,
+            veh.tipo             AS veh_tipo,
+            veh.chapa_remolque   AS veh_chapa,
+            r.nombre             AS ruta_nombre,
+            r.km_oficiales       AS ruta_km
         FROM viajes v
         LEFT JOIN camioneros c   ON v.camionero_id = c.id
         LEFT JOIN clientes   cl  ON v.cliente_id   = cl.id
@@ -604,27 +608,47 @@ def generar_pdf_carta_porte(viaje_id: int) -> bytes:
     elems.append(Spacer(1, 12))
 
     # ── Datos del transporte ──────────────────────────────────────────────────
-    elems.append(_seccion("DATOS DEL TRANSPORTE", es["seccion"]))
+    elems.append(_seccion("DATOS DEL TRANSPORTISTA", es["seccion"]))
     elems.append(Spacer(1, 8))
 
     marca_modelo = " ".join(filter(None, [v.get("veh_marca"), v.get("veh_modelo")])) or "—"
 
-    t = Table(
+    # Fila 1: nombre, carnet, matrícula, chapa remolque
+    t1 = Table(
         [
-            [Paragraph("CONDUCTOR",  es["label"]),           Paragraph("LICENCIA", es["label"]),
-             Paragraph("TELÉFONO",   es["label"]),           Paragraph("VEHÍCULO", es["label"]),
-             Paragraph("MATRÍCULA",  es["label"]),           Paragraph("TIPO", es["label"])],
+            [Paragraph("CONDUCTOR",       es["label"]),
+             Paragraph("CARNET / DUI",    es["label"]),
+             Paragraph("MATRÍCULA",       es["label"]),
+             Paragraph("CHAPA REMOLQUE",  es["label"])],
             [Paragraph(str(v.get("cam_nombre")    or "—"), es["valor"]),
-             Paragraph(str(v.get("cam_licencia")  or "—"), es["valor"]),
-             Paragraph(str(v.get("cam_telefono")  or "—"), es["valor"]),
-             Paragraph(marca_modelo,                         es["valor"]),
+             Paragraph(str(v.get("cam_carnet")    or "—"), es["valor"]),
              Paragraph(str(v.get("veh_matricula") or "—"), es["valor"]),
-             Paragraph(str(v.get("veh_tipo")      or "—"), es["valor"])],
+             Paragraph(str(v.get("veh_chapa")     or "—"), es["valor"])],
         ],
-        colWidths=[3.5 * cm, 2.8 * cm, 2.8 * cm, 3.5 * cm, 2.5 * cm, 1.9 * cm],
+        colWidths=[5.5 * cm, 4 * cm, 3.5 * cm, 4 * cm],
     )
-    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2)]))
-    elems.append(t)
+    t1.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2)]))
+    elems.append(t1)
+    elems.append(Spacer(1, 6))
+
+    # Fila 2: licencia, licencia operativa, empresa, vehículo, tipo
+    t2 = Table(
+        [
+            [Paragraph("LICENCIA",          es["label"]),
+             Paragraph("LIC. OPERATIVA",    es["label"]),
+             Paragraph("EMPRESA",           es["label"]),
+             Paragraph("VEHÍCULO",          es["label"]),
+             Paragraph("TIPO",              es["label"])],
+            [Paragraph(str(v.get("cam_licencia")    or "—"), es["valor"]),
+             Paragraph(str(v.get("cam_licencia_op") or "—"), es["valor"]),
+             Paragraph(str(v.get("cam_empresa")     or "—"), es["valor"]),
+             Paragraph(marca_modelo,                          es["valor"]),
+             Paragraph(str(v.get("veh_tipo")        or "—"), es["valor"])],
+        ],
+        colWidths=[3 * cm, 3 * cm, 4 * cm, 4 * cm, 3 * cm],
+    )
+    t2.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2)]))
+    elems.append(t2)
     elems.append(Spacer(1, 12))
 
     # ── Descripción de la carga ───────────────────────────────────────────────

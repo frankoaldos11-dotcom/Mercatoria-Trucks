@@ -1,49 +1,57 @@
 # Reporte de Pruebas — 2026-06-28
 
-## Páginas probadas (viewport móvil 390×844)
-- http://127.0.0.1:5000/admin/ — dashboard (sidebar cerrado)
-- http://127.0.0.1:5000/admin/ — dashboard (menú overlay abierto con hamburguesa)
-- http://127.0.0.1:5000/admin/viaje/2 — gestionar viaje (flujo secuencial en móvil)
+## Páginas probadas
+- http://127.0.0.1:5000/admin/camioneros — formulario nuevo camionero con campos adicionales
+- http://127.0.0.1:5000/admin/camioneros/1/editar — editar camionero #1 con nuevos campos
+- http://127.0.0.1:5000/admin/viaje/1/carta-porte — generación PDF carta de porte actualizada
 
 ## Errores encontrados
 Ninguno. Sin errores de consola ni HTTP 4xx/5xx.
 
+Durante el desarrollo se detectó y corrigió:
+- `NameError: name 'ph' is not defined` en `editar_camionero` — se introdujo `ph()` en el código pero no estaba importado en `routes/admin.py`. Corregido reemplazando con `?` (consistente con el resto del archivo).
+
 ## Screenshots tomados
-- `mobile_dashboard_closed.png` — topbar fija visible, sidebar oculto, contenido principal accesible
-- `mobile_menu_open.png` — menú overlay a pantalla completa con links verticales
-- `mobile_viaje_detail.png` — página de viaje con pasos secuenciales en móvil (fullPage)
+- `camioneros_form.png` — formulario "Nuevo camionero" mostrando los 4 campos nuevos: Carnet de Identidad, Licencia Operativa, Empresa, Chapa Remolque
+- `editar_camionero.png` — formulario edición con todos los campos nuevos correctamente poblados
 
 ## Correcciones aplicadas
 
-### CSS admin.css — bloque @media (max-width: 768px) reescrito completamente
+### 1. Nuevas columnas en base de datos
+- `camioneros`: `carnet_identidad TEXT`, `licencia_operativa TEXT`, `empresa TEXT`
+- `vehiculos`: `chapa_remolque TEXT`
+- Migración SQLite: `migraciones.py` — 4 llamadas a `agregar_columna()`
+- Migración PostgreSQL: `migrations_v12.py` — 4 llamadas a `run()` con `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
 
-Comportamiento anterior (roto):
-- `.sidebar` usaba `position: fixed; left: -290px` con `transition: left` — el drawer se animaba pero en algunos dispositivos quedaba parcialmente visible bloqueando el contenido
-- `.main-content` tenía `padding: 14px` sin offset del topbar — el contenido quedaba tapado por la barra superior
-- `.mobile-topbar` era `position: sticky` — no quedaba fija al hacer scroll
+### 2. Rutas admin.py — `admin_camioneros()` y `editar_camionero()`
+- POST handler nuevo camionero: lee y guarda `carnet_identidad`, `licencia_operativa`, `empresa`, `chapa_remolque`
+- POST handler editar camionero: UPDATE con los 3 campos nuevos del camionero + `chapa_remolque` en vehiculo
+- GET handler editar: SELECT extendido para incluir los 3 campos del camionero + `chapa_remolque` del vehículo
 
-Comportamiento nuevo:
-1. **Sidebar completamente oculto** por defecto: `display: none`
-2. **Topbar fija**: `position: fixed; top: 0; left: 0; right: 0; z-index: 600` — siempre visible sobre todo el contenido
-3. **Menú overlay a pantalla completa**: al pulsar ☰, el sidebar pasa a `display: flex; position: fixed; top: 52px; width: 100vw; height: calc(100vh - 52px); z-index: 500`
-4. **Overlay oscuro**: `top: 52px` — cubre la zona de contenido sin tapar la topbar
-5. **Contenido principal**: `padding: 66px 14px 32px` — desplazado 66px desde arriba para quedar bajo la topbar de 52px
-6. **html/body**: `height: auto; overflow-y: auto` — sin alturas fijas
+### 3. Templates actualizados
+- `templates/admin/camioneros.html`: 4 campos nuevos en el formulario "Nuevo camionero"
+- `templates/admin/editar_camionero.html`: 4 campos nuevos con valores pre-poblados desde la BD
 
-### Template — cache-buster en CSS
-`base_admin.html`: `admin.css?v=2` para forzar recarga de la hoja de estilos tras el cambio.
+### 4. PDF Carta de Porte — `services/pdf_service.py`
+- SQL extendido para incluir: `c.carnet_identidad`, `c.licencia_operativa`, `c.empresa`, `veh.chapa_remolque`
+- Sección "DATOS DEL TRANSPORTE" reemplazada por "DATOS DEL TRANSPORTISTA" con 2 filas:
+  - Fila 1: CONDUCTOR | CARNET / DUI | MATRÍCULA | CHAPA REMOLQUE
+  - Fila 2: LICENCIA | LIC. OPERATIVA | EMPRESA | VEHÍCULO | TIPO
+- Campos vacíos muestran `—` (guión largo)
 
 ## Comportamiento verificado
 | Check | Resultado |
 |-------|-----------|
-| `.sidebar` display en reposo | `none` ✓ |
-| `.sidebar` width al abrir | `390px` (100vw) ✓ |
-| `.sidebar` top al abrir | `52px` (bajo topbar) ✓ |
-| `.main-content` padding-top | `66px` ✓ |
-| `.mobile-topbar` position | `fixed` ✓ |
-| `.mobile-topbar` z-index | `600` ✓ |
-| Cerrar menú con botón X | Funciona ✓ |
+| Formulario nuevo camionero muestra Carnet de Identidad | ✓ |
+| Formulario nuevo camionero muestra Licencia Operativa | ✓ |
+| Formulario nuevo camionero muestra Empresa | ✓ |
+| Formulario nuevo camionero muestra Chapa Remolque | ✓ |
+| Editar camionero carga sin error | ✓ |
+| Editar camionero muestra 4 campos nuevos | ✓ |
+| PDF carta de porte HTTP 200 | ✓ |
+| Sin errores de consola en todas las páginas | ✓ |
 
 ## Recomendaciones
-- El botón X cierra el menú correctamente; el overlay oscuro es visual pero no clickeable (el sidebar cubre todo el ancho). Si se prefiere cerrar tocando fuera del menú, reducir el sidebar a ~85% del ancho para dejar una franja clickeable.
-- Incrementar `?v=3` en la próxima modificación de admin.css para invalidar caché.
+- Los campos nuevos son opcionales — el formulario no los marca como requeridos, correcto para datos de puerto que se rellenan progresivamente.
+- En PostgreSQL los `?` de admin.py deberían ser `%s`; el archivo entero usa `?` hardcoded. Esta deuda técnica existía antes de este task y no se abordó aquí para no ampliar el scope.
+- Considerar añadir `carnet_identidad` y `licencia_operativa` a la columna de la tabla de listado de camioneros si se quiere visibilidad rápida sin entrar a editar.

@@ -220,6 +220,12 @@ def ejecutar_migraciones():
         )
         """)
 
+    # v1.3 — campos camionero para puerto y chapa remolque
+    agregar_columna(cursor, "camioneros", "carnet_identidad",  "TEXT")
+    agregar_columna(cursor, "camioneros", "licencia_operativa", "TEXT")
+    agregar_columna(cursor, "camioneros", "empresa",            "TEXT")
+    agregar_columna(cursor, "vehiculos",  "chapa_remolque",     "TEXT")
+
     # v1.2 — papelera de reciclaje
     agregar_columna(cursor, "camioneros", "deleted_at", "TEXT")
     agregar_columna(cursor, "camioneros", "deleted_by", "TEXT")

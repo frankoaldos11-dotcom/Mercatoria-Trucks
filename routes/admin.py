@@ -1238,16 +1238,20 @@ def admin_camioneros():
     error = None
 
     if request.method == "POST":
-        nombre    = request.form["nombre"].strip()
-        telefono  = request.form.get("telefono", "").strip()
-        licencia  = request.form.get("licencia", "").strip()
-        estado    = request.form.get("estado", "Disponible").strip()
+        nombre             = request.form["nombre"].strip()
+        telefono           = request.form.get("telefono", "").strip()
+        licencia           = request.form.get("licencia", "").strip()
+        carnet_identidad   = request.form.get("carnet_identidad", "").strip()
+        licencia_operativa = request.form.get("licencia_operativa", "").strip()
+        empresa            = request.form.get("empresa", "").strip()
+        estado             = request.form.get("estado", "Disponible").strip()
 
-        matricula = request.form.get("matricula", "").strip()
-        marca     = request.form.get("marca", "").strip()
-        modelo    = request.form.get("modelo", "").strip()
-        tipo      = request.form.get("tipo", "").strip()
-        capacidad = request.form.get("capacidad", "").strip()
+        matricula      = request.form.get("matricula", "").strip()
+        marca          = request.form.get("marca", "").strip()
+        modelo         = request.form.get("modelo", "").strip()
+        tipo           = request.form.get("tipo", "").strip()
+        capacidad      = request.form.get("capacidad", "").strip()
+        chapa_remolque = request.form.get("chapa_remolque", "").strip()
 
         if not matricula:
             error = "La matrícula del vehículo es obligatoria."
@@ -1259,18 +1263,19 @@ def admin_camioneros():
 
         if not error:
             cursor.execute("""
-                INSERT INTO camioneros (nombre, telefono, licencia, estado, activo)
-                VALUES (?, ?, ?, ?, 1)
-            """, (nombre, telefono, licencia, estado))
+                INSERT INTO camioneros (nombre, telefono, licencia, carnet_identidad,
+                    licencia_operativa, empresa, estado, activo)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+            """, (nombre, telefono, licencia, carnet_identidad, licencia_operativa, empresa, estado))
             nuevo_id = cursor.lastrowid
 
             if matricula:
                 cursor.execute("""
                     INSERT INTO vehiculos
                         (camionero_id, matricula, marca, modelo, tipo, capacidad,
-                         estado, activo)
-                    VALUES (?, ?, ?, ?, ?, ?, 'Disponible', 1)
-                """, (nuevo_id, matricula, marca, modelo, tipo, capacidad))
+                         chapa_remolque, estado, activo)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'Disponible', 1)
+                """, (nuevo_id, matricula, marca, modelo, tipo, capacidad, chapa_remolque))
 
             conexion.commit()
             conexion.close()
@@ -1365,37 +1370,41 @@ def editar_camionero(id):
     error = None
 
     if request.method == "POST":
-        nombre   = request.form["nombre"].strip()
-        telefono = request.form.get("telefono", "").strip()
-        licencia = request.form.get("licencia", "").strip()
-        estado   = request.form.get("estado", "Disponible").strip()
+        nombre             = request.form["nombre"].strip()
+        telefono           = request.form.get("telefono", "").strip()
+        licencia           = request.form.get("licencia", "").strip()
+        carnet_identidad   = request.form.get("carnet_identidad", "").strip()
+        licencia_operativa = request.form.get("licencia_operativa", "").strip()
+        empresa            = request.form.get("empresa", "").strip()
+        estado             = request.form.get("estado", "Disponible").strip()
 
-        matricula = request.form.get("matricula", "").strip()
-        marca     = request.form.get("marca", "").strip()
-        modelo    = request.form.get("modelo", "").strip()
-        tipo      = request.form.get("tipo", "").strip()
-        capacidad = request.form.get("capacidad", "").strip()
+        matricula      = request.form.get("matricula", "").strip()
+        marca          = request.form.get("marca", "").strip()
+        modelo         = request.form.get("modelo", "").strip()
+        tipo           = request.form.get("tipo", "").strip()
+        capacidad      = request.form.get("capacidad", "").strip()
+        chapa_remolque = request.form.get("chapa_remolque", "").strip()
 
         cursor.execute("""
-            UPDATE camioneros SET nombre = ?, telefono = ?, licencia = ?, estado = ?
+            UPDATE camioneros SET nombre = ?, telefono = ?, licencia = ?,
+                carnet_identidad = ?, licencia_operativa = ?, empresa = ?,
+                estado = ?
             WHERE id = ?
-        """, (nombre, telefono, licencia, estado, id))
+        """, (nombre, telefono, licencia, carnet_identidad, licencia_operativa, empresa, estado, id))
 
-        # Buscar vehículo actual del camionero
         cursor.execute(
             "SELECT id FROM vehiculos WHERE camionero_id = ? AND activo = 1", (id,)
         )
         veh_row = cursor.fetchone()
 
         if veh_row:
-            # Actualizar vehículo existente
             cursor.execute("""
                 UPDATE vehiculos
-                SET matricula = ?, marca = ?, modelo = ?, tipo = ?, capacidad = ?
+                SET matricula = ?, marca = ?, modelo = ?, tipo = ?,
+                    capacidad = ?, chapa_remolque = ?
                 WHERE id = ?
-            """, (matricula, marca, modelo, tipo, capacidad, veh_row["id"]))
+            """, (matricula, marca, modelo, tipo, capacidad, chapa_remolque, veh_row["id"]))
         elif matricula:
-            # Verificar matrícula única antes de insertar
             cursor.execute(
                 "SELECT id FROM vehiculos WHERE matricula = ?", (matricula,)
             )
@@ -1405,9 +1414,9 @@ def editar_camionero(id):
                 cursor.execute("""
                     INSERT INTO vehiculos
                         (camionero_id, matricula, marca, modelo, tipo, capacidad,
-                         estado, activo)
-                    VALUES (?, ?, ?, ?, ?, ?, 'Disponible', 1)
-                """, (id, matricula, marca, modelo, tipo, capacidad))
+                         chapa_remolque, estado, activo)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'Disponible', 1)
+                """, (id, matricula, marca, modelo, tipo, capacidad, chapa_remolque))
 
         if not error:
             conexion.commit()
@@ -1415,7 +1424,9 @@ def editar_camionero(id):
             return redirect("/admin/camioneros")
 
     cursor.execute(
-        "SELECT id, nombre, telefono, licencia, estado FROM camioneros WHERE id = ?",
+        """SELECT id, nombre, telefono, licencia, carnet_identidad,
+                   licencia_operativa, empresa, estado
+            FROM camioneros WHERE id = ?""",
         (id,)
     )
     camionero = cursor.fetchone()
@@ -1425,7 +1436,7 @@ def editar_camionero(id):
         return redirect("/admin/camioneros")
 
     cursor.execute(
-        """SELECT id, matricula, marca, modelo, tipo, capacidad
+        """SELECT id, matricula, marca, modelo, tipo, capacidad, chapa_remolque
            FROM vehiculos WHERE camionero_id = ? AND activo = 1""",
         (id,)
     )

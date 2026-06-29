@@ -56,6 +56,14 @@ def _ejecutar(conn):
     run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP", "deleted_at")
     run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS deleted_by TEXT", "deleted_by")
 
+    print("\n[ campos camionero para puerto ]")
+    run(conn, cur, "ALTER TABLE camioneros ADD COLUMN IF NOT EXISTS carnet_identidad TEXT", "carnet_identidad")
+    run(conn, cur, "ALTER TABLE camioneros ADD COLUMN IF NOT EXISTS licencia_operativa TEXT", "licencia_operativa")
+    run(conn, cur, "ALTER TABLE camioneros ADD COLUMN IF NOT EXISTS empresa TEXT", "empresa")
+
+    print("\n[ chapa remolque en vehiculos ]")
+    run(conn, cur, "ALTER TABLE vehiculos ADD COLUMN IF NOT EXISTS chapa_remolque TEXT", "chapa_remolque")
+
     print("\n[ solicitudes_eliminacion ]")
     run(conn, cur, """
         CREATE TABLE IF NOT EXISTS solicitudes_eliminacion (
