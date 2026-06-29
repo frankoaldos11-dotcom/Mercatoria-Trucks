@@ -1,11 +1,11 @@
-﻿{% extends "admin/base_admin.html" %}
+{% extends "admin/base_admin.html" %}
 
 {% block contenido %}
 
 <div class="page-header">
     <div>
-        <h1>Configuración financiera</h1>
-        <p class="subtitulo">Parámetros globales de liquidación</p>
+        <h1>Configuración</h1>
+        <p class="subtitulo">Centro de control del sistema</p>
     </div>
 </div>
 
@@ -13,6 +13,15 @@
 <div class="alerta-exito">{{ mensaje }}</div>
 {% endif %}
 
+<!-- Tab navigation -->
+<div class="config-tabs">
+    <button class="config-tab" data-tab="tab-financiero">Parámetros financieros</button>
+    <button class="config-tab" data-tab="tab-tipos">Tipos de vehículo</button>
+    <button class="config-tab" data-tab="tab-accesos">Accesos rápidos</button>
+</div>
+
+<!-- TAB 1: Parámetros financieros -->
+<div id="tab-financiero" class="config-tab-content">
 <div class="config-layout">
 
     <form method="POST" action="/admin/configuracion" class="card config-form">
@@ -163,65 +172,6 @@
 
     </form>
 
-    <div class="card config-form" style="margin-top:28px;">
-        <h3 style="margin:0 0 6px;font-size:16px;">Tipos de vehículo</h3>
-        <p style="margin:0 0 20px;font-size:13px;color:#888;">Catálogo usado en el formulario de camioneros y en cotizaciones.</p>
-
-        {% if request.args.get('ok_tipo') %}
-        <div style="background:#e6f7ee;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:13px;font-weight:600;">
-            Tipo de vehículo añadido correctamente.
-        </div>
-        {% endif %}
-
-        <form method="POST" action="/admin/configuracion/tipo-vehiculo/nuevo" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div>
-                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Nombre *</label>
-                <input type="text" name="nombre" class="config-input" style="width:180px;font-size:14px;" placeholder="Ej: Rastra" required>
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Descripción</label>
-                <input type="text" name="descripcion" class="config-input" style="width:200px;font-size:14px;" placeholder="Opcional">
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Cap. toneladas</label>
-                <input type="number" name="capacidad_ton" class="config-input" style="width:110px;font-size:14px;" step="0.1" placeholder="Ej: 20">
-            </div>
-            <button type="submit" style="background:#E86A2C;color:#fff;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Añadir tipo</button>
-        </form>
-
-        {% if tipos_vehiculo %}
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <thead>
-                <tr style="border-bottom:2px solid #f0f0f0;">
-                    <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;text-transform:uppercase;">Nombre</th>
-                    <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;text-transform:uppercase;">Descripción</th>
-                    <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;text-transform:uppercase;">Cap. ton.</th>
-                    <th style="text-align:right;padding:6px 8px;"></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for t in tipos_vehiculo %}
-                <tr style="border-bottom:1px solid #f5f5f5;">
-                    <td style="padding:8px;">{{ t.nombre }}</td>
-                    <td style="padding:8px;color:#888;">{{ t.descripcion or '—' }}</td>
-                    <td style="padding:8px;color:#888;">{{ t.capacidad_ton or '—' }}</td>
-                    <td style="padding:8px;text-align:right;">
-                        <form method="POST" action="/admin/configuracion/tipo-vehiculo/{{ t.id }}/eliminar"
-                              style="display:inline" onsubmit="return confirm('¿Eliminar este tipo?')">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" style="background:#fde8e8;color:#c0392b;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;">Eliminar</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p style="color:#aaa;font-size:13px;font-style:italic;">No hay tipos de vehículo registrados. Añade uno usando el formulario de arriba.</p>
-        {% endif %}
-    </div>
-
     <div class="card config-preview">
         <h3>Vista previa de liquidación ejemplo</h3>
         <p class="preview-nota">Con 150 km recorridos y precio cliente registrado de $500 USD</p>
@@ -257,11 +207,113 @@
     </div>
 
 </div>
+</div>
+
+<!-- TAB 2: Tipos de vehículo -->
+<div id="tab-tipos" class="config-tab-content">
+<div class="card config-form" style="max-width:780px;">
+    <h3 style="margin:0 0 6px;font-size:16px;">Tipos de vehículo</h3>
+    <p style="margin:0 0 20px;font-size:13px;color:#888;">Catálogo usado en el formulario de camioneros y en cotizaciones.</p>
+
+    {% if request.args.get('ok_tipo') %}
+    <div style="background:#e6f7ee;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:13px;font-weight:600;">
+        Tipo de vehículo añadido correctamente.
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/admin/configuracion/tipo-vehiculo/nuevo" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Nombre *</label>
+            <input type="text" name="nombre" class="config-input" style="width:180px;font-size:14px;" placeholder="Ej: Rastra" required>
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Descripción</label>
+            <input type="text" name="descripcion" class="config-input" style="width:200px;font-size:14px;" placeholder="Opcional">
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Cap. toneladas</label>
+            <input type="number" name="capacidad_ton" class="config-input" style="width:110px;font-size:14px;" step="0.1" placeholder="Ej: 20">
+        </div>
+        <button type="submit" style="background:#E86A2C;color:#fff;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Añadir tipo</button>
+    </form>
+
+    {% if tipos_vehiculo %}
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+            <tr style="border-bottom:2px solid #f0f0f0;">
+                <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;text-transform:uppercase;">Nombre</th>
+                <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;text-transform:uppercase;">Descripción</th>
+                <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;text-transform:uppercase;">Cap. ton.</th>
+                <th style="text-align:right;padding:6px 8px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tipos_vehiculo %}
+            <tr style="border-bottom:1px solid #f5f5f5;">
+                <td style="padding:8px;">{{ t.nombre }}</td>
+                <td style="padding:8px;color:#888;">{{ t.descripcion or '—' }}</td>
+                <td style="padding:8px;color:#888;">{{ t.capacidad_ton or '—' }}</td>
+                <td style="padding:8px;text-align:right;">
+                    <form method="POST" action="/admin/configuracion/tipo-vehiculo/{{ t.id }}/eliminar"
+                          style="display:inline" onsubmit="return confirm('¿Eliminar este tipo?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" style="background:#fde8e8;color:#c0392b;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#aaa;font-size:13px;font-style:italic;">No hay tipos de vehículo registrados. Añade uno usando el formulario de arriba.</p>
+    {% endif %}
+</div>
+</div>
+
+<!-- TAB 3: Accesos rápidos -->
+<div id="tab-accesos" class="config-tab-content">
+<div style="max-width:860px;">
+    <p style="color:#777;font-size:14px;margin:0 0 20px;">Atajos directos a las secciones más usadas del panel.</p>
+    <div class="accesos-grid">
+        <a href="/admin/usuarios" class="acceso-card">
+            <i class="bi bi-people"></i>
+            <span>Usuarios</span>
+        </a>
+        <a href="/admin/comercial/rutas" class="acceso-card">
+            <i class="bi bi-signpost-2"></i>
+            <span>Rutas</span>
+        </a>
+        <a href="/admin/comercial/tarifas" class="acceso-card">
+            <i class="bi bi-table"></i>
+            <span>Tarifas</span>
+        </a>
+        <a href="/admin/auditoria" class="acceso-card">
+            <i class="bi bi-journal-text"></i>
+            <span>Auditoría</span>
+        </a>
+        <a href="/admin/camioneros" class="acceso-card">
+            <i class="bi bi-person-vcard"></i>
+            <span>Camioneros</span>
+        </a>
+        <a href="/admin/clientes" class="acceso-card">
+            <i class="bi bi-buildings"></i>
+            <span>Clientes</span>
+        </a>
+        <a href="/admin/reportes" class="acceso-card">
+            <i class="bi bi-bar-chart-line"></i>
+            <span>Reportes</span>
+        </a>
+        <a href="/admin/lote" class="acceso-card">
+            <i class="bi bi-lightning-charge"></i>
+            <span>Acciones por lote</span>
+        </a>
+    </div>
+</div>
+</div>
 
 <style>
-.page-header {
-    margin-bottom: 28px;
-}
+.page-header { margin-bottom: 28px; }
 .page-header h1 { margin: 0; }
 .subtitulo { margin: 6px 0 0; color: #777; }
 
@@ -282,13 +334,9 @@
     align-items: start;
 }
 
-.config-form {
-    padding: 32px;
-}
+.config-form { padding: 32px; }
 
-.config-grupo {
-    margin-bottom: 26px;
-}
+.config-grupo { margin-bottom: 26px; }
 
 .config-label {
     display: block;
@@ -318,19 +366,10 @@
     -moz-appearance: textfield;
 }
 .config-input::-webkit-outer-spin-button,
-.config-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
+.config-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.config-input:focus { outline: none; border-color: #E86A2C; }
 
-.config-input:focus {
-    outline: none;
-    border-color: #E86A2C;
-}
-
-.config-acciones {
-    margin-top: 8px;
-}
+.config-acciones { margin-top: 8px; }
 
 .btn-guardar {
     background: #E86A2C;
@@ -343,7 +382,6 @@
     cursor: pointer;
     width: 100%;
 }
-
 .btn-guardar:hover { background: #d95714; }
 
 .config-preview {
@@ -351,17 +389,8 @@
     position: sticky;
     top: 24px;
 }
-
-.config-preview h3 {
-    margin: 0 0 6px;
-    font-size: 17px;
-}
-
-.preview-nota {
-    font-size: 13px;
-    color: #888;
-    margin: 0 0 20px;
-}
+.config-preview h3 { margin: 0 0 6px; font-size: 17px; }
+.preview-nota { font-size: 13px; color: #888; margin: 0 0 20px; }
 
 .preview-fila {
     display: flex;
@@ -371,20 +400,14 @@
     border-bottom: 1px solid #f0f0f0;
     font-size: 15px;
 }
-
 .preview-fila span { color: #666; }
-
 .preview-fila.utilidad {
     border-bottom: none;
     margin-top: 8px;
     padding-top: 16px;
     border-top: 2px solid #E86A2C;
 }
-
-.preview-fila.utilidad strong {
-    font-size: 20px;
-    color: #E86A2C;
-}
+.preview-fila.utilidad strong { font-size: 20px; color: #E86A2C; }
 
 @media (max-width: 900px) {
     .config-layout { grid-template-columns: 1fr; }
@@ -392,24 +415,55 @@
 </style>
 
 <script>
+/* Config tabs */
+(function () {
+    var tabs = document.querySelectorAll('.config-tab');
+    var contents = document.querySelectorAll('.config-tab-content');
+
+    function activate(tabId) {
+        tabs.forEach(function (b) { b.classList.remove('cfg-active'); });
+        contents.forEach(function (c) { c.classList.remove('cfg-active'); });
+        var btn = document.querySelector('.config-tab[data-tab="' + tabId + '"]');
+        var content = document.getElementById(tabId);
+        if (btn) btn.classList.add('cfg-active');
+        if (content) content.classList.add('cfg-active');
+        localStorage.setItem('cfg_tab', tabId);
+    }
+
+    tabs.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            activate(this.dataset.tab);
+        });
+    });
+
+    /* Auto-select tipos tab after adding a type */
+    {% if request.args.get('ok_tipo') %}
+    activate('tab-tipos');
+    {% else %}
+    var saved = localStorage.getItem('cfg_tab') || 'tab-financiero';
+    activate(saved);
+    {% endif %}
+})();
+
+/* Live preview for financial params */
 const KM_EJEMPLO = 150;
 const PRECIO_CLIENTE_EJEMPLO = 500;
 
 function recalcular() {
-    const tarifa    = parseFloat(document.querySelector('[name=tarifa_km]').value) || 0;
-    const divisor   = parseFloat(document.querySelector('[name=margen_combustible_divisor]').value) || 1;
-    const mult      = parseFloat(document.querySelector('[name=multiplicador_pago_camionero]').value) || 1;
-    const minKm     = parseFloat(document.querySelector('[name=minimo_km_garantizado]').value) || 0;
-    const minPago   = parseFloat(document.querySelector('[name=minimo_pago_usd]').value) || 0;
-    const comPct    = parseFloat(document.querySelector('[name=comision_mercatoria_porcentaje]').value) || 0;
+    var tarifa  = parseFloat(document.querySelector('[name=tarifa_km]').value) || 0;
+    var divisor = parseFloat(document.querySelector('[name=margen_combustible_divisor]').value) || 1;
+    var mult    = parseFloat(document.querySelector('[name=multiplicador_pago_camionero]').value) || 1;
+    var minKm   = parseFloat(document.querySelector('[name=minimo_km_garantizado]').value) || 0;
+    var minPago = parseFloat(document.querySelector('[name=minimo_pago_usd]').value) || 0;
+    var comPct  = parseFloat(document.querySelector('[name=comision_mercatoria_porcentaje]').value) || 0;
 
-    const kmLiq     = Math.max(KM_EJEMPLO, minKm);
-    const pagoCalc  = kmLiq * tarifa;
-    const pago      = Math.max(pagoCalc, minPago);
-    const comb      = divisor ? pago / divisor : 0;
-    const precio    = PRECIO_CLIENTE_EJEMPLO;
-    const comision  = precio * comPct / 100;
-    const utilidad  = precio - pago - comb - comision;
+    var kmLiq    = Math.max(KM_EJEMPLO, minKm);
+    var pagoCalc = kmLiq * tarifa;
+    var pago     = Math.max(pagoCalc, minPago);
+    var comb     = divisor ? pago / divisor : 0;
+    var precio   = PRECIO_CLIENTE_EJEMPLO;
+    var comision = precio * comPct / 100;
+    var utilidad = precio - pago - comb - comision;
 
     document.getElementById('prev-km-liq').textContent   = kmLiq.toFixed(0) + ' km';
     document.getElementById('prev-pago').textContent     = '$' + pago.toFixed(2);
@@ -418,7 +472,9 @@ function recalcular() {
     document.getElementById('prev-utilidad').textContent = '$' + utilidad.toFixed(2);
 }
 
-document.querySelectorAll('.config-input').forEach(el => el.addEventListener('input', recalcular));
+document.querySelectorAll('.config-input').forEach(function (el) {
+    el.addEventListener('input', recalcular);
+});
 recalcular();
 </script>
 

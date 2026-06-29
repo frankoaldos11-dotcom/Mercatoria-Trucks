@@ -702,3 +702,106 @@ body {
         font-size: 24px;
     }
 }
+
+/* ── NAV GROUPS: collapsible sidebar sections ── */
+.nav-group-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.42);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 18px 12px 6px;
+    cursor: pointer;
+    text-align: left;
+    gap: 6px;
+    line-height: 1;
+}
+.nav-group-header:hover {
+    color: rgba(255,255,255,0.65);
+}
+.nav-group-arrow {
+    margin-left: auto;
+    font-size: 12px;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: transform 0.22s ease;
+}
+.nav-group.open .nav-group-arrow {
+    transform: rotate(-180deg);
+}
+.nav-group-items {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.25s ease;
+}
+.nav-group.open .nav-group-items {
+    max-height: 440px;
+}
+
+/* ── CONFIG TABS ── */
+.config-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 28px;
+    border-bottom: 2px solid #e5e7eb;
+}
+.config-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #888;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+.config-tab:hover { color: #444; }
+.config-tab.cfg-active {
+    color: #E86A2C;
+    border-bottom-color: #E86A2C;
+}
+.config-tab-content { display: none; }
+.config-tab-content.cfg-active { display: block; }
+
+/* ── ACCESOS RÁPIDOS ── */
+.accesos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+}
+.acceso-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-decoration: none;
+    color: #172033;
+    font-weight: 700;
+    font-size: 15px;
+    transition: box-shadow 0.15s, transform 0.15s, color 0.15s;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.05);
+}
+.acceso-card:hover {
+    box-shadow: 0 6px 22px rgba(15,23,42,0.12);
+    transform: translateY(-2px);
+    color: #E86A2C;
+}
+.acceso-card i {
+    font-size: 22px;
+    color: #E86A2C;
+    opacity: 0.85;
+    flex-shrink: 0;
+}

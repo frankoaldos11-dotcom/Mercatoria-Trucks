@@ -5,77 +5,55 @@
 | URL | HTTP | Consola |
 |-----|------|---------|
 | `/login` | ✅ 200 | sin errores |
-| `/admin/clientes` | ✅ 200 | sin errores |
-| `/admin/clientes/<id>/editar` | ✅ 200 | sin errores |
-| `/admin/comercial/rutas` | ✅ 200 | sin errores |
-| `/admin/comercial/rutas?access_error=...` | ✅ 200 | sin errores |
-| `/admin/viajes` (con modal nuevo viaje) | ✅ 200 | sin errores |
-| `/admin/camioneros` | ✅ 200 | sin errores |
-| `/admin/configuracion` (sección tipos vehículo) | ✅ 200 | sin errores |
+| `/admin/` (dashboard) | ✅ 200 | sin errores |
+| `/admin/configuracion` (tab Parámetros) | ✅ 200 | sin errores |
+| `/admin/configuracion` (tab Tipos de vehículo) | ✅ 200 | sin errores |
+| `/admin/configuracion` (tab Accesos rápidos) | ✅ 200 | sin errores |
+| `/admin/viajes` | ✅ 200 | sin errores |
 
 ## Errores encontrados
 
-- **favicon.ico 404** — pre-existente, no bloqueante
+- Ninguno. 0 errores de consola en toda la sesión.
 
 ## Screenshots tomados
 
-- `test_clientes_admin.png` — página clientes con formulario y campo documento_identidad
-- `test_rutas_form.png` — formulario nueva ruta con campo tarifa/km auto
-- `test_viajes_modal.png` — modal "Nueva solicitud de viaje" con selector de cliente
-- `test_configuracion_tipos.png` — sección Tipos de vehículo en Configuración
-- `test_ruta_duplicada_msg.png` — banner de error al intentar ruta duplicada
+- `prompt_a_sidebar.png` — sidebar colapsado (todos los grupos cerrados en carga inicial)
+- `prompt_a_sidebar_open.png` — OPERACIONES expandido al hacer clic (chevron rotado)
+- `prompt_a_config_tabs.png` — Configuración con tab "Parámetros financieros" activo y vista previa de liquidación
+- `prompt_a_config_tipos.png` — tab "Tipos de vehículo" con catálogo por defecto insertado (Plancha, Rastra, Furgón, etc.)
+- `prompt_a_config_accesos.png` — tab "Accesos rápidos" con grid de 8 tarjetas de navegación rápida
+- `prompt_a_viajes_sidebar.png` — OPERACIONES se auto-abre al navegar a Viajes (link activo detectado por JS)
 
 ## Correcciones aplicadas
 
-### 1a — Permisos operario: crear/editar/eliminar clientes
-- Eliminados 3 checks `session.get("rol") != "admin"` en `routes/admin.py` (crear, editar, eliminar)
-- Formulario "Nuevo cliente" visible para operario en `clientes.html`
-- Columnas Email y Acciones (Editar/Eliminar) visibles para operario
-- Excel import/export conservado solo para admin
+### 1 — Sidebar colapsable estilo Holded (`base_admin.html`, `admin.css`)
+- 5 grupos: OPERACIONES (Dashboard, Viajes, Incidencias), COMERCIAL (Rutas, Tarifas, Cotizaciones), RECURSOS (Camioneros, Clientes), FINANZAS (Reportes), SISTEMA (Usuarios, Configuración, Auditoría, Acciones por lote, Mensajes, Papelera)
+- Incidencias movida de "flotante" a dentro de OPERACIONES
+- Cotizaciones movida a dentro de COMERCIAL (antes aparecía sola en OPERACIONES)
+- Badge "Solo Admin" eliminado del sidebar (los items admin-only están en grupos que Jinja2 oculta para operario)
+- Cada `nav-group-header` es un `<button>` con chevron animado
+- `nav-group-items` colapsa con `max-height` transition de 0.25s
+- JS: al cargar la página, el grupo que contiene el link `.nav-item-active` se abre automáticamente
+- JS: estado de cada grupo guardado en `localStorage` (`nav_ng-xxx = '1'/'0'`)
+- Mobile hamburguesa sin cambios (sigue funcionando con `.mobile-open`)
+- CSS en `admin.css?v=4` (cache-busted)
 
-### 1b — Permisos operario: crear/editar rutas
-- Eliminados 2 checks de rol en `routes/comercial.py` (`nueva_ruta`, `editar_ruta`)
-- Formulario "Nueva ruta" visible para operario en `rutas.html`
+### 2 — Configuración con pestañas (`configuracion.html`, `admin.css`)
+- Título cambiado a "Configuración" / "Centro de control del sistema"
+- 3 tabs: Parámetros financieros | Tipos de vehículo | Accesos rápidos
+- Pestaña activa con línea naranja inferior (`cfg-active`)
+- Estado del tab activo en `localStorage` (`cfg_tab`)
+- Si se añade un tipo de vehículo, el redirect fuerza el tab de Tipos (via `{% if request.args.get('ok_tipo') %}`)
+- Tab "Accesos rápidos": 8 tarjetas grid con hover elevado — Usuarios, Rutas, Tarifas, Auditoría, Camioneros, Clientes, Reportes, Acciones por lote
+- Vista previa de liquidación sigue reactiva en tab Parámetros
 
-### 1c — Crear viajes desde admin
-- Nuevo handler POST `/admin/viajes/nuevo` en `routes/admin.py`
-- Botón "Nuevo viaje" en header de `/admin/viajes`
-- Modal con formulario idéntico al portal cliente + selector de cliente
-- Cierre con Escape y botón ✕
-- El viaje se crea con estado `Pendiente` y se redirige a gestionar viaje
-
-### 2 — Tipos de vehículo integrado en camioneros
-- Link "Tipos de vehículo" eliminado del sidebar (`base_admin.html`)
-- Selector "Tipo de vehículo" en formulario nuevo camionero usa `tipos_vehiculo` (antes `catalogo_tipo_transporte`)
-- Selector actualizado también en formulario editar camionero
-- Sección de gestión de tipos_vehiculo añadida a `/admin/configuracion` (CRUD: add/delete)
-- Nuevas rutas en `finanzas.py`: `/admin/configuracion/tipo-vehiculo/nuevo` y `/eliminar`
-
-### 3 — Tarifas automáticas en nueva ruta
-- Campo `tarifa_km` añadido al formulario "Nueva ruta"
-- JS: al cambiar km, calcula `tarifa_sugerida = km × tarifa_km_global` y pre-rellena el campo
-- El usuario puede sobreescribir el valor sugerido
-- `tarifa_km_global` se pasa desde `routes/comercial.py` via `get_configuracion()`
-
-### 4 — Clientes sin duplicados: campo documento_identidad
-- Migración `ADD COLUMN documento_identidad TEXT` en `database.py`
-- Validación de email duplicado al crear cliente (redirige con `access_error`)
-- Validación de documento_identidad duplicado al crear cliente
-- Mismas validaciones en editar cliente (excluye el propio id)
-- Campo visible en formulario de nuevo cliente y edición
-
-### 7 — Autocomplete origen/destino en rutas
-- `<datalist id="dl-origenes-destinos">` en `rutas.html` con todos los orígenes/destinos existentes
-- Inputs de Origen y Destino en nueva ruta tienen `list="dl-origenes-destinos"`
-- Datos se pasan desde `routes/comercial.py` sin petición extra al servidor
-
-### 8 — Mensaje ruta duplicada
-- Verificado: banner rojo visible en la parte superior de la página con texto claro
-- Mensaje: "Esta ruta ya existe. Si necesitas modificarla, búscala en el listado y edítala."
-- Implementación ya existente de la sesión anterior — confirmada funcional ✅
+### 3 — Tipos de vehículo por defecto (`database.py`)
+- Tras `CREATE TABLE IF NOT EXISTS tipos_vehiculo`, se insertan 8 valores con `INSERT OR IGNORE`:
+  Plancha, Rastra, Furgón, Camión cerrado, Camión refrigerado, Portacontenedor, Camioneta, Otro
+- Confirmado en tab Tipos de vehículo: todos aparecen en el catálogo desde primer arranque
 
 ## Recomendaciones
 
-- **Poblar tipos_vehiculo iniciales**: el catálogo está vacío en nuevas instancias. Considerar añadir valores por defecto en `database.py` (Plancha, Rastra, Furgón, Portacontenedor, etc.) igual que se hace con `catalogo_tipo_transporte`
-- **Autocomplete en modal nuevo viaje**: el formulario modal usa `<select>` para la ruta (bien), pero los campos de observaciones son texto libre — no requiere autocompletar
-- **Email como campo recomendado**: se eliminó el `required` del campo email en nuevo cliente para que operarios puedan registrar clientes sin email; revisar si se desea mantener validación de formato cuando se provee
+- **Dashboard link activo**: `request.path == '/admin'` no matchea `/admin/` (con slash final). El link Dashboard nunca se marca activo. Considerar `request.path.rstrip('/') == '/admin'` para corregirlo.
+- **FINANZAS con un solo ítem**: el grupo Finanzas solo contiene Reportes. Si en el futuro se añaden más reportes o un módulo de facturación, el grupo ya está listo para expandirse.
+- **localStorage compartido por dominio**: si se abre la app en dos pestañas con distintos roles, el estado del sidebar se comparte. No es un problema en uso real (un operario por sesión), pero es un detalle a considerar.

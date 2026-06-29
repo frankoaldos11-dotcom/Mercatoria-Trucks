@@ -194,6 +194,11 @@ def crear_base_datos(bcrypt):
         activo INTEGER DEFAULT 1
     )
     """)
+    for _tv in ["Plancha", "Rastra", "Furgón", "Camión cerrado",
+                "Camión refrigerado", "Portacontenedor", "Camioneta", "Otro"]:
+        cursor.execute(
+            "INSERT OR IGNORE INTO tipos_vehiculo (nombre) VALUES (?)", (_tv,)
+        )
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS catalogo_tipo_transporte (
