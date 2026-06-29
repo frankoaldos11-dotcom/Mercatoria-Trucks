@@ -305,61 +305,6 @@
 
 </div>{# /steps #}
 
-{# ── REGISTRO DE COBRO (solo admin) ──────────────────────── #}
-{% if session.get('rol') == 'admin' %}
-<div class="card" style="padding:16px;margin-bottom:16px;">
-    {% if viaje.fecha_cobro %}
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:{% if viaje.comentario_cobro %}8px{% else %}0{% endif %};">
-        <span style="background:#065f46;color:#fff;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;">
-            <i class="bi bi-check-circle-fill"></i> Cobrado
-        </span>
-        <span style="font-size:13px;color:#555;">
-            {{ viaje.fecha_cobro | fmt_fecha }} · <strong>{{ viaje.forma_cobro or '—' }}</strong>
-            {% if viaje.monto_cobrado %} · <strong style="color:#065f46;">${{ "%.2f"|format(viaje.monto_cobrado|float) }}</strong>{% endif %}
-            {% if viaje.codigo_transaccion %} · <span style="color:#888;">Cód: {{ viaje.codigo_transaccion }}</span>{% endif %}
-        </span>
-    </div>
-    {% if viaje.comentario_cobro %}
-    <p style="margin:0;font-size:13px;color:#777;padding-left:2px;">{{ viaje.comentario_cobro }}</p>
-    {% endif %}
-    {% else %}
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <i class="bi bi-cash-coin" style="color:#E86A2C;font-size:1.2rem;"></i>
-        <strong style="font-size:14px;">Registro de cobro al cliente</strong>
-    </div>
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/marcar-cobrado">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
-            <div>
-                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Forma de pago *</label>
-                <select name="forma_cobro" class="step-input" style="width:160px;margin:0;" required>
-                    <option value="">— Seleccionar —</option>
-                    {% for fp in ['Efectivo', 'Transferencia', 'Tropipay', 'Otro'] %}
-                    <option value="{{ fp }}">{{ fp }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Monto cobrado (USD)</label>
-                <input type="number" name="monto_cobrado" step="0.01" min="0" class="step-input" style="width:130px;margin:0;" placeholder="0.00">
-            </div>
-            <div>
-                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Código transacción</label>
-                <input type="text" name="codigo_transaccion" class="step-input" style="width:160px;margin:0;" placeholder="Opcional">
-            </div>
-        </div>
-        <div style="margin-bottom:10px;">
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Comentario</label>
-            <input type="text" name="comentario_cobro" class="step-input" style="margin:0;" placeholder="Opcional">
-        </div>
-        <button type="submit" class="step-btn" style="background:#065f46;">
-            <i class="bi bi-check2-circle"></i> Marcar cobrado
-        </button>
-    </form>
-    {% endif %}
-</div>
-{% endif %}
-
 {# ── DETAILS ACCORDION ─────────────────────────────────────── #}
 <div style="display:flex;flex-direction:column;gap:10px;">
 
@@ -612,6 +557,61 @@
 </div>
 {% endif %}
 
+{# ── REGISTRO DE COBRO (solo admin) ──────────────────────── #}
+{% if session.get('rol') == 'admin' %}
+<div class="card" style="padding:16px;margin-top:10px;">
+    {% if viaje.fecha_cobro %}
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:{% if viaje.comentario_cobro %}8px{% else %}0{% endif %};">
+        <span style="background:#065f46;color:#fff;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;">
+            <i class="bi bi-check-circle-fill"></i> Cobrado
+        </span>
+        <span style="font-size:13px;color:#555;">
+            {{ viaje.fecha_cobro | fmt_fecha }} · <strong>{{ viaje.forma_cobro or '—' }}</strong>
+            {% if viaje.monto_cobrado %} · <strong style="color:#065f46;">${{ "%.2f"|format(viaje.monto_cobrado|float) }}</strong>{% endif %}
+            {% if viaje.codigo_transaccion %} · <span style="color:#888;">Cód: {{ viaje.codigo_transaccion }}</span>{% endif %}
+        </span>
+    </div>
+    {% if viaje.comentario_cobro %}
+    <p style="margin:0;font-size:13px;color:#777;padding-left:2px;">{{ viaje.comentario_cobro }}</p>
+    {% endif %}
+    {% else %}
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <i class="bi bi-cash-coin" style="color:#E86A2C;font-size:1.2rem;"></i>
+        <strong style="font-size:14px;">Registro de cobro al cliente</strong>
+    </div>
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/marcar-cobrado">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+            <div>
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Forma de pago *</label>
+                <select name="forma_cobro" class="step-input" style="width:160px;margin:0;" required>
+                    <option value="">— Seleccionar —</option>
+                    {% for fp in ['Efectivo', 'Transferencia', 'Tropipay', 'Otro'] %}
+                    <option value="{{ fp }}">{{ fp }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Monto cobrado (USD)</label>
+                <input type="number" name="monto_cobrado" step="0.01" min="0" class="step-input" style="width:130px;margin:0;" placeholder="0.00">
+            </div>
+            <div>
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Código transacción</label>
+                <input type="text" name="codigo_transaccion" class="step-input" style="width:160px;margin:0;" placeholder="Opcional">
+            </div>
+        </div>
+        <div style="margin-bottom:10px;">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Comentario</label>
+            <input type="text" name="comentario_cobro" class="step-input" style="margin:0;" placeholder="Opcional">
+        </div>
+        <button type="submit" class="step-btn" style="background:#065f46;">
+            <i class="bi bi-check2-circle"></i> Marcar cobrado
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+
 {# ── CERRAR OPERACIÓN — ÚLTIMO BLOQUE ─────────────────────── #}
 {% if done_all and session.get('rol') == 'admin' %}
 {% set _epc_final = viaje.estado_pago_camionero or 'Pendiente' %}
@@ -632,7 +632,8 @@
         </div>
     </div>
     {% else %}
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero">
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero"
+          onsubmit="return confirm('¿Confirmas que esta operación está completada y pagada? Esta acción no se puede deshacer.')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" name="accion" value="pagado"
                 style="width:100%;padding:16px;background:#16a34a;color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:0.01em;">

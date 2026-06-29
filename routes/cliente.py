@@ -272,8 +272,8 @@ def detalle_viaje(viaje_id):
         FROM viajes v
         LEFT JOIN vehiculos veh ON v.vehiculo_id = veh.id
         LEFT JOIN rutas r ON v.ruta_id = r.id
-        WHERE v.id = ? AND v.cliente_id = ?
-    """, (viaje_id, cliente_id))
+        WHERE v.id = ? AND (v.cliente_id = ? OR v.cliente = ?)
+    """, (viaje_id, cliente_id, session.get("usuario", "")))
     viaje = cur.fetchone()
     con.close()
 

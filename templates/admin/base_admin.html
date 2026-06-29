@@ -146,18 +146,6 @@
                     <i class="bi bi-chevron-down nav-group-arrow"></i>
                 </button>
                 <div class="nav-group-items">
-                    <a href="/admin/usuarios" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/usuarios') else '' }}">
-                        <i class="bi bi-people"></i>
-                        <span>Usuarios</span>
-                    </a>
-                    <a href="/admin/configuracion" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/configuracion') else '' }}">
-                        <i class="bi bi-sliders"></i>
-                        <span>Configuración</span>
-                    </a>
-                    <a href="/admin/auditoria" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/auditoria') else '' }}">
-                        <i class="bi bi-clock-history"></i>
-                        <span>Historial de Cambios</span>
-                    </a>
                     <a href="/admin/comercial/cotizaciones" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/comercial/cotizacion') else '' }}">
                         <i class="bi bi-file-earmark-text"></i>
                         <span>Cotizaciones</span>
@@ -165,6 +153,28 @@
                     <a href="/admin/comercial/tarifas" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/comercial/tarifas') else '' }}">
                         <i class="bi bi-table"></i>
                         <span>Tarifas</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CONFIGURACIÓN -->
+            <div class="nav-group" id="ng-configuracion">
+                <button class="nav-group-header">
+                    <span>Configuración</span>
+                    <i class="bi bi-chevron-down nav-group-arrow"></i>
+                </button>
+                <div class="nav-group-items">
+                    <a href="/admin/configuracion" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/configuracion') else '' }}">
+                        <i class="bi bi-sliders"></i>
+                        <span>Parámetros financieros</span>
+                    </a>
+                    <a href="/admin/usuarios" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/usuarios') else '' }}">
+                        <i class="bi bi-people"></i>
+                        <span>Usuarios</span>
+                    </a>
+                    <a href="/admin/auditoria" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/auditoria') else '' }}">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Historial de Cambios</span>
                     </a>
                     <a href="/admin/lote" class="nav-item {{ 'nav-item-active' if request.path.startswith('/admin/lote') else '' }}">
                         <i class="bi bi-lightning-charge"></i>
@@ -247,7 +257,7 @@ if ('serviceWorker' in navigator) {
 </script>
 <script>
 (function () {
-    var groups = ['ng-operaciones', 'ng-finanzas', 'ng-administracion'];
+    var groups = ['ng-operaciones', 'ng-finanzas', 'ng-administracion', 'ng-configuracion'];
     groups.forEach(function (id) {
         var g = document.getElementById(id);
         if (!g) return;
