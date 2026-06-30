@@ -162,6 +162,7 @@
                     <th>Estado cobro</th>
                     <th>Forma pago</th>
                     <th>Cód. transacción</th>
+                    <th>Verificado</th>
                     <th></th>
                 </tr>
             </thead>
@@ -197,6 +198,31 @@
                     <td style="font-size:12px;color:#555;">{{ f.forma_cobro or '—' }}</td>
                     <td style="font-size:12px;color:#888;">{{ f.codigo_transaccion or '—' }}</td>
                     <td>
+                        {% if f.verificado %}
+                        <span class="badge-verificado" title="Verificado por {{ f.verificado_por }} el {{ f.fecha_verificacion[:10] if f.fecha_verificacion else '' }}">
+                            <i class="bi bi-patch-check-fill"></i> Verificado
+                        </span>
+                        {% if session.get('rol') == 'admin' %}
+                        <form method="POST" action="/admin/viaje/{{ f.id }}/verificar" style="display:inline;margin-left:4px;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="accion" value="revertir">
+                            <input type="hidden" name="_referer" value="{{ request.url }}">
+                            <button type="submit" class="btn-revertir-verif" title="Revertir verificación">✕</button>
+                        </form>
+                        {% endif %}
+                        {% elif session.get('rol') == 'admin' %}
+                        <form method="POST" action="/admin/viaje/{{ f.id }}/verificar" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="_referer" value="{{ request.url }}">
+                            <button type="submit" class="btn-verificar-inline">
+                                <i class="bi bi-patch-check"></i> Confirmar cobrado y verificado
+                            </button>
+                        </form>
+                        {% else %}
+                        <span style="color:#bbb;font-size:12px;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
                         {% if not f.cobrado %}
                         <button class="btn-cobrar-inline" onclick="abrirModalCobro({{ f.id }}, '{{ f.cliente|replace("'","") }}')">
                             <i class="bi bi-cash-coin"></i> Cobrar
@@ -214,7 +240,7 @@
                     <td class="col-num {% if totales.utilidad < 0 %}num-negativo{% else %}num-positivo{% endif %}">
                         <strong>${{ "%.2f"|format(totales.utilidad) }}</strong>
                     </td>
-                    <td colspan="4"></td>
+                    <td colspan="5"></td>
                 </tr>
             </tfoot>
         </table>
@@ -508,6 +534,40 @@
     transition: background .15s;
 }
 .btn-cobrar-inline:hover { background: #a7f3d0; }
+
+.badge-verificado {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.btn-verificar-inline {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #86efac;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-verificar-inline:hover { background: #dcfce7; }
+.btn-revertir-verif {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0 2px;
+}
+.btn-revertir-verif:hover { color: #c0392b; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {

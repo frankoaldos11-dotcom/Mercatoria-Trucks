@@ -1277,6 +1277,31 @@ def marcar_cobrado(id):
     return redirect(f"/admin/viajes/{id}/gestionar")
 
 
+@admin_bp.route("/viaje/<int:id>/verificar", methods=["POST"])
+def verificar_viaje(id):
+    if session.get("rol") != "admin":
+        return redirect("/login")
+    accion = request.form.get("accion", "verificar")
+    con = conectar()
+    cur = con.cursor()
+    if accion == "revertir":
+        cur.execute(
+            f"UPDATE viajes SET verificado_financiero=0, verificado_por=NULL, fecha_verificacion=NULL WHERE id={ph()}",
+            (id,)
+        )
+        _registrar_historial(id, "Verificación revertida", f"Por: {session.get('usuario')}")
+    else:
+        cur.execute(
+            f"UPDATE viajes SET verificado_financiero=1, verificado_por={ph()}, fecha_verificacion=CURRENT_TIMESTAMP WHERE id={ph()}",
+            (session.get("usuario"), id)
+        )
+        _registrar_historial(id, "Verificado financiero", f"Por: {session.get('usuario')}")
+    con.commit()
+    con.close()
+    referer = request.form.get("_referer", "/admin/reportes")
+    return redirect(referer)
+
+
 @admin_bp.route("/camioneros/<int:id>/economico")
 def camionero_economico(id):
     if not requiere_admin():
@@ -2026,7 +2051,8 @@ def _calcular_financieros_periodo(fecha_desde, fecha_hasta,
 
     cursor.execute(f"""
         SELECT id, cliente, origen, destino, estado, fecha_creacion,
-               forma_cobro, codigo_transaccion, fecha_cobro, monto_cobrado
+               forma_cobro, codigo_transaccion, fecha_cobro, monto_cobrado,
+               verificado_financiero, verificado_por, fecha_verificacion
         FROM viajes
         WHERE (fecha_creacion >= {ph()} AND fecha_creacion <= {ph()})
           AND LOWER(estado) != 'cancelado'
@@ -2069,6 +2095,9 @@ def _calcular_financieros_periodo(fecha_desde, fecha_hasta,
             "codigo_transaccion": v["codigo_transaccion"] or "",
             "fecha_cobro": v["fecha_cobro"] or "",
             "monto_cobrado": v["monto_cobrado"],
+            "verificado": bool(v["verificado_financiero"]),
+            "verificado_por": v["verificado_por"] or "",
+            "fecha_verificacion": v["fecha_verificacion"] or "",
         })
 
     return filas, totales

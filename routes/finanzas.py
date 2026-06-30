@@ -69,6 +69,8 @@ def configuracion():
     config_texto = {r["clave"]: r["valor"] for r in cur.fetchall()}
     cur.execute("SELECT id, nombre, descripcion, capacidad_ton FROM tipos_vehiculo WHERE activo = 1 ORDER BY nombre")
     tipos_vehiculo = cur.fetchall()
+    cur.execute("SELECT id, origen, destino, zona, km_oficiales FROM rutas WHERE activa = 1 ORDER BY origen, destino")
+    rutas = cur.fetchall()
     con.close()
 
     return render_template(
@@ -77,6 +79,7 @@ def configuracion():
         config_texto=config_texto,
         mensaje=mensaje,
         tipos_vehiculo=tipos_vehiculo,
+        rutas=rutas,
     )
 
 
@@ -100,6 +103,25 @@ def nuevo_tipo_vehiculo_config():
             pass
         con.close()
     return redirect("/admin/configuracion?ok_tipo=1")
+
+
+@finanzas_bp.route("/configuracion/ruta/<int:id>/km", methods=["POST"])
+def editar_km_ruta_config(id):
+    if not solo_admin():
+        return redirect("/login")
+    km = request.form.get("km_oficiales", "").strip()
+    con = conectar()
+    cur = con.cursor()
+    try:
+        cur.execute(
+            "UPDATE rutas SET km_oficiales = ? WHERE id = ?",
+            (float(km) if km else None, id)
+        )
+        con.commit()
+    except (ValueError, TypeError):
+        pass
+    con.close()
+    return redirect("/admin/configuracion?tab=tab-rutas")
 
 
 @finanzas_bp.route("/configuracion/tipo-vehiculo/<int:id>/eliminar", methods=["POST"])

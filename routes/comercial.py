@@ -231,13 +231,13 @@ def cotizar_view():
     cfg = get_configuracion()
     con = conectar()
     cur = con.cursor()
-    cur.execute("SELECT id, nombre FROM catalogo_tipo_transporte WHERE activo = 1 ORDER BY nombre")
-    tipos_catalogo = cur.fetchall()
+    cur.execute("SELECT id, nombre FROM tipos_vehiculo WHERE activo = 1 ORDER BY nombre")
+    tipos_vehiculo = cur.fetchall()
     con.close()
     return render_template(
         "admin/comercial/cotizar.html",
         rutas=get_all_rutas(),
-        tipos=tipos_catalogo,
+        tipos=tipos_vehiculo,
         clientes=get_all_clientes(),
         tarifa_km_global=cfg.get("tarifa_km", 1.5),
     )

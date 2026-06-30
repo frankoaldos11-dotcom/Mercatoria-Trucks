@@ -60,13 +60,7 @@
                 ↺ km
             </button>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-            <input id="ruta-tarifa" name="tarifa_km" type="number" step="0.01" min="0"
-                   placeholder="Tarifa/km (auto)"
-                   title="Tarifa por km para esta ruta. Se calcula automáticamente como km × tarifa global, pero puedes sobreescribirla."
-                   style="flex:1;min-width:0;">
-            <span style="font-size:11px;color:#aaa;white-space:nowrap;" id="tarifa-hint"></span>
-        </div>
+        <input id="ruta-tarifa" name="tarifa_km" type="hidden">
         <button type="submit" class="btn-submit">Añadir ruta</button>
     </form>
 </section>
@@ -77,23 +71,10 @@ var _tarifaGlobal = {{ tarifa_km_global | tojson }};
 function autoTarifa() {
     var km = parseFloat(document.getElementById('ruta-km').value);
     var t = document.getElementById('ruta-tarifa');
-    var hint = document.getElementById('tarifa-hint');
     if (!isNaN(km) && km > 0) {
-        var sugerida = (_tarifaGlobal * km).toFixed(2);
-        if (!t._touched) {
-            t.value = sugerida;
-        }
-        hint.textContent = 'Sugerida: $' + sugerida;
-    } else {
-        hint.textContent = '';
+        t.value = (_tarifaGlobal * km).toFixed(2);
     }
 }
-document.addEventListener('DOMContentLoaded', function() {
-    var t = document.getElementById('ruta-tarifa');
-    if (t) {
-        t.addEventListener('input', function() { t._touched = true; });
-    }
-});
 </script>
 
 <section class="panel panel-spaced">
