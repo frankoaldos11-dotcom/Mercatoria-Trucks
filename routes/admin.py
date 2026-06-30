@@ -347,6 +347,7 @@ def viajes():
                COALESCE(v.precio_final, v.precio_cliente, v.precio, 0) as precio,
                v.fecha_creacion,
                v.prioridad, v.tipo_carga,
+               COALESCE(v.estado_pago_camionero, 'Pendiente') AS estado_pago_camionero,
                COALESCE(c.categoria, 'Normal') AS cliente_categoria,
                (SELECT COUNT(*) FROM incidencias i WHERE i.viaje_id = v.id AND i.estado != 'Resuelta') AS incidencias_abiertas
         FROM viajes v

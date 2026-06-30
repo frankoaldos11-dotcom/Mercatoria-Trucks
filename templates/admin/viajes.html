@@ -244,6 +244,7 @@ document.addEventListener('keydown', function(e) {
                     <th>Precio</th>
                     <th>Fecha</th>
                     <th>Transportista</th>
+                    <th>Pago transp.</th>
                 </tr>
             </thead>
 
@@ -290,10 +291,19 @@ document.addEventListener('keydown', function(e) {
                     </td>
                     <td style="font-size:11px;color:#999;">{{ v.fecha_creacion | fmt_fecha('%Y-%m-%d') }}</td>
                     <td>{{ v.camionero_nombre if v.camionero_nombre else "Sin asignar" }}</td>
+                    <td>
+                        {% if v.estado_pago_camionero == 'Pagado' %}
+                        <span style="display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#dcfce7;color:#166534;">Pagado</span>
+                        {% elif v.estado_pago_camionero == 'Parcial' %}
+                        <span style="display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#fef3c7;color:#92400e;">Parcial</span>
+                        {% else %}
+                        <span style="display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#f3f4f6;color:#6b7280;">Pendiente</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="9" class="empty-state">No hay viajes{% if buscar %} que coincidan con "{{ buscar }}"{% endif %}.</td>
+                    <td colspan="10" class="empty-state">No hay viajes{% if buscar %} que coincidan con "{{ buscar }}"{% endif %}.</td>
                 </tr>
                 {% endfor %}
             </tbody>
