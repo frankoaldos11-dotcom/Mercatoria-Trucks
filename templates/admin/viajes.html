@@ -182,7 +182,7 @@ document.addEventListener('keydown', function(e) {
     <input type="hidden" name="estado" value="{{ filtro }}">
     <div style="display:flex;gap:8px;max-width:480px;">
         <input type="text" name="buscar" value="{{ buscar }}"
-               placeholder="Buscar por cliente, origen, destino o camionero…"
+               placeholder="Buscar por cliente, origen, destino o transportista…"
                class="form-control form-control-sm"
                style="border-radius:8px;">
         <button type="submit" class="btn btn-sm btn-secondary" style="border-radius:8px;white-space:nowrap;">
@@ -235,6 +235,7 @@ document.addEventListener('keydown', function(e) {
         <table class="data-table">
             <thead>
                 <tr>
+                    <th>Acción</th>
                     <th>ID</th>
                     <th>Cliente</th>
                     <th>Origen</th>
@@ -242,14 +243,20 @@ document.addEventListener('keydown', function(e) {
                     <th>Estado</th>
                     <th>Precio</th>
                     <th>Fecha</th>
-                    <th>Camionero</th>
-                    <th>Acción</th>
+                    <th>Transportista</th>
                 </tr>
             </thead>
 
             <tbody>
                 {% for v in lista %}
                 <tr>
+                    <td>
+                        <a href="/admin/viaje/{{ v.id }}"
+                           class="btn-icon-action"
+                           title="Gestionar viaje #{{ v.id }}">
+                            <i class="bi bi-sliders"></i>
+                        </a>
+                    </td>
                     <td>#{{ v.id }}</td>
                     <td>
                         {{ v.cliente }}
@@ -283,13 +290,6 @@ document.addEventListener('keydown', function(e) {
                     </td>
                     <td style="font-size:11px;color:#999;">{{ v.fecha_creacion | fmt_fecha('%Y-%m-%d') }}</td>
                     <td>{{ v.camionero_nombre if v.camionero_nombre else "Sin asignar" }}</td>
-                    <td>
-                        <a href="/admin/viaje/{{ v.id }}"
-                           class="btn-icon-action"
-                           title="Gestionar viaje #{{ v.id }}">
-                            <i class="bi bi-sliders"></i>
-                        </a>
-                    </td>
                 </tr>
                 {% else %}
                 <tr>

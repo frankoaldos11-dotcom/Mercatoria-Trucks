@@ -43,12 +43,15 @@ def calcular_liquidacion(viaje_id):
     viaje = cur.fetchone()
 
     ruta_tarifa_km = None
+    km_ruta = 0.0
     if viaje and _col_exists(viaje, "ruta_id") and viaje["ruta_id"]:
         try:
-            cur.execute(f"SELECT tarifa_km FROM rutas WHERE id = {ph()}", (viaje["ruta_id"],))
+            cur.execute(f"SELECT tarifa_km, km_oficiales FROM rutas WHERE id = {ph()}", (viaje["ruta_id"],))
             ruta = cur.fetchone()
             if ruta and ruta["tarifa_km"] is not None:
                 ruta_tarifa_km = float(ruta["tarifa_km"])
+            if ruta and ruta["km_oficiales"]:
+                km_ruta = float(ruta["km_oficiales"])
         except Exception:
             pass
 
@@ -68,8 +71,10 @@ def calcular_liquidacion(viaje_id):
     minimo_pago               = cfg.get("minimo_pago_usd", 150.0)
     comision_pct              = cfg.get("comision_mercatoria_porcentaje", 20.0)
 
-    # km real del viaje (buscar en columnas posibles)
+    # km real del viaje (buscar en columnas posibles; usar km_oficiales de la ruta como fallback)
     km_real = float(viaje["km"] or viaje["kilometros"] or 0) if _col_exists(viaje, "km") else 0
+    if km_real == 0 and km_ruta > 0:
+        km_real = km_ruta
 
     km_liquidable = max(km_real, minimo_km) if km_real > 0 else minimo_km
 
@@ -92,6 +97,7 @@ def calcular_liquidacion(viaje_id):
         "km_real":             round(km_real, 2),
         "km_liquidable":       round(km_liquidable, 2),
         "combustible":         round(combustible, 2),
+        "litros_combustible":  round(km_real / margen_divisor, 1) if margen_divisor else 0,
         "pago_camionero":      round(pago_camionero, 2),
         "precio_cliente":      round(precio_cliente, 2),
         "comision_mercatoria": round(comision_mercatoria, 2),

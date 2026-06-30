@@ -316,11 +316,11 @@ def viajes():
         params.append(filtro)
 
     if buscar:
-        condiciones.append("""(
-            COALESCE(v.cliente, '') LIKE ?
-            OR COALESCE(v.origen, '') LIKE ?
-            OR COALESCE(v.destino, '') LIKE ?
-            OR COALESCE(v.camionero_nombre, '') LIKE ?
+        condiciones.append(f"""(
+            COALESCE(c.nombre, v.cliente, '') LIKE {ph()}
+            OR COALESCE(v.origen, '') LIKE {ph()}
+            OR COALESCE(v.destino, '') LIKE {ph()}
+            OR COALESCE(v.camionero_nombre, '') LIKE {ph()}
         )""")
         like = f"%{buscar}%"
         params.extend([like, like, like, like])
@@ -342,7 +342,7 @@ def viajes():
 
     cursor.execute(f"""
         SELECT v.id,
-               COALESCE(v.cliente, 'Sin nombre') as cliente,
+               COALESCE(c.nombre, v.cliente, 'Sin nombre') as cliente,
                v.origen, v.destino, v.estado, v.camionero_nombre,
                COALESCE(v.precio_final, v.precio_cliente, v.precio, 0) as precio,
                v.fecha_creacion,
@@ -353,7 +353,7 @@ def viajes():
         LEFT JOIN clientes c ON c.id = v.cliente_id
         {where}
         ORDER BY v.id DESC
-        LIMIT ? OFFSET ?
+        LIMIT {ph()} OFFSET {ph()}
     """, params + [por_pagina, offset])
     lista = cursor.fetchall()
 
@@ -457,13 +457,18 @@ def gestionar_viaje(id):
         )
         cliente_info = cursor.fetchone()
 
-    # Nombre legible de la ruta
+    # Nombre legible de la ruta y km oficiales
     ruta_display = None
+    km_ruta = 0.0
+    ids_en_ruta = []
     if viaje["ruta_id"]:
-        cursor.execute(f"SELECT origen, destino FROM rutas WHERE id = {ph()}", (viaje["ruta_id"],))
+        cursor.execute(f"SELECT origen, destino, km_oficiales FROM rutas WHERE id = {ph()}", (viaje["ruta_id"],))
         ruta_row = cursor.fetchone()
         if ruta_row:
             ruta_display = f"{ruta_row['origen']} → {ruta_row['destino']}"
+            km_ruta = float(ruta_row["km_oficiales"] or 0)
+        cursor.execute(f"SELECT camionero_id FROM camionero_ruta WHERE ruta_id = {ph()}", (viaje["ruta_id"],))
+        ids_en_ruta = [r["camionero_id"] for r in cursor.fetchall()]
 
     conexion.close()
 
@@ -590,6 +595,8 @@ def gestionar_viaje(id):
         orden_carga_tooltip=orden_carga_tooltip,
         cliente_info=cliente_info,
         ruta_display=ruta_display,
+        km_ruta=km_ruta,
+        ids_en_ruta=ids_en_ruta,
         obs_parsed=obs_parsed,
         notas=notas,
         checklist=checklist,
