@@ -210,7 +210,7 @@
                             <button type="submit" class="btn-revertir-verif" title="Revertir verificación">✕</button>
                         </form>
                         {% endif %}
-                        {% elif session.get('rol') == 'admin' %}
+                        {% elif f.cobrado and session.get('rol') == 'admin' %}
                         <form method="POST" action="/admin/viaje/{{ f.id }}/verificar" style="display:inline;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="_referer" value="{{ request.url }}">
