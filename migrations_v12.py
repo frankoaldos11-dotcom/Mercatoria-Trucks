@@ -99,6 +99,21 @@ def _ejecutar(conn):
         )
     """, "CREATE TABLE solicitudes_eliminacion")
 
+    print("\n[ viajes multi-tramo ]")
+    run(conn, cur, """
+        CREATE TABLE IF NOT EXISTS viaje_tramos (
+            id SERIAL PRIMARY KEY,
+            viaje_id INTEGER NOT NULL,
+            ruta_id INTEGER NOT NULL,
+            orden INTEGER NOT NULL,
+            estado TEXT DEFAULT 'pendiente',
+            fecha_llegada TIMESTAMP,
+            FOREIGN KEY (viaje_id) REFERENCES viajes(id),
+            FOREIGN KEY (ruta_id) REFERENCES rutas(id)
+        )
+    """, "CREATE TABLE viaje_tramos")
+    run(conn, cur, "CREATE INDEX IF NOT EXISTS idx_viaje_tramos_viaje_id ON viaje_tramos(viaje_id)", "idx_viaje_tramos_viaje_id")
+
     cur.close()
     conn.close()
     print("\n=== Migración v1.2 completada ===\n")
