@@ -34,6 +34,12 @@ def ejecutar_migraciones_pg():
         except Exception:
             conn.rollback()
 
+        try:
+            cur.execute("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS documento_identidad TEXT")
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
         nuevas_columnas_viajes = [
             ("referencia_cliente",      "TEXT"),
             ("prioridad",               "TEXT DEFAULT 'Normal'"),
@@ -48,6 +54,9 @@ def ejecutar_migraciones_pg():
             ("observacion_pago",        "TEXT"),
             ("monto_pagado",            "REAL"),
             ("fecha_pago_camionero",    "TEXT"),
+            ("verificado_financiero",   "INTEGER DEFAULT 0"),
+            ("verificado_por",          "TEXT"),
+            ("fecha_verificacion",      "TEXT"),
         ]
         for col, defn in nuevas_columnas_viajes:
             try:
@@ -185,6 +194,7 @@ def ejecutar_migraciones_pg():
         direccion TEXT,
         activo INTEGER DEFAULT 1,
         categoria TEXT DEFAULT 'Normal',
+        documento_identidad TEXT,
         fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -363,7 +373,10 @@ def ejecutar_migraciones_pg():
         tipo_pago_camionero TEXT,
         observacion_pago TEXT,
         monto_pagado REAL,
-        fecha_pago_camionero TEXT
+        fecha_pago_camionero TEXT,
+        verificado_financiero INTEGER DEFAULT 0,
+        verificado_por TEXT,
+        fecha_verificacion TEXT
     )
     """)
 

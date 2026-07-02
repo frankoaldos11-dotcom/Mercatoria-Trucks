@@ -1580,15 +1580,20 @@ def verificar_viaje(id):
             f"UPDATE viajes SET verificado_financiero=0, verificado_por=NULL, fecha_verificacion=NULL WHERE id={ph()}",
             (id,)
         )
-        _registrar_historial(id, "Verificación revertida", f"Por: {session.get('usuario')}")
     else:
+        ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cur.execute(
-            f"UPDATE viajes SET verificado_financiero=1, verificado_por={ph()}, fecha_verificacion=CURRENT_TIMESTAMP WHERE id={ph()}",
-            (session.get("usuario"), id)
+            f"UPDATE viajes SET verificado_financiero=1, verificado_por={ph()}, fecha_verificacion={ph()} WHERE id={ph()}",
+            (session.get("usuario"), ahora, id)
         )
-        _registrar_historial(id, "Verificado financiero", f"Por: {session.get('usuario')}")
     con.commit()
     con.close()
+
+    if accion == "revertir":
+        _registrar_historial(id, "Verificación revertida", f"Por: {session.get('usuario')}")
+    else:
+        _registrar_historial(id, "Verificado financiero", f"Por: {session.get('usuario')}")
+
     referer = request.form.get("_referer", "/admin/reportes")
     return redirect(referer)
 

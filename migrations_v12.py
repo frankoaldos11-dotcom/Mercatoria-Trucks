@@ -74,6 +74,14 @@ def _ejecutar(conn):
     print("\n[ reabrir viaje cerrado ]")
     run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS reabierto_en TIMESTAMP", "reabierto_en")
 
+    print("\n[ verificacion financiera ]")
+    run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS verificado_financiero INTEGER DEFAULT 0", "verificado_financiero")
+    run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS verificado_por TEXT", "verificado_por")
+    run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS fecha_verificacion TEXT", "fecha_verificacion")
+
+    print("\n[ documento de identidad en clientes ]")
+    run(conn, cur, "ALTER TABLE clientes ADD COLUMN IF NOT EXISTS documento_identidad TEXT", "documento_identidad")
+
     print("\n[ historial de cambios por viaje ]")
     run(conn, cur, """
         CREATE TABLE IF NOT EXISTS historial_viaje (
