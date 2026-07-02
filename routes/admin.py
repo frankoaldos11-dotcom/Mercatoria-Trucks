@@ -53,6 +53,32 @@ def _viaje_cerrado(viaje_id):
     return bool(row) and (row["estado"] or "").lower() == "cerrado"
 
 
+def _rutas_no_cubiertas(cursor, camionero_id, viaje_id, ruta_id_directo):
+    """Devuelve la lista de rutas del viaje (dicts con ruta_id/origen/destino) que el
+    camionero indicado NO tiene habilitadas en camionero_ruta. Lista vacía = las cubre todas.
+    Si el viaje tiene tramos (multi-tramo) valida cada tramo en orden; si no, valida
+    la ruta_id directa del viaje."""
+    tramos = obtener_tramos_viaje(viaje_id)
+    if tramos:
+        rutas = [{"ruta_id": t["ruta_id"], "origen": t["origen"], "destino": t["destino"]} for t in tramos]
+    elif ruta_id_directo:
+        cursor.execute(f"SELECT id, origen, destino FROM rutas WHERE id = {ph()}", (ruta_id_directo,))
+        r = cursor.fetchone()
+        rutas = [{"ruta_id": r["id"], "origen": r["origen"], "destino": r["destino"]}] if r else []
+    else:
+        rutas = []
+
+    no_cubiertas = []
+    for ruta in rutas:
+        cursor.execute(
+            f"SELECT 1 FROM camionero_ruta WHERE camionero_id = {ph()} AND ruta_id = {ph()}",
+            (camionero_id, ruta["ruta_id"])
+        )
+        if not cursor.fetchone():
+            no_cubiertas.append(ruta)
+    return no_cubiertas
+
+
 def _registrar_historial(viaje_id, accion, detalle=""):
     try:
         usuario = session.get("usuario", "sistema")
@@ -761,6 +787,21 @@ def asignar_camionero(id):
     fila = cursor.fetchone()
 
     if fila:
+        cursor.execute(f"SELECT ruta_id FROM viajes WHERE id = {ph()}", (id,))
+        viaje_row = cursor.fetchone()
+        ruta_id_directo = viaje_row["ruta_id"] if viaje_row else None
+        no_cubiertas = _rutas_no_cubiertas(cursor, camionero_id, id, ruta_id_directo)
+
+        if no_cubiertas:
+            conexion.close()
+            etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
+            _registrar_historial(
+                id, "Asignación de transportista rechazada",
+                f"{fila['nombre']} no está habilitado para: {etiquetas}"
+            )
+            mensaje = f"El transportista no está habilitado para las rutas: {etiquetas}"
+            return redirect(f"/admin/viaje/{id}?error={quote_plus(mensaje)}")
+
         cursor.execute(f"""
             UPDATE viajes
             SET camionero_id = {ph()}, camionero_nombre = {ph()}, estado = 'Asignado'
@@ -927,6 +968,18 @@ def asignar_camionero_vehiculo(id):
 
     cursor.execute(f"SELECT nombre FROM camioneros WHERE id = {ph()}", (camionero_id,))
     camionero = cursor.fetchone()
+
+    if camionero:
+        no_cubiertas = _rutas_no_cubiertas(cursor, camionero_id, id, viaje["ruta_id"])
+        if no_cubiertas:
+            conexion.close()
+            etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
+            _registrar_historial(
+                id, "Asignación de transportista rechazada",
+                f"{camionero['nombre']} no está habilitado para: {etiquetas}"
+            )
+            mensaje = f"El transportista no está habilitado para las rutas: {etiquetas}"
+            return redirect(f"/admin/viaje/{id}?error={quote_plus(mensaje)}")
 
     cursor.execute(f"""
         SELECT id, COALESCE(matricula, '') AS matricula,
