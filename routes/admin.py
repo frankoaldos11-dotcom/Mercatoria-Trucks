@@ -44,6 +44,15 @@ def registrar_auditoria(accion, categoria, entidad=None, entidad_id=None, detall
         current_app.logger.error(f"AUDITORIA ERROR: {e}")
 
 
+def _viaje_cerrado(viaje_id):
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(f"SELECT estado FROM viajes WHERE id = {ph()}", (viaje_id,))
+    row = cur.fetchone()
+    con.close()
+    return bool(row) and (row["estado"] or "").lower() == "cerrado"
+
+
 def _registrar_historial(viaje_id, accion, detalle=""):
     try:
         usuario = session.get("usuario", "sistema")
@@ -512,6 +521,7 @@ def gestionar_viaje(id):
         "confirmado":         ["En ruta", "Carga recogida", "Entregado", "Cancelado"],
         "entregado":          ["En ruta", "Asignado", "Cancelado"],
         "cancelado":          ["Solicitado", "Asignado"],
+        "cerrado":            [],
     }
     estado_norm = (viaje["estado"] or "").lower()
     estados_validos = _transiciones.get(estado_norm, ["Asignado", "En ruta", "Entregado", "Cancelado"])
@@ -646,6 +656,8 @@ def gestionar_viaje(id):
 def completar_tramo_admin(id, tramo_id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     ok = completar_tramo(id, tramo_id)
     if ok:
@@ -737,6 +749,8 @@ def cambiar_estado_incidencia(id, inc_id):
 def asignar_camionero(id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     camionero_id = request.form["camionero"]
 
@@ -768,6 +782,8 @@ def asignar_camionero(id):
 def cambiar_estado(id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     estado = request.form["estado"]
 
@@ -844,6 +860,8 @@ def cambiar_estado(id):
 def asignar_vehiculo(id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     vehiculo_id = request.form["vehiculo"]
 
@@ -890,6 +908,8 @@ def asignar_vehiculo(id):
 def asignar_camionero_vehiculo(id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     camionero_id = request.form.get("camionero", "").strip()
 
@@ -1091,6 +1111,8 @@ def descargar_factura_cliente(id):
 def confirmar_precio(id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     precio_str = request.form.get("precio_cliente", "").strip()
     try:
@@ -1115,6 +1137,8 @@ def confirmar_precio(id):
 def guardar_combustible(id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
     val = request.form.get("combustible", "").strip()
     try:
         combustible = float(val)
@@ -1135,6 +1159,8 @@ def guardar_combustible(id):
 def guardar_fechas(id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
     fecha_recogida = request.form.get("fecha_recogida", "").strip() or None
     fecha_entrega = request.form.get("fecha_entrega", "").strip() or None
     con = conectar()
@@ -1205,6 +1231,8 @@ def eliminar_viaje_admin(id):
 def actualizar_prioridad_viaje(id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
     prioridad = request.form.get("prioridad", "Normal").strip()
     if prioridad not in ["Normal", "Alta", "Urgente"]:
         prioridad = "Normal"
@@ -1251,6 +1279,8 @@ def convertir_cotizacion(id):
 def pago_camionero(id):
     if not requiere_admin():
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     accion     = request.form.get("accion", "").strip()
     tipo_pago  = request.form.get("tipo_pago", "").strip() or None
@@ -1296,6 +1326,8 @@ def pago_camionero(id):
 def marcar_cobrado(id):
     if session.get("rol") != "admin":
         return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     forma_cobro = request.form.get("forma_cobro", "").strip()
     codigo_transaccion = request.form.get("codigo_transaccion", "").strip() or None
@@ -1329,6 +1361,31 @@ def marcar_cobrado(id):
     if referer and "reportes" in referer:
         return redirect(referer)
     return redirect(f"/admin/viajes/{id}/gestionar")
+
+
+@admin_bp.route("/viaje/<int:id>/finalizar", methods=["POST"])
+def finalizar_viaje(id):
+    if session.get("rol") != "admin":
+        return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}")
+
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(f"SELECT fecha_cobro FROM viajes WHERE id = {ph()}", (id,))
+    viaje = cur.fetchone()
+    if not viaje or not viaje["fecha_cobro"]:
+        con.close()
+        return redirect(f"/admin/viaje/{id}?error=El+cobro+debe+estar+registrado+antes+de+finalizar+el+viaje")
+
+    cur.execute(f"UPDATE viajes SET estado = 'Cerrado' WHERE id = {ph()}", (id,))
+    con.commit()
+    con.close()
+
+    _registrar_historial(id, "Viaje finalizado", "Estado cambiado a Cerrado")
+    registrar_auditoria("Finalizó el viaje", "Viajes", "viaje", id)
+
+    return redirect(f"/admin/viaje/{id}")
 
 
 @admin_bp.route("/viaje/<int:id>/verificar", methods=["POST"])

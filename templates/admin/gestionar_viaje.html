@@ -196,6 +196,11 @@
         </form>
     </div>
 </div>
+{% elif (viaje.estado or '')|lower == 'cerrado' %}
+<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">Transportista sin asignar</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
+</div>
 {% else %}
 <div class="card step-active">
     <div class="step-title-row"><span class="step-num">1</span> Asignar transportista y vehículo</div>
@@ -220,6 +225,11 @@
     <div><strong>Combustible confirmado</strong>
     <span class="step-done-info"> · {% if liquidacion and liquidacion.litros_combustible > 0 %}{{ liquidacion.litros_combustible }} L{% else %}${{ "%.2f"|format(viaje.combustible|float) }}{% endif %}</span></div>
 </div>
+{% elif (viaje.estado or '')|lower == 'cerrado' %}
+<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">Combustible no confirmado</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
+</div>
 {% else %}
 <div class="card step-active">
     <div class="step-title-row"><span class="step-num">2</span> Confirmar combustible asignado</div>
@@ -236,89 +246,80 @@
 </div>
 {% endif %}
 
-{# STEP 3 — Fecha de extracción #}
-{% if done3 %}
-<div class="step-done" id="step3-done" style="justify-content:space-between;">
+{# STEP 3 — Fechas de recogida y descarga (guardadas juntas) #}
+{% set done34 = done3 and done4 %}
+{% if done34 %}
+<div class="step-done" id="step34-done" style="justify-content:space-between;">
     <div style="display:flex;align-items:center;gap:10px;flex:1;">
         <i class="bi bi-check-circle-fill step-check"></i>
-        <div><strong>Fecha de extracción</strong><span class="step-done-info"> · {{ viaje.fecha_recogida | fmt_fecha }}</span></div>
+        <div>
+            <strong>Fechas registradas</strong>
+            <span class="step-done-info"> · Extracción: {{ viaje.fecha_recogida | fmt_fecha }} · Descarga: {{ viaje.fecha_entrega | fmt_fecha }}</span>
+        </div>
     </div>
     {% if (viaje.estado or '')|lower not in ['entregado', 'cerrado'] %}
-    <button type="button" onclick="document.getElementById('step3-form').style.display='block';document.getElementById('step3-done').style.display='none';"
+    <button type="button" onclick="document.getElementById('step34-form').style.display='block';document.getElementById('step34-done').style.display='none';"
             style="font-size:11px;font-weight:700;padding:4px 10px;background:#f0f0f0;color:#555;border:1px solid #ddd;border-radius:6px;cursor:pointer;white-space:nowrap;flex-shrink:0;">
         <i class="bi bi-pencil"></i> Editar
     </button>
     {% endif %}
 </div>
-<div id="step3-form" style="display:none;">
+<div id="step34-form" style="display:none;">
     <div class="card step-active">
-        <div class="step-title-row"><span class="step-num">3</span> Fecha de extracción (editar)</div>
-        <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <div class="step-title-row"><span class="step-num">3</span> Fechas de recogida y descarga (editar)</div>
+        <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="date" name="fecha_recogida" class="step-input" value="{{ viaje.fecha_recogida or '' }}" required>
-            <button type="submit" class="step-btn">Guardar</button>
-            <button type="button" onclick="document.getElementById('step3-form').style.display='none';document.getElementById('step3-done').style.display='flex';"
+            <div>
+                <label style="display:block;font-size:11px;color:#888;margin-bottom:4px;">Fecha de extracción</label>
+                <input type="date" name="fecha_recogida" class="step-input fecha-recogida-input" value="{{ viaje.fecha_recogida or '' }}">
+            </div>
+            <div>
+                <label style="display:block;font-size:11px;color:#888;margin-bottom:4px;">Fecha de descarga</label>
+                <input type="date" name="fecha_entrega" class="step-input fecha-entrega-input" value="{{ viaje.fecha_entrega or '' }}">
+            </div>
+            <button type="submit" class="step-btn">Guardar fechas</button>
+            <button type="button" onclick="document.getElementById('step34-form').style.display='none';document.getElementById('step34-done').style.display='flex';"
                     style="padding:8px 14px;background:#f0f0f0;color:#555;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Cancelar</button>
         </form>
     </div>
 </div>
+{% elif (viaje.estado or '')|lower == 'cerrado' %}
+<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">Fechas no registradas</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
+</div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">3</span> Fecha de extracción (recogida de carga)</div>
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+    <div class="step-title-row"><span class="step-num">3</span> Fechas de recogida y descarga</div>
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="date" name="fecha_recogida" class="step-input" required>
-        <button type="submit" class="step-btn">Guardar</button>
+        <div>
+            <label style="display:block;font-size:11px;color:#888;margin-bottom:4px;">Fecha de extracción</label>
+            <input type="date" name="fecha_recogida" class="step-input fecha-recogida-input" value="{{ viaje.fecha_recogida or '' }}">
+        </div>
+        <div>
+            <label style="display:block;font-size:11px;color:#888;margin-bottom:4px;">Fecha de descarga</label>
+            <input type="date" name="fecha_entrega" class="step-input fecha-entrega-input" value="{{ viaje.fecha_entrega or '' }}">
+        </div>
+        <button type="submit" class="step-btn">Guardar fechas</button>
     </form>
 </div>
 {% endif %}
 
-{# STEP 4 — Fecha de descarga #}
-{% if done4 %}
-<div class="step-done" id="step4-done" style="justify-content:space-between;">
-    <div style="display:flex;align-items:center;gap:10px;flex:1;">
-        <i class="bi bi-check-circle-fill step-check"></i>
-        <div><strong>Fecha de descarga</strong><span class="step-done-info"> · {{ viaje.fecha_entrega | fmt_fecha }}</span></div>
-    </div>
-    {% if (viaje.estado or '')|lower not in ['entregado', 'cerrado'] %}
-    <button type="button" onclick="document.getElementById('step4-form').style.display='block';document.getElementById('step4-done').style.display='none';"
-            style="font-size:11px;font-weight:700;padding:4px 10px;background:#f0f0f0;color:#555;border:1px solid #ddd;border-radius:6px;cursor:pointer;white-space:nowrap;flex-shrink:0;">
-        <i class="bi bi-pencil"></i> Editar
-    </button>
-    {% endif %}
-</div>
-<div id="step4-form" style="display:none;">
-    <div class="card step-active">
-        <div class="step-title-row"><span class="step-num">4</span> Fecha de descarga (editar)</div>
-        <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="date" name="fecha_entrega" class="step-input" value="{{ viaje.fecha_entrega or '' }}" required>
-            <button type="submit" class="step-btn">Guardar</button>
-            <button type="button" onclick="document.getElementById('step4-form').style.display='none';document.getElementById('step4-done').style.display='flex';"
-                    style="padding:8px 14px;background:#f0f0f0;color:#555;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Cancelar</button>
-        </form>
-    </div>
-</div>
-{% else %}
-<div class="card step-active">
-    <div class="step-title-row"><span class="step-num">4</span> Fecha de descarga</div>
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="date" name="fecha_entrega" class="step-input" required>
-        <button type="submit" class="step-btn">Guardar</button>
-    </form>
-</div>
-{% endif %}
-
-{# STEP 5 — Enviar documentación #}
+{# STEP 4 — Enviar documentación #}
 {% if done5 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
     <div><strong>Documentación enviada</strong></div>
 </div>
+{% elif (viaje.estado or '')|lower == 'cerrado' %}
+<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">Documentación no enviada</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
+</div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">5</span> Enviar documentación al transportista</div>
+    <div class="step-title-row"><span class="step-num">4</span> Enviar documentación al transportista</div>
     <p style="font-size:12px;color:#888;margin:8px 0 10px;">Orden de carga, contrato, instrucciones de ruta.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         {% if orden_carga_ok %}
@@ -339,15 +340,20 @@
 </div>
 {% endif %}
 
-{# STEP 6 — Confirmar entrega #}
+{# STEP 5 — Confirmar entrega #}
 {% if done6 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
     <div><strong>Entrega confirmada</strong><span class="step-done-info"> · Estado: Entregado</span></div>
 </div>
+{% elif (viaje.estado or '')|lower == 'cerrado' %}
+<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">Entrega no confirmada</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
+</div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">6</span> Confirmar entrega</div>
+    <div class="step-title-row"><span class="step-num">5</span> Confirmar entrega</div>
     {% if tramos and not tramos_ok %}
     <p style="font-size:12px;color:#c0392b;margin:8px 0 10px;">
         <i class="bi bi-exclamation-triangle-fill"></i> Completa todos los tramos del viaje antes de confirmar la entrega.
@@ -369,7 +375,7 @@
 </div>
 {% endif %}
 
-{# STEP 7 — Pago al transportista #}
+{# STEP 6 — Pago al transportista #}
 {% if done7 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -379,9 +385,14 @@
         {% if viaje.fecha_pago_camionero %}<span class="step-done-info"> · {{ viaje.fecha_pago_camionero | fmt_fecha }}</span>{% endif %}
     </div>
 </div>
+{% elif (viaje.estado or '')|lower == 'cerrado' %}
+<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">Pago al transportista</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
+</div>
 {% elif done6 %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">7</span> Pago al transportista</div>
+    <div class="step-title-row"><span class="step-num">6</span> Pago al transportista</div>
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero" style="margin-top:10px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="accion" value="pagado">
@@ -485,6 +496,9 @@
                 {% if viaje.fecha_pago_camionero %}<span style="font-size:12px;color:#6b7280;">{{ viaje.fecha_pago_camionero | fmt_fecha }}</span>{% endif %}
             </div>
             {% endif %}
+            {% if (viaje.estado or '')|lower == 'cerrado' %}
+            <p style="margin:0;font-size:12px;color:#9CA3AF;">Viaje cerrado — no admite cambios.</p>
+            {% else %}
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero" style="display:flex;gap:8px;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" name="accion" value="pagado"
@@ -497,6 +511,7 @@
                     <i class="bi bi-x-circle"></i> Pendiente de pago
                 </button>
             </form>
+            {% endif %}
         </div>
     </details>
     {% endif %}
@@ -690,6 +705,16 @@
     {% if viaje.comentario_cobro %}
     <p style="margin:0;font-size:13px;color:#777;padding-left:2px;">{{ viaje.comentario_cobro }}</p>
     {% endif %}
+    {% if (viaje.estado or '')|lower != 'cerrado' %}
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/finalizar" style="margin-top:14px;"
+          onsubmit="return confirm('¿Confirmas que este viaje está completamente finalizado? Esta acción no se puede deshacer.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit"
+                style="width:100%;padding:16px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="bi bi-check-circle-fill" style="font-size:1.3rem;"></i> Viaje finalizado
+        </button>
+    </form>
+    {% endif %}
     {% else %}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
         <i class="bi bi-cash-coin" style="color:#E86A2C;font-size:1.2rem;"></i>
@@ -729,12 +754,23 @@
 {% endif %}
 
 {# ── CERRAR OPERACIÓN — ÚLTIMO BLOQUE ─────────────────────── #}
-{% if done_all and session.get('rol') == 'admin' %}
+{% if (viaje.estado or '')|lower == 'cerrado' %}
+<div id="operacion" class="card" style="border:2px solid #16a34a;background:#f0fdf4;padding:20px;margin-top:16px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <i class="bi bi-lock-fill" style="color:#16a34a;font-size:1.8rem;"></i>
+        <div>
+            <strong style="font-size:16px;color:#065f46;display:block;">Viaje finalizado y cerrado</strong>
+            <span style="font-size:13px;color:#6b7280;">Este viaje quedó cerrado. Ningún campo puede editarse.</span>
+            {% if viaje.fecha_pago_camionero %}<span style="font-size:12px;color:#6b7280;display:block;margin-top:4px;">Pago transportista: {{ viaje.fecha_pago_camionero | fmt_fecha }}{% if viaje.tipo_pago_camionero %} · {{ viaje.tipo_pago_camionero }}{% endif %}</span>{% endif %}
+        </div>
+    </div>
+</div>
+{% elif done_all and session.get('rol') == 'admin' %}
 <div id="operacion" class="card" style="border:2px solid #16a34a;background:#f0fdf4;padding:20px;margin-top:16px;">
     <div style="display:flex;align-items:center;gap:12px;">
         <i class="bi bi-check-circle-fill" style="color:#16a34a;font-size:1.8rem;"></i>
         <div>
-            <strong style="font-size:16px;color:#065f46;display:block;">Operación completada y cerrada</strong>
+            <strong style="font-size:16px;color:#065f46;display:block;">Operación completada</strong>
             <span style="font-size:13px;color:#6b7280;">Todos los pasos completados y el pago al transportista fue registrado.</span>
             {% if viaje.fecha_pago_camionero %}<span style="font-size:12px;color:#6b7280;display:block;margin-top:4px;">Pago: {{ viaje.fecha_pago_camionero | fmt_fecha }}{% if viaje.tipo_pago_camionero %} · {{ viaje.tipo_pago_camionero }}{% endif %}</span>{% endif %}
         </div>
@@ -786,6 +822,22 @@ function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
     .then(function(d) { if (d.estado) location.reload(); })
     .catch(function(e) { console.error(e); });
 }
+
+(function() {
+    var hoy = new Date().toISOString().slice(0, 10);
+    document.querySelectorAll('.fecha-entrega-input').forEach(function(entregaInput) {
+        var form = entregaInput.closest('form');
+        var recogidaInput = form ? form.querySelector('.fecha-recogida-input') : null;
+        function actualizarMin() {
+            entregaInput.min = (recogidaInput && recogidaInput.value) || hoy;
+        }
+        actualizarMin();
+        if (recogidaInput) {
+            recogidaInput.addEventListener('change', actualizarMin);
+            recogidaInput.addEventListener('input', actualizarMin);
+        }
+    });
+})();
 </script>
 
 <style>
