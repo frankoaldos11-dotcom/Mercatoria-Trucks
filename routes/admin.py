@@ -1024,11 +1024,22 @@ def asignar_camionero_vehiculo(id):
         """, (camionero_id, camionero["nombre"], id))
         cursor.execute(f"UPDATE camioneros SET estado = 'En viaje' WHERE id = {ph()}", (camionero_id,))
 
+    vehiculo_desasignado = False
     if vehiculo:
         cursor.execute(f"""
             UPDATE viajes SET vehiculo_id = {ph()}, vehiculo_placa = {ph()} WHERE id = {ph()}
         """, (vehiculo["id"], vehiculo["matricula"], id))
         cursor.execute(f"UPDATE vehiculos SET estado = 'En viaje' WHERE id = {ph()}", (vehiculo["id"],))
+    elif camionero:
+        # El nuevo transportista no tiene vehículo activo: no dejar colgado el vehículo anterior
+        vehiculo_anterior_id = viaje["vehiculo_id"]
+        if vehiculo_anterior_id:
+            cursor.execute(f"SELECT estado FROM vehiculos WHERE id = {ph()}", (vehiculo_anterior_id,))
+            veh_anterior = cursor.fetchone()
+            if veh_anterior and (veh_anterior["estado"] or "") == "En viaje":
+                cursor.execute(f"UPDATE vehiculos SET estado = 'Disponible' WHERE id = {ph()}", (vehiculo_anterior_id,))
+        cursor.execute(f"UPDATE viajes SET vehiculo_id = NULL, vehiculo_placa = NULL WHERE id = {ph()}", (id,))
+        vehiculo_desasignado = True
 
     if camionero:
         cursor.execute(f"UPDATE viajes SET estado = 'Asignado' WHERE id = {ph()}", (id,))
@@ -1045,6 +1056,11 @@ def asignar_camionero_vehiculo(id):
         f"Camionero y vehículo asignados juntos"
     )
     _registrar_historial(id, f"Camionero asignado: {nombre_cam}", f"Vehículo: {nombre_veh}")
+    if vehiculo_desasignado:
+        _registrar_historial(
+            id, "Vehículo desasignado",
+            f"El viaje quedó sin vehículo asignado tras reasignar a {nombre_cam} (sin vehículo activo)"
+        )
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -1465,6 +1481,89 @@ def finalizar_viaje(id):
 
     _registrar_historial(id, "Viaje finalizado", "Estado cambiado a Cerrado")
     registrar_auditoria("Finalizó el viaje", "Viajes", "viaje", id)
+
+    return redirect(f"/admin/viaje/{id}")
+
+
+@admin_bp.route("/viaje/<int:id>/reabrir", methods=["POST"])
+def reabrir_viaje(id):
+    if session.get("rol") != "admin":
+        return redirect("/login")
+    if not _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}")
+
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(f"UPDATE viajes SET estado = 'Entregado', reabierto_en = CURRENT_TIMESTAMP WHERE id = {ph()}", (id,))
+    con.commit()
+    con.close()
+
+    _registrar_historial(id, "Viaje reabierto", "Estado cambiado de Cerrado a Entregado")
+    registrar_auditoria("Reabrió el viaje", "Viajes", "viaje", id)
+
+    return redirect(f"/admin/viaje/{id}")
+
+
+@admin_bp.route("/viaje/<int:id>/corregir-cobro", methods=["POST"])
+def corregir_cobro(id):
+    if session.get("rol") != "admin":
+        return redirect("/login")
+
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(f"""
+        SELECT reabierto_en, estado, forma_cobro, monto_cobrado, codigo_transaccion,
+               verificado_financiero
+        FROM viajes WHERE id = {ph()}
+    """, (id,))
+    viaje = cur.fetchone()
+    if not viaje or not viaje["reabierto_en"] or (viaje["estado"] or "").lower() == "cerrado":
+        con.close()
+        return redirect(f"/admin/viaje/{id}?error=La+corrección+de+cobro+solo+aplica+a+viajes+reabiertos")
+
+    forma_cobro_nueva = request.form.get("forma_cobro", "").strip()
+    codigo_nuevo = request.form.get("codigo_transaccion", "").strip() or None
+    monto_str = request.form.get("monto_cobrado", "").strip()
+    try:
+        monto_nuevo = float(monto_str) if monto_str else None
+    except ValueError:
+        monto_nuevo = None
+
+    forma_anterior = viaje["forma_cobro"] or ""
+    monto_anterior = float(viaje["monto_cobrado"] or 0)
+    codigo_anterior = viaje["codigo_transaccion"] or None
+
+    cambios = []
+    if forma_cobro_nueva and forma_cobro_nueva != forma_anterior:
+        cambios.append(f"forma de pago: '{forma_anterior or '—'}' → '{forma_cobro_nueva}'")
+    if monto_nuevo is not None and monto_nuevo != monto_anterior:
+        cambios.append(f"monto: ${monto_anterior:.2f} → ${monto_nuevo:.2f}")
+    if codigo_nuevo != codigo_anterior:
+        cambios.append(f"código transacción: '{codigo_anterior or '—'}' → '{codigo_nuevo or '—'}'")
+
+    cur.execute(f"""
+        UPDATE viajes SET forma_cobro = {ph()}, monto_cobrado = {ph()}, codigo_transaccion = {ph()}
+        WHERE id = {ph()}
+    """, (
+        forma_cobro_nueva or viaje["forma_cobro"],
+        monto_nuevo if monto_nuevo is not None else viaje["monto_cobrado"],
+        codigo_nuevo,
+        id,
+    ))
+
+    if cambios and viaje["verificado_financiero"]:
+        cur.execute(
+            f"UPDATE viajes SET verificado_financiero=0, verificado_por=NULL, fecha_verificacion=NULL WHERE id={ph()}",
+            (id,)
+        )
+        cambios.append("verificación financiera revertida a pendiente por la corrección")
+
+    con.commit()
+    con.close()
+
+    if cambios:
+        _registrar_historial(id, "Cobro corregido", "; ".join(cambios))
+        registrar_auditoria("Corrigió el cobro del viaje", "Viajes", "viaje", id, "; ".join(cambios))
 
     return redirect(f"/admin/viaje/{id}")
 

@@ -726,6 +726,40 @@
         </button>
     </form>
     {% endif %}
+    {% if viaje.reabierto_en and (viaje.estado or '')|lower != 'cerrado' %}
+    <details class="detail-block" style="margin-top:12px;">
+        <summary class="detail-summary"><i class="bi bi-pencil-square"></i> Corregir cobro (viaje reabierto)</summary>
+        <div style="padding:14px;">
+            <p style="font-size:12px;color:#888;margin:0 0 10px;">Este viaje fue reabierto. Puedes corregir el registro de cobro; el cambio queda en el Historial de Cambios.</p>
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/corregir-cobro">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+                    <div>
+                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Forma de pago</label>
+                        <select name="forma_cobro" class="step-input" style="width:160px;margin:0;">
+                            {% for fp in ['Efectivo', 'Transferencia', 'Tropipay', 'Otro'] %}
+                            <option value="{{ fp }}" {{ 'selected' if fp == viaje.forma_cobro else '' }}>{{ fp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Monto cobrado (USD)</label>
+                        <input type="number" name="monto_cobrado" step="0.01" min="0" class="step-input" style="width:130px;margin:0;"
+                               value="{{ '%.2f'|format(viaje.monto_cobrado|float) if viaje.monto_cobrado else '' }}">
+                    </div>
+                    <div>
+                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Código transacción</label>
+                        <input type="text" name="codigo_transaccion" class="step-input" style="width:160px;margin:0;" value="{{ viaje.codigo_transaccion or '' }}">
+                    </div>
+                </div>
+                <button type="submit" class="step-btn" style="background:#b45309;"
+                        onclick="return confirm('¿Corregir el cobro registrado? El cambio quedará en el historial.')">
+                    <i class="bi bi-check2-circle"></i> Guardar corrección
+                </button>
+            </form>
+        </div>
+    </details>
+    {% endif %}
     {% else %}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
         <i class="bi bi-cash-coin" style="color:#E86A2C;font-size:1.2rem;"></i>
@@ -768,13 +802,25 @@
 {# ── CERRAR OPERACIÓN — ÚLTIMO BLOQUE ─────────────────────── #}
 {% if (viaje.estado or '')|lower == 'cerrado' %}
 <div id="operacion" class="card" style="border:2px solid #16a34a;background:#f0fdf4;padding:20px;margin-top:16px;">
-    <div style="display:flex;align-items:center;gap:12px;">
-        <i class="bi bi-lock-fill" style="color:#16a34a;font-size:1.8rem;"></i>
-        <div>
-            <strong style="font-size:16px;color:#065f46;display:block;">Viaje finalizado y cerrado</strong>
-            <span style="font-size:13px;color:#6b7280;">Este viaje quedó cerrado. Ningún campo puede editarse.</span>
-            {% if viaje.fecha_pago_camionero %}<span style="font-size:12px;color:#6b7280;display:block;margin-top:4px;">Pago transportista: {{ viaje.fecha_pago_camionero | fmt_fecha }}{% if viaje.tipo_pago_camionero %} · {{ viaje.tipo_pago_camionero }}{% endif %}</span>{% endif %}
+    <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <i class="bi bi-lock-fill" style="color:#16a34a;font-size:1.8rem;"></i>
+            <div>
+                <strong style="font-size:16px;color:#065f46;display:block;">Viaje finalizado y cerrado</strong>
+                <span style="font-size:13px;color:#6b7280;">Este viaje quedó cerrado. Ningún campo puede editarse.</span>
+                {% if viaje.fecha_pago_camionero %}<span style="font-size:12px;color:#6b7280;display:block;margin-top:4px;">Pago transportista: {{ viaje.fecha_pago_camionero | fmt_fecha }}{% if viaje.tipo_pago_camionero %} · {{ viaje.tipo_pago_camionero }}{% endif %}</span>{% endif %}
+            </div>
         </div>
+        {% if session.get('rol') == 'admin' %}
+        <form method="POST" action="/admin/viaje/{{ viaje.id }}/reabrir"
+              onsubmit="return confirm('¿Reabrir este viaje? Volverá a ser editable (cobro, pago al transportista, estado, fechas) y la acción quedará registrada en el historial.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                    style="padding:10px 18px;background:#fff;color:#b45309;border:1.5px solid #f59e0b;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                <i class="bi bi-unlock-fill"></i> Reabrir viaje
+            </button>
+        </form>
+        {% endif %}
     </div>
 </div>
 {% elif done_all and session.get('rol') == 'admin' %}

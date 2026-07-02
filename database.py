@@ -412,6 +412,7 @@ def crear_base_datos(bcrypt):
     agregar_columna(cursor, "viajes",     "verificado_financiero", "INTEGER DEFAULT 0")
     agregar_columna(cursor, "viajes",     "verificado_por",        "TEXT")
     agregar_columna(cursor, "viajes",     "fecha_verificacion",    "TEXT")
+    agregar_columna(cursor, "viajes",     "reabierto_en",          "TIMESTAMP")
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS configuracion_texto (

@@ -71,6 +71,9 @@ def _ejecutar(conn):
     run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS fecha_cobro TEXT", "fecha_cobro")
     run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS monto_cobrado NUMERIC", "monto_cobrado")
 
+    print("\n[ reabrir viaje cerrado ]")
+    run(conn, cur, "ALTER TABLE viajes ADD COLUMN IF NOT EXISTS reabierto_en TIMESTAMP", "reabierto_en")
+
     print("\n[ historial de cambios por viaje ]")
     run(conn, cur, """
         CREATE TABLE IF NOT EXISTS historial_viaje (

@@ -1,7 +1,7 @@
 # Reporte de Pruebas — 2026-07-02
 
 ## Contexto
-Commit probado en esta sesión: **habilitar transportista en rutas desde la asignación + precarga de monto de cobro** ("Habilitar transportista en rutas desde asignación + precarga monto de cobro"), pendiente de push al cierre de este reporte.
+Commit probado en esta sesión: **fix vehículo colgado al reasignar + reabrir viaje cerrado (solo admin) + corregir cobro** ("Fix vehículo colgado al reasignar + reabrir viaje cerrado (solo admin)"), pendiente de push al cierre de este reporte.
 
 Sesiones anteriores del mismo día (ya en `main`):
 1. `2f53dee` — "feat: viajes multi-tramo con validacion continuidad y timeline cliente"
@@ -9,46 +9,57 @@ Sesiones anteriores del mismo día (ya en `main`):
 3. `039a6b8` — "docs: test_report actualizado post fix migracion viaje_tramos"
 4. `6755022` — "feat: guardar fechas conjunto, validacion fecha descarga, boton viaje finalizado"
 5. `b93c241` — "Validación: transportista debe cubrir todas las rutas del viaje al asignar"
+6. `8e3b144` — "Habilitar transportista en rutas desde asignación + precarga monto de cobro"
+
+## Investigación previa (antes de implementar)
+Por pedido explícito, antes de tocar código se investigó dónde leen el monto cobrado los reportes financieros (`/admin/reportes` y su CSV). Hallazgo reportado al usuario: `_calcular_financieros_periodo()` (`routes/admin.py`) calcula "Importe bruto/Neto" vía `calcular_liquidacion()`, que deriva el precio de `viaje.precio_final` (o `viaje_tramos`) — **no** de `viajes.monto_cobrado`. El usuario decidió, con esta información: (a) la corrección de cobro solo toca `monto_cobrado`/`forma_cobro`/`codigo_transaccion`, sin tocar `precio_final` (acciones separadas), y (b) corregir el cobro debe resetear `verificado_financiero` a pendiente si ya estaba verificado.
 
 ## Páginas probadas
-- `/admin/viaje/<id>` — viaje multi-tramo de prueba (#10, La Habana→Holguín→Matanzas): rechazo de asignación, botón "Habilitar en estas rutas y asignar", reasignación posterior sin fricción
-- `/admin/viaje/2` (viaje single-ruta existente, ya asignado) — precarga del campo "Monto cobrado (USD)"
-- Endpoint probado directamente (sin UI, vía `test_client`): `POST /admin/viaje/<id>/asignar-todo` con `habilitar_rutas=1` para un transportista **sin vehículo activo**
+- `/admin/viaje/11` (viaje de prueba cerrado con cobro y verificación financiera ya registrados): reabrir, editar pago transportista tras reabrir, corregir cobro
+- `/admin/reportes`: verificar qué campos del viaje corregido se reflejan y cuáles no
+- `/admin/viaje/12` (viaje de prueba asignado): reasignar transportista sin vehículo activo y con vehículo activo
+- Operador (`session` simulada vía `test_client`): confirmar que no ve los botones nuevos ni puede invocar los endpoints directamente
 
 ## Errores encontrados
-- **Ninguno.** Sin errores de consola (0 errors) en ninguna prueba. Dos *warnings* preexistentes de formato de fecha en `/admin/viaje/2` (`does not conform to the required format, "yyyy-MM-dd"`), ya documentados en el reporte anterior — no relacionados con este cambio, no se tocaron.
+- **Bug propio detectado y corregido durante la sesión de QA (antes del commit):** en `asignar_camionero_vehiculo`, el nuevo registro `_registrar_historial(id, "Vehículo desasignado", ...)` se llamaba **antes** del `commit()`/`close()` de la conexión principal. Como `_registrar_historial()` abre su propia conexión SQLite y el proyecto usa `sqlite3` con locking a nivel de archivo, esa segunda conexión chocaba con la transacción de escritura aún abierta en la conexión principal (`UPDATE viajes...`, `UPDATE vehiculos...` sin commitear) — el error quedaba silenciado por el `try/except: pass` interno de `_registrar_historial()`, así que el registro nunca se guardaba, sin ningún error visible. Se corrigió moviendo el registro a después del `commit()`/`close()`, junto al resto de los registros de historial de ese endpoint (mismo patrón ya usado en el resto del archivo). Verificado con una segunda prueba: el evento "Vehículo desasignado" ahora sí aparece en el Historial de Cambios.
+- Sin más errores de consola (0 errors) en ninguna prueba.
 
 ## Screenshots tomados
-- `viaje10_rechazo_boton.png` — Banner de rechazo con el botón secundario "Habilitar en estas rutas y asignar" junto al mensaje de error
-- `viaje10_habilitado_asignado.png` — Tras pulsar el botón: transportista asignado, rutas habilitadas
-- `viaje2_monto_precargado.png` / `viaje2_monto_precargado2.png` — Campo "Monto cobrado (USD)" precargado con `450.00` (precio cliente calculado del viaje)
-
-(Los screenshots quedaron en la raíz del proyecto, ignorados por git vía `*.png` en `.gitignore`.)
+- Capturas de pantalla completa del viaje #11 antes y después de reabrir, confirmando el bloqueo/desbloqueo de cada paso, el botón "Reabrir viaje", el bloque "Corregir cobro (viaje reabierto)" y el reporte financiero — eliminadas al finalizar la sesión (gitignored, `*.png`).
 
 ## Correcciones aplicadas
 
-**1. Habilitar transportista en rutas desde la asignación** (`routes/admin.py`):
-- Se importó `asignar_camionero_a_ruta` desde `services/comercial_service.py` (función ya existente, idempotente — no se escribió SQL nuevo).
-- `asignar_camionero` y `asignar_camionero_vehiculo`: cuando la validación de cobertura detecta rutas no cubiertas, si el formulario trae `habilitar_rutas=1` se crean las filas faltantes en `camionero_ruta` (solo las que faltaban — las ya cubiertas no se tocan), se registra en Historial de Cambios ("Transportista habilitado en rutas") y se continúa con la asignación normal. Sin esa bandera, el comportamiento es el mismo rechazo de antes, pero el redirect ahora añade `&camionero_intentado=<id>` para que la UI sepa a quién ofrecer habilitar.
-- `gestionar_viaje()` lee `camionero_intentado` de la query string y lo pasa al template.
-- Plantilla: el banner de error superior, cuando viene acompañado de `camionero_intentado`, muestra un botón secundario y explícito "Habilitar en estas rutas y asignar" (no ocurre nada en silencio) que hace `POST` a `/asignar-todo` con `camionero` y `habilitar_rutas=1` ocultos.
+**1. Bug — vehículo colgado al reasignar** (`routes/admin.py`, `asignar_camionero_vehiculo`): cuando el nuevo transportista no tiene vehículo activo, el viaje ya no conserva el `vehiculo_id`/`vehiculo_placa` anterior — se limpian a `NULL`. Si el vehículo anterior estaba `'En viaje'`, se libera a `'Disponible'`. Se registra "Vehículo desasignado" en el Historial (después del commit, corrigiendo el bug propio descrito arriba). El caso de reasignación con vehículo activo sigue igual.
 
-**2. Precarga del monto de cobro** (`templates/admin/gestionar_viaje.html`): el input `monto_cobrado` ahora trae `value="{{ _pns.precio_val }}"` cuando `_precio_confirmado` es verdadero (la misma cascada `precio_final → precio_cliente → precio` ya calculada en el template); si no hay precio confirmado, el campo queda vacío con el placeholder de siempre. El campo sigue siendo un `<input>` normal, totalmente editable. No se tocó el endpoint `marcar-cobrado`.
+**2. Feature — reabrir viaje cerrado** (`routes/admin.py`, `templates/admin/gestionar_viaje.html`):
+- Nueva columna `viajes.reabierto_en` (TIMESTAMP, nullable) — migración en `database.py` (`agregar_columna`) y en `migrations_v12.py` (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, el archivo que ya confirmamos que corre siempre en producción sin depender de `SKIP_MIGRATIONS`).
+- Nuevo endpoint `POST /viaje/<id>/reabrir`: chequeo estricto `session.get("rol") != "admin"` (no `requiere_admin()`, que también deja pasar al operador). Solo actúa si el viaje está cerrado; pasa `estado` a `'Entregado'` y setea `reabierto_en`. Registra en Historial y Auditoría.
+- Al reabrir, todo lo que bloqueaba `_viaje_cerrado()` vuelve a estar disponible: combustible, fechas, documentación, entrega, pago al transportista (incluido su botón "revertir"), cambiar estado, prioridad, asignación de transportista.
+- UI: botón "Reabrir viaje" junto al bloque "Viaje finalizado y cerrado", visible solo para `rol == 'admin'`, con `confirm()` de advertencia.
+
+**3. Feature — corregir cobro en viaje reabierto** (`routes/admin.py`, `templates/admin/gestionar_viaje.html`):
+- Nuevo endpoint `POST /viaje/<id>/corregir-cobro`: solo admin, solo si `viaje.reabierto_en` está seteado y el viaje no está cerrado. Actualiza `forma_cobro`/`monto_cobrado`/`codigo_transaccion`.
+- Si el viaje ya estaba `verificado_financiero=1`, la corrección lo resetea a `0` (limpia `verificado_por`/`fecha_verificacion`), forzando nueva verificación.
+- Cada corrección registra en Historial de Cambios el valor anterior → nuevo de cada campo modificado, más el aviso de reversión de verificación si aplica.
+- UI: bloque colapsable "Corregir cobro (viaje reabierto)" dentro de "Registro de cobro al cliente", con los 3 campos precargados, visible solo si `viaje.reabierto_en` y no cerrado (implícitamente solo admin, todo el panel de cobro ya es admin-only).
 
 ## Validaciones funcionales verificadas
 
 | # | Escenario | Resultado esperado | Estado |
 |---|---|---|---|
-| 1 | Viaje multi-tramo, transportista sin cobertura en ninguna ruta | Rechazo + botón "Habilitar en estas rutas y asignar" visible junto al mensaje | ✅ |
-| 2 | Clic en "Habilitar en estas rutas y asignar" | Crea las filas faltantes en `camionero_ruta` (sin duplicar las existentes), registra "Transportista habilitado en rutas" en Historial, y completa la asignación (transportista + vehículo si tiene) | ✅ |
-| 3 | Reasignar al mismo transportista ya habilitado | Se asigna directo, **sin** mostrar el botón extra (regresión) | ✅ |
-| 4 | "Habilitar y asignar" con un transportista **sin vehículo activo** (`/asignar-todo` vía `test_client`, camionero "juan") | No rompe nada: la ruta faltante se habilita, el transportista queda asignado (`camionero_id`, `camionero_nombre`, `estado='Asignado'`) sin excepción, aunque no haya vehículo que asignar | ✅ |
-| 5 | Viaje con precio confirmado ($450.00), sin cobro registrado aún | Campo "Monto cobrado (USD)" aparece precargado con `450.00` | ✅ |
-| 6 | Campo de monto precargado sigue siendo editable | Se pudo sobrescribir a `399.99` sin problema | ✅ |
+| 1 | Reabrir un viaje cerrado como admin | Estado pasa a "Entregado", header ya no dice "CERRADO", historial registra "Viaje reabierto · Estado cambiado de Cerrado a Entregado · admin · fecha" | ✅ |
+| 2 | Tras reabrir: editar "Pago al transportista" | Accordion muestra botones "Marcar como pagado"/"Pendiente de pago" habilitados de nuevo | ✅ |
+| 3 | Tras reabrir: pasos de fechas/documentación/cambiar estado | Todos vuelven a mostrar formularios editables | ✅ |
+| 4 | Corregir cobro (monto $500→$650, código OLD123→NEW456) | Historial registra "monto: $500.00 → $650.00; código transacción: 'OLD123' → 'NEW456'; verificación financiera revertida a pendiente" | ✅ |
+| 5 | `verificado_financiero` tras corregir (viaje previamente verificado) | Vuelve a `0`, `verificado_por`/`fecha_verificacion` a `NULL` | ✅ |
+| 6 | Reporte financiero (`/admin/reportes`) tras la corrección | La fila del viaje muestra el `codigo_transaccion` corregido ("NEW456") y reaparece el botón "Confirmar cobrado y verificado" (por el reset de verificación). El "Importe Bruto" **no cambia** ($1000.00, derivado de `precio_final`) — comportamiento esperado y decidido explícitamente por el usuario, no un bug | ✅ |
+| 7 | Botón "Reabrir viaje" y bloque "Corregir cobro" para rol operador | No aparecen en el HTML renderizado | ✅ |
+| 8 | POST directo a `/reabrir` como operador (bypass de UI) | Redirige a `/login`, sin cambios en BD | ✅ |
+| 9 | Reasignar transportista **sin** vehículo activo | `vehiculo_id`/`vehiculo_placa` del viaje quedan `NULL`; el vehículo anterior (`'En viaje'`) se libera a `'Disponible'`; Historial registra "Vehículo desasignado" | ✅ |
+| 10 | Reasignar transportista **con** vehículo activo (regresión) | Vehículo se asigna y marca `'En viaje'` exactamente igual que antes del fix | ✅ |
 | — | Sin errores de consola en ninguna prueba | — | ✅ |
 
-**Nota sobre el punto de atención señalado en la revisión:** se confirmó explícitamente (prueba #4) que enrutar el botón "Habilitar y asignar" siempre a través de `/asignar-todo` no rompe el caso de un transportista sin vehículo disponible — el código de `asignar_camionero_vehiculo` ya maneja `vehiculo=None` con gracia (solo actualiza `vehiculo_id`/`vehiculo_placa` si encuentra un vehículo activo). Se observó, como comportamiento preexistente (no introducido por este cambio), que si el viaje ya tenía un vehículo asignado de una asignación anterior y se reasigna a un transportista sin vehículo, el `vehiculo_id` anterior queda "colgado" sin limpiarse — no es un bug nuevo ni de este prompt, se deja anotado como posible mejora futura.
-
 ## Recomendaciones
-- Los datos de prueba (viaje #10, ruta temporal "TEST Holguin-Matanzas" y las filas de `camionero_ruta` creadas durante las pruebas) fueron eliminados de `mercatoria.db`; también se limpió un registro de historial residual de la sesión anterior que había quedado en el viaje #2. No quedan residuos.
-- Posible mejora futura (fuera de alcance de este prompt): limpiar `vehiculo_id`/`vehiculo_placa` del viaje cuando se reasigna a un transportista sin vehículo activo, para evitar mostrar un vehículo que ya no corresponde al transportista actual.
+- Los datos de prueba (viajes #11 y #12, la fila temporal de `camionero_ruta` para la prueba de regresión, y los estados de vehículo/camionero modificados) fueron eliminados/revertidos de `mercatoria.db`; no quedan residuos.
+- Si en el futuro se necesita que el reporte financiero refleje el monto realmente cobrado (no solo `precio_final`), habrá que decidir explícitamente cómo reconciliar ambos valores — quedó fuera de alcance de este prompt por decisión del usuario.
+- Se detectó (no se tocó, fuera de alcance) que las columnas `verificado_financiero`/`verificado_por`/`fecha_verificacion` no están presentes en ninguna migración de PostgreSQL (`migrations_v11.py`, `migrations_v12.py`, `migraciones_pg.py`) — mismo patrón de bug que motivó el fix de migración de `viaje_tramos` hace unas sesiones. Recomiendo revisarlo pronto si el proyecto corre en Postgres en producción.
