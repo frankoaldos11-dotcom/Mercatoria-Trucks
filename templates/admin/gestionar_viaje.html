@@ -41,8 +41,19 @@
 </div>
 
 {% if error %}
-<div style="background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;">
-    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+<div style="background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-weight:600;font-size:13px;">
+    <div style="display:flex;align-items:center;gap:8px;"><i class="bi bi-exclamation-triangle-fill"></i> {{ error }}</div>
+    {% if camionero_intentado %}
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo" style="margin:0;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="camionero" value="{{ camionero_intentado }}">
+        <input type="hidden" name="habilitar_rutas" value="1">
+        <button type="submit"
+                style="font-size:12px;font-weight:700;padding:6px 12px;background:#fff;color:#c0392b;border:1px solid #e74c3c;border-radius:6px;cursor:pointer;white-space:nowrap;">
+            <i class="bi bi-unlock-fill"></i> Habilitar en estas rutas y asignar
+        </button>
+    </form>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -734,7 +745,8 @@
             </div>
             <div>
                 <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Monto cobrado (USD)</label>
-                <input type="number" name="monto_cobrado" step="0.01" min="0" class="step-input" style="width:130px;margin:0;" placeholder="0.00">
+                <input type="number" name="monto_cobrado" step="0.01" min="0" class="step-input" style="width:130px;margin:0;"
+                       value="{% if _precio_confirmado %}{{ _pns.precio_val }}{% endif %}" placeholder="0.00">
             </div>
             <div>
                 <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Código transacción</label>

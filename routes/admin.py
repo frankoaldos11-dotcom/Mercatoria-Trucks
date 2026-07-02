@@ -13,7 +13,9 @@ from database import conectar, crear_checklist_viaje, INCIDENCIAS_CATEGORIAS, IN
 from db_config import USE_POSTGRES, ph
 from extensions import bcrypt, mail
 from flask_mail import Message
-from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_por_camionero
+from services.comercial_service import (
+    asignar_camionero_a_ruta, convertir_cotizacion_en_viaje, get_rutas_por_camionero,
+)
 from services.finanzas_service import calcular_liquidacion
 from services.pdf_service import generar_factura_cliente, generar_pdf_orden_carga
 from services.tramos_service import (
@@ -534,6 +536,7 @@ def gestionar_viaje(id):
 
     liquidacion = calcular_liquidacion(id)
     error = request.args.get("error")
+    camionero_intentado = request.args.get("camionero_intentado")
     obs_parsed = _parsear_observaciones(viaje["observaciones"])
 
     _transiciones = {
@@ -657,6 +660,7 @@ def gestionar_viaje(id):
         tipo_vehiculo_nombre=tipo_vehiculo_nombre,
         tarifa_info=tarifa_info,
         error=error,
+        camionero_intentado=camionero_intentado,
         estados_validos=estados_validos,
         orden_carga_ok=orden_carga_ok,
         orden_carga_tooltip=orden_carga_tooltip,
@@ -792,6 +796,18 @@ def asignar_camionero(id):
         ruta_id_directo = viaje_row["ruta_id"] if viaje_row else None
         no_cubiertas = _rutas_no_cubiertas(cursor, camionero_id, id, ruta_id_directo)
 
+        habilitar_rutas = request.form.get("habilitar_rutas") == "1"
+
+        if no_cubiertas and habilitar_rutas:
+            for ruta in no_cubiertas:
+                asignar_camionero_a_ruta(ruta["ruta_id"], camionero_id)
+            etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
+            _registrar_historial(
+                id, "Transportista habilitado en rutas",
+                f"{fila['nombre']} habilitado para: {etiquetas}"
+            )
+            no_cubiertas = []
+
         if no_cubiertas:
             conexion.close()
             etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
@@ -800,7 +816,7 @@ def asignar_camionero(id):
                 f"{fila['nombre']} no está habilitado para: {etiquetas}"
             )
             mensaje = f"El transportista no está habilitado para las rutas: {etiquetas}"
-            return redirect(f"/admin/viaje/{id}?error={quote_plus(mensaje)}")
+            return redirect(f"/admin/viaje/{id}?error={quote_plus(mensaje)}&camionero_intentado={camionero_id}")
 
         cursor.execute(f"""
             UPDATE viajes
@@ -971,6 +987,18 @@ def asignar_camionero_vehiculo(id):
 
     if camionero:
         no_cubiertas = _rutas_no_cubiertas(cursor, camionero_id, id, viaje["ruta_id"])
+        habilitar_rutas = request.form.get("habilitar_rutas") == "1"
+
+        if no_cubiertas and habilitar_rutas:
+            for ruta in no_cubiertas:
+                asignar_camionero_a_ruta(ruta["ruta_id"], camionero_id)
+            etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
+            _registrar_historial(
+                id, "Transportista habilitado en rutas",
+                f"{camionero['nombre']} habilitado para: {etiquetas}"
+            )
+            no_cubiertas = []
+
         if no_cubiertas:
             conexion.close()
             etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
@@ -979,7 +1007,7 @@ def asignar_camionero_vehiculo(id):
                 f"{camionero['nombre']} no está habilitado para: {etiquetas}"
             )
             mensaje = f"El transportista no está habilitado para las rutas: {etiquetas}"
-            return redirect(f"/admin/viaje/{id}?error={quote_plus(mensaje)}")
+            return redirect(f"/admin/viaje/{id}?error={quote_plus(mensaje)}&camionero_intentado={camionero_id}")
 
     cursor.execute(f"""
         SELECT id, COALESCE(matricula, '') AS matricula,
