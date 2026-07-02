@@ -7,6 +7,9 @@ from flask import Blueprint, render_template, request, session, redirect, url_fo
 from flask_mail import Message
 from database import conectar, crear_checklist_viaje
 from extensions import bcrypt, mail
+from services.tramos_service import (
+    ContinuidadError, crear_tramos_viaje, obtener_tramos_viaje, validar_continuidad,
+)
 
 
 def enviar_bienvenida(app, email, nombre):
@@ -281,10 +284,12 @@ def detalle_viaje(viaje_id):
         return redirect(url_for("cliente.mis_viajes"))
 
     paso_actual = PASOS_ESTADO.get(viaje["estado"], 0)
+    tramos = obtener_tramos_viaje(viaje_id)
     return render_template(
         "cliente/viaje_detalle.html",
         viaje=viaje,
-        paso_actual=paso_actual
+        paso_actual=paso_actual,
+        tramos=tramos
     )
 
 
@@ -340,7 +345,7 @@ def solicitar_envio():
     cur = con.cursor()
 
     if request.method == "POST":
-        ruta_id            = request.form.get("ruta_id", "").strip()
+        ruta_ids           = [r.strip() for r in request.form.getlist("ruta_id") if r.strip()]
         tipo_carga         = request.form.get("tipo_carga", "").strip()
         tipo_transporte    = request.form.get("tipo_transporte", "").strip()
         peso_str           = request.form.get("peso_toneladas", "").strip()
@@ -357,7 +362,7 @@ def solicitar_envio():
             con.close()
             return render_template("cliente/solicitar.html", rutas=rutas_err, error=msg)
 
-        if not ruta_id or not tipo_carga:
+        if not ruta_ids or not tipo_carga:
             return _err("Selecciona la ruta y el tipo de carga")
 
         if not peso_str:
@@ -375,13 +380,29 @@ def solicitar_envio():
             except ValueError:
                 pass
 
-        cur.execute("SELECT origen, destino FROM rutas WHERE id = ? AND activa = 1", (ruta_id,))
-        ruta = cur.fetchone()
-        if not ruta:
+        try:
+            ruta_ids = [int(r) for r in ruta_ids]
+        except ValueError:
             return _err("La ruta seleccionada no es válida. Por favor elige una de la lista.")
 
-        origen  = ruta["origen"]
-        destino = ruta["destino"]
+        placeholders = ",".join("?" for _ in ruta_ids)
+        cur.execute(
+            f"SELECT id, origen, destino FROM rutas WHERE id IN ({placeholders}) AND activa = 1",
+            ruta_ids
+        )
+        rutas_por_id = {r["id"]: r for r in cur.fetchall()}
+        if len(rutas_por_id) != len(set(ruta_ids)):
+            return _err("La ruta seleccionada no es válida. Por favor elige una de la lista.")
+        rutas_ordenadas = [rutas_por_id[rid] for rid in ruta_ids]
+
+        try:
+            validar_continuidad(rutas_ordenadas)
+        except ContinuidadError as e:
+            return _err(str(e))
+
+        ruta_id = ruta_ids[0]
+        origen  = rutas_ordenadas[0]["origen"]
+        destino = rutas_ordenadas[-1]["destino"]
 
         cur.execute("SELECT id FROM clientes WHERE usuario_id = ?", (session["user_id"],))
         cliente_row = cur.fetchone()
@@ -419,6 +440,8 @@ def solicitar_envio():
         ))
         viaje_id = cur.lastrowid
         crear_checklist_viaje(cur, viaje_id)
+        if len(ruta_ids) > 1:
+            crear_tramos_viaje(cur, viaje_id, ruta_ids)
         con.commit()
         con.close()
         return redirect(url_for("cliente.mis_viajes", nuevo=1))

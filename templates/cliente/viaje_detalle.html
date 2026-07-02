@@ -74,6 +74,33 @@
 </div>
 {% endif %}
 
+{% if tramos %}
+<div class="mt-card p-3 mb-3">
+    <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9CA3AF;margin-bottom:1rem;">
+        Recorrido de la carga
+    </div>
+    <div class="trm-wrap">
+        {% for t in tramos %}
+        <div class="trm-step">
+            <div class="trm-line-before"></div>
+            <div class="trm-dot trm-{{ t.estado }}">
+                {% if t.estado == 'completado' %}
+                <i class="bi bi-check-lg"></i>
+                {% elif t.estado == 'en_curso' %}
+                <i class="bi bi-truck-front-fill"></i>
+                {% else %}
+                {{ loop.index }}
+                {% endif %}
+            </div>
+            <div class="trm-line-after"></div>
+            <span class="trm-label">{{ t.origen }} → {{ t.destino }}</span>
+            <span class="trm-sublabel">{{ t.estado.replace('_', ' ')|capitalize }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 {% if viaje.precio_confirmado and viaje.precio_confirmado > 0 %}
 <div class="mt-card p-3 mb-3 d-flex align-items-center justify-content-between">
     <div>
@@ -156,6 +183,68 @@
 }
 .tl-step.done .tl-label { color: #6B7280; font-weight: 600; }
 .tl-step.active .tl-label { color: #E86A2C; font-weight: 700; }
+
+.trm-wrap {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+    flex-wrap: wrap;
+}
+.trm-step {
+    flex: 1;
+    min-width: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+.trm-line-before,
+.trm-line-after {
+    height: 3px;
+    flex: 1;
+    background: #E5E7EB;
+    align-self: center;
+    width: 100%;
+}
+.trm-step:first-child .trm-line-before { background: transparent; }
+.trm-step:last-child .trm-line-after { background: transparent; }
+.trm-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    z-index: 1;
+    background: #E5E7EB;
+    color: #9CA3AF;
+}
+.trm-dot.trm-completado {
+    background: #27AE60;
+    color: #fff;
+}
+.trm-dot.trm-en_curso {
+    background: #F39C12;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(243,156,18,0.2);
+}
+.trm-label {
+    font-size: 0.68rem;
+    color: #374151;
+    margin-top: 7px;
+    font-weight: 600;
+    text-align: center;
+}
+.trm-sublabel {
+    font-size: 0.62rem;
+    color: #9CA3AF;
+    text-align: center;
+}
+.trm-step:has(.trm-completado) .trm-sublabel { color: #27AE60; font-weight: 700; }
+.trm-step:has(.trm-en_curso) .trm-sublabel { color: #F39C12; font-weight: 700; }
 </style>
 
 <!-- Info grid -->

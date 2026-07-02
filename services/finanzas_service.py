@@ -1,5 +1,6 @@
 from database import conectar
 from db_config import USE_POSTGRES
+from services.tramos_service import calcular_totales_tramos
 
 
 def ph():
@@ -71,10 +72,16 @@ def calcular_liquidacion(viaje_id):
     minimo_pago               = cfg.get("minimo_pago_usd", 150.0)
     comision_pct              = cfg.get("comision_mercatoria_porcentaje", 20.0)
 
+    # Viaje multi-tramo: km total y precio cliente se calculan sumando cada tramo
+    totales_tramos = calcular_totales_tramos(viaje_id)
+
     # km real del viaje (buscar en columnas posibles; usar km_oficiales de la ruta como fallback)
     km_real = float(viaje["km"] or viaje["kilometros"] or 0) if _col_exists(viaje, "km") else 0
     if km_real == 0 and km_ruta > 0:
         km_real = km_ruta
+    if totales_tramos:
+        km_real = totales_tramos["km_total"]
+        tarifa_km_fuente = "tramos"
 
     km_liquidable = max(km_real, minimo_km) if km_real > 0 else minimo_km
 
@@ -83,10 +90,12 @@ def calcular_liquidacion(viaje_id):
 
     combustible = pago_camionero / margen_divisor if margen_divisor else 0
 
-    # Precio cliente: usar el registrado en el viaje o estimar con multiplicador
+    # Precio cliente: usar el registrado en el viaje, o sumar tramos, o estimar con multiplicador
     precio_cliente = float(
         viaje["precio_final"] or viaje["precio"] or 0
     ) if _col_exists(viaje, "precio_final") else 0
+    if precio_cliente == 0 and totales_tramos:
+        precio_cliente = totales_tramos["precio_cliente_total"]
     if precio_cliente == 0:
         precio_cliente = pago_camionero * multiplicador_camionero
 

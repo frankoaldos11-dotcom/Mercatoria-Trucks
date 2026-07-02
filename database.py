@@ -297,6 +297,19 @@ def crear_base_datos(bcrypt):
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS viaje_tramos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        viaje_id INTEGER NOT NULL,
+        ruta_id INTEGER NOT NULL,
+        orden INTEGER NOT NULL,
+        estado TEXT DEFAULT 'pendiente',
+        fecha_llegada TIMESTAMP,
+        FOREIGN KEY (viaje_id) REFERENCES viajes(id),
+        FOREIGN KEY (ruta_id) REFERENCES rutas(id)
+    )
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS movimientos_viaje (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         viaje_id INTEGER,
@@ -495,6 +508,7 @@ def crear_base_datos(bcrypt):
         ("idx_clientes_activo",        "clientes",   "activo"),
         ("idx_camioneros_estado",      "camioneros", "estado"),
         ("idx_auditoria_fecha",        "auditoria",  "fecha"),
+        ("idx_viaje_tramos_viaje_id",   "viaje_tramos", "viaje_id"),
     ]
     for _nombre, _tabla, _col in _indices:
         cursor.execute(

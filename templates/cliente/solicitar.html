@@ -19,31 +19,28 @@
     <form method="POST" action="/cliente/solicitar" id="formSolicitar">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <!-- Ruta -->
+        <!-- Ruta(s) / Tramos -->
         <div class="mb-4">
-            <label class="mt-label">Ruta <span style="color:#DC2626;">*</span></label>
-            <select name="ruta_id" id="rutaSelect" class="form-select mt-input" required>
-                <option value="">— Selecciona la ruta —</option>
-                {% for r in rutas %}
-                <option value="{{ r.id }}"
-                        data-origen="{{ r.origen }}"
-                        data-destino="{{ r.destino }}">
-                    {% if r.nombre %}{{ r.nombre }} — {% endif %}{{ r.origen }} → {{ r.destino }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div id="rutaPreview" class="mb-4" style="display:none;">
-            <div class="d-flex align-items-center gap-3 p-3 rounded-3"
-                 style="background:#FFF3EC;border:1.5px solid #E86A2C;">
-                <i class="bi bi-geo-alt-fill" style="color:#E86A2C;font-size:1.2rem;"></i>
-                <div style="font-size:0.9rem;font-weight:600;color:#7C2D12;">
-                    <span id="previewOrigen"></span>
-                    <span style="color:#E86A2C;margin:0 8px;">→</span>
-                    <span id="previewDestino"></span>
-                </div>
+            <label class="mt-label">Ruta(s) <span style="color:#DC2626;">*</span></label>
+            <p style="margin:0 0 6px;font-size:0.85rem;color:#888;">Selecciona una o varias rutas, en orden, si tu envío tiene paradas intermedias.</p>
+            <div class="d-flex gap-2">
+                <select id="rutaSelect" class="form-select mt-input" style="flex:1;">
+                    <option value="">— Selecciona una ruta —</option>
+                    {% for r in rutas %}
+                    <option value="{{ r.id }}"
+                            data-origen="{{ r.origen }}"
+                            data-destino="{{ r.destino }}">
+                        {% if r.nombre %}{{ r.nombre }} — {% endif %}{{ r.origen }} → {{ r.destino }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="agregarTramo()" class="btn-mt" style="white-space:nowrap;">
+                    <i class="bi bi-plus-lg"></i> Añadir tramo
+                </button>
             </div>
+            <div id="tramosList" class="mt-2" style="display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="tramosError" style="display:none;color:#DC2626;font-size:0.85rem;font-weight:600;margin-top:6px;"></div>
+            <div id="tramosContainer"></div>
         </div>
 
         {% if not rutas %}
@@ -201,15 +198,76 @@
 
 {% block scripts %}
 <script>
-document.getElementById('rutaSelect').addEventListener('change', function() {
-    var opt = this.options[this.selectedIndex];
-    var preview = document.getElementById('rutaPreview');
-    if (this.value) {
-        document.getElementById('previewOrigen').textContent = opt.dataset.origen;
-        document.getElementById('previewDestino').textContent = opt.dataset.destino;
-        preview.style.display = 'block';
-    } else {
-        preview.style.display = 'none';
+var solTramos = [];
+
+function renderTramos() {
+    var list = document.getElementById('tramosList');
+    var container = document.getElementById('tramosContainer');
+    list.innerHTML = '';
+    container.innerHTML = '';
+    solTramos.forEach(function(t, i) {
+        var row = document.createElement('div');
+        row.style.cssText = "display:flex;align-items:center;gap:8px;background:#FFF3EC;border:1.5px solid #E86A2C;border-radius:8px;padding:10px 14px;font-size:0.9rem;font-weight:600;color:#7C2D12;";
+        row.innerHTML =
+            '<span style="flex:1;"><i class="bi bi-geo-alt-fill" style="color:#E86A2C;"></i> Tramo ' + (i + 1) + ': ' + t.origen + ' → ' + t.destino + '</span>' +
+            '<button type="button" onclick="moverTramo(' + i + ', -1)" ' + (i === 0 ? 'disabled' : '') + ' style="background:none;border:none;cursor:pointer;color:#7C2D12;" title="Subir"><i class="bi bi-arrow-up"></i></button>' +
+            '<button type="button" onclick="moverTramo(' + i + ', 1)" ' + (i === solTramos.length - 1 ? 'disabled' : '') + ' style="background:none;border:none;cursor:pointer;color:#7C2D12;" title="Bajar"><i class="bi bi-arrow-down"></i></button>' +
+            '<button type="button" onclick="eliminarTramo(' + i + ')" style="background:none;border:none;cursor:pointer;color:#DC2626;" title="Eliminar"><i class="bi bi-trash"></i></button>';
+        list.appendChild(row);
+
+        var hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'ruta_id';
+        hidden.value = t.rutaId;
+        container.appendChild(hidden);
+    });
+    validarContinuidad();
+}
+
+function agregarTramo() {
+    var sel = document.getElementById('rutaSelect');
+    if (!sel.value) return;
+    var opt = sel.options[sel.selectedIndex];
+    solTramos.push({ rutaId: sel.value, origen: opt.dataset.origen, destino: opt.dataset.destino });
+    sel.value = '';
+    renderTramos();
+}
+
+function eliminarTramo(i) {
+    solTramos.splice(i, 1);
+    renderTramos();
+}
+
+function moverTramo(i, dir) {
+    var j = i + dir;
+    if (j < 0 || j >= solTramos.length) return;
+    var tmp = solTramos[i];
+    solTramos[i] = solTramos[j];
+    solTramos[j] = tmp;
+    renderTramos();
+}
+
+function validarContinuidad() {
+    var err = document.getElementById('tramosError');
+    for (var i = 0; i < solTramos.length - 1; i++) {
+        if (solTramos[i].destino.trim().toLowerCase() !== solTramos[i + 1].origen.trim().toLowerCase()) {
+            err.textContent = 'El destino del tramo ' + (i + 1) + ' (' + solTramos[i].destino + ') no coincide con el origen del tramo ' + (i + 2) + ' (' + solTramos[i + 1].origen + ')';
+            err.style.display = 'block';
+            return false;
+        }
+    }
+    err.style.display = 'none';
+    return true;
+}
+
+document.getElementById('formSolicitar').addEventListener('submit', function(e) {
+    if (solTramos.length === 0) {
+        e.preventDefault();
+        var err = document.getElementById('tramosError');
+        err.textContent = 'Añade al menos un tramo (ruta).';
+        err.style.display = 'block';
+    } else if (!validarContinuidad()) {
+        e.preventDefault();
     }
 });
 </script>

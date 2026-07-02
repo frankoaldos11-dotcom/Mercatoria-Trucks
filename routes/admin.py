@@ -16,6 +16,10 @@ from flask_mail import Message
 from services.comercial_service import convertir_cotizacion_en_viaje, get_rutas_por_camionero
 from services.finanzas_service import calcular_liquidacion
 from services.pdf_service import generar_factura_cliente, generar_pdf_orden_carga
+from services.tramos_service import (
+    ContinuidadError, completar_tramo, crear_tramos_viaje,
+    obtener_tramos_viaje, tramos_completados, validar_continuidad,
+)
 from utils.constants import CAMIONERO_ESTADOS, VEHICULO_ESTADOS
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -212,7 +216,7 @@ def nuevo_viaje_admin():
     if not requiere_admin():
         return redirect("/login")
 
-    ruta_id = request.form.get("ruta_id", "").strip()
+    ruta_ids = [r.strip() for r in request.form.getlist("ruta_id") if r.strip()]
     tipo_carga = request.form.get("tipo_carga", "").strip()
     tipo_transporte = request.form.get("tipo_transporte", "").strip()
     peso_str = request.form.get("peso_toneladas", "").strip()
@@ -222,17 +226,35 @@ def nuevo_viaje_admin():
     obs_operativas = request.form.get("observaciones_operativas", "").strip()
     cliente_id_str = request.form.get("cliente_id", "").strip()
 
-    if not ruta_id or not tipo_carga:
+    if not ruta_ids or not tipo_carga:
         return redirect("/admin/viajes?access_error=Selecciona+la+ruta+y+el+tipo+de+carga")
+
+    ruta_ids = [int(r) for r in ruta_ids]
 
     con = conectar()
     cur = con.cursor()
 
-    cur.execute("SELECT origen, destino FROM rutas WHERE id = ? AND activa = 1", (ruta_id,))
-    ruta = cur.fetchone()
-    if not ruta:
+    placeholders = ",".join("?" for _ in ruta_ids)
+    cur.execute(
+        f"SELECT id, origen, destino FROM rutas WHERE id IN ({placeholders}) AND activa = 1",
+        ruta_ids
+    )
+    rutas_por_id = {r["id"]: r for r in cur.fetchall()}
+    if len(rutas_por_id) != len(set(ruta_ids)):
         con.close()
         return redirect("/admin/viajes?access_error=Ruta+no+válida")
+    rutas_ordenadas = [rutas_por_id[rid] for rid in ruta_ids]
+
+    try:
+        validar_continuidad(rutas_ordenadas)
+    except ContinuidadError as e:
+        con.close()
+        return redirect(f"/admin/viajes?access_error={quote_plus(str(e))}")
+
+    ruta = rutas_ordenadas[0]
+    ruta_id = ruta_ids[0]
+    origen_viaje = rutas_ordenadas[0]["origen"]
+    destino_viaje = rutas_ordenadas[-1]["destino"]
 
     cliente_id = int(cliente_id_str) if cliente_id_str else None
     cliente_nombre = ""
@@ -266,7 +288,7 @@ def nuevo_viaje_admin():
         VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, 'Pendiente',
                 ?, 'Normal', ?, ?, ?, ?, ?, ?)
     """, (
-        cliente_nombre, cliente_id, ruta_id, ruta["origen"], ruta["destino"],
+        cliente_nombre, cliente_id, ruta_id, origen_viaje, destino_viaje,
         notas or None,
         tipo_carga,
         tipo_transporte or None,
@@ -277,6 +299,8 @@ def nuevo_viaje_admin():
     ))
     viaje_id = cur.lastrowid
     crear_checklist_viaje(cur, viaje_id)
+    if len(ruta_ids) > 1:
+        crear_tramos_viaje(cur, viaje_id, ruta_ids)
     con.commit()
     con.close()
 
@@ -582,6 +606,12 @@ def gestionar_viaje(id):
 
     checklist_map = {item["item"]: {"id": item["id"], "completado": bool(item["completado"])} for item in checklist}
 
+    tramos = obtener_tramos_viaje(id)
+    tramos_ok = tramos_completados(id)
+    if tramos:
+        km_ruta = sum(float(t["km_oficiales"] or 0) for t in tramos)
+        ruta_display = " → ".join([tramos[0]["origen"]] + [t["destino"] for t in tramos])
+
     return render_template(
         "admin/gestionar_viaje.html",
         viaje=viaje,
@@ -607,7 +637,24 @@ def gestionar_viaje(id):
         incidencias_estados=INCIDENCIAS_ESTADOS,
         auto_completados=auto_completados,
         historial=historial,
+        tramos=tramos,
+        tramos_ok=tramos_ok,
     )
+
+
+@admin_bp.route("/viaje/<int:id>/tramo/<int:tramo_id>/completar", methods=["POST"])
+def completar_tramo_admin(id, tramo_id):
+    if not requiere_admin():
+        return redirect("/login")
+
+    ok = completar_tramo(id, tramo_id)
+    if ok:
+        registrar_auditoria("completó tramo", "Viajes", "viaje", id, f"Tramo ID: {tramo_id}")
+        _registrar_historial(id, "Tramo completado", f"Tramo ID: {tramo_id}")
+    else:
+        return redirect(f"/admin/viajes/{id}/gestionar?error=Ese+tramo+no+se+puede+completar+todav%C3%ADa")
+
+    return redirect(f"/admin/viajes/{id}/gestionar")
 
 
 @admin_bp.route("/viaje/<int:viaje_id>/checklist/<int:item_id>/toggle", methods=["POST"])
@@ -737,6 +784,13 @@ def cambiar_estado(id):
         if not viaje or not viaje["camionero_id"] or not viaje["vehiculo_id"]:
             conexion.close()
             return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+Asignado+debes+asignar+un+camionero+y+un+veh%C3%ADculo")
+
+    if estado == "Entregado":
+        conexion.close()
+        if tramos_completados(id) is False:
+            return redirect(f"/admin/viajes/{id}/gestionar?error=Completa+todos+los+tramos+antes+de+confirmar+la+entrega")
+        conexion = conectar()
+        cursor = conexion.cursor()
 
     cursor.execute(f"UPDATE viajes SET estado = {ph()} WHERE id = {ph()}", (estado, id))
 

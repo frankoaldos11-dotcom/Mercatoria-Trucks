@@ -119,6 +119,45 @@
     </div>
 </div>
 
+{# ── TRAMOS (viajes multi-tramo) ─────────────────────────────── #}
+{% if tramos %}
+<div class="card" style="padding:16px;margin-bottom:16px;">
+    <div class="step-title-row" style="margin-bottom:12px;">
+        Tramos del viaje
+        {% if tramos_ok %}
+        <span style="margin-left:8px;font-size:11px;font-weight:700;color:#27ae60;"><i class="bi bi-check-circle-fill"></i> Todos los tramos completados</span>
+        {% endif %}
+    </div>
+    <div style="display:flex;align-items:flex-start;flex-wrap:wrap;gap:0;">
+        {% for t in tramos %}
+        <div style="display:flex;align-items:flex-start;">
+            <div style="text-align:center;min-width:130px;padding:0 6px;">
+                <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-weight:700;font-size:13px;
+                    {% if t.estado == 'completado' %}background:#27ae60;color:#fff;
+                    {% elif t.estado == 'en_curso' %}background:#f39c12;color:#fff;
+                    {% else %}background:#e5e7eb;color:#888;{% endif %}">
+                    {% if t.estado == 'completado' %}<i class="bi bi-check-lg"></i>{% else %}{{ loop.index }}{% endif %}
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#374151;">{{ t.origen }} → {{ t.destino }}</div>
+                <div style="font-size:10px;color:#888;text-transform:capitalize;margin-top:2px;">{{ t.estado.replace('_', ' ') }}</div>
+                {% if t.estado == 'en_curso' %}
+                <form method="POST" action="/admin/viaje/{{ viaje.id }}/tramo/{{ t.id }}/completar" style="margin-top:6px;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" style="font-size:11px;font-weight:700;padding:4px 10px;background:#fff3ec;color:#E86A2C;border:1px solid #E86A2C;border-radius:6px;cursor:pointer;">
+                        Marcar completado
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+            {% if not loop.last %}
+            <div style="width:28px;height:2px;background:#e5e7eb;margin:14px 0 0;"></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 {# ── STEPS ────────────────────────────────────────────────── #}
 <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
 
@@ -309,6 +348,14 @@
 {% else %}
 <div class="card step-active">
     <div class="step-title-row"><span class="step-num">6</span> Confirmar entrega</div>
+    {% if tramos and not tramos_ok %}
+    <p style="font-size:12px;color:#c0392b;margin:8px 0 10px;">
+        <i class="bi bi-exclamation-triangle-fill"></i> Completa todos los tramos del viaje antes de confirmar la entrega.
+    </p>
+    <button type="button" class="step-btn" disabled style="opacity:.5;cursor:not-allowed;">
+        <i class="bi bi-check2-circle"></i> Confirmar entrega
+    </button>
+    {% else %}
     <p style="font-size:12px;color:#888;margin:8px 0 10px;">Confirmar que la carga fue entregada en destino.</p>
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
           onsubmit="return confirm('¿Confirmar entrega? Esto cambiará el estado a Entregado.')">
@@ -318,6 +365,7 @@
             <i class="bi bi-check2-circle"></i> Confirmar entrega
         </button>
     </form>
+    {% endif %}
 </div>
 {% endif %}
 

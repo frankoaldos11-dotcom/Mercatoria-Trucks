@@ -106,6 +106,23 @@ def ejecutar_migraciones_pg():
         except Exception:
             conn.rollback()
 
+        try:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS viaje_tramos (
+                id SERIAL PRIMARY KEY,
+                viaje_id INTEGER NOT NULL,
+                ruta_id INTEGER NOT NULL,
+                orden INTEGER NOT NULL,
+                estado TEXT DEFAULT 'pendiente',
+                fecha_llegada TIMESTAMP,
+                FOREIGN KEY (viaje_id) REFERENCES viajes(id),
+                FOREIGN KEY (ruta_id) REFERENCES rutas(id)
+            )
+            """)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
         _indices = [
             ("idx_viajes_estado",         "viajes",     "estado"),
             ("idx_viajes_cliente_id",      "viajes",     "cliente_id"),
@@ -114,6 +131,7 @@ def ejecutar_migraciones_pg():
             ("idx_clientes_activo",        "clientes",   "activo"),
             ("idx_camioneros_estado",      "camioneros", "estado"),
             ("idx_auditoria_fecha",        "auditoria",  "fecha"),
+            ("idx_viaje_tramos_viaje_id",  "viaje_tramos", "viaje_id"),
         ]
         for _nombre, _tabla, _col in _indices:
             try:
@@ -448,6 +466,19 @@ def ejecutar_migraciones_pg():
     )
     """)
 
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS viaje_tramos (
+        id SERIAL PRIMARY KEY,
+        viaje_id INTEGER NOT NULL,
+        ruta_id INTEGER NOT NULL,
+        orden INTEGER NOT NULL,
+        estado TEXT DEFAULT 'pendiente',
+        fecha_llegada TIMESTAMP,
+        FOREIGN KEY (viaje_id) REFERENCES viajes(id),
+        FOREIGN KEY (ruta_id) REFERENCES rutas(id)
+    )
+    """)
+
     _indices = [
         ("idx_viajes_estado",         "viajes",     "estado"),
         ("idx_viajes_cliente_id",      "viajes",     "cliente_id"),
@@ -456,6 +487,7 @@ def ejecutar_migraciones_pg():
         ("idx_clientes_activo",        "clientes",   "activo"),
         ("idx_camioneros_estado",      "camioneros", "estado"),
         ("idx_auditoria_fecha",        "auditoria",  "fecha"),
+        ("idx_viaje_tramos_viaje_id",  "viaje_tramos", "viaje_id"),
     ]
     for _nombre, _tabla, _col in _indices:
         cur.execute(f"CREATE INDEX IF NOT EXISTS {_nombre} ON {_tabla}({_col})")
