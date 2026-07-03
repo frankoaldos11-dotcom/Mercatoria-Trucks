@@ -81,20 +81,15 @@ def _rutas_no_cubiertas(cursor, camionero_id, viaje_id, ruta_id_directo):
     return no_cubiertas
 
 
-def _registrar_historial(viaje_id, accion, detalle=""):
-    try:
-        usuario = session.get("usuario", "sistema")
-        con = conectar()
-        cur = con.cursor()
-        cur.execute(
-            f"INSERT INTO historial_viaje (viaje_id, usuario, accion, detalle) "
-            f"VALUES ({ph()}, {ph()}, {ph()}, {ph()})",
-            (viaje_id, usuario, accion, detalle or None)
-        )
-        con.commit()
-        con.close()
-    except Exception:
-        pass
+def _registrar_historial(cursor, viaje_id, accion, detalle=""):
+    """Inserta una fila en historial_viaje usando el cursor de la transacción ya
+    abierta del endpoint llamador. No abre conexión propia ni comitea: el commit
+    lo hace el endpoint como parte de su propia transacción."""
+    cursor.execute(
+        f"INSERT INTO historial_viaje (viaje_id, usuario, accion, detalle) "
+        f"VALUES ({ph()}, {ph()}, {ph()}, {ph()})",
+        (viaje_id, session.get("usuario", "sistema"), accion, detalle or None)
+    )
 
 
 def notificar_cliente_estado(viaje_id, nuevo_estado, email_cliente):
@@ -691,8 +686,12 @@ def completar_tramo_admin(id, tramo_id):
 
     ok = completar_tramo(id, tramo_id)
     if ok:
+        con = conectar()
+        cur = con.cursor()
+        _registrar_historial(cur, id, "Tramo completado", f"Tramo ID: {tramo_id}")
+        con.commit()
+        con.close()
         registrar_auditoria("completó tramo", "Viajes", "viaje", id, f"Tramo ID: {tramo_id}")
-        _registrar_historial(id, "Tramo completado", f"Tramo ID: {tramo_id}")
     else:
         return redirect(f"/admin/viajes/{id}/gestionar?error=Ese+tramo+no+se+puede+completar+todav%C3%ADa")
 
@@ -751,9 +750,9 @@ def nueva_incidencia(id):
         f"INSERT INTO incidencias (viaje_id, categoria, descripcion, usuario) VALUES ({ph()}, {ph()}, {ph()}, {ph()})",
         (id, categoria, descripcion, session.get("usuario", "admin"))
     )
+    _registrar_historial(cur, id, f"Incidencia registrada: {categoria}", descripcion)
     con.commit()
     con.close()
-    _registrar_historial(id, f"Incidencia registrada: {categoria}", descripcion)
     return redirect(f"/admin/viaje/{id}#operacion")
 
 
@@ -803,18 +802,19 @@ def asignar_camionero(id):
                 asignar_camionero_a_ruta(ruta["ruta_id"], camionero_id)
             etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
             _registrar_historial(
-                id, "Transportista habilitado en rutas",
+                cursor, id, "Transportista habilitado en rutas",
                 f"{fila['nombre']} habilitado para: {etiquetas}"
             )
             no_cubiertas = []
 
         if no_cubiertas:
-            conexion.close()
             etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
             _registrar_historial(
-                id, "Asignación de transportista rechazada",
+                cursor, id, "Asignación de transportista rechazada",
                 f"{fila['nombre']} no está habilitado para: {etiquetas}"
             )
+            conexion.commit()
+            conexion.close()
             mensaje = f"El transportista no está habilitado para las rutas: {etiquetas}"
             return redirect(f"/admin/viaje/{id}?error={quote_plus(mensaje)}&camionero_intentado={camionero_id}")
 
@@ -890,6 +890,9 @@ def cambiar_estado(id):
 
     estado_anterior = viaje["estado"] if viaje else None
 
+    _registrar_historial(cursor, id, f"Estado cambiado a {estado}",
+                         f"Estado anterior: {estado_anterior}" if estado_anterior else "")
+
     conexion.commit()
     conexion.close()
 
@@ -907,8 +910,6 @@ def cambiar_estado(id):
         f"Cambió estado a {estado}", "Viajes", "viaje", id,
         f"Estado anterior: {estado_anterior}"
     )
-    _registrar_historial(id, f"Estado cambiado a {estado}",
-                         f"Estado anterior: {estado_anterior}" if estado_anterior else "")
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -994,18 +995,19 @@ def asignar_camionero_vehiculo(id):
                 asignar_camionero_a_ruta(ruta["ruta_id"], camionero_id)
             etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
             _registrar_historial(
-                id, "Transportista habilitado en rutas",
+                cursor, id, "Transportista habilitado en rutas",
                 f"{camionero['nombre']} habilitado para: {etiquetas}"
             )
             no_cubiertas = []
 
         if no_cubiertas:
-            conexion.close()
             etiquetas = ", ".join(f"{r['origen']}–{r['destino']}" for r in no_cubiertas)
             _registrar_historial(
-                id, "Asignación de transportista rechazada",
+                cursor, id, "Asignación de transportista rechazada",
                 f"{camionero['nombre']} no está habilitado para: {etiquetas}"
             )
+            conexion.commit()
+            conexion.close()
             mensaje = f"El transportista no está habilitado para las rutas: {etiquetas}"
             return redirect(f"/admin/viaje/{id}?error={quote_plus(mensaje)}&camionero_intentado={camionero_id}")
 
@@ -1047,6 +1049,13 @@ def asignar_camionero_vehiculo(id):
     nombre_cam = camionero["nombre"] if camionero else "desconocido"
     nombre_veh = f"{vehiculo['marca']} {vehiculo['modelo']} ({vehiculo['matricula']})" if vehiculo else "desconocido"
 
+    _registrar_historial(cursor, id, f"Camionero asignado: {nombre_cam}", f"Vehículo: {nombre_veh}")
+    if vehiculo_desasignado:
+        _registrar_historial(
+            cursor, id, "Vehículo desasignado",
+            f"El viaje quedó sin vehículo asignado tras reasignar a {nombre_cam} (sin vehículo activo)"
+        )
+
     conexion.commit()
     conexion.close()
 
@@ -1055,12 +1064,6 @@ def asignar_camionero_vehiculo(id):
         "Viajes", "viaje", id,
         f"Camionero y vehículo asignados juntos"
     )
-    _registrar_historial(id, f"Camionero asignado: {nombre_cam}", f"Vehículo: {nombre_veh}")
-    if vehiculo_desasignado:
-        _registrar_historial(
-            id, "Vehículo desasignado",
-            f"El viaje quedó sin vehículo asignado tras reasignar a {nombre_cam} (sin vehículo activo)"
-        )
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -1443,15 +1446,17 @@ def marcar_cobrado(id):
         f"WHERE id={ph()}",
         (forma_cobro, codigo_transaccion, comentario_cobro, monto_cobrado, id)
     )
-    con.commit()
-    con.close()
 
     detalle = f"Forma: {forma_cobro}"
     if monto_cobrado:
         detalle += f" · Monto: ${monto_cobrado:.2f}"
     if codigo_transaccion:
         detalle += f" · Código: {codigo_transaccion}"
-    _registrar_historial(id, "Cobro registrado", detalle)
+    _registrar_historial(cur, id, "Cobro registrado", detalle)
+
+    con.commit()
+    con.close()
+
     registrar_auditoria("Registró cobro del viaje", "Viajes", "viaje", id, detalle)
 
     referer = request.form.get("_referer", "")
@@ -1476,10 +1481,10 @@ def finalizar_viaje(id):
         return redirect(f"/admin/viaje/{id}?error=El+cobro+debe+estar+registrado+antes+de+finalizar+el+viaje")
 
     cur.execute(f"UPDATE viajes SET estado = 'Cerrado' WHERE id = {ph()}", (id,))
+    _registrar_historial(cur, id, "Viaje finalizado", "Estado cambiado a Cerrado")
     con.commit()
     con.close()
 
-    _registrar_historial(id, "Viaje finalizado", "Estado cambiado a Cerrado")
     registrar_auditoria("Finalizó el viaje", "Viajes", "viaje", id)
 
     return redirect(f"/admin/viaje/{id}")
@@ -1495,10 +1500,10 @@ def reabrir_viaje(id):
     con = conectar()
     cur = con.cursor()
     cur.execute(f"UPDATE viajes SET estado = 'Entregado', reabierto_en = CURRENT_TIMESTAMP WHERE id = {ph()}", (id,))
+    _registrar_historial(cur, id, "Viaje reabierto", "Estado cambiado de Cerrado a Entregado")
     con.commit()
     con.close()
 
-    _registrar_historial(id, "Viaje reabierto", "Estado cambiado de Cerrado a Entregado")
     registrar_auditoria("Reabrió el viaje", "Viajes", "viaje", id)
 
     return redirect(f"/admin/viaje/{id}")
@@ -1558,11 +1563,13 @@ def corregir_cobro(id):
         )
         cambios.append("verificación financiera revertida a pendiente por la corrección")
 
+    if cambios:
+        _registrar_historial(cur, id, "Cobro corregido", "; ".join(cambios))
+
     con.commit()
     con.close()
 
     if cambios:
-        _registrar_historial(id, "Cobro corregido", "; ".join(cambios))
         registrar_auditoria("Corrigió el cobro del viaje", "Viajes", "viaje", id, "; ".join(cambios))
 
     return redirect(f"/admin/viaje/{id}")
@@ -1580,19 +1587,16 @@ def verificar_viaje(id):
             f"UPDATE viajes SET verificado_financiero=0, verificado_por=NULL, fecha_verificacion=NULL WHERE id={ph()}",
             (id,)
         )
+        _registrar_historial(cur, id, "Verificación revertida", f"Por: {session.get('usuario')}")
     else:
         ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cur.execute(
             f"UPDATE viajes SET verificado_financiero=1, verificado_por={ph()}, fecha_verificacion={ph()} WHERE id={ph()}",
             (session.get("usuario"), ahora, id)
         )
+        _registrar_historial(cur, id, "Verificado financiero", f"Por: {session.get('usuario')}")
     con.commit()
     con.close()
-
-    if accion == "revertir":
-        _registrar_historial(id, "Verificación revertida", f"Por: {session.get('usuario')}")
-    else:
-        _registrar_historial(id, "Verificado financiero", f"Por: {session.get('usuario')}")
 
     referer = request.form.get("_referer", "/admin/reportes")
     return redirect(referer)
