@@ -1,7 +1,7 @@
 # Reporte de Pruebas — 2026-07-03
 
 ## Contexto
-Commit probado en esta sesión: **elimina `conectar()` local de `migraciones.py`** ("Elimina conectar() local de migraciones.py, usa conexión centralizada"), pendiente de push al cierre de este reporte.
+Commit probado en esta sesión: **fix del bootstrap de `SKIP_MIGRATIONS` en `migraciones_pg.py`** ("Fix: SKIP_MIGRATIONS ya no puede dejar una Postgres vacia sin schema"), pendiente de push al cierre de este reporte.
 
 Sesiones anteriores (ya en `main`):
 1. `2f53dee` — "feat: viajes multi-tramo con validacion continuidad y timeline cliente"
@@ -13,40 +13,56 @@ Sesiones anteriores (ya en `main`):
 7. `b33a385` — "Fix vehículo colgado al reasignar + reabrir viaje cerrado (solo admin)"
 8. `f2d5a7c` — "Fix: 4 columnas en uso faltantes en migración Postgres (verificación financiera + documento_identidad)"
 9. `590c14a` — "Refactor _registrar_historial: usa cursor de la transacción activa, sin tragar errores"
+10. `65772e0` — "Elimina conectar() local de migraciones.py, usa conexión centralizada"
 
 ## Corrección aplicada
-`migraciones.py`: se eliminó el `import sqlite3`, el `DATABASE_NAME` local y el `def conectar()` propio (que hacía `sqlite3.connect()` directo). Se reemplazó por `from database import conectar`, el conector centralizado del proyecto. Sin cambios en `tabla_existe`, `columna_existe`, `agregar_columna` ni en la lógica de `ejecutar_migraciones()` — solo cambia el origen de la conexión. Este archivo solo se invoca en la rama SQLite de `app.py` (`else:` del `if USE_POSTGRES:`), así que el `row_factory=sqlite3.Row` del conector centralizado (idéntico al que tenía el conector local) garantiza que `columna_existe()` (que accede a `col["name"]`) siga funcionando igual.
+`migraciones_pg.py` — `ejecutar_migraciones_pg()` se reordenó completamente:
 
-## Hallazgo reportado — deuda técnica (NO implementada en este commit, solo documentada)
+1. La consulta `SELECT COUNT(*) FROM information_schema.tables WHERE table_name='usuarios'` ahora corre **primero**, sin condición alguna.
+2. Si el schema **no existe** (`not schema_existe`), se ejecuta siempre la creación completa (todas las `CREATE TABLE`), sin mirar `SKIP_MIGRATIONS` — una base vacía se crea con o sin el flag. Esta rama termina con `conn.commit(); cur.close(); conn.close(); return`, igual que antes (mismo manejo de conexión, solo con un `return` explícito porque ahora ya no es el final físico del archivo).
+3. Solo si el schema **ya existe** se evalúa `SKIP_MIGRATIONS`: si está en `true`, se omiten las migraciones incrementales (`conn.close(); return`); si no, corren igual que siempre (mismos `ALTER TABLE`/`CREATE TABLE IF NOT EXISTS`, mismo manejo de conexión con `conn.close()` al final, try/except por sentencia sin cambios).
 
-**Riesgo:** `ejecutar_migraciones_pg()` (`migraciones_pg.py:12-23`) chequea `SKIP_MIGRATIONS` **antes** de verificar si el schema existe. Si se arranca contra una Postgres **vacía** (sin tabla `usuarios`) con `SKIP_MIGRATIONS=true`, la función retorna de inmediato sin crear ninguna tabla base (`usuarios`, `viajes`, `clientes`, `rutas`, etc.) — la única rama del código que crea esas tablas desde cero. `migrations_v11.py`/`migrations_v12.py` corren después igualmente (ignoran el flag), pero solo hacen `ALTER TABLE`/`CREATE TABLE IF NOT EXISTS` sobre tablas específicas; si las tablas base no existen, esos `ALTER TABLE` fallan silenciosamente (cada uno con su propio try/except que hace rollback y continúa). Resultado: **base de datos a medio crear, en silencio, sin ningún error visible en el arranque** — la app luego falla en cualquier página que toque la base ("relation does not exist").
+Ninguna sentencia SQL cambió. Solo se movió el orden de los chequeos y a qué rama afecta el flag, tal como se acordó.
 
-**Mitigación propuesta (pendiente de implementar en un prompt aparte):** mover el chequeo de `SKIP_MIGRATIONS` para que ocurra **después** de la verificación de "¿existe el schema?" (la query `SELECT COUNT(*) FROM information_schema.tables WHERE table_name='usuarios'`), de modo que:
-- Si el schema no existe → siempre se crea completo, sin importar el flag.
-- Si el schema ya existe → el flag puede seguir usándose para saltar el chequeo incremental de columnas nuevas (comportamiento actual, ya usado como optimización de arranque).
+## Verificación (sin Postgres disponible en este entorno)
 
-**Prioridad:** alta — mismo tipo de bug de familia que ya causó los incidentes de `viaje_tramos` y las 4 columnas de verificación financiera, pero a nivel de bootstrap completo en vez de columnas sueltas. Bajo riesgo de ocurrencia inmediata (requiere una Postgres vacía + el flag ya activo), pero alto impacto si ocurre (app completamente no funcional).
+Dado que el entorno local no tiene Postgres, se hizo:
+
+1. **Auditoría de código línea por línea** confirmando la nueva estructura de control (`schema_existe` se calcula antes de cualquier chequeo de flag; `SKIP_MIGRATIONS` solo se lee dentro de la rama donde el schema ya existe).
+2. **Simulación funcional de los 3 escenarios** con una conexión/cursor simulados (mock de `psycopg2`) que registra cada sentencia SQL ejecutada, para probar el árbol de decisión real de Python (no solo la lectura del código):
+
+| Escenario | `schema_existe` | `SKIP_MIGRATIONS` | Resultado esperado | Resultado obtenido |
+|---|---|---|---|---|
+| (1) Base vacía + flag activo | `False` | `true` | Crea el schema completo (ignora el flag) | ✅ Corrió `CREATE TABLE ... usuarios` y el resto del schema completo; no corrió ninguna migración incremental |
+| (2) Schema existente + flag activo | `True` | `true` | Salta las migraciones incrementales, no recrea nada | ✅ No corrió ni el schema completo ni los incrementales — retornó de inmediato tras el mensaje de "omitiendo" |
+| (3) Schema existente + flag ausente | `True` | *(no seteada)* | Corre las migraciones incrementales normalmente | ✅ Corrió `ALTER TABLE clientes ADD COLUMN IF NOT EXISTS categoria` y el resto del bloque incremental |
+
+Los 3 escenarios se comportaron exactamente como lo especifica la mitigación acordada.
+
+3. **Arranque local (SQLite)** sin cambios ni errores — este archivo no se toca en esa rama de `app.py`, se verificó como control de que nada se rompió colateralmente.
+
+**⚠️ Pendiente:** esta verificación es de código y de lógica simulada, no contra una Postgres real. La verificación definitiva contra producción queda pendiente del próximo deploy en Render (confirmar en los logs de arranque que aparece el mensaje esperado según el estado real de la base al momento del deploy).
 
 ## Páginas probadas
-- Arranque completo de la app (SQLite local) vía `python app.py`
-- `/login` → `/admin/` (dashboard) tras iniciar sesión
+- Arranque completo de la app (SQLite local) vía `python app.py` — sin errores, como control de no-regresión.
 
 ## Errores encontrados
-Ninguno. 0 errores de consola, sin tracebacks en el log del servidor.
+Ninguno. 0 errores de consola, sin tracebacks en el log del servidor local.
 
 ## Screenshots tomados
-- Captura del Dashboard tras iniciar sesión, confirmando arranque normal de la app post-refactor — eliminada al finalizar la sesión (gitignored, `*.png`).
+- Ninguno nuevo — este fix no tiene superficie de UI (solo lógica de arranque de Postgres, no ejercitable desde el navegador en este entorno).
 
 ## Validaciones funcionales verificadas
 
 | # | Verificación | Resultado esperado | Estado |
 |---|---|---|---|
-| 1 | Arranque contra la base SQLite existente (`mercatoria.db`) | Sin errores de migración | ✅ |
-| 2 | Esquema resultante (23 tablas, mismas columnas) comparado antes/después del refactor | Idéntico — 0 tablas nuevas, 0 tablas perdidas, 0 diferencias de columnas | ✅ |
-| 3 | Arranque desde una base SQLite completamente nueva (`crear_base_datos` + `ejecutar_migraciones()`) | Se crean las 23 tablas sin excepciones | ✅ |
-| 4 | Login y carga del Dashboard tras el refactor | Funciona normalmente | ✅ |
-| — | Sin errores de consola ni tracebacks de servidor | — | ✅ |
+| 1 | Base vacía + `SKIP_MIGRATIONS=true` → crea schema completo | Sí, ignorando el flag | ✅ (simulado) |
+| 2 | Schema existente + `SKIP_MIGRATIONS=true` → salta incrementales | Sí, sin recrear nada | ✅ (simulado) |
+| 3 | Schema existente + `SKIP_MIGRATIONS` ausente → corre incrementales | Sí, igual que antes | ✅ (simulado) |
+| 4 | Ninguna sentencia SQL cambió de contenido | Solo se reordenó el control de flujo | ✅ (diff de código) |
+| 5 | Arranque local SQLite sin regresión | Sin errores | ✅ |
+| — | Verificación real contra Postgres | **Pendiente del próximo deploy en Render** | ⏳ |
 
 ## Recomendaciones
-- Retomar la mitigación de `SKIP_MIGRATIONS` documentada arriba en un prompt aparte, tal como se acordó — no se tocó el flag en este commit.
-- El archivo de prueba SQLite temporal creado para la verificación de "arranque desde cero" fue eliminado; no quedan residuos en `mercatoria.db`.
+- Confirmar en el próximo deploy a Render que el log de arranque muestre el mensaje correcto según el estado real de la base (`"Schema nuevo — ejecutando migraciones completas."` o `"SKIP_MIGRATIONS=true — omitiendo migraciones incrementales..."` o `"Schema existente detectado — migraciones incrementales aplicadas."`), y que no aparezca ningún traceback.
+- El archivo de prueba temporal usado para simular los 3 escenarios se guardó en el scratchpad de la sesión (no en el repo), no queda residuo en el proyecto.
