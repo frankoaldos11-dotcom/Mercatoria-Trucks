@@ -49,11 +49,24 @@
             </div>
             <div class="form-crud-field">
                 <label>Rol *</label>
-                <select name="rol" class="input-crud" required>
+                <select name="rol" class="input-crud" required id="rolNuevoUsuario">
                     <option value="operador">Operador</option>
                     <option value="admin">Admin</option>
                     <option value="cliente">Cliente</option>
                 </select>
+            </div>
+            <div class="form-crud-field" id="campoClienteVinculado" style="display:none;">
+                <label>Cliente vinculado *</label>
+                <div style="display:flex;gap:6px;">
+                    <select name="cliente_id" id="selectClienteVinculado" class="input-crud">
+                        <option value="">— Seleccionar cliente —</option>
+                        {% for c in clientes_sin_usuario %}
+                        <option value="{{ c.id }}">{{ c.nombre }}{% if c.email %} ({{ c.email }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn-crud-secondary" data-bs-toggle="modal" data-bs-target="#modalNuevoClienteRapido" style="white-space:nowrap;">+ Nuevo cliente</button>
+                </div>
+                <small style="color:#9CA3AF;font-size:11px;margin-top:4px;display:block;">Solo se listan clientes sin usuario asociado.</small>
             </div>
             <div class="form-crud-field form-crud-submit">
                 <button type="submit" class="btn-crud-primary">Crear usuario</button>
@@ -61,6 +74,45 @@
         </form>
     </div>
 </section>
+
+<!-- Modal Nuevo cliente rápido -->
+<div class="modal fade" id="modalNuevoClienteRapido" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-crud">
+            <div class="modal-header modal-crud-header">
+                <h5 class="modal-title">Nuevo cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="errorNuevoClienteRapido" style="display:none;background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:8px 12px;border-radius:8px;margin-bottom:12px;font-size:13px;"></div>
+                <div class="form-crud-field" style="margin-bottom:12px;">
+                    <label>Nombre *</label>
+                    <input type="text" id="ncr_nombre" class="input-crud" required placeholder="Nombre completo">
+                </div>
+                <div class="form-crud-field" style="margin-bottom:12px;">
+                    <label>Empresa</label>
+                    <input type="text" id="ncr_empresa" class="input-crud" placeholder="Razón social">
+                </div>
+                <div class="form-crud-field" style="margin-bottom:12px;">
+                    <label>Teléfono</label>
+                    <input type="text" id="ncr_telefono" class="input-crud" placeholder="Teléfono">
+                </div>
+                <div class="form-crud-field" style="margin-bottom:12px;">
+                    <label>Email</label>
+                    <input type="email" id="ncr_email" class="input-crud" placeholder="correo@empresa.com">
+                </div>
+                <div class="form-crud-field">
+                    <label>Documento identidad</label>
+                    <input type="text" id="ncr_documento" class="input-crud" placeholder="CI / NIF / Pasaporte">
+                </div>
+            </div>
+            <div class="modal-footer modal-crud-footer">
+                <button type="button" class="btn-cancelar-modal" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-crud-primary" id="btnGuardarClienteRapido">Guardar cliente</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <section class="panel">
     <div class="panel-header">
@@ -312,6 +364,28 @@
 .pill-activo  { background: #1a1a1a; color: #fff; }
 .pill-inactivo { background: #f5f5f5; color: #444; border: 1px solid #ddd; }
 .pill-inactivo:hover { background: #e9e9e9; }
+
+.btn-crud-secondary {
+    background: #f0f0f0;
+    color: #555;
+    padding: 9px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-crud-secondary:hover { background: #e0e0e0; }
+
+.modal-crud { border-radius: 12px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,.12); }
+.modal-crud-header { border-bottom: 1px solid #f0f0f0; padding: 20px 24px; }
+.modal-crud-header .modal-title { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+.modal-crud-footer { border-top: 1px solid #f0f0f0; padding: 16px 24px; gap: 8px; }
+.btn-cancelar-modal {
+    background: #f0f0f0; color: #555; padding: 10px 20px;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn-cancelar-modal:hover { background: #e0e0e0; }
 </style>
 
 <script>
@@ -324,6 +398,71 @@ function filtrarTabla() {
         fila.style.display = email.indexOf(filtro) > -1 ? "" : "none";
     });
 }
+
+function toggleClienteVinculado() {
+    var rol = document.getElementById("rolNuevoUsuario").value;
+    var campo = document.getElementById("campoClienteVinculado");
+    var select = document.getElementById("selectClienteVinculado");
+    if (rol === "cliente") {
+        campo.style.display = "";
+        select.required = true;
+    } else {
+        campo.style.display = "none";
+        select.required = false;
+    }
+}
+document.getElementById("rolNuevoUsuario").addEventListener("change", toggleClienteVinculado);
+toggleClienteVinculado();
+
+document.getElementById("btnGuardarClienteRapido").addEventListener("click", function() {
+    var nombre = document.getElementById("ncr_nombre").value.trim();
+    var errorDiv = document.getElementById("errorNuevoClienteRapido");
+    errorDiv.style.display = "none";
+    if (!nombre) {
+        errorDiv.textContent = "El nombre es obligatorio.";
+        errorDiv.style.display = "";
+        return;
+    }
+
+    var fd = new FormData();
+    fd.append("csrf_token", "{{ csrf_token() }}");
+    fd.append("nombre", nombre);
+    fd.append("empresa", document.getElementById("ncr_empresa").value.trim());
+    fd.append("telefono", document.getElementById("ncr_telefono").value.trim());
+    fd.append("email", document.getElementById("ncr_email").value.trim());
+    fd.append("documento_identidad", document.getElementById("ncr_documento").value.trim());
+
+    fetch("/admin/clientes/crear-rapido", { method: "POST", body: fd })
+        .then(function(r) { return r.json().then(function(data) { return { status: r.status, data: data }; }); })
+        .then(function(res) {
+            if (res.status !== 200 || res.data.error) {
+                errorDiv.textContent = res.data.error || "No se pudo crear el cliente.";
+                errorDiv.style.display = "";
+                return;
+            }
+
+            var select = document.getElementById("selectClienteVinculado");
+            var opt = document.createElement("option");
+            opt.value = res.data.id;
+            opt.textContent = res.data.nombre + (res.data.email ? " (" + res.data.email + ")" : "");
+            select.appendChild(opt);
+            opt.selected = true;
+
+            document.getElementById("ncr_nombre").value = "";
+            document.getElementById("ncr_empresa").value = "";
+            document.getElementById("ncr_telefono").value = "";
+            document.getElementById("ncr_email").value = "";
+            document.getElementById("ncr_documento").value = "";
+
+            var modalEl = document.getElementById("modalNuevoClienteRapido");
+            var modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modalInstance.hide();
+        })
+        .catch(function() {
+            errorDiv.textContent = "Error de red, intenta de nuevo.";
+            errorDiv.style.display = "";
+        });
+});
 </script>
 
 {% endblock %}

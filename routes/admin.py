@@ -1989,6 +1989,41 @@ def eliminar_camionero(id):
 
 # ── Clientes CRUD ────────────────────────────────────────────────────────────
 
+CATEGORIAS_CLIENTE = ["Normal", "VIP", "Estratégico", "Humanitario"]
+
+
+def _validar_y_crear_cliente(cursor, form):
+    """Valida y crea un cliente a partir de un form (request.form).
+    Devuelve (cliente_id, error) — error es None si se creó correctamente."""
+    nombre = form["nombre"].strip()
+    empresa = form.get("empresa", "").strip()
+    contacto = form.get("contacto", "").strip()
+    telefono = form.get("telefono", "").strip()
+    email = form.get("email", "").strip()
+    direccion = form.get("direccion", "").strip()
+    categoria = form.get("categoria", "Normal").strip()
+    documento_identidad = form.get("documento_identidad", "").strip()
+    if categoria not in CATEGORIAS_CLIENTE:
+        categoria = "Normal"
+
+    if email:
+        cursor.execute(f"SELECT id FROM clientes WHERE email = {ph()} AND deleted_at IS NULL", (email,))
+        if cursor.fetchone():
+            return None, "Ya existe un cliente con ese email. Búscalo y edítalo."
+
+    if documento_identidad:
+        cursor.execute(f"SELECT id FROM clientes WHERE documento_identidad = {ph()} AND deleted_at IS NULL", (documento_identidad,))
+        if cursor.fetchone():
+            return None, "Ya existe un cliente con ese documento de identidad. Búscalo y edítalo."
+
+    cursor.execute(f"""
+        INSERT INTO clientes (nombre, empresa, contacto, telefono, email, direccion, categoria, documento_identidad)
+        VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
+    """, (nombre, empresa, contacto, telefono, email, direccion, categoria, documento_identidad or None))
+
+    return cursor.lastrowid, None
+
+
 @admin_bp.route("/clientes", methods=["GET", "POST"])
 def admin_clientes():
     if not requiere_admin():
@@ -1997,36 +2032,11 @@ def admin_clientes():
     conexion = conectar()
     cursor = conexion.cursor()
 
-    CATEGORIAS_CLIENTE = ["Normal", "VIP", "Estratégico", "Humanitario"]
-
     if request.method == "POST":
-        nombre = request.form["nombre"].strip()
-        empresa = request.form.get("empresa", "").strip()
-        contacto = request.form.get("contacto", "").strip()
-        telefono = request.form.get("telefono", "").strip()
-        email = request.form.get("email", "").strip()
-        direccion = request.form.get("direccion", "").strip()
-        categoria = request.form.get("categoria", "Normal").strip()
-        documento_identidad = request.form.get("documento_identidad", "").strip()
-        if categoria not in CATEGORIAS_CLIENTE:
-            categoria = "Normal"
-
-        if email:
-            cursor.execute(f"SELECT id FROM clientes WHERE email = {ph()} AND deleted_at IS NULL", (email,))
-            if cursor.fetchone():
-                conexion.close()
-                return redirect("/admin/clientes?access_error=Ya+existe+un+cliente+con+ese+email.+Búscalo+y+edítalo.")
-
-        if documento_identidad:
-            cursor.execute(f"SELECT id FROM clientes WHERE documento_identidad = {ph()} AND deleted_at IS NULL", (documento_identidad,))
-            if cursor.fetchone():
-                conexion.close()
-                return redirect("/admin/clientes?access_error=Ya+existe+un+cliente+con+ese+documento+de+identidad.+Búscalo+y+edítalo.")
-
-        cursor.execute(f"""
-            INSERT INTO clientes (nombre, empresa, contacto, telefono, email, direccion, categoria, documento_identidad)
-            VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
-        """, (nombre, empresa, contacto, telefono, email, direccion, categoria, documento_identidad or None))
+        cliente_id, error = _validar_y_crear_cliente(cursor, request.form)
+        if error:
+            conexion.close()
+            return redirect(f"/admin/clientes?access_error={quote_plus(error)}")
 
         conexion.commit()
         conexion.close()
@@ -2074,6 +2084,29 @@ def admin_clientes():
                            pagina_actual=pagina,
                            total_paginas=total_paginas_cl,
                            total=total_cl)
+
+
+@admin_bp.route("/clientes/crear-rapido", methods=["POST"])
+def crear_cliente_rapido():
+    if not requiere_admin():
+        return jsonify({"error": "No autorizado"}), 401
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cliente_id, error = _validar_y_crear_cliente(cursor, request.form)
+    if error:
+        conexion.close()
+        return jsonify({"error": error}), 400
+
+    conexion.commit()
+    conexion.close()
+
+    nombre = request.form.get("nombre", "").strip()
+    email = request.form.get("email", "").strip()
+    registrar_auditoria(f"Creó cliente {nombre} (rápido, desde alta de usuario)", "Clientes", "cliente", cliente_id)
+
+    return jsonify({"ok": True, "id": cliente_id, "nombre": nombre, "email": email})
 
 
 @admin_bp.route("/clientes/<int:id>/editar", methods=["GET", "POST"])
@@ -2571,6 +2604,14 @@ def lista_usuarios():
     cursor.execute("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'cliente'")
     total_cliente = cursor.fetchone()["total"]
 
+    cursor.execute("""
+        SELECT id, nombre, email
+        FROM clientes
+        WHERE usuario_id IS NULL AND deleted_at IS NULL
+        ORDER BY nombre
+    """)
+    clientes_sin_usuario = cursor.fetchall()
+
     conexion.close()
 
     return render_template(
@@ -2581,6 +2622,7 @@ def lista_usuarios():
         total_admin=total_admin,
         total_operador=total_operador,
         total_cliente=total_cliente,
+        clientes_sin_usuario=clientes_sin_usuario,
     )
 
 
@@ -2592,9 +2634,20 @@ def crear_usuario():
     usuario = request.form.get("usuario", "").strip()
     password = request.form.get("password", "").strip()
     rol = request.form.get("rol", "").strip()
+    cliente_id_str = request.form.get("cliente_id", "").strip()
 
     if not usuario or not password or rol not in ("admin", "operador", "cliente"):
         return redirect("/admin/usuarios?error=Datos+inv%C3%A1lidos")
+
+    if rol == "cliente" and not cliente_id_str:
+        return redirect("/admin/usuarios?error=Selecciona+el+cliente+a+vincular")
+
+    cliente_id = None
+    if rol == "cliente":
+        try:
+            cliente_id = int(cliente_id_str)
+        except ValueError:
+            return redirect("/admin/usuarios?error=Cliente+inv%C3%A1lido")
 
     conexion = conectar()
     cursor = conexion.cursor()
@@ -2603,15 +2656,37 @@ def crear_usuario():
         conexion.close()
         return redirect("/admin/usuarios?error=El+usuario+ya+existe")
 
+    if cliente_id is not None:
+        cursor.execute(f"SELECT id FROM clientes WHERE id = {ph()} AND deleted_at IS NULL", (cliente_id,))
+        if not cursor.fetchone():
+            conexion.close()
+            return redirect("/admin/usuarios?error=El+cliente+seleccionado+no+existe")
+
     hash_pw = bcrypt.generate_password_hash(password).decode("utf-8")
     cursor.execute(
         f"INSERT INTO usuarios (usuario, password, rol) VALUES ({ph()}, {ph()}, {ph()})",
         (usuario, hash_pw, rol)
     )
+    nuevo_usuario_id = cursor.lastrowid
+
+    if cliente_id is not None:
+        cursor.execute(
+            f"UPDATE clientes SET usuario_id = {ph()} WHERE id = {ph()} AND usuario_id IS NULL",
+            (nuevo_usuario_id, cliente_id)
+        )
+        if cursor.rowcount == 0:
+            # Otro admin vinculó este cliente en el intervalo: no comiteamos nada,
+            # ni el usuario ni el update quedan persistidos (transacción atómica).
+            conexion.close()
+            return redirect("/admin/usuarios?error=Ese+cliente+ya+fue+vinculado+por+otro+usuario%2C+intenta+de+nuevo")
+
     conexion.commit()
     conexion.close()
 
-    registrar_auditoria(f"Creó usuario {usuario} con rol {rol}", "Usuarios", "usuario")
+    detalle = f"Creó usuario {usuario} con rol {rol}"
+    if cliente_id is not None:
+        detalle += f", vinculado a cliente #{cliente_id}"
+    registrar_auditoria(detalle, "Usuarios", "usuario", nuevo_usuario_id)
 
     return redirect("/admin/usuarios")
 

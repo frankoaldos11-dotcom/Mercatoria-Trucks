@@ -46,6 +46,10 @@ class CursorWrapper:
     def description(self):
         return self._cursor.description
 
+    @property
+    def rowcount(self):
+        return self._cursor.rowcount
+
     def __iter__(self):
         return iter(self._cursor)
 

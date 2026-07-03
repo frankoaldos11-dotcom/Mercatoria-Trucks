@@ -1,7 +1,9 @@
 # Reporte de Pruebas — 2026-07-03
 
 ## Contexto
-Commit probado en esta sesión: **fix del bootstrap de `SKIP_MIGRATIONS` en `migraciones_pg.py`** ("Fix: SKIP_MIGRATIONS ya no puede dejar una Postgres vacia sin schema"), pendiente de push al cierre de este reporte.
+Commit de esta sesión: **vincular usuario cliente a su ficha de cliente desde el admin, y crear cliente desde la pantalla de "Nuevo usuario"** ("Vincular usuario cliente a su ficha desde admin + crear cliente desde pantalla de usuario"), pendiente de push al cierre de este reporte.
+
+**⚠️ La verificación con Playwright de este commit NO se completó** — se documenta al final por qué, y queda pendiente de verificación manual en producción por Aldo.
 
 Sesiones anteriores (ya en `main`):
 1. `2f53dee` — "feat: viajes multi-tramo con validacion continuidad y timeline cliente"
@@ -14,55 +16,46 @@ Sesiones anteriores (ya en `main`):
 8. `f2d5a7c` — "Fix: 4 columnas en uso faltantes en migración Postgres (verificación financiera + documento_identidad)"
 9. `590c14a` — "Refactor _registrar_historial: usa cursor de la transacción activa, sin tragar errores"
 10. `65772e0` — "Elimina conectar() local de migraciones.py, usa conexión centralizada"
+11. `75cf3b0` — "Fix: SKIP_MIGRATIONS ya no puede dejar una Postgres vacia sin schema"
 
-## Corrección aplicada
-`migraciones_pg.py` — `ejecutar_migraciones_pg()` se reordenó completamente:
+## Problema que resuelve este commit
+Investigación previa (misma sesión) encontró que la única forma de vincular un usuario con rol "cliente" a su ficha de `clientes` (columna `clientes.usuario_id`) era el autoregistro del propio cliente en `/cliente/registro`. El admin no tenía ninguna vía para producir ese vínculo — ni desde "Nuevo usuario" (el select ni existía), ni desde "Clientes" (`admin_clientes()` no escribe `usuario_id`). Consecuencia real: un admin que crea manualmente un usuario rol cliente para un cliente institucional (PMA, WFP, Cáritas, etc.) le deja el portal completamente vacío, porque todas las consultas de `routes/cliente.py` filtran por `clientes.usuario_id`.
 
-1. La consulta `SELECT COUNT(*) FROM information_schema.tables WHERE table_name='usuarios'` ahora corre **primero**, sin condición alguna.
-2. Si el schema **no existe** (`not schema_existe`), se ejecuta siempre la creación completa (todas las `CREATE TABLE`), sin mirar `SKIP_MIGRATIONS` — una base vacía se crea con o sin el flag. Esta rama termina con `conn.commit(); cur.close(); conn.close(); return`, igual que antes (mismo manejo de conexión, solo con un `return` explícito porque ahora ya no es el final físico del archivo).
-3. Solo si el schema **ya existe** se evalúa `SKIP_MIGRATIONS`: si está en `true`, se omiten las migraciones incrementales (`conn.close(); return`); si no, corren igual que siempre (mismos `ALTER TABLE`/`CREATE TABLE IF NOT EXISTS`, mismo manejo de conexión con `conn.close()` al final, try/except por sentencia sin cambios).
+## Cambios implementados
 
-Ninguna sentencia SQL cambió. Solo se movió el orden de los chequeos y a qué rama afecta el flag, tal como se acordó.
+**`database.py`** — se agregó la propiedad `rowcount` a `CursorWrapper` (pass-through a `self._cursor.rowcount`). No existía; es necesaria para el UPDATE condicional atómico que se describe abajo.
 
-## Verificación (sin Postgres disponible en este entorno)
+**`routes/admin.py`**:
+- Se extrajo `_validar_y_crear_cliente(cursor, form)`, con la misma validación de email/documento duplicado e INSERT que ya tenía `admin_clientes()` — ahora ambos flujos (el formulario normal de "Clientes" y el nuevo endpoint rápido) reutilizan la misma función, sin duplicar la validación.
+- Nuevo endpoint `POST /admin/clientes/crear-rapido`: crea un cliente vía AJAX (JSON), protegido con `requiere_admin()` (mismo nivel de permiso que `admin_clientes`), con `registrar_auditoria()` propio.
+- `lista_usuarios()` (GET `/admin/usuarios`) ahora también consulta `clientes_sin_usuario` (`WHERE usuario_id IS NULL AND deleted_at IS NULL`) y se la pasa al template.
+- `crear_usuario()`: si `rol == "cliente"`, exige `cliente_id`; valida que el cliente exista; crea el usuario; **vincula con `UPDATE clientes SET usuario_id = ? WHERE id = ? AND usuario_id IS NULL`** y verifica `cursor.rowcount`. Si el rowcount es 0 (otro admin vinculó ese cliente en el intervalo), no se comitea nada — ni el usuario ni el update quedan persistidos, evitando el usuario huérfano. Todo en una sola transacción/conexión. Auditoría con el detalle del vínculo.
 
-Dado que el entorno local no tiene Postgres, se hizo:
+**`templates/admin/usuarios.html`**:
+- Campo "Cliente vinculado *" (select, oculto salvo rol=cliente, con `required` alternado por JS) que lista solo clientes sin usuario asociado.
+- Botón "+ Nuevo cliente" que abre un modal Bootstrap (mismo patrón ya usado en `clientes.html` para importar Excel) con campos mínimos (nombre*, empresa, teléfono, email, documento).
+- El modal guarda vía `fetch()` + `FormData` (mismo patrón AJAX ya usado en `gestionar_viaje.html`) contra el nuevo endpoint, inyecta la opción nueva en el select ya seleccionada, y se cierra sin recargar la página — así no se pierde lo ya escrito en email/contraseña/rol del formulario principal.
 
-1. **Auditoría de código línea por línea** confirmando la nueva estructura de control (`schema_existe` se calcula antes de cualquier chequeo de flag; `SKIP_MIGRATIONS` solo se lee dentro de la rama donde el schema ya existe).
-2. **Simulación funcional de los 3 escenarios** con una conexión/cursor simulados (mock de `psycopg2`) que registra cada sentencia SQL ejecutada, para probar el árbol de decisión real de Python (no solo la lectura del código):
+## Verificación realizada
+- `py_compile` de `routes/admin.py` y `database.py`: OK.
+- Verificación de sintaxis Jinja de `templates/admin/usuarios.html` (parseo con `jinja2.Environment`): OK.
+- Arranque de la app local (`python app.py`): sin tracebacks en el log (`Debugger PIN` normal, ninguna excepción).
+- Fixture de prueba creado y luego eliminado (cliente "Test PMA Cuba" sin `usuario_id`, id temporal, ya borrado de `mercatoria.db`).
 
-| Escenario | `schema_existe` | `SKIP_MIGRATIONS` | Resultado esperado | Resultado obtenido |
-|---|---|---|---|---|
-| (1) Base vacía + flag activo | `False` | `true` | Crea el schema completo (ignora el flag) | ✅ Corrió `CREATE TABLE ... usuarios` y el resto del schema completo; no corrió ninguna migración incremental |
-| (2) Schema existente + flag activo | `True` | `true` | Salta las migraciones incrementales, no recrea nada | ✅ No corrió ni el schema completo ni los incrementales — retornó de inmediato tras el mensaje de "omitiendo" |
-| (3) Schema existente + flag ausente | `True` | *(no seteada)* | Corre las migraciones incrementales normalmente | ✅ Corrió `ALTER TABLE clientes ADD COLUMN IF NOT EXISTS categoria` y el resto del bloque incremental |
+## ⚠️ Verificación con Playwright — NO completada
+Al intentar navegar a `/login` para iniciar la verificación end-to-end, la llamada de Playwright quedó sin responder y Aldo interrumpió la sesión manualmente. El log de Flask (`/tmp/flask_cliente_vinculado.log`) no muestra ningún traceback ni error — el servidor arrancó limpio y quedó escuchando en el puerto 5000 (`Debugger PIN: 768-020-502`), así que el problema fue específicamente en la herramienta de automación del navegador, no en el servidor ni en el código.
 
-Los 3 escenarios se comportaron exactamente como lo especifica la mitigación acordada.
+**Queda pendiente que Aldo verifique manualmente en producción:**
+1. Crear un usuario rol "cliente" vinculándolo a un cliente existente sin usuario → confirmar que `clientes.usuario_id` queda escrito y que ese cliente ve sus datos al loguearse en el portal.
+2. Intentar crear un usuario rol "cliente" sin seleccionar cliente → debe bloquearlo con mensaje claro, sin crear el usuario.
+3. Usar "+ Nuevo cliente" desde la pantalla de "Nuevo usuario" → el cliente se crea, queda seleccionado automáticamente, y los datos ya escritos de email/contraseña/rol no se pierden.
+4. Crear un usuario rol admin u operador → debe seguir funcionando igual, sin pedir cliente vinculado.
+5. (Condición de carrera, más difícil de probar manualmente pero documentada): si dos intentos de vinculación al mismo cliente casi simultáneos ocurrieran, el segundo debe fallar con "Ese cliente ya fue vinculado por otro usuario, intenta de nuevo" y no dejar un usuario huérfano — esto está cubierto por el `UPDATE ... WHERE usuario_id IS NULL` + chequeo de `rowcount` dentro de la misma transacción, pero no se ejecutó una prueba de concurrencia real.
 
-3. **Arranque local (SQLite)** sin cambios ni errores — este archivo no se toca en esa rama de `app.py`, se verificó como control de que nada se rompió colateralmente.
-
-**⚠️ Pendiente:** esta verificación es de código y de lógica simulada, no contra una Postgres real. La verificación definitiva contra producción queda pendiente del próximo deploy en Render (confirmar en los logs de arranque que aparece el mensaje esperado según el estado real de la base al momento del deploy).
-
-## Páginas probadas
-- Arranque completo de la app (SQLite local) vía `python app.py` — sin errores, como control de no-regresión.
-
-## Errores encontrados
-Ninguno. 0 errores de consola, sin tracebacks en el log del servidor local.
-
-## Screenshots tomados
-- Ninguno nuevo — este fix no tiene superficie de UI (solo lógica de arranque de Postgres, no ejercitable desde el navegador en este entorno).
-
-## Validaciones funcionales verificadas
-
-| # | Verificación | Resultado esperado | Estado |
-|---|---|---|---|
-| 1 | Base vacía + `SKIP_MIGRATIONS=true` → crea schema completo | Sí, ignorando el flag | ✅ (simulado) |
-| 2 | Schema existente + `SKIP_MIGRATIONS=true` → salta incrementales | Sí, sin recrear nada | ✅ (simulado) |
-| 3 | Schema existente + `SKIP_MIGRATIONS` ausente → corre incrementales | Sí, igual que antes | ✅ (simulado) |
-| 4 | Ninguna sentencia SQL cambió de contenido | Solo se reordenó el control de flujo | ✅ (diff de código) |
-| 5 | Arranque local SQLite sin regresión | Sin errores | ✅ |
-| — | Verificación real contra Postgres | **Pendiente del próximo deploy en Render** | ⏳ |
+## Páginas y funcionalidad NO probadas en esta sesión
+- La pantalla `/admin/usuarios` con el nuevo campo y modal no se abrió ni una vez en el navegador.
+- El portal cliente (`/cliente/...`) no se verificó tras un vínculo nuevo.
 
 ## Recomendaciones
-- Confirmar en el próximo deploy a Render que el log de arranque muestre el mensaje correcto según el estado real de la base (`"Schema nuevo — ejecutando migraciones completas."` o `"SKIP_MIGRATIONS=true — omitiendo migraciones incrementales..."` o `"Schema existente detectado — migraciones incrementales aplicadas."`), y que no aparezca ningún traceback.
-- El archivo de prueba temporal usado para simular los 3 escenarios se guardó en el scratchpad de la sesión (no en el repo), no queda residuo en el proyecto.
+- Antes de dar por cerrado este commit, correr la lista de verificación de arriba en producción (o repetirla localmente con Playwright cuando la herramienta de automación responda con normalidad).
+- Si el problema de Playwright se repite, revisar si es un problema puntual de la extensión/tab del navegador (reiniciar la sesión de Chrome) antes de asumir que es un problema del código — el arranque del servidor fue limpio.
