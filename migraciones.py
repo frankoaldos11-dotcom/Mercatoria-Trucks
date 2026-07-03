@@ -1,13 +1,4 @@
-import sqlite3
-
-
-DATABASE_NAME = "mercatoria.db"
-
-
-def conectar():
-    conexion = sqlite3.connect(DATABASE_NAME)
-    conexion.row_factory = sqlite3.Row
-    return conexion
+from database import conectar
 
 
 def tabla_existe(cursor, tabla):

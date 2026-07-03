@@ -1,7 +1,7 @@
 # Reporte de Pruebas — 2026-07-03
 
 ## Contexto
-Commit probado en esta sesión: **refactor de `_registrar_historial()`** ("Refactor _registrar_historial: usa cursor de la transacción activa, sin tragar errores"), pendiente de push al cierre de este reporte.
+Commit probado en esta sesión: **elimina `conectar()` local de `migraciones.py`** ("Elimina conectar() local de migraciones.py, usa conexión centralizada"), pendiente de push al cierre de este reporte.
 
 Sesiones anteriores (ya en `main`):
 1. `2f53dee` — "feat: viajes multi-tramo con validacion continuidad y timeline cliente"
@@ -12,50 +12,41 @@ Sesiones anteriores (ya en `main`):
 6. `8e3b144` — "Habilitar transportista en rutas desde asignación + precarga monto de cobro"
 7. `b33a385` — "Fix vehículo colgado al reasignar + reabrir viaje cerrado (solo admin)"
 8. `f2d5a7c` — "Fix: 4 columnas en uso faltantes en migración Postgres (verificación financiera + documento_identidad)"
+9. `590c14a` — "Refactor _registrar_historial: usa cursor de la transacción activa, sin tragar errores"
 
-## Alcance real vs. lo reportado
-El pedido original mencionaba 8 llamadas a `_registrar_historial()`. Al mapear el archivo se encontraron **15 call sites reales** (más que los 8 estimados, probablemente por referirse a una versión anterior del archivo, antes de que prompts recientes de esta misma sesión agregaran `finalizar_viaje`, `reabrir_viaje`, `corregir_cobro` y las ramas de habilitar-rutas). Se reportó antes de implementar y se cubrieron las 15, para no dejar ninguna con el bug original.
+## Corrección aplicada
+`migraciones.py`: se eliminó el `import sqlite3`, el `DATABASE_NAME` local y el `def conectar()` propio (que hacía `sqlite3.connect()` directo). Se reemplazó por `from database import conectar`, el conector centralizado del proyecto. Sin cambios en `tabla_existe`, `columna_existe`, `agregar_columna` ni en la lógica de `ejecutar_migraciones()` — solo cambia el origen de la conexión. Este archivo solo se invoca en la rama SQLite de `app.py` (`else:` del `if USE_POSTGRES:`), así que el `row_factory=sqlite3.Row` del conector centralizado (idéntico al que tenía el conector local) garantiza que `columna_existe()` (que accede a `col["name"]`) siga funcionando igual.
 
-## Correcciones aplicadas
+## Hallazgo reportado — deuda técnica (NO implementada en este commit, solo documentada)
 
-**`_registrar_historial()` (routes/admin.py:84):** nueva firma `_registrar_historial(cursor, viaje_id, accion, detalle="")`. Ya no abre conexión propia, no comitea, no tiene `except Exception: pass`. El `INSERT` corre sobre el cursor de la transacción del endpoint llamador; el commit lo hace el propio endpoint.
+**Riesgo:** `ejecutar_migraciones_pg()` (`migraciones_pg.py:12-23`) chequea `SKIP_MIGRATIONS` **antes** de verificar si el schema existe. Si se arranca contra una Postgres **vacía** (sin tabla `usuarios`) con `SKIP_MIGRATIONS=true`, la función retorna de inmediato sin crear ninguna tabla base (`usuarios`, `viajes`, `clientes`, `rutas`, etc.) — la única rama del código que crea esas tablas desde cero. `migrations_v11.py`/`migrations_v12.py` corren después igualmente (ignoran el flag), pero solo hacen `ALTER TABLE`/`CREATE TABLE IF NOT EXISTS` sobre tablas específicas; si las tablas base no existen, esos `ALTER TABLE` fallan silenciosamente (cada uno con su propio try/except que hace rollback y continúa). Resultado: **base de datos a medio crear, en silencio, sin ningún error visible en el arranque** — la app luego falla en cualquier página que toque la base ("relation does not exist").
 
-**15 call sites actualizados**, cada uno verificado individualmente para que la llamada quede **antes** del `commit()` de su transacción:
-- `completar_tramo_admin`: no tenía cursor propio (la mutación vive en el servicio `completar_tramo()`); se abrió una conexión dedicada solo para este registro, comiteada por el propio endpoint.
-- `nueva_incidencia`, `cambiar_estado`, `marcar_cobrado`, `finalizar_viaje`, `reabrir_viaje`, `verificar_viaje` (x2): estaban después del commit/close; se movieron antes, reutilizando el cursor ya abierto.
-- `asignar_camionero` y `asignar_camionero_vehiculo` (2 y 4 llamadas respectivamente): la rama de "habilitar rutas" ya estaba antes del commit (solo se cambió a usar el cursor); la rama de rechazo cerraba la conexión **antes** de registrar el historial — se reordenó para registrar primero y cerrar después; las llamadas finales (camionero asignado / vehículo desasignado) se movieron de después del commit a antes.
-- `corregir_cobro`: se mantuvo el mismo condicional (`if cambios:`) pero moviendo el registro antes del commit.
+**Mitigación propuesta (pendiente de implementar en un prompt aparte):** mover el chequeo de `SKIP_MIGRATIONS` para que ocurra **después** de la verificación de "¿existe el schema?" (la query `SELECT COUNT(*) FROM information_schema.tables WHERE table_name='usuarios'`), de modo que:
+- Si el schema no existe → siempre se crea completo, sin importar el flag.
+- Si el schema ya existe → el flag puede seguir usándose para saltar el chequeo incremental de columnas nuevas (comportamiento actual, ya usado como optimización de arranque).
 
-`registrar_auditoria()` no se tocó (no fue parte del pedido; ya maneja errores de forma visible con `logger.error`, no un `pass` silencioso).
+**Prioridad:** alta — mismo tipo de bug de familia que ya causó los incidentes de `viaje_tramos` y las 4 columnas de verificación financiera, pero a nivel de bootstrap completo en vez de columnas sueltas. Bajo riesgo de ocurrencia inmediata (requiere una Postgres vacía + el flag ya activo), pero alto impacto si ocurre (app completamente no funcional).
 
-## Bug detectado durante la implementación
-Al reproducir el flujo de asignación en el navegador tras el redeploy de código, la sesión había expirado (token CSRF inválido → `400 Bad Request` en `/admin/viaje/<id>/asignar-todo`). No es un bug del código: fue por el tiempo real transcurrido entre la carga de la página y el envío del formulario durante la sesión de pruebas. Se resolvió recargando la página (nuevo token) y volviendo a iniciar sesión — no requirió cambios de código.
-
-## Páginas y flujo probado
-Un viaje de prueba multi-tramo (2 tramos) recorrido de punta a punta: asignar transportista (rechazado por rutas → habilitar y asignar) → completar tramo 1 → completar tramo 2 → registrar incidencia → confirmar entrega (cambio de estado) → marcar cobrado → finalizar → reabrir → corregir cobro. Los 8 tipos de acción pedidos para la verificación quedaron cubiertos.
+## Páginas probadas
+- Arranque completo de la app (SQLite local) vía `python app.py`
+- `/login` → `/admin/` (dashboard) tras iniciar sesión
 
 ## Errores encontrados
-Ninguno atribuible al refactor. 0 errores de consola en toda la sesión; el único *warning* de consola es el de formato de fecha ya documentado en reportes anteriores (preexistente, no relacionado). Sin tracebacks en el log del servidor Flask.
+Ninguno. 0 errores de consola, sin tracebacks en el log del servidor.
 
 ## Screenshots tomados
-- Captura completa del panel del viaje de prueba mostrando las 11 entradas del Historial de Cambios generadas durante la prueba, en orden cronológico inverso — eliminada al finalizar la sesión (gitignored, `*.png`).
+- Captura del Dashboard tras iniciar sesión, confirmando arranque normal de la app post-refactor — eliminada al finalizar la sesión (gitignored, `*.png`).
 
 ## Validaciones funcionales verificadas
 
-| # | Acción | Entrada esperada en Historial | Estado |
+| # | Verificación | Resultado esperado | Estado |
 |---|---|---|---|
-| 1 | Asignación rechazada por cobertura de rutas | "Asignación de transportista rechazada" | ✅ |
-| 2 | Habilitar rutas y asignar | "Transportista habilitado en rutas" + "Camionero asignado: ..." | ✅ |
-| 3 | Completar tramo 1 y tramo 2 | "Tramo completado" (x2, con el ID de cada tramo) | ✅ |
-| 4 | Registrar incidencia | "Incidencia registrada: Retraso" | ✅ |
-| 5 | Confirmar entrega (cambio de estado) | "Estado cambiado a Entregado · Estado anterior: Asignado" | ✅ |
-| 6 | Marcar cobrado | "Cobro registrado · Forma: Efectivo · Monto: $600.00" | ✅ |
-| 7 | Finalizar viaje | "Viaje finalizado · Estado cambiado a Cerrado" | ✅ |
-| 8 | Reabrir viaje | "Viaje reabierto · Estado cambiado de Cerrado a Entregado" | ✅ |
-| 9 | Corregir cobro | "Cobro corregido · monto: $600.00 → $720.00" | ✅ |
-| — | Todas las entradas conservan orden cronológico correcto y no se pierde ninguna | — | ✅ |
+| 1 | Arranque contra la base SQLite existente (`mercatoria.db`) | Sin errores de migración | ✅ |
+| 2 | Esquema resultante (23 tablas, mismas columnas) comparado antes/después del refactor | Idéntico — 0 tablas nuevas, 0 tablas perdidas, 0 diferencias de columnas | ✅ |
+| 3 | Arranque desde una base SQLite completamente nueva (`crear_base_datos` + `ejecutar_migraciones()`) | Se crean las 23 tablas sin excepciones | ✅ |
+| 4 | Login y carga del Dashboard tras el refactor | Funciona normalmente | ✅ |
 | — | Sin errores de consola ni tracebacks de servidor | — | ✅ |
 
 ## Recomendaciones
-- Los datos de prueba (viaje temporal, ruta "TEST Historial-Tramo2", incidencia y filas de `camionero_ruta` creadas durante la prueba) fueron eliminados/revertidos de `mercatoria.db`; no quedan residuos.
-- Dado que este refactor eliminó el `except Exception: pass` que ocultaba fallos, cualquier error futuro en el `INSERT` de historial (por ejemplo, una migración de Postgres pendiente) ahora **sí** hará fallar visiblemente el endpoint completo, en vez de continuar en silencio sin dejar rastro. Esto es el comportamiento buscado, pero conviene tenerlo presente al hacer el próximo deploy a Postgres: si `historial_viaje` no existiera ahí (no es el caso — ya se confirmó creada por `migrations_v12.py`), estos endpoints ahora fallarían con 500 en vez de simplemente omitir el registro.
+- Retomar la mitigación de `SKIP_MIGRATIONS` documentada arriba en un prompt aparte, tal como se acordó — no se tocó el flag en este commit.
+- El archivo de prueba SQLite temporal creado para la verificación de "arranque desde cero" fue eliminado; no quedan residuos en `mercatoria.db`.
