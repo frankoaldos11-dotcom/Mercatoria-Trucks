@@ -1,6 +1,6 @@
 # 04 — Arquitectura
 
-> Versión MDS: 1.0 | Proyecto: Mercatoria Truck | Actualizado: 2026-06-28
+> Versión MDS: 1.1 | Proyecto: Mercatoria Truck | Actualizado: 2026-07-05
 
 ---
 
@@ -9,7 +9,7 @@
 | Capa | Tecnología |
 |---|---|
 | Backend | Python 3.x + Flask |
-| Base de datos prod | PostgreSQL 16 (Neon) |
+| Base de datos prod | PostgreSQL — Render (`mercatoria-truck-db`, plan Basic, propia de Truck) |
 | Base de datos local | SQLite 3 |
 | ORM | Ninguno — SQL directo con `psycopg2` / `sqlite3` |
 | Autenticación | `flask-bcrypt` + sesiones Flask |
@@ -57,7 +57,8 @@
                       │ SQL
 ┌─────────────────────▼───────────────────────────┐
 │              Base de Datos                       │
-│  Prod: PostgreSQL (Neon) via DATABASE_URL        │
+│  Prod: PostgreSQL Render (mercatoria-truck-db)   │
+│        via DATABASE_URL — propia de Truck        │
 │  Dev:  SQLite (mercatoria.db)                    │
 └─────────────────────────────────────────────────┘
 ```
@@ -128,6 +129,8 @@ Tabla `auditoria` — registra todas las acciones relevantes:
 - `detalle`: descripción libre en JSON o texto
 
 Visible en Admin Panel → Auditoría con filtros por categoría y fecha.
+
+**Regla de implementación:** las funciones que registran historial/auditoría (ej. `_registrar_historial`) reciben el cursor de la transacción activa del endpoint llamador como parámetro — nunca abren su propia conexión. Abrir una conexión nueva dentro de una transacción ya abierta choca por el lock de escritura (crítico en SQLite). El `commit()` lo hace el endpoint, como parte de su propia transacción, para que el registro quede atómico con el cambio que documenta.
 
 ---
 

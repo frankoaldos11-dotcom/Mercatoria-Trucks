@@ -1,6 +1,6 @@
 # 02 — QA Master (Especificación de Calidad)
 
-> Versión MDS: 1.0 | Proyecto: Mercatoria Truck | Actualizado: 2026-06-28
+> Versión MDS: 1.1 | Proyecto: Mercatoria Truck | Actualizado: 2026-07-05
 
 ---
 
@@ -34,11 +34,14 @@ Al terminar cualquier sesión de pruebas con Playwright, generar automáticament
 - [ ] Métricas del mes cargadas sin error (viajes, ingresos, clientes)
 - [ ] Gráficos visibles
 - [ ] Badges del sidebar reflejan viajes urgentes/solicitados en tiempo real
+- [ ] "Viajes en curso" cuenta todo viaje que no esté entregado, cerrado ni cancelado (no solo "en ruta")
 
 ### VIAJES
 - [ ] Crear viaje desde solicitud de cliente
 - [ ] Asignar camionero y vehículo
 - [ ] Cambiar estado: Solicitado → Pendiente → En tránsito → Entregado → Liquidado
+- [ ] No se puede confirmar entrega ni registrar pago sin transportista asignado
+- [ ] Confirmar entrega en una fecha distinta a la del sistema muestra aviso, y si se continúa queda marcada como retroactiva en el Historial
 - [ ] Checklist operativo: marcar ítems, persiste al recargar
 - [ ] Registrar incidencia y cambiar su estado
 - [ ] Notas de viaje: agregar y visualizar
@@ -85,6 +88,7 @@ Al terminar cualquier sesión de pruebas con Playwright, generar automáticament
 - Campos numéricos con valor 0: se muestran como `0`, no como `—`
 - Fechas nulas: filtro `fmt_fecha` devuelve `—` sin excepción
 - Sesión expirada (>8h): redirige a login sin error 500
+- Formulario con error de validación (ej. matrícula/email duplicado): no debe perder los datos ya ingresados, y el segundo envío tras corregir el campo no debe fallar por CSRF
 
 ---
 

@@ -1,6 +1,6 @@
 # 03 — Despliegue (Deploy)
 
-> Versión MDS: 1.0 | Proyecto: Mercatoria Truck | Actualizado: 2026-06-28
+> Versión MDS: 1.1 | Proyecto: Mercatoria Truck | Actualizado: 2026-07-05
 
 ---
 
@@ -9,11 +9,11 @@
 | Componente | Proveedor | Plan | Notas |
 |---|---|---|---|
 | Hosting app | Render | Free | `web: gunicorn app:app` |
-| Base de datos | Neon (PostgreSQL 16) | Free | Expira **2026-07-26** |
+| Base de datos | Render PostgreSQL — `mercatoria-truck-db` | Basic (de pago) | Base propia de Truck, separada de Fuel. No expira (plan de pago). |
 | Repositorio | GitHub | Free | Rama `main` = producción |
 | Dominio | Render subdomain | — | `*.onrender.com` |
 
-> **ALERTA**: La instancia de PostgreSQL en Neon expira el **2026-07-26**. Renovar o migrar antes de esa fecha.
+> **Corrección de infraestructura (2026-07-05):** este MDS documentaba la base de producción como Neon PostgreSQL, expirando el 2026-07-26. Eso ya no es así — producción corre sobre PostgreSQL de Render. Truck y Fuel llegaron a compartir una sola base gratuita de Render (`mercatoria-db`), lo cual causó un incidente real (ver `98_DECISION_LOG.md`); la corrección fue separar Truck a su propia base `mercatoria-truck-db` en plan Basic de pago, dejando `mercatoria-db` para Fuel. **A confirmar**: fecha exacta del cambio de proveedor Neon → Render, y si `mercatoria-db` (Fuel) sigue en plan Free con expiración propia.
 
 ---
 
@@ -24,8 +24,8 @@ Configurar en: Render Dashboard → Mercatoria Truck → Environment
 | Variable | Descripción | Obligatoria |
 |---|---|---|
 | `SECRET_KEY` | Clave Flask (mín. 32 chars hex) | Sí — la app no arranca sin ella |
-| `DATABASE_URL` | PostgreSQL connection string de Neon | Sí |
-| `SKIP_MIGRATIONS` | `true` para saltar migraciones al arrancar | No (default: false) |
+| `DATABASE_URL` | PostgreSQL connection string de `mercatoria-truck-db` (Render) | Sí |
+| `SKIP_MIGRATIONS` | `true` para saltar las migraciones **incrementales** al arrancar — solo tiene efecto si el schema ya existe; contra una base vacía, el schema completo se crea siempre, ignorando el flag (ver "Migraciones" más abajo) | No (default: false) |
 | `MAIL_SERVER` | SMTP server (default: smtp.gmail.com) | No |
 | `MAIL_PORT` | Puerto SMTP (default: 587) | No |
 | `MAIL_USERNAME` | Cuenta de correo | No |
@@ -59,11 +59,12 @@ Render ejecuta automáticamente:
 ## Primer despliegue en un entorno nuevo
 
 1. Conectar el repositorio GitHub en Render.
-2. Configurar todas las variables de entorno obligatorias.
-3. Hacer deploy manual (o push a `main`).
-4. Verificar logs de Render: sin errores en migraciones.
-5. Acceder a `/login` → HTTP 200.
-6. Crear usuario admin desde Render Shell si la BD está vacía:
+2. Crear la base de datos PostgreSQL **propia de este proyecto** (nunca reutilizar la base de otro proyecto Mercatoria). Render Free solo permite **una base de datos gratis por cuenta** — si ya hay otro proyecto usando la base free, este necesita plan de pago (Basic, ~$6/mes). Al crearla, revisar el storage por defecto (Render asigna 15 GB extra) y bajarlo al mínimo si el proyecto arranca vacío.
+3. Configurar todas las variables de entorno obligatorias.
+4. Hacer deploy manual (o push a `main`).
+5. Verificar logs de Render: sin errores en migraciones.
+6. Acceder a `/login` → HTTP 200.
+7. Crear usuario admin desde Render Shell si la BD está vacía:
    ```python
    python -c "
    from app import app
@@ -79,6 +80,7 @@ Render ejecuta automáticamente:
    print('Admin creado')
    "
    ```
+8. **Cambiar de inmediato la contraseña default del admin** (`migraciones_pg.py` siembra `admin` / `1234` en el schema nuevo si no se crea uno manualmente en el paso anterior). No dejarla así en producción.
 
 ---
 
@@ -86,8 +88,8 @@ Render ejecuta automáticamente:
 
 ### Comportamiento automático
 - `USE_POSTGRES=True` (cuando `DATABASE_URL` está definida):
-  1. `migraciones_pg.py` → schema base
-  2. `migrations_v11.py` → columnas y tablas del sprint v1.1
+  1. `migraciones_pg.py` → verifica primero si el schema existe. Si **no** existe, lo crea completo (ignora `SKIP_MIGRATIONS` — una base vacía siempre debe arrancar con su schema). Si **sí** existe, recién ahí se respeta `SKIP_MIGRATIONS` para saltar las columnas/tablas incrementales.
+  2. `migrations_v11.py`, `migrations_v12.py` → columnas y tablas de sprint, siempre corren (no respetan `SKIP_MIGRATIONS` — son idempotentes por diseño, ver `98_DECISION_LOG.md`).
 
 - `USE_POSTGRES=False` (local con SQLite):
   1. `database.py::crear_base_datos()` → schema base
@@ -102,6 +104,10 @@ python migrations_v11.py
 1. Crear `migrations_v12.py` con el patrón de `migrations_v11.py`.
 2. Importar y llamar en `app.py` junto a las anteriores.
 3. La migración debe ser idempotente.
+4. Toda columna nueva que use SQLite (`database.py` / `migraciones.py`) debe reflejarse también en Postgres (`migraciones_pg.py` o el `migrations_v*.py` correspondiente) con `ADD COLUMN IF NOT EXISTS` — nunca solo en un lado.
+
+### Auditoría periódica del esquema
+No esperar a que algo revienta en producción para revisar el esquema. Cada cierto tiempo, comparar columna por columna lo que espera el código (`SELECT`/`INSERT` en `routes/`, `services/`) contra lo que realmente existe en la Postgres de producción (`information_schema.columns`). Ya pasó más de una vez que una columna existía en SQLite pero no en Postgres y solo se detectó cuando falló en vivo.
 
 ---
 

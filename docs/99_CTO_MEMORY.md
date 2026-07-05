@@ -2,7 +2,7 @@
 
 > Memoria técnica del CTO (ChatGPT) para Mercatoria Truck.
 > Contexto y decisiones de arquitectura que Claude Code debe conocer al inicio de cada sesión.
-> Actualizado: 2026-06-28
+> Actualizado: 2026-07-05
 
 ---
 
@@ -16,8 +16,8 @@ Usuarios reales: operadores internos de Mercatoria y clientes externos que contr
 
 ## Estado técnico actual
 
-- **Versión**: v1.1 en producción (Render + Neon PostgreSQL)
-- **Alerta activa**: PostgreSQL Neon expira **2026-07-26** — prioritario
+- **Versión**: v1.1 en producción (Render + PostgreSQL Render — `mercatoria-truck-db`, plan Basic, propia de Truck)
+- **Alerta anterior resuelta**: la expiración de PostgreSQL Neon (2026-07-26) ya no aplica — producción migró de Neon a Render. **A confirmar**: fecha exacta de la migración.
 - **Deuda técnica menor**: reset de contraseña incompleto (tabla existe, flujo no)
 - **Sin tests automatizados**: solo QA manual con Playwright MCP
 
@@ -31,6 +31,7 @@ Usuarios reales: operadores internos de Mercatoria y clientes externos que contr
 4. **Separación SQLite/PostgreSQL transparente.** `db_config.py::USE_POSTGRES` es el único switch.
 5. **Blueprints por módulo.** No mezclar lógica de módulos diferentes en el mismo archivo.
 6. **Services para lógica compleja.** Las rutas solo orquestan; la lógica va en `services/`.
+7. **Una base de datos por proyecto, nunca compartida.** Truck y Fuel deben tener bases de datos separadas — ver "Proyectos hermanos" más abajo y el incidente registrado en `98_DECISION_LOG.md`.
 
 ---
 
@@ -40,6 +41,9 @@ Usuarios reales: operadores internos de Mercatoria y clientes externos que contr
 - El rol `cliente` solo ve sus propios viajes en `/cliente/*` — sin acceso a datos de otros clientes.
 - Los camioneros pueden no tener vehículo asignado (vehículo propio no obligatorio).
 - El precio al cliente y el pago al camionero son independientes (margen configurable en tabla `configuracion`).
+- La asignación de transportista es requisito temprano: un viaje no puede confirmar entrega ni registrar pago sin transportista asignado.
+- La confirmación de entrega solo es válida en la fecha real del sistema. Se permite confirmar fuera de fecha, pero queda marcada de forma diferenciada en el Historial (rastro retroactivo) — nunca se bloquea del todo.
+- "Viajes en curso" se define como todo viaje que no esté entregado, cerrado ni cancelado — no solo los que están "en ruta".
 
 ---
 
@@ -60,7 +64,7 @@ Usuarios reales: operadores internos de Mercatoria y clientes externos que contr
 
 - **v1.2**: ¿API REST o seguir con server-side rendering? (impacta integración con Fuel)
 - **Hosting**: ¿cuándo pasar de Render Free a plan de pago? (elimina el "sleep" del servidor)
-- **BD**: ¿Neon Pro o migrar a Supabase/Railway? Decidir antes de 2026-07-26
+- **BD**: resuelto — Truck ya está en PostgreSQL de Render (`mercatoria-truck-db`, Basic), separada de Fuel. Pendiente confirmar el plan/expiración de la base de Fuel (`mercatoria-db`).
 - **Auth**: ¿Implementar OAuth/SSO para clientes empresariales en v1.3?
 - **Multi-IA**: roadmap v2.0 — ¿qué agentes se integran? ¿para qué casos de uso?
 
@@ -80,6 +84,7 @@ Usuarios reales: operadores internos de Mercatoria y clientes externos que contr
 ## Proyectos hermanos
 
 - **Mercatoria Fuel**: proyecto paralelo, mismo stack (Flask + PostgreSQL), mismos estándares MDS.
+- **Truck y Fuel deben tener bases de datos separadas — nunca compartir una base entre proyectos.** Ya ocurrió un incidente real por esto (esquema de `usuarios` de Fuel pisando el de Truck, 500 en login); detalle completo en `98_DECISION_LOG.md`. Truck corre hoy en su propia base (`mercatoria-truck-db`).
 - En v1.2 se planifica integración entre Truck y Fuel vía API REST.
 
 ---
@@ -100,3 +105,5 @@ Usuarios reales: operadores internos de Mercatoria y clientes externos que contr
 - La compatibilidad SQLite/PostgreSQL en queries de auditoría fue un bug recurrente. La solución: helper `sql_mes_actual()` que devuelve la expresión correcta según `USE_POSTGRES`.
 - El sidebar en móvil tenía problema de scroll: resuelto con CSS específico para `position: sticky` en breakpoints pequeños.
 - Las migraciones v1.1 fallaban en gunicorn porque el contexto de app no estaba disponible en el import. Resuelto: `with app.app_context():` en `app.py` antes de llamar `aplicar_migraciones_v11()`.
+- Truck y Fuel compartieron una base PostgreSQL de Render sin que nadie lo decidiera explícitamente — causó un 500 "column does not exist" en el login de Truck, con el esquema de `usuarios` de Fuel pisando el de Truck. El síntoma parecía un bug de código; la causa era infraestructura compartida. Resuelto separando las bases (detalle en `98_DECISION_LOG.md`).
+- `_registrar_historial()` abría su propia conexión dentro de transacciones ya abiertas de los endpoints — chocaba por lock de escritura en SQLite y el historial no quedaba registrado, con el error tragado por un `try/except: pass`. Refactorizado para recibir el cursor de la transacción activa como parámetro.

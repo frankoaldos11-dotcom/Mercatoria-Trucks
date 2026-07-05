@@ -4,6 +4,20 @@
 
 ---
 
+## Sesión de estabilización PostgreSQL — 2026-07 (post v1.1, en producción)
+
+### Fixes
+- `fix` refactor `_registrar_historial`: recibe el cursor de la transacción activa, elimina el `try/except: pass` que silenciaba errores — `590c14a`
+- `fix` elimina `conectar()` local en `migraciones.py`, usa la conexión centralizada — `65772e0`
+- `fix` orden de `SKIP_MIGRATIONS`: el chequeo del flag va después de verificar si el schema existe, para que una base vacía siempre se cree — `75cf3b0`
+- `fix` vincula usuario cliente a su ficha de cliente desde el admin (antes solo el autoregistro producía el vínculo) + crear cliente desde la pantalla de "Nuevo usuario" — `799a221`
+- `fix` seis correcciones de flujo de viaje: UX de tramos, causa raíz de factura no descargable, transportista como requisito temprano para entrega/pago, formularios que conservan datos tras error de validación, aviso y marca retroactiva en Historial para entregas fuera de fecha, conteo correcto de "Viajes en curso" en dashboard — `b79ef18`
+
+### Incidente de infraestructura
+- Truck y Fuel compartían una sola base PostgreSQL gratuita de Render, causando un 500 "column does not exist" en el login de Truck (esquema de Fuel pisando el de Truck). Resuelto separando Truck a su propia base (`mercatoria-truck-db`, plan Basic). Detalle en `98_DECISION_LOG.md`.
+
+---
+
 ## v1.1 — 2026-Q2 (en producción)
 
 ### Fixes

@@ -70,6 +70,33 @@
 
 ---
 
+## 2026-Q3 — Sesión de estabilización PostgreSQL
+
+### Bases de datos separadas por proyecto (Truck / Fuel)
+**Decisión**: Cada proyecto Mercatoria tiene su propia base de datos desde el día uno; nunca compartir base entre proyectos.
+**Qué pasó**: Truck y Fuel llegaron a compartir una sola base gratuita de Render (`mercatoria-db`). `CREATE TABLE IF NOT EXISTS usuarios` no protege contra esto: la app que arrancó primero (Fuel) "ganó" el esquema de esa tabla (con columnas como `password_hash`, `gasolinera_id`), y Truck quedó leyendo/escribiendo contra una tabla que no era la suya. Síntoma en producción: 500 "column does not exist" en el login de Truck, sin ningún error de conexión — parecía un bug de código, no de infraestructura compartida.
+**Alternativas consideradas**: renombrar/ajustar columnas en la tabla compartida para que sirvieran a ambas apps — descartado porque arreglar Truck así habría roto Fuel (que ya dependía de esa forma de la tabla).
+**Decisión final**: separar Truck a su propia base (`mercatoria-truck-db`, plan Basic de pago), dejando `mercatoria-db` para Fuel. **A confirmar**: fecha exacta de la separación.
+**Razón**: Render Free solo permite una base gratis por cuenta — por eso ambos proyectos habían terminado en la misma. La solución correcta es una base por proyecto, no reutilizar la gratuita entre apps.
+
+---
+
+### Orden de verificación de `SKIP_MIGRATIONS` en el bootstrap de Postgres
+**Decisión**: Dentro de `ejecutar_migraciones_pg()`, el chequeo de `SKIP_MIGRATIONS` ocurre **después** de verificar si el schema existe, nunca antes.
+**Qué pasaba antes**: el flag se evaluaba al principio de la función. Si `SKIP_MIGRATIONS=true` y la Postgres estaba vacía, la función retornaba sin crear ninguna tabla — pero las migraciones de sprint (que si corren siempre, ver decisión de v1.1 más arriba) intentaban `ALTER TABLE` sobre tablas que no existían, y fallaban en silencio (try/except por sentencia). Resultado: base a medio crear, sin ningún error visible en el arranque.
+**Alternativas consideradas**: quitar `SKIP_MIGRATIONS` por completo — descartado porque sigue siendo útil como optimización de arranque cuando el schema ya existe.
+**Razón**: una base vacía siempre debe recibir su schema completo, con o sin el flag. El flag solo tiene sentido para saltar el chequeo incremental de columnas nuevas sobre una base que ya tiene su schema base.
+
+---
+
+### Columnas faltantes recurrentes entre SQLite y Postgres
+**Decisión**: toda columna que el código use debe existir en la migración de Postgres con `ADD COLUMN IF NOT EXISTS`, auditado columna por columna, no solo cuando algo revienta.
+**Qué pasó**: ya ocurrió más de una vez que una columna vivía en el `CREATE TABLE`/`agregar_columna` de SQLite pero faltaba en `migraciones_pg.py` o en los `migrations_v*.py` — casos reales: `viaje_tramos`, `verificado_financiero`/`verificado_por`/`fecha_verificacion`, `documento_identidad`.
+**Razón**: el desarrollo diario ocurre contra SQLite local; es fácil agregar una columna ahí y olvidar el lado Postgres, y el error solo aparece en producción.
+**Nota de tipos**: al elegir el tipo en Postgres, seguir cómo el código ya usa la columna, no el tipo "ideal" — ejemplo: literales `=1`/`=0` sin cast piden `INTEGER`, no `BOOLEAN`; un `[:10]` sobre una fecha en un template pide `TEXT`, no `TIMESTAMP` (un `datetime` de `psycopg2` rompe ese slice).
+
+---
+
 ## 2025-Q4 — v1.0
 
 ### Render como hosting (plan Free)
@@ -81,3 +108,5 @@
 **Decisión**: Neon Free Tier.
 **Alternativas**: Supabase, Railway PostgreSQL, ElephantSQL, Render PostgreSQL (de pago).
 **Razón**: Plan gratuito generoso, branching de BD (útil para dev), buena compatibilidad con psycopg2. Limitación: **instancias free expiran** — atención al vencimiento.
+
+> **Actualización (2026-07-05):** esta decisión quedó revertida — producción ya no usa Neon. Se migró a PostgreSQL de Render (`mercatoria-truck-db`, plan Basic). Ver la decisión "Bases de datos separadas por proyecto" más arriba (2026-Q3) para el contexto del cambio. **A confirmar**: fecha exacta de la migración de proveedor y la razón puntual (no quedó registrada en su momento).

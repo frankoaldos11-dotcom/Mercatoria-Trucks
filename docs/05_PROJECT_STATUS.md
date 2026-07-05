@@ -1,6 +1,6 @@
 # 05 — Estado del Proyecto
 
-> Proyecto: Mercatoria Truck | Actualizado: 2026-06-28
+> Proyecto: Mercatoria Truck | Actualizado: 2026-07-05
 
 ---
 
@@ -10,17 +10,15 @@
 |---|---|
 | Versión desplegada | **v1.1** |
 | Entorno de producción | Render (Python/Gunicorn) |
-| Base de datos | PostgreSQL — Neon Free |
+| Base de datos | PostgreSQL — Render (`mercatoria-truck-db`, plan Basic, propia de Truck) |
 | Estado | **En producción — estable** |
-| Próximo hito | Renovación BD antes de 2026-07-26 |
+| Próximo hito | Ver backlog v1.2+ |
 
 ---
 
-## Alerta crítica
+## Nota de infraestructura (2026-07-05)
 
-> **PostgreSQL en Neon expira el 2026-07-26.**
-> Quedan aproximadamente 28 días. Si la instancia expira, la app en producción pierde acceso a la BD.
-> Acción requerida: renovar el plan de Neon o migrar a otro proveedor PostgreSQL antes de esa fecha.
+> La alerta anterior de este archivo ("PostgreSQL en Neon expira el 2026-07-26") **ya no aplica**. Producción migró de Neon a PostgreSQL de Render. Truck tiene su propia base (`mercatoria-truck-db`, plan Basic de pago — no expira), separada de la base de Fuel (`mercatoria-db`); ambas llegaron a compartir una base gratuita de Render en algún momento, lo cual causó un incidente real (detalle en `98_DECISION_LOG.md`). **A confirmar**: fecha exacta del cambio de proveedor y si `mercatoria-db` (Fuel) sigue en plan Free con expiración propia.
 
 ---
 
@@ -100,7 +98,7 @@
 
 | Pendiente | Responsable | Fecha límite | Impacto |
 |---|---|---|---|
-| Renovar/migrar PostgreSQL Neon | CEO/CTO | **2026-07-26** | Crítico — caída de producción |
+| Confirmar plan/expiración de `mercatoria-db` (Fuel) tras la separación de bases | CEO/CTO | Sin fecha confirmada | Medio — evitar repetir el mismo tipo de alerta con Fuel |
 | Dominio propio (no `*.onrender.com`) | CEO | Sin fecha | Imagen profesional |
 | Plan de pago Render (para no dormir el servidor) | CEO | Sin fecha | UX — arranque lento tras inactividad |
 
