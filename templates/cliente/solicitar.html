@@ -22,9 +22,9 @@
         <!-- Ruta(s) / Tramos -->
         <div class="mb-4">
             <label class="mt-label">Ruta(s) <span style="color:#DC2626;">*</span></label>
-            <p style="margin:0 0 6px;font-size:0.85rem;color:#888;">Selecciona una o varias rutas, en orden, si tu envío tiene paradas intermedias.</p>
+            <p style="margin:0 0 6px;font-size:0.85rem;color:#888;">Selecciona una ruta y pulsa <strong>"Añadir tramo"</strong> para confirmarla — elegirla en la lista no la agrega por sí sola. Repite el paso si tu envío tiene paradas intermedias, en orden.</p>
             <div class="d-flex gap-2">
-                <select id="rutaSelect" class="form-select mt-input" style="flex:1;">
+                <select id="rutaSelect" class="form-select mt-input" style="flex:1;" onchange="marcarRutaPendiente()">
                     <option value="">— Selecciona una ruta —</option>
                     {% for r in rutas %}
                     <option value="{{ r.id }}"
@@ -34,9 +34,12 @@
                     </option>
                     {% endfor %}
                 </select>
-                <button type="button" onclick="agregarTramo()" class="btn-mt" style="white-space:nowrap;">
+                <button type="button" id="btnAgregarTramo" onclick="agregarTramo()" class="btn-mt" style="white-space:nowrap;">
                     <i class="bi bi-plus-lg"></i> Añadir tramo
                 </button>
+            </div>
+            <div id="rutaPendienteAviso" style="display:none;color:#E86A2C;font-size:0.8rem;font-weight:600;margin-top:6px;">
+                <i class="bi bi-arrow-up"></i> Pulsa "Añadir tramo" para confirmar esta ruta.
             </div>
             <div id="tramosList" class="mt-2" style="display:flex;flex-direction:column;gap:6px;"></div>
             <div id="tramosError" style="display:none;color:#DC2626;font-size:0.85rem;font-weight:600;margin-top:6px;"></div>
@@ -224,12 +227,26 @@ function renderTramos() {
     validarContinuidad();
 }
 
+function marcarRutaPendiente() {
+    var sel = document.getElementById('rutaSelect');
+    var btn = document.getElementById('btnAgregarTramo');
+    var aviso = document.getElementById('rutaPendienteAviso');
+    if (sel.value) {
+        btn.classList.add('btn-mt-pendiente');
+        aviso.style.display = 'block';
+    } else {
+        btn.classList.remove('btn-mt-pendiente');
+        aviso.style.display = 'none';
+    }
+}
+
 function agregarTramo() {
     var sel = document.getElementById('rutaSelect');
     if (!sel.value) return;
     var opt = sel.options[sel.selectedIndex];
     solTramos.push({ rutaId: sel.value, origen: opt.dataset.origen, destino: opt.dataset.destino });
     sel.value = '';
+    marcarRutaPendiente();
     renderTramos();
 }
 

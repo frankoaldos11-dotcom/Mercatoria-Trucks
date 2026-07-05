@@ -289,7 +289,8 @@ def detalle_viaje(viaje_id):
         "cliente/viaje_detalle.html",
         viaje=viaje,
         paso_actual=paso_actual,
-        tramos=tramos
+        tramos=tramos,
+        factura_error=request.args.get("factura_error")
     )
 
 
@@ -324,9 +325,13 @@ def descargar_factura(viaje_id):
         from services.pdf_service import generar_factura_cliente
         pdf_bytes = generar_factura_cliente(viaje_id)
     except ValueError as e:
-        return redirect(url_for("cliente.detalle_viaje", viaje_id=viaje_id))
-    except Exception:
-        return redirect(url_for("cliente.detalle_viaje", viaje_id=viaje_id))
+        return redirect(url_for("cliente.detalle_viaje", viaje_id=viaje_id, factura_error=str(e)))
+    except Exception as e:
+        current_app.logger.error(f"Error generando factura viaje #{viaje_id}: {e}")
+        return redirect(url_for(
+            "cliente.detalle_viaje", viaje_id=viaje_id,
+            factura_error="No se pudo generar la factura. Contacta con soporte si el problema persiste."
+        ))
 
     return send_file(
         io.BytesIO(pdf_bytes),
@@ -409,10 +414,12 @@ def solicitar_envio():
         if cliente_row:
             cliente_id = cliente_row["id"]
         else:
+            email_usuario = session.get("usuario", "")
+            nombre_fallback = session.get("nombre") or email_usuario.split("@")[0] or "Cliente"
             cur.execute("""
                 INSERT INTO clientes (usuario_id, nombre, email, contacto, telefono)
                 VALUES (?, ?, ?, ?, ?)
-            """, (session["user_id"], session.get("nombre", ""), session.get("usuario", ""), session.get("usuario", ""), ""))
+            """, (session["user_id"], nombre_fallback, email_usuario, email_usuario, ""))
             cliente_id = cur.lastrowid
             con.commit()
 

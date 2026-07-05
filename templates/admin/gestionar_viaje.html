@@ -365,7 +365,14 @@
 {% else %}
 <div class="card step-active">
     <div class="step-title-row"><span class="step-num">5</span> Confirmar entrega</div>
-    {% if tramos and not tramos_ok %}
+    {% if not done1 %}
+    <p style="font-size:12px;color:#c0392b;margin:8px 0 10px;">
+        <i class="bi bi-exclamation-triangle-fill"></i> Asigna un transportista antes de confirmar la entrega.
+    </p>
+    <button type="button" class="step-btn" disabled style="opacity:.5;cursor:not-allowed;">
+        <i class="bi bi-check2-circle"></i> Confirmar entrega
+    </button>
+    {% elif tramos and not tramos_ok %}
     <p style="font-size:12px;color:#c0392b;margin:8px 0 10px;">
         <i class="bi bi-exclamation-triangle-fill"></i> Completa todos los tramos del viaje antes de confirmar la entrega.
     </p>
@@ -374,14 +381,27 @@
     </button>
     {% else %}
     <p style="font-size:12px;color:#888;margin:8px 0 10px;">Confirmar que la carga fue entregada en destino.</p>
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado"
-          onsubmit="return confirm('¿Confirmar entrega? Esto cambiará el estado a Entregado.')">
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado" id="formConfirmarEntrega"
+          onsubmit="return confirmarEntregaSubmit()">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="estado" value="Entregado">
         <button type="submit" class="step-btn">
             <i class="bi bi-check2-circle"></i> Confirmar entrega
         </button>
     </form>
+    <script>
+    function confirmarEntregaSubmit() {
+        var fechaGuardada = {{ (viaje.fecha_entrega or '')[:10]|tojson }};
+        var hoy = new Date().toISOString().slice(0, 10);
+        if (fechaGuardada && fechaGuardada !== hoy) {
+            return confirm(
+                'La fecha de descarga registrada (' + fechaGuardada + ') no es la de hoy (' + hoy + ').\n' +
+                '¿Confirmar de todas formas? Quedará marcada como entrega con fecha retroactiva en el Historial.'
+            );
+        }
+        return confirm('¿Confirmar entrega? Esto cambiará el estado a Entregado.');
+    }
+    </script>
     {% endif %}
 </div>
 {% endif %}
@@ -760,6 +780,14 @@
         </div>
     </details>
     {% endif %}
+    {% elif not done1 %}
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <i class="bi bi-cash-coin" style="color:#E86A2C;font-size:1.2rem;"></i>
+        <strong style="font-size:14px;">Registro de cobro al cliente</strong>
+    </div>
+    <p style="font-size:12px;color:#c0392b;margin:0;">
+        <i class="bi bi-exclamation-triangle-fill"></i> Asigna un transportista antes de registrar el cobro.
+    </p>
     {% else %}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
         <i class="bi bi-cash-coin" style="color:#E86A2C;font-size:1.2rem;"></i>

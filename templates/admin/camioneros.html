@@ -45,33 +45,33 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-crud-field">
                 <label>Nombre *</label>
-                <input type="text" name="nombre" class="input-crud" required placeholder="Nombre completo">
+                <input type="text" name="nombre" class="input-crud" required placeholder="Nombre completo" value="{{ form_data.get('nombre', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Teléfono</label>
-                <input type="text" name="telefono" class="input-crud" placeholder="Teléfono de contacto">
+                <input type="text" name="telefono" class="input-crud" placeholder="Teléfono de contacto" value="{{ form_data.get('telefono', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Licencia</label>
-                <input type="text" name="licencia" class="input-crud" placeholder="Número de licencia">
+                <input type="text" name="licencia" class="input-crud" placeholder="Número de licencia" value="{{ form_data.get('licencia', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Carnet de Identidad</label>
-                <input type="text" name="carnet_identidad" class="input-crud" placeholder="CI / DUI / DNI">
+                <input type="text" name="carnet_identidad" class="input-crud" placeholder="CI / DUI / DNI" value="{{ form_data.get('carnet_identidad', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Licencia Operativa</label>
-                <input type="text" name="licencia_operativa" class="input-crud" placeholder="Ej: LO-2024-001">
+                <input type="text" name="licencia_operativa" class="input-crud" placeholder="Ej: LO-2024-001" value="{{ form_data.get('licencia_operativa', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Empresa</label>
-                <input type="text" name="empresa" class="input-crud" placeholder="Empresa o autónomo">
+                <input type="text" name="empresa" class="input-crud" placeholder="Empresa o autónomo" value="{{ form_data.get('empresa', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Estado</label>
                 <select name="estado" class="input-crud">
                     {% for e in estados %}
-                    <option value="{{ e }}">{{ e }}</option>
+                    <option value="{{ e }}" {{ 'selected' if form_data and form_data.get('estado') == e else '' }}>{{ e }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -80,32 +80,32 @@
             </div>
             <div class="form-crud-field">
                 <label>Matrícula <span style="color:#DC2626;">*</span></label>
-                <input type="text" name="matricula" id="campo-matricula" class="input-crud" placeholder="Matrícula" required>
+                <input type="text" name="matricula" id="campo-matricula" class="input-crud" placeholder="Matrícula" required value="{{ form_data.get('matricula', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Marca</label>
-                <input type="text" name="marca" class="input-crud" placeholder="Marca">
+                <input type="text" name="marca" class="input-crud" placeholder="Marca" value="{{ form_data.get('marca', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Modelo</label>
-                <input type="text" name="modelo" class="input-crud" placeholder="Modelo">
+                <input type="text" name="modelo" class="input-crud" placeholder="Modelo" value="{{ form_data.get('modelo', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Tipo de vehículo</label>
                 <select name="tipo" class="input-crud">
                     <option value="">— Sin especificar —</option>
                     {% for t in tipos_vehiculo %}
-                    <option value="{{ t.nombre }}">{{ t.nombre }}</option>
+                    <option value="{{ t.nombre }}" {{ 'selected' if form_data and form_data.get('tipo') == t.nombre else '' }}>{{ t.nombre }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="form-crud-field">
                 <label>Capacidad</label>
-                <input type="text" name="capacidad" class="input-crud" placeholder="Ej: 10 ton">
+                <input type="text" name="capacidad" class="input-crud" placeholder="Ej: 10 ton" value="{{ form_data.get('capacidad', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
                 <label>Chapa Remolque</label>
-                <input type="text" name="chapa_remolque" class="input-crud" placeholder="Matrícula del remolque">
+                <input type="text" name="chapa_remolque" class="input-crud" placeholder="Matrícula del remolque" value="{{ form_data.get('chapa_remolque', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field form-crud-submit">
                 <button type="submit" class="btn-crud-primary">Registrar camionero</button>

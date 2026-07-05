@@ -145,7 +145,7 @@ def dashboard():
     cursor.execute("""
         SELECT
             COUNT(CASE WHEN LOWER(estado) IN ('pendiente','solicitado') THEN 1 END) AS pendientes,
-            COUNT(CASE WHEN LOWER(estado) IN ('en ruta','en_ruta')      THEN 1 END) AS en_curso,
+            COUNT(CASE WHEN LOWER(estado) NOT IN ('entregado','cerrado','cancelado') THEN 1 END) AS en_curso,
             COUNT(CASE WHEN LOWER(estado) = 'entregado'                 THEN 1 END) AS entregados,
             COUNT(CASE WHEN LOWER(estado) = 'asignado'                  THEN 1 END) AS asignados,
             COUNT(CASE WHEN LOWER(estado) = 'cancelado'                 THEN 1 END) AS cancelados
@@ -258,33 +258,40 @@ def nuevo_viaje_admin():
     obs_operativas = request.form.get("observaciones_operativas", "").strip()
     cliente_id_str = request.form.get("cliente_id", "").strip()
 
-    if not ruta_ids or not tipo_carga:
-        return redirect("/admin/viajes?access_error=Selecciona+la+ruta+y+el+tipo+de+carga")
+    def _error_con_contexto(mensaje):
+        con = conectar()
+        cur = con.cursor()
+        ctx = _contexto_lista_viajes(cur)
+        con.close()
+        return render_template("admin/viajes.html", error=mensaje, form_data=request.form, **ctx)
 
-    ruta_ids = [int(r) for r in ruta_ids]
+    if not ruta_ids or not tipo_carga:
+        return _error_con_contexto("Selecciona la ruta y el tipo de carga")
+
+    ruta_ids_int = [int(r) for r in ruta_ids]
 
     con = conectar()
     cur = con.cursor()
 
-    placeholders = ",".join("?" for _ in ruta_ids)
+    placeholders = ",".join("?" for _ in ruta_ids_int)
     cur.execute(
         f"SELECT id, origen, destino FROM rutas WHERE id IN ({placeholders}) AND activa = 1",
-        ruta_ids
+        ruta_ids_int
     )
     rutas_por_id = {r["id"]: r for r in cur.fetchall()}
-    if len(rutas_por_id) != len(set(ruta_ids)):
+    if len(rutas_por_id) != len(set(ruta_ids_int)):
         con.close()
-        return redirect("/admin/viajes?access_error=Ruta+no+válida")
-    rutas_ordenadas = [rutas_por_id[rid] for rid in ruta_ids]
+        return _error_con_contexto("Ruta no válida")
+    rutas_ordenadas = [rutas_por_id[rid] for rid in ruta_ids_int]
 
     try:
         validar_continuidad(rutas_ordenadas)
     except ContinuidadError as e:
         con.close()
-        return redirect(f"/admin/viajes?access_error={quote_plus(str(e))}")
+        return _error_con_contexto(str(e))
 
     ruta = rutas_ordenadas[0]
-    ruta_id = ruta_ids[0]
+    ruta_id = ruta_ids_int[0]
     origen_viaje = rutas_ordenadas[0]["origen"]
     destino_viaje = rutas_ordenadas[-1]["destino"]
 
@@ -331,8 +338,8 @@ def nuevo_viaje_admin():
     ))
     viaje_id = cur.lastrowid
     crear_checklist_viaje(cur, viaje_id)
-    if len(ruta_ids) > 1:
-        crear_tramos_viaje(cur, viaje_id, ruta_ids)
+    if len(ruta_ids_int) > 1:
+        crear_tramos_viaje(cur, viaje_id, ruta_ids_int)
     con.commit()
     con.close()
 
@@ -354,11 +361,7 @@ def api_origenes_destinos():
     return jsonify(sorted(set(origenes + destinos)))
 
 
-@admin_bp.route("/viajes")
-def viajes():
-    if not requiere_admin():
-        return redirect("/login")
-
+def _contexto_lista_viajes(cursor):
     filtro = request.args.get("estado", "").strip().lower()
     buscar = request.args.get("buscar", "").strip()
     pagina = max(1, int(request.args.get("pagina", 1) or 1))
@@ -382,9 +385,6 @@ def viajes():
         params.extend([like, like, like, like])
 
     where = ("WHERE " + " AND ".join(condiciones)) if condiciones else ""
-
-    conexion = conectar()
-    cursor = conexion.cursor()
 
     cursor.execute(f"""
         SELECT COUNT(*) AS total FROM viajes v
@@ -420,19 +420,29 @@ def viajes():
     cursor.execute("SELECT id, nombre FROM clientes WHERE deleted_at IS NULL ORDER BY nombre")
     clientes_list = cursor.fetchall()
 
+    return {
+        "lista": lista,
+        "filtro": filtro,
+        "buscar": buscar,
+        "pagina_actual": pagina,
+        "total_paginas": total_paginas,
+        "total": total,
+        "rutas_list": rutas_list,
+        "clientes_list": clientes_list,
+    }
+
+
+@admin_bp.route("/viajes")
+def viajes():
+    if not requiere_admin():
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    ctx = _contexto_lista_viajes(cursor)
     conexion.close()
 
-    return render_template(
-        "admin/viajes.html",
-        lista=lista,
-        filtro=filtro,
-        buscar=buscar,
-        pagina_actual=pagina,
-        total_paginas=total_paginas,
-        total=total,
-        rutas_list=rutas_list,
-        clientes_list=clientes_list,
-    )
+    return render_template("admin/viajes.html", **ctx)
 
 
 def _parsear_observaciones(obs):
@@ -848,7 +858,7 @@ def cambiar_estado(id):
     cursor = conexion.cursor()
 
     cursor.execute(f"""
-        SELECT camionero_id, vehiculo_id, precio_final, precio_cliente, precio, estado, cliente_id
+        SELECT camionero_id, vehiculo_id, precio_final, precio_cliente, precio, estado, cliente_id, fecha_entrega
         FROM viajes WHERE id = {ph()}
     """, (id,))
     viaje = cursor.fetchone()
@@ -859,6 +869,9 @@ def cambiar_estado(id):
             return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+Asignado+debes+asignar+un+camionero+y+un+veh%C3%ADculo")
 
     if estado == "Entregado":
+        if not viaje or not viaje["camionero_id"]:
+            conexion.close()
+            return redirect(f"/admin/viajes/{id}/gestionar?error=No+puedes+confirmar+la+entrega+sin+un+transportista+asignado")
         conexion.close()
         if tramos_completados(id) is False:
             return redirect(f"/admin/viajes/{id}/gestionar?error=Completa+todos+los+tramos+antes+de+confirmar+la+entrega")
@@ -868,12 +881,22 @@ def cambiar_estado(id):
     cursor.execute(f"UPDATE viajes SET estado = {ph()} WHERE id = {ph()}", (estado, id))
 
     ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    entrega_retroactiva = False
+    fecha_entrega_previa = None
     if estado == "Asignado":
         cursor.execute(f"UPDATE viajes SET fecha_asignacion = {ph()} WHERE id = {ph()}", (ahora, id))
     elif estado in ["En ruta", "Carga recogida"]:
         cursor.execute(f"UPDATE viajes SET fecha_recogida = {ph()} WHERE id = {ph()}", (ahora, id))
     elif estado == "Entregado":
-        cursor.execute(f"UPDATE viajes SET fecha_entrega = {ph()} WHERE id = {ph()}", (ahora, id))
+        fecha_entrega_previa = ((viaje["fecha_entrega"] or "") if viaje else "")[:10]
+        hoy = datetime.now().strftime("%Y-%m-%d")
+        if not fecha_entrega_previa:
+            # No había fecha registrada contra la que comparar: se registra hoy con normalidad.
+            cursor.execute(f"UPDATE viajes SET fecha_entrega = {ph()} WHERE id = {ph()}", (ahora, id))
+        elif fecha_entrega_previa != hoy:
+            # Ya había una fecha de descarga registrada y no coincide con hoy: se respeta esa
+            # fecha (no se sobreescribe) y queda marcada como retroactiva en el historial.
+            entrega_retroactiva = True
 
     if estado.lower() in ["entregado", "cancelado"]:
         if viaje and viaje["vehiculo_id"]:
@@ -890,8 +913,14 @@ def cambiar_estado(id):
 
     estado_anterior = viaje["estado"] if viaje else None
 
-    _registrar_historial(cursor, id, f"Estado cambiado a {estado}",
-                         f"Estado anterior: {estado_anterior}" if estado_anterior else "")
+    if entrega_retroactiva:
+        _registrar_historial(
+            cursor, id, "Entrega confirmada con fecha retroactiva",
+            f"Fecha de descarga registrada: {fecha_entrega_previa} · Confirmado el: {ahora}"
+        )
+    else:
+        _registrar_historial(cursor, id, f"Estado cambiado a {estado}",
+                             f"Estado anterior: {estado_anterior}" if estado_anterior else "")
 
     conexion.commit()
     conexion.close()
@@ -1440,6 +1469,13 @@ def marcar_cobrado(id):
 
     con = conectar()
     cur = con.cursor()
+
+    cur.execute(f"SELECT camionero_id FROM viajes WHERE id = {ph()}", (id,))
+    viaje = cur.fetchone()
+    if not viaje or not viaje["camionero_id"]:
+        con.close()
+        return redirect(f"/admin/viajes/{id}/gestionar?error=No+puedes+registrar+el+cobro+sin+un+transportista+asignado")
+
     cur.execute(
         f"UPDATE viajes SET forma_cobro={ph()}, codigo_transaccion={ph()}, "
         f"comentario_cobro={ph()}, fecha_cobro=CURRENT_TIMESTAMP, monto_cobrado={ph()} "
@@ -1850,6 +1886,7 @@ def admin_camioneros():
         total_paginas=total_paginas,
         total=total,
         error=error,
+        form_data=request.form if error else None,
     )
 
 
@@ -2032,15 +2069,15 @@ def admin_clientes():
     conexion = conectar()
     cursor = conexion.cursor()
 
+    error = None
     if request.method == "POST":
         cliente_id, error = _validar_y_crear_cliente(cursor, request.form)
-        if error:
+        if not error:
+            conexion.commit()
             conexion.close()
-            return redirect(f"/admin/clientes?access_error={quote_plus(error)}")
-
-        conexion.commit()
-        conexion.close()
-        return redirect("/admin/clientes?ok=1")
+            return redirect("/admin/clientes?ok=1")
+        # Si hubo error de validación, no se comitea nada (el INSERT no llegó a
+        # correr) y se cae al listado de abajo conservando lo ya escrito.
 
     buscar_cl  = request.args.get("buscar", "").strip()
     filtro_cat = request.args.get("categoria", "").strip()
@@ -2083,7 +2120,9 @@ def admin_clientes():
                            categorias=CATEGORIAS_CLIENTE,
                            pagina_actual=pagina,
                            total_paginas=total_paginas_cl,
-                           total=total_cl)
+                           total=total_cl,
+                           error=error,
+                           form_data=request.form if error else None)
 
 
 @admin_bp.route("/clientes/crear-rapido", methods=["POST"])

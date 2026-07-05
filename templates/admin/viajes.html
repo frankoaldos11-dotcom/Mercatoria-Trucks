@@ -27,7 +27,7 @@
 </div>
 
 <!-- Modal Nuevo Viaje -->
-<div id="modalNuevoViaje" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050;align-items:center;justify-content:center;padding:16px;">
+<div id="modalNuevoViaje" style="display:{{ 'flex' if error else 'none' }};position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050;align-items:center;justify-content:center;padding:16px;">
     <div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.2);">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid #f0f0f0;">
             <h2 style="margin:0;font-size:18px;">Nueva solicitud de viaje</h2>
@@ -37,13 +37,19 @@
         <form method="POST" action="/admin/viajes/nuevo" style="padding:24px;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
+            {% if error %}
+            <div style="background:#fde8e8;color:#c0392b;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;font-weight:600;">
+                {{ error }}
+            </div>
+            {% endif %}
+
             <!-- Cliente -->
             <div class="mb-3">
                 <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Cliente</label>
                 <select name="cliente_id" class="form-select" style="border-radius:8px;font-size:14px;">
                     <option value="">— Sin cliente asignado —</option>
                     {% for c in clientes_list %}
-                    <option value="{{ c.id }}">{{ c.nombre }}</option>
+                    <option value="{{ c.id }}" {{ 'selected' if form_data and form_data.get('cliente_id') == c.id|string else '' }}>{{ c.nombre }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -51,9 +57,9 @@
             <!-- Ruta(s) / Tramos -->
             <div class="mb-3">
                 <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Ruta(s) <span style="color:#DC2626;">*</span></label>
-                <p style="margin:0 0 6px;font-size:12px;color:#888;">Selecciona una o varias rutas, en orden, para crear un viaje con tramos.</p>
+                <p style="margin:0 0 6px;font-size:12px;color:#888;">Selecciona una ruta y pulsa <strong>"Añadir tramo"</strong> para confirmarla — elegirla en la lista no la agrega por sí sola. Repite el paso, en orden, si el viaje tiene paradas intermedias.</p>
                 <div style="display:flex;gap:8px;">
-                    <select id="mvRutaSelect" class="form-select" style="border-radius:8px;font-size:14px;flex:1;">
+                    <select id="mvRutaSelect" class="form-select" style="border-radius:8px;font-size:14px;flex:1;" onchange="mvMarcarRutaPendiente()">
                         <option value="">— Selecciona una ruta —</option>
                         {% for r in rutas_list %}
                         <option value="{{ r.id }}" data-origen="{{ r.origen }}" data-destino="{{ r.destino }}">
@@ -61,10 +67,13 @@
                         </option>
                         {% endfor %}
                     </select>
-                    <button type="button" onclick="mvAgregarTramo()"
+                    <button type="button" id="mvBtnAgregarTramo" onclick="mvAgregarTramo()"
                             style="background:#E86A2C;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
                         <i class="bi bi-plus-lg"></i> Añadir tramo
                     </button>
+                </div>
+                <div id="mvRutaPendienteAviso" style="display:none;color:#E86A2C;font-size:11px;font-weight:600;margin-top:6px;">
+                    <i class="bi bi-arrow-up"></i> Pulsa "Añadir tramo" para confirmar esta ruta.
                 </div>
                 <div id="mvTramosList" style="margin-top:10px;display:flex;flex-direction:column;gap:6px;"></div>
                 <div id="mvTramosError" style="display:none;color:#DC2626;font-size:12px;font-weight:600;margin-top:6px;"></div>
@@ -76,7 +85,8 @@
                 <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Tipo de carga <span style="color:#DC2626;">*</span></label>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;">
                     {% for tc in ['Seca','Refrigerada','Congelada','Desagrupada','Frágil','Peligrosa','Otra'] %}
-                    <input type="radio" name="tipo_carga" id="mv_tc_{{ loop.index }}" value="{{ tc }}" style="display:none;" required>
+                    <input type="radio" name="tipo_carga" id="mv_tc_{{ loop.index }}" value="{{ tc }}" style="display:none;" required
+                           {{ 'checked' if form_data and form_data.get('tipo_carga') == tc else '' }}>
                     <label for="mv_tc_{{ loop.index }}" class="toggle-btn-mv">{{ tc }}</label>
                     {% endfor %}
                 </div>
@@ -87,7 +97,8 @@
                 <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Tipo de transporte</label>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;">
                     {% for tt in ['Plancha','Rastra','Portacontenedor','Furgón','Refrigerado','Cerrado','Abierto','Otro'] %}
-                    <input type="radio" name="tipo_transporte" id="mv_tt_{{ loop.index }}" value="{{ tt }}" style="display:none;">
+                    <input type="radio" name="tipo_transporte" id="mv_tt_{{ loop.index }}" value="{{ tt }}" style="display:none;"
+                           {{ 'checked' if form_data and form_data.get('tipo_transporte') == tt else '' }}>
                     <label for="mv_tt_{{ loop.index }}" class="toggle-btn-mv">{{ tt }}</label>
                     {% endfor %}
                 </div>
@@ -97,15 +108,18 @@
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
                 <div style="flex:1;min-width:120px;">
                     <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Peso (ton.) <span style="color:#DC2626;">*</span></label>
-                    <input type="number" name="peso_toneladas" class="form-control" step="0.01" min="0.01" placeholder="Ej: 2.5" required style="border-radius:8px;font-size:14px;">
+                    <input type="number" name="peso_toneladas" class="form-control" step="0.01" min="0.01" placeholder="Ej: 2.5" required style="border-radius:8px;font-size:14px;"
+                           value="{{ form_data.get('peso_toneladas', '') if form_data else '' }}">
                 </div>
                 <div style="flex:1;min-width:120px;">
                     <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Cant. contenedores</label>
-                    <input type="text" name="cantidad_contenedores" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 2" style="border-radius:8px;font-size:14px;">
+                    <input type="text" name="cantidad_contenedores" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 2" style="border-radius:8px;font-size:14px;"
+                           value="{{ form_data.get('cantidad_contenedores', '') if form_data else '' }}">
                 </div>
                 <div style="flex:1;min-width:140px;">
                     <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">N° contenedor</label>
-                    <input type="text" name="numero_contenedor" class="form-control" placeholder="Ej: ABCU1234567" style="border-radius:8px;font-size:14px;">
+                    <input type="text" name="numero_contenedor" class="form-control" placeholder="Ej: ABCU1234567" style="border-radius:8px;font-size:14px;"
+                           value="{{ form_data.get('numero_contenedor', '') if form_data else '' }}">
                 </div>
             </div>
 
@@ -113,12 +127,12 @@
             <div style="margin-bottom:12px;">
                 <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Observaciones operativas</label>
                 <textarea name="observaciones_operativas" class="form-control" rows="2"
-                          placeholder="Temperatura, instrucciones de manejo, ventanas horarias..." style="border-radius:8px;font-size:14px;"></textarea>
+                          placeholder="Temperatura, instrucciones de manejo, ventanas horarias..." style="border-radius:8px;font-size:14px;">{{ form_data.get('observaciones_operativas', '') if form_data else '' }}</textarea>
             </div>
             <div style="margin-bottom:20px;">
                 <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Notas adicionales</label>
                 <textarea name="notas" class="form-control" rows="2"
-                          placeholder="Información adicional (opcional)" style="border-radius:8px;font-size:14px;"></textarea>
+                          placeholder="Información adicional (opcional)" style="border-radius:8px;font-size:14px;">{{ form_data.get('notas', '') if form_data else '' }}</textarea>
             </div>
 
             <div style="display:flex;gap:10px;">
@@ -169,6 +183,21 @@ input[type="radio"]:checked + .toggle-btn-mv {
 <script>
 var mvTramos = [];
 
+{% if form_data %}
+(function() {
+    var rutasDisponibles = {{ rutas_list|map(attribute='id')|list|tojson }};
+    var rutasOrigen = {{ rutas_list|map(attribute='origen')|list|tojson }};
+    var rutasDestino = {{ rutas_list|map(attribute='destino')|list|tojson }};
+    var rutaIdsPrevios = {{ form_data.getlist('ruta_id')|tojson }};
+    rutaIdsPrevios.forEach(function(rid) {
+        var idx = rutasDisponibles.indexOf(parseInt(rid, 10));
+        if (idx !== -1) {
+            mvTramos.push({ rutaId: String(rutasDisponibles[idx]), origen: rutasOrigen[idx], destino: rutasDestino[idx] });
+        }
+    });
+})();
+{% endif %}
+
 function mvRenderTramos() {
     var list = document.getElementById('mvTramosList');
     var container = document.getElementById('mvTramosContainer');
@@ -193,12 +222,26 @@ function mvRenderTramos() {
     mvValidarContinuidad();
 }
 
+function mvMarcarRutaPendiente() {
+    var sel = document.getElementById('mvRutaSelect');
+    var btn = document.getElementById('mvBtnAgregarTramo');
+    var aviso = document.getElementById('mvRutaPendienteAviso');
+    if (sel.value) {
+        btn.style.boxShadow = '0 0 0 3px rgba(232, 106, 44, 0.35)';
+        aviso.style.display = 'block';
+    } else {
+        btn.style.boxShadow = 'none';
+        aviso.style.display = 'none';
+    }
+}
+
 function mvAgregarTramo() {
     var sel = document.getElementById('mvRutaSelect');
     if (!sel.value) return;
     var opt = sel.options[sel.selectedIndex];
     mvTramos.push({ rutaId: sel.value, origen: opt.dataset.origen, destino: opt.dataset.destino });
     sel.value = '';
+    mvMarcarRutaPendiente();
     mvRenderTramos();
 }
 
@@ -243,6 +286,10 @@ document.querySelector('#modalNuevoViaje form').addEventListener('submit', funct
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') document.getElementById('modalNuevoViaje').style.display = 'none';
 });
+
+if (mvTramos.length > 0) {
+    mvRenderTramos();
+}
 </script>
 
 {# Buscador #}

@@ -1,9 +1,7 @@
-# Reporte de Pruebas — 2026-07-03
+# Reporte de Pruebas — 2026-07-05
 
 ## Contexto
-Commit de esta sesión: **vincular usuario cliente a su ficha de cliente desde el admin, y crear cliente desde la pantalla de "Nuevo usuario"** ("Vincular usuario cliente a su ficha desde admin + crear cliente desde pantalla de usuario"), pendiente de push al cierre de este reporte.
-
-**⚠️ La verificación con Playwright de este commit NO se completó** — se documenta al final por qué, y queda pendiente de verificación manual en producción por Aldo.
+Commit de esta sesión: **seis correcciones en el flujo de viajes** ("Fixes flujo viaje: tramo UX, factura PDF, validacion transportista temprana, conservar datos, entrega fuera de fecha, conteo en curso"), pendiente de push al cierre de este reporte.
 
 Sesiones anteriores (ya en `main`):
 1. `2f53dee` — "feat: viajes multi-tramo con validacion continuidad y timeline cliente"
@@ -17,45 +15,56 @@ Sesiones anteriores (ya en `main`):
 9. `590c14a` — "Refactor _registrar_historial: usa cursor de la transacción activa, sin tragar errores"
 10. `65772e0` — "Elimina conectar() local de migraciones.py, usa conexión centralizada"
 11. `75cf3b0` — "Fix: SKIP_MIGRATIONS ya no puede dejar una Postgres vacia sin schema"
+12. `799a221` — "Vincular usuario cliente a su ficha desde admin + crear cliente desde pantalla de usuario"
 
-## Problema que resuelve este commit
-Investigación previa (misma sesión) encontró que la única forma de vincular un usuario con rol "cliente" a su ficha de `clientes` (columna `clientes.usuario_id`) era el autoregistro del propio cliente en `/cliente/registro`. El admin no tenía ninguna vía para producir ese vínculo — ni desde "Nuevo usuario" (el select ni existía), ni desde "Clientes" (`admin_clientes()` no escribe `usuario_id`). Consecuencia real: un admin que crea manualmente un usuario rol cliente para un cliente institucional (PMA, WFP, Cáritas, etc.) le deja el portal completamente vacío, porque todas las consultas de `routes/cliente.py` filtran por `clientes.usuario_id`.
+## Correcciones aplicadas (una por punto del prompt)
 
-## Cambios implementados
+**1. UX de tramos.** `templates/cliente/solicitar.html` y `templates/admin/viajes.html`: texto de ayuda explícito ("selecciona la ruta y pulsa 'Añadir tramo' para confirmarla") + el botón "Añadir tramo" se resalta visualmente (box-shadow pulsante) en cuanto se elige una ruta en el desplegable sin haberla añadido, con un aviso textual debajo. El resaltado se apaga al añadir el tramo. No se tocó el flujo multi-tramo existente.
 
-**`database.py`** — se agregó la propiedad `rowcount` a `CursorWrapper` (pass-through a `self._cursor.rowcount`). No existía; es necesaria para el UPDATE condicional atómico que se describe abajo.
+**2. Factura no descarga — causa raíz encontrada y corregida.** El fallback de auto-creación de `clientes` en `routes/cliente.py` (`solicitar()`) usaba `session.get("nombre", "")`, pero el login real (`app.py` `/login`) nunca setea `session["nombre"]` (solo lo hace una ruta de login duplicada e inalcanzable en `cliente.py`). Cualquier cliente cuya ficha se creara por esa vía quedaba con `nombre=""` para siempre, y `generar_factura_cliente()` rechaza clientes sin nombre real — pero `descargar_factura()` tragaba la excepción en silencio y solo redirigía, así que el cliente no veía nada. Fix: (a) nombre de respaldo razonable (parte local del email) en vez de cadena vacía; (b) `descargar_factura()` ya no traga el error — lo pasa a la página vía query param y se muestra en un banner visible. **Bug propio detectado y corregido durante la verificación:** mi primera implementación combinaba `quote_plus()` con `url_for()`, que ya codifica sus parámetros — esto producía doble codificación y el mensaje se mostraba con `+` y `%2C` literales en vez de espacios y comas. Corregido pasando el string plano a `url_for()`.
 
-**`routes/admin.py`**:
-- Se extrajo `_validar_y_crear_cliente(cursor, form)`, con la misma validación de email/documento duplicado e INSERT que ya tenía `admin_clientes()` — ahora ambos flujos (el formulario normal de "Clientes" y el nuevo endpoint rápido) reutilizan la misma función, sin duplicar la validación.
-- Nuevo endpoint `POST /admin/clientes/crear-rapido`: crea un cliente vía AJAX (JSON), protegido con `requiere_admin()` (mismo nivel de permiso que `admin_clientes`), con `registrar_auditoria()` propio.
-- `lista_usuarios()` (GET `/admin/usuarios`) ahora también consulta `clientes_sin_usuario` (`WHERE usuario_id IS NULL AND deleted_at IS NULL`) y se la pasa al template.
-- `crear_usuario()`: si `rol == "cliente"`, exige `cliente_id`; valida que el cliente exista; crea el usuario; **vincula con `UPDATE clientes SET usuario_id = ? WHERE id = ? AND usuario_id IS NULL`** y verifica `cursor.rowcount`. Si el rowcount es 0 (otro admin vinculó ese cliente en el intervalo), no se comitea nada — ni el usuario ni el update quedan persistidos, evitando el usuario huérfano. Todo en una sola transacción/conexión. Auditoría con el detalle del vínculo.
+**3. Transportista temprano.** `cambiar_estado()` (transición a "Entregado") y `marcar_cobrado()` ahora exigen `camionero_id` asignado, con mensaje claro, tanto en backend (verificado con POST directo vía `fetch()`, bypaseando el UI) como en el template (botones deshabilitados con el mismo patrón visual que el bloqueo de tramos incompletos).
 
-**`templates/admin/usuarios.html`**:
-- Campo "Cliente vinculado *" (select, oculto salvo rol=cliente, con `required` alternado por JS) que lista solo clientes sin usuario asociado.
-- Botón "+ Nuevo cliente" que abre un modal Bootstrap (mismo patrón ya usado en `clientes.html` para importar Excel) con campos mínimos (nombre*, empresa, teléfono, email, documento).
-- El modal guarda vía `fetch()` + `FormData` (mismo patrón AJAX ya usado en `gestionar_viaje.html`) contra el nuevo endpoint, inyecta la opción nueva en el select ya seleccionada, y se cierra sin recargar la página — así no se pierde lo ya escrito en email/contraseña/rol del formulario principal.
+**4. Conservar datos tras error de validación.** `admin_camioneros()` ya re-renderizaba pero no rellenaba los campos — se agregó `form_data`. `admin_clientes()` y `nuevo_viaje_admin()` **redirigían** en el error (perdían el POST completo) — se cambiaron a re-renderizar directamente, reutilizando el listado (`_contexto_lista_viajes()` extraído como helper compartido para `viajes()` y `nuevo_viaje_admin()`). El modal de "Nuevo viaje" se auto-abre si hay error, incluidos los tramos ya seleccionados (reconstruidos en JS desde `form_data`).
 
-## Verificación realizada
-- `py_compile` de `routes/admin.py` y `database.py`: OK.
-- Verificación de sintaxis Jinja de `templates/admin/usuarios.html` (parseo con `jinja2.Environment`): OK.
-- Arranque de la app local (`python app.py`): sin tracebacks en el log (`Debugger PIN` normal, ninguna excepción).
-- Fixture de prueba creado y luego eliminado (cliente "Test PMA Cuba" sin `usuario_id`, id temporal, ya borrado de `mercatoria.db`).
+**5. Entrega fuera de fecha.** `cambiar_estado()`: si el viaje ya tenía `fecha_entrega` guardada (vía "Guardar fechas") y no coincide con la fecha real del sistema, la confirmación de entrega dispara un `confirm()` de advertencia distinto al normal; si el admin continúa, se conserva la fecha ya registrada (no se sobreescribe con hoy) y el Historial queda marcado como "Entrega confirmada con fecha retroactiva" con el detalle de ambas fechas. **Si no hay fecha previa registrada, no hay aviso ni marca — se usa hoy con normalidad**, tal como se acordó explícitamente.
 
-## ⚠️ Verificación con Playwright — NO completada
-Al intentar navegar a `/login` para iniciar la verificación end-to-end, la llamada de Playwright quedó sin responder y Aldo interrumpió la sesión manualmente. El log de Flask (`/tmp/flask_cliente_vinculado.log`) no muestra ningún traceback ni error — el servidor arrancó limpio y quedó escuchando en el puerto 5000 (`Debugger PIN: 768-020-502`), así que el problema fue específicamente en la herramienta de automación del navegador, no en el servidor ni en el código.
+**6. Dashboard "Viajes en curso".** El `CASE` pasó de `LOWER(estado) IN ('en ruta','en_ruta')` a `LOWER(estado) NOT IN ('entregado','cerrado','cancelado')`.
 
-**Queda pendiente que Aldo verifique manualmente en producción:**
-1. Crear un usuario rol "cliente" vinculándolo a un cliente existente sin usuario → confirmar que `clientes.usuario_id` queda escrito y que ese cliente ve sus datos al loguearse en el portal.
-2. Intentar crear un usuario rol "cliente" sin seleccionar cliente → debe bloquearlo con mensaje claro, sin crear el usuario.
-3. Usar "+ Nuevo cliente" desde la pantalla de "Nuevo usuario" → el cliente se crea, queda seleccionado automáticamente, y los datos ya escritos de email/contraseña/rol no se pierden.
-4. Crear un usuario rol admin u operador → debe seguir funcionando igual, sin pedir cliente vinculado.
-5. (Condición de carrera, más difícil de probar manualmente pero documentada): si dos intentos de vinculación al mismo cliente casi simultáneos ocurrieran, el segundo debe fallar con "Ese cliente ya fue vinculado por otro usuario, intenta de nuevo" y no dejar un usuario huérfano — esto está cubierto por el `UPDATE ... WHERE usuario_id IS NULL` + chequeo de `rowcount` dentro de la misma transacción, pero no se ejecutó una prueba de concurrencia real.
+## Verificación con Playwright (todos los puntos)
 
-## Páginas y funcionalidad NO probadas en esta sesión
-- La pantalla `/admin/usuarios` con el nuevo campo y modal no se abrió ni una vez en el navegador.
-- El portal cliente (`/cliente/...`) no se verificó tras un vínculo nuevo.
+| # | Verificación | Resultado |
+|---|---|---|
+| 1 | Elegir ruta sin añadir → botón se resalta + aviso visible; añadir tramo → resaltado se apaga | ✅ Verificado en `/admin/viajes` (JS `boxShadow`/`display` inspeccionados directamente) |
+| 2 | Cliente con nombre válido → factura se descarga (`factura-0017.pdf` descargado con éxito) | ✅ |
+| 2 | Cliente con `nombre=''` (el caso raíz) → error visible en banner rojo, con el motivo exacto, ya no silencioso | ✅ (y se corrigió el bug de doble-encoding encontrado en el camino) |
+| 3 | POST directo a `/estado` (Entregado) sin transportista → bloqueado, estado permanece "Pendiente" | ✅ |
+| 3 | POST directo a `/marcar-cobrado` sin transportista → bloqueado, redirige con error | ✅ |
+| 3 | UI: botones "Confirmar entrega" y "Marcar cobrado" deshabilitados con mensaje cuando no hay transportista | ✅ |
+| 4 | Camionero — matrícula duplicada (ejemplo literal del prompt): error mostrado, **todos** los campos conservados (nombre, teléfono, empresa, matrícula, marca) | ✅ |
+| 4 | Ciclo completo: corregir matrícula → reenviar → `?ok=1`, sin error 400 de CSRF | ✅ |
+| 4 | Cliente — email duplicado: error mostrado, nombre/empresa/email conservados; corregir → reenviar → `?ok=1` sin error CSRF | ✅ |
+| 5 | Fecha de descarga guardada distinta a hoy + confirmar entrega → diálogo de advertencia con ambas fechas | ✅ |
+| 5 | Continuar tras advertencia → Historial: "Entrega confirmada con fecha retroactiva", fecha original conservada (no sobreescrita) | ✅ |
+| 5 | Sin fecha previa registrada + confirmar entrega → diálogo normal, sin marca retroactiva, fecha_entrega = hoy | ✅ |
+| 6 | Dashboard con 4 viajes en estado "Asignado" → "Viajes en curso" muestra 4 (antes mostraba 0) | ✅ |
+
+## Errores encontrados durante la sesión (y su resolución)
+- **Bug propio de doble-codificación de URL** en el fix del punto 2 (`quote_plus()` + `url_for()`) — detectado durante la propia verificación de Playwright, corregido antes de cerrar el punto.
+- Advertencia de consola preexistente y ya documentada en reportes anteriores (formato de fecha del `<input type="date">` vs. el string con hora completa que devuelve `cambiar_estado()`) — no es una regresión de esta sesión.
+- Nota operativa: durante la prueba del punto 2 se restableció temporalmente la contraseña del usuario de prueba `ana2@test.com` (dato de desarrollo local, no de producción) para poder iniciar sesión como ese cliente.
+
+## Páginas probadas
+- `/admin/viajes` (modal Nuevo viaje, tramos, ciclo de error/corrección)
+- `/admin/camioneros` (ciclo de error/corrección)
+- `/admin/clientes` (ciclo de error/corrección)
+- `/admin/viajes/<id>/gestionar` (bloqueo de entrega/cobro, fecha retroactiva, historial)
+- `/admin` (dashboard, conteo de viajes en curso)
+- `/cliente/viaje/<id>` y `/cliente/viaje/<id>/factura` (descarga exitosa y caso de error visible)
+
+## Limpieza posterior
+Todos los viajes, clientes y usuarios de prueba creados durante esta verificación (ids 15–18, cliente "Cliente Test Conservar", camionero "Test Conservar Datos" y su vehículo, usuario `clientevacio@test.com`) fueron eliminados de `mercatoria.db` al finalizar. Los 4 viajes y camioneros/clientes preexistentes de sesiones anteriores no se tocaron.
 
 ## Recomendaciones
-- Antes de dar por cerrado este commit, correr la lista de verificación de arriba en producción (o repetirla localmente con Playwright cuando la herramienta de automación responda con normalidad).
-- Si el problema de Playwright se repite, revisar si es un problema puntual de la extensión/tab del navegador (reiniciar la sesión de Chrome) antes de asumir que es un problema del código — el arranque del servidor fue limpio.
+- Ninguna corrección quedó pendiente de los 6 puntos pedidos.
+- Vale la pena, en un futuro prompt aparte, revisar si conviene eliminar la ruta de login duplicada e inalcanzable en `routes/cliente.py` (`cliente.login()` POST), ya que fue la pista que confirmó por qué `session["nombre"]` nunca se seteaba en el flujo real.

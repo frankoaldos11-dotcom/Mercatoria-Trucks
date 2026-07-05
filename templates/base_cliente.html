@@ -133,6 +133,14 @@
             transition: background 0.15s;
         }
         .btn-mt:hover { background: var(--mt-orange-dark); color: #fff; }
+        .btn-mt-pendiente {
+            box-shadow: 0 0 0 3px rgba(232, 106, 44, 0.35);
+            animation: mt-pulso 1.1s ease-in-out infinite;
+        }
+        @keyframes mt-pulso {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(232, 106, 44, 0.35); }
+            50% { box-shadow: 0 0 0 6px rgba(232, 106, 44, 0.12); }
+        }
         .btn-mt-outline {
             background: transparent;
             color: var(--mt-orange);
