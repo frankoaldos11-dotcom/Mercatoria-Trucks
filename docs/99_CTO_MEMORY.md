@@ -58,6 +58,10 @@ Usuarios reales: operadores internos de Mercatoria y clientes externos que contr
 | `minimo_pago_usd` | 150.0 | Pago mínimo garantizado al camionero (USD) |
 | `comision_mercatoria_porcentaje` | 20.0 | % de comisión de Mercatoria sobre precio cliente |
 
+**Fórmula de utilidad (fijada 2026-07-10, `calcular_liquidacion` en `services/finanzas_service.py`):**
+`utilidad_mercatoria = comision_mercatoria = precio_cliente × comision_pct / 100`.
+La comisión Mercatoria **es la ganancia**, no un costo — `precio_cliente` ya cubre por separado `pago_camionero` y `combustible`. Nunca restar `comision_mercatoria` de `precio_cliente − pago_camionero − combustible`: eso resta la ganancia dos veces y hace que subir el % de comisión *baje* la utilidad, lo cual es imposible por definición. Bug real desde el Sprint 8 (commit `e20e428`), corregido el 2026-07-10.
+
 ---
 
 ## Decisiones pendientes del CTO

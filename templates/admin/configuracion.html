@@ -534,7 +534,7 @@ function recalcular() {
     var comb     = divisor ? pago / divisor : 0;
     var precio   = PRECIO_CLIENTE_EJEMPLO;
     var comision = precio * comPct / 100;
-    var utilidad = precio - pago - comb - comision;
+    var utilidad = comision;
 
     document.getElementById('prev-km-liq').textContent   = kmLiq.toFixed(0) + ' km';
     document.getElementById('prev-pago').textContent     = '$' + pago.toFixed(2);

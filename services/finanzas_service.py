@@ -101,7 +101,7 @@ def calcular_liquidacion(viaje_id):
         precio_cliente = pago_camionero * multiplicador_camionero
 
     comision_mercatoria = precio_cliente * comision_pct / 100
-    utilidad_mercatoria = precio_cliente - pago_camionero - combustible - comision_mercatoria
+    utilidad_mercatoria = comision_mercatoria
 
     return {
         "km_real":             round(km_real, 2),
