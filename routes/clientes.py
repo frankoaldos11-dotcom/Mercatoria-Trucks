@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, session
+from flask import Blueprint, redirect
 from database import conectar
 
 clientes_bp = Blueprint("clientes", __name__)

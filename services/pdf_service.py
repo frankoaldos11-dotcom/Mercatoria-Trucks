@@ -28,7 +28,6 @@ def _cargar_logo(width=2.2*cm, height=2.2*cm):
         return Image(_LOGO_PATH, width=width, height=height)
     try:
         from svglib.svglib import svg2rlg
-        from reportlab.graphics import renderPDF
         if os.path.exists(_LOGO_SVG_PATH):
             drawing = svg2rlg(_LOGO_SVG_PATH)
             if drawing:

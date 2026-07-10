@@ -1,6 +1,5 @@
 import os
 import time
-import logging
 from datetime import timedelta
 from flask import Flask, render_template, request, redirect, session, g
 from flask_limiter import Limiter

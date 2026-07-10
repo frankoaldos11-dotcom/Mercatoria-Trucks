@@ -1,4 +1,3 @@
-import os
 import sqlite3
 
 from db_config import USE_POSTGRES

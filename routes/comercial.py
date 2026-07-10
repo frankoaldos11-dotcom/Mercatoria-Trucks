@@ -9,7 +9,6 @@ from services.finanzas_service import get_configuracion
 
 from services.comercial_service import (
     get_all_rutas,
-    get_ruta,
     crear_ruta,
     ruta_existe,
     actualizar_tarifa_km_ruta,

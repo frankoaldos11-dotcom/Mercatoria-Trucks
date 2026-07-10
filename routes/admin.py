@@ -943,54 +943,6 @@ def cambiar_estado(id):
     return redirect(f"/admin/viajes/{id}/gestionar")
 
 
-@admin_bp.route("/viaje/<int:id>/asignar-vehiculo", methods=["POST"])
-def asignar_vehiculo(id):
-    if not requiere_admin():
-        return redirect("/login")
-    if _viaje_cerrado(id):
-        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
-
-    vehiculo_id = request.form["vehiculo"]
-
-    conexion = conectar()
-    cursor = conexion.cursor()
-
-    cursor.execute(f"SELECT * FROM viajes WHERE id = {ph()}", (id,))
-    viaje = cursor.fetchone()
-
-    if not viaje:
-        conexion.close()
-        return redirect("/admin/viajes")
-
-    cursor.execute(f"""
-        SELECT v.id, v.matricula, v.tipo_vehiculo_id, v.tipo, v.estado
-        FROM vehiculos v
-        WHERE
-            v.id = {ph()}
-            AND v.activo = 1
-            AND LOWER(v.estado) = 'disponible'
-            AND (
-                v.tipo_vehiculo_id = {ph()}
-                OR v.tipo = (SELECT nombre FROM tipos_vehiculo WHERE id = {ph()})
-            )
-    """, (vehiculo_id, viaje["tipo_vehiculo_id"], viaje["tipo_vehiculo_id"]))
-    vehiculo = cursor.fetchone()
-
-    if vehiculo:
-        cursor.execute(f"""
-            UPDATE viajes
-            SET vehiculo_id = {ph()}, vehiculo_placa = {ph()}, estado = 'Asignado'
-            WHERE id = {ph()}
-        """, (vehiculo["id"], vehiculo["matricula"], id))
-
-        cursor.execute(f"UPDATE vehiculos SET estado = 'En viaje' WHERE id = {ph()}", (vehiculo["id"],))
-
-    conexion.commit()
-    conexion.close()
-
-    return redirect(f"/admin/viajes/{id}/gestionar")
-
-
 @admin_bp.route("/viaje/<int:id>/asignar-todo", methods=["POST"])
 def asignar_camionero_vehiculo(id):
     if not requiere_admin():
@@ -1234,32 +1186,6 @@ def descargar_factura_cliente(id):
         as_attachment=True,
         download_name=f"factura-{id:04d}.pdf",
     )
-
-
-@admin_bp.route("/viaje/<int:id>/confirmar-precio", methods=["POST"])
-def confirmar_precio(id):
-    if not requiere_admin():
-        return redirect("/login")
-    if _viaje_cerrado(id):
-        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
-
-    precio_str = request.form.get("precio_cliente", "").strip()
-    try:
-        precio = float(precio_str)
-        if precio <= 0:
-            raise ValueError
-    except (ValueError, TypeError):
-        return redirect(f"/admin/viajes/{id}/gestionar?error=Precio+inv%C3%A1lido%2C+debe+ser+un+n%C3%BAmero+mayor+que+cero")
-
-    conexion = conectar()
-    cursor = conexion.cursor()
-    cursor.execute(f"UPDATE viajes SET precio_cliente = {ph()} WHERE id = {ph()}", (precio, id))
-    conexion.commit()
-    conexion.close()
-
-    registrar_auditoria(f"Confirmó precio ${precio}", "Viajes", "viaje", id)
-
-    return redirect(f"/admin/viajes/{id}/gestionar")
 
 
 @admin_bp.route("/viaje/<int:id>/guardar-combustible", methods=["POST"])
@@ -2155,8 +2081,6 @@ def editar_cliente(id):
 
     conexion = conectar()
     cursor = conexion.cursor()
-
-    CATEGORIAS_CLIENTE = ["Normal", "VIP", "Estratégico", "Humanitario"]
 
     if request.method == "POST":
         nombre = request.form["nombre"].strip()

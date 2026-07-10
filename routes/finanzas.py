@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, session
 
 from database import conectar
-from db_config import USE_POSTGRES
+from db_config import ph
 from services.finanzas_service import get_configuracion, guardar_configuracion
 
 finanzas_bp = Blueprint("finanzas", __name__, url_prefix="/admin")
@@ -44,18 +44,11 @@ def configuracion():
         cur = con.cursor()
         for clave in claves_texto:
             valor = request.form.get(clave, "").strip()
-            if USE_POSTGRES:
-                cur.execute(
-                    "INSERT INTO configuracion_texto (clave, valor) VALUES (%s, %s) "
-                    "ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor",
-                    (clave, valor)
-                )
-            else:
-                cur.execute(
-                    "INSERT INTO configuracion_texto (clave, valor) VALUES (?, ?) "
-                    "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
-                    (clave, valor)
-                )
+            cur.execute(
+                f"INSERT INTO configuracion_texto (clave, valor) VALUES ({ph()}, {ph()}) "
+                "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+                (clave, valor)
+            )
         con.commit()
         con.close()
 
