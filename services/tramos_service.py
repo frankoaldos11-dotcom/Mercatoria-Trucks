@@ -97,32 +97,29 @@ def calcular_totales_tramos(viaje_id):
     return {"km_total": km_total, "precio_cliente_total": precio_cliente_total}
 
 
-def completar_tramo(viaje_id, tramo_id):
+def completar_tramo(cursor, viaje_id, tramo_id):
     """Marca como completado el tramo indicado si es el tramo activo (en_curso)
     del viaje, y activa el siguiente en orden. No permite saltar tramos.
-    Devuelve True si se completó, False si el tramo no estaba en_curso."""
-    con = conectar()
-    cur = con.cursor()
-    cur.execute(
+    Usa el cursor de la transacción activa del llamador; no comitea ni abre
+    conexión propia. Devuelve True si se completó, False si el tramo no
+    estaba en_curso."""
+    cursor.execute(
         f"SELECT id, orden, estado FROM viaje_tramos WHERE id = {ph()} AND viaje_id = {ph()}",
         (tramo_id, viaje_id)
     )
-    tramo = cur.fetchone()
+    tramo = cursor.fetchone()
     if not tramo or tramo["estado"] != "en_curso":
-        con.close()
         return False
 
-    cur.execute(
+    cursor.execute(
         f"UPDATE viaje_tramos SET estado = 'completado', fecha_llegada = CURRENT_TIMESTAMP "
         f"WHERE id = {ph()}",
         (tramo_id,)
     )
-    cur.execute(
+    cursor.execute(
         f"UPDATE viaje_tramos SET estado = 'en_curso' WHERE viaje_id = {ph()} AND orden = {ph()}",
         (viaje_id, tramo["orden"] + 1)
     )
-    con.commit()
-    con.close()
     return True
 
 

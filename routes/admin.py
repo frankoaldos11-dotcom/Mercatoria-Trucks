@@ -694,15 +694,16 @@ def completar_tramo_admin(id, tramo_id):
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
-    ok = completar_tramo(id, tramo_id)
+    con = conectar()
+    cur = con.cursor()
+    ok = completar_tramo(cur, id, tramo_id)
     if ok:
-        con = conectar()
-        cur = con.cursor()
         _registrar_historial(cur, id, "Tramo completado", f"Tramo ID: {tramo_id}")
         con.commit()
         con.close()
         registrar_auditoria("completó tramo", "Viajes", "viaje", id, f"Tramo ID: {tramo_id}")
     else:
+        con.close()
         return redirect(f"/admin/viajes/{id}/gestionar?error=Ese+tramo+no+se+puede+completar+todav%C3%ADa")
 
     return redirect(f"/admin/viajes/{id}/gestionar")
