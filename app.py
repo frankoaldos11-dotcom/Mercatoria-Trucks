@@ -160,7 +160,9 @@ def login():
 
         return render_template("login.html", error="Credenciales incorrectas")
 
-    return render_template("login.html")
+    registrado = request.args.get("registrado")
+    reset = request.args.get("reset")
+    return render_template("login.html", registrado=registrado, reset=reset)
 
 
 @app.route("/logout")

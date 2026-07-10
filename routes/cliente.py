@@ -52,52 +52,6 @@ def _requiere_cliente():
     return "usuario" in session and session.get("rol") == "cliente"
 
 
-@cliente_bp.route("/login", methods=["GET", "POST"])
-def login():
-    if _requiere_cliente():
-        return redirect(url_for("cliente.cliente_home"))
-
-    if request.method == "GET":
-        return redirect("/login")
-
-    error = None
-    if request.method == "POST":
-        email = request.form["email"].strip().lower()
-        password = request.form["password"]
-
-        con = conectar()
-        cur = con.cursor()
-        cur.execute(
-            "SELECT id, password, rol FROM usuarios WHERE usuario = ? AND rol = 'cliente'",
-            (email,)
-        )
-        fila = cur.fetchone()
-
-        if fila and bcrypt.check_password_hash(fila["password"], password):
-            cur.execute("SELECT nombre, apellidos FROM usuarios WHERE id = ?", (fila["id"],))
-            u = cur.fetchone()
-            nombre = ""
-            if u:
-                nombre = f"{u['nombre'] or ''} {u['apellidos'] or ''}".strip()
-            if not nombre:
-                nombre = email.split("@")[0]
-            session["nombre"] = nombre
-            con.close()
-            session.permanent = True
-            session["usuario"] = email
-            session["rol"] = fila["rol"]
-            session["user_id"] = fila["id"]
-            return redirect(url_for("cliente.cliente_home"))
-
-        con.close()
-
-        error = "Correo o contraseña incorrectos"
-
-    registrado = request.args.get("registrado")
-    reset = request.args.get("reset")
-    return render_template("cliente/login.html", error=error, registrado=registrado, reset=reset)
-
-
 @cliente_bp.route("/registro", methods=["GET", "POST"])
 def registro():
     if _requiere_cliente():
@@ -156,7 +110,7 @@ def registro():
         t.daemon = True
         t.start()
 
-        return redirect(url_for("cliente.login") + "?registrado=1")
+        return redirect(url_for("login") + "?registrado=1")
 
     return render_template("cliente/registro.html")
 
@@ -164,7 +118,7 @@ def registro():
 @cliente_bp.route("/")
 def cliente_home():
     if not _requiere_cliente():
-        return redirect(url_for("cliente.login"))
+        return redirect(url_for("login"))
 
     con = conectar()
     cur = con.cursor()
@@ -217,7 +171,7 @@ def cliente_home():
 @cliente_bp.route("/viajes")
 def mis_viajes():
     if not _requiere_cliente():
-        return redirect(url_for("cliente.login"))
+        return redirect(url_for("login"))
 
     filtro = request.args.get("estado", "todos")
     nuevo  = request.args.get("nuevo")
@@ -246,7 +200,7 @@ def mis_viajes():
 @cliente_bp.route("/viaje/<int:viaje_id>")
 def detalle_viaje(viaje_id):
     if not _requiere_cliente():
-        return redirect(url_for("cliente.login"))
+        return redirect(url_for("login"))
 
     con = conectar()
     cur = con.cursor()
@@ -297,7 +251,7 @@ def detalle_viaje(viaje_id):
 @cliente_bp.route("/viaje/<int:viaje_id>/factura")
 def descargar_factura(viaje_id):
     if not _requiere_cliente():
-        return redirect(url_for("cliente.login"))
+        return redirect(url_for("login"))
 
     con = conectar()
     cur = con.cursor()
@@ -344,7 +298,7 @@ def descargar_factura(viaje_id):
 @cliente_bp.route("/solicitar", methods=["GET", "POST"])
 def solicitar_envio():
     if not _requiere_cliente():
-        return redirect(url_for("cliente.login"))
+        return redirect(url_for("login"))
 
     con = conectar()
     cur = con.cursor()
@@ -462,7 +416,7 @@ def solicitar_envio():
 @cliente_bp.route("/viaje/<int:viaje_id>/cancelar", methods=["POST"])
 def cancelar_viaje(viaje_id):
     if not _requiere_cliente():
-        return redirect(url_for("cliente.login"))
+        return redirect(url_for("login"))
     con = conectar()
     cur = con.cursor()
     cur.execute(
@@ -483,7 +437,7 @@ def cancelar_viaje(viaje_id):
 @cliente_bp.route("/perfil", methods=["GET", "POST"])
 def perfil():
     if not _requiere_cliente():
-        return redirect(url_for("cliente.login"))
+        return redirect(url_for("login"))
 
     con = conectar()
     cur = con.cursor()
@@ -658,7 +612,7 @@ def reset_password(token):
     con.commit()
     con.close()
 
-    return redirect(url_for("cliente.login") + "?reset=1")
+    return redirect(url_for("login") + "?reset=1")
 
 
 @cliente_bp.route("/activos")
