@@ -1,70 +1,50 @@
-# Reporte de Pruebas — 2026-07-05
+# Reporte de Pruebas — 2026-07-10 (sesión 2)
 
 ## Contexto
-Commit de esta sesión: **seis correcciones en el flujo de viajes** ("Fixes flujo viaje: tramo UX, factura PDF, validacion transportista temprana, conservar datos, entrega fuera de fecha, conteo en curso"), pendiente de push al cierre de este reporte.
+Commit de esta sesión (pendiente de push al cierre de este reporte): "Reemplaza try/except pass financieros por errores visibles: importar Excel (+ fix ON CONFLICT Postgres), parametros financieros, log en liquidacion".
 
-Sesiones anteriores (ya en `main`):
-1. `2f53dee` — "feat: viajes multi-tramo con validacion continuidad y timeline cliente"
-2. `6aa7115` — "fix: migracion viaje_tramos produccion, boton refrescar navbar"
-3. `039a6b8` — "docs: test_report actualizado post fix migracion viaje_tramos"
-4. `6755022` — "feat: guardar fechas conjunto, validacion fecha descarga, boton viaje finalizado"
-5. `b93c241` — "Validación: transportista debe cubrir todas las rutas del viaje al asignar"
-6. `8e3b144` — "Habilitar transportista en rutas desde asignación + precarga monto de cobro"
-7. `b33a385` — "Fix vehículo colgado al reasignar + reabrir viaje cerrado (solo admin)"
-8. `f2d5a7c` — "Fix: 4 columnas en uso faltantes en migración Postgres (verificación financiera + documento_identidad)"
-9. `590c14a` — "Refactor _registrar_historial: usa cursor de la transacción activa, sin tragar errores"
-10. `65772e0` — "Elimina conectar() local de migraciones.py, usa conexión centralizada"
-11. `75cf3b0` — "Fix: SKIP_MIGRATIONS ya no puede dejar una Postgres vacia sin schema"
-12. `799a221` — "Vincular usuario cliente a su ficha desde admin + crear cliente desde pantalla de usuario"
+Reemplaza tres bloques `except Exception: pass` con impacto financiero por manejo visible, sin cambiar la lógica de negocio de ninguno de los tres:
 
-## Correcciones aplicadas (una por punto del prompt)
-
-**1. UX de tramos.** `templates/cliente/solicitar.html` y `templates/admin/viajes.html`: texto de ayuda explícito ("selecciona la ruta y pulsa 'Añadir tramo' para confirmarla") + el botón "Añadir tramo" se resalta visualmente (box-shadow pulsante) en cuanto se elige una ruta en el desplegable sin haberla añadido, con un aviso textual debajo. El resaltado se apaga al añadir el tramo. No se tocó el flujo multi-tramo existente.
-
-**2. Factura no descarga — causa raíz encontrada y corregida.** El fallback de auto-creación de `clientes` en `routes/cliente.py` (`solicitar()`) usaba `session.get("nombre", "")`, pero el login real (`app.py` `/login`) nunca setea `session["nombre"]` (solo lo hace una ruta de login duplicada e inalcanzable en `cliente.py`). Cualquier cliente cuya ficha se creara por esa vía quedaba con `nombre=""` para siempre, y `generar_factura_cliente()` rechaza clientes sin nombre real — pero `descargar_factura()` tragaba la excepción en silencio y solo redirigía, así que el cliente no veía nada. Fix: (a) nombre de respaldo razonable (parte local del email) en vez de cadena vacía; (b) `descargar_factura()` ya no traga el error — lo pasa a la página vía query param y se muestra en un banner visible. **Bug propio detectado y corregido durante la verificación:** mi primera implementación combinaba `quote_plus()` con `url_for()`, que ya codifica sus parámetros — esto producía doble codificación y el mensaje se mostraba con `+` y `%2C` literales en vez de espacios y comas. Corregido pasando el string plano a `url_for()`.
-
-**3. Transportista temprano.** `cambiar_estado()` (transición a "Entregado") y `marcar_cobrado()` ahora exigen `camionero_id` asignado, con mensaje claro, tanto en backend (verificado con POST directo vía `fetch()`, bypaseando el UI) como en el template (botones deshabilitados con el mismo patrón visual que el bloqueo de tramos incompletos).
-
-**4. Conservar datos tras error de validación.** `admin_camioneros()` ya re-renderizaba pero no rellenaba los campos — se agregó `form_data`. `admin_clientes()` y `nuevo_viaje_admin()` **redirigían** en el error (perdían el POST completo) — se cambiaron a re-renderizar directamente, reutilizando el listado (`_contexto_lista_viajes()` extraído como helper compartido para `viajes()` y `nuevo_viaje_admin()`). El modal de "Nuevo viaje" se auto-abre si hay error, incluidos los tramos ya seleccionados (reconstruidos en JS desde `form_data`).
-
-**5. Entrega fuera de fecha.** `cambiar_estado()`: si el viaje ya tenía `fecha_entrega` guardada (vía "Guardar fechas") y no coincide con la fecha real del sistema, la confirmación de entrega dispara un `confirm()` de advertencia distinto al normal; si el admin continúa, se conserva la fecha ya registrada (no se sobreescribe con hoy) y el Historial queda marcado como "Entrega confirmada con fecha retroactiva" con el detalle de ambas fechas. **Si no hay fecha previa registrada, no hay aviso ni marca — se usa hoy con normalidad**, tal como se acordó explícitamente.
-
-**6. Dashboard "Viajes en curso".** El `CASE` pasó de `LOWER(estado) IN ('en ruta','en_ruta')` a `LOWER(estado) NOT IN ('entregado','cerrado','cancelado')`.
-
-## Verificación con Playwright (todos los puntos)
-
-| # | Verificación | Resultado |
-|---|---|---|
-| 1 | Elegir ruta sin añadir → botón se resalta + aviso visible; añadir tramo → resaltado se apaga | ✅ Verificado en `/admin/viajes` (JS `boxShadow`/`display` inspeccionados directamente) |
-| 2 | Cliente con nombre válido → factura se descarga (`factura-0017.pdf` descargado con éxito) | ✅ |
-| 2 | Cliente con `nombre=''` (el caso raíz) → error visible en banner rojo, con el motivo exacto, ya no silencioso | ✅ (y se corrigió el bug de doble-encoding encontrado en el camino) |
-| 3 | POST directo a `/estado` (Entregado) sin transportista → bloqueado, estado permanece "Pendiente" | ✅ |
-| 3 | POST directo a `/marcar-cobrado` sin transportista → bloqueado, redirige con error | ✅ |
-| 3 | UI: botones "Confirmar entrega" y "Marcar cobrado" deshabilitados con mensaje cuando no hay transportista | ✅ |
-| 4 | Camionero — matrícula duplicada (ejemplo literal del prompt): error mostrado, **todos** los campos conservados (nombre, teléfono, empresa, matrícula, marca) | ✅ |
-| 4 | Ciclo completo: corregir matrícula → reenviar → `?ok=1`, sin error 400 de CSRF | ✅ |
-| 4 | Cliente — email duplicado: error mostrado, nombre/empresa/email conservados; corregir → reenviar → `?ok=1` sin error CSRF | ✅ |
-| 5 | Fecha de descarga guardada distinta a hoy + confirmar entrega → diálogo de advertencia con ambas fechas | ✅ |
-| 5 | Continuar tras advertencia → Historial: "Entrega confirmada con fecha retroactiva", fecha original conservada (no sobreescrita) | ✅ |
-| 5 | Sin fecha previa registrada + confirmar entrega → diálogo normal, sin marca retroactiva, fecha_entrega = hoy | ✅ |
-| 6 | Dashboard con 4 viajes en estado "Asignado" → "Viajes en curso" muestra 4 (antes mostraba 0) | ✅ |
-
-## Errores encontrados durante la sesión (y su resolución)
-- **Bug propio de doble-codificación de URL** en el fix del punto 2 (`quote_plus()` + `url_for()`) — detectado durante la propia verificación de Playwright, corregido antes de cerrar el punto.
-- Advertencia de consola preexistente y ya documentada en reportes anteriores (formato de fecha del `<input type="date">` vs. el string con hora completa que devuelve `cambiar_estado()`) — no es una regresión de esta sesión.
-- Nota operativa: durante la prueba del punto 2 se restableció temporalmente la contraseña del usuario de prueba `ana2@test.com` (dato de desarrollo local, no de producción) para poder iniciar sesión como ese cliente.
+1. **`routes/admin.py` — `importar_excel`**: `INSERT OR IGNORE` (SQLite-only, rompía en Postgres) → `INSERT ... ON CONFLICT (id) DO NOTHING` (válido en ambos motores; `id` es `PRIMARY KEY` en las 4 tablas de `_EXCEL_CONFIG`). Los fallos por fila ahora se acumulan y se reportan: log del servidor con detalle (`current_app.logger.error`) + query params `?importado=N&fallidos=M` + banner de advertencia en pantalla (agregado a `templates/admin/comercial/rutas.html`, `camioneros.html`, `clientes.html`, `vehiculos.html`, que hoy tampoco mostraban el banner de éxito existente).
+2. **`routes/finanzas.py` — `configuracion()`**: si un parámetro numérico llega vacío o no numérico, ahora se nombra explícitamente en el mensaje de resultado (reutilizando la variable `mensaje` ya existente) en vez de decir "guardado correctamente" sin serlo. Banner cambia a `alerta-warning` (ámbar, agregado a `templates/admin/configuracion.html`) cuando hay fallos, `alerta-exito` (verde) cuando no.
+3. **`services/finanzas_service.py` — `calcular_liquidacion()`**: función interna sin pantalla (llamada desde gestionar viaje, reportes y generación de PDF). El fallback (`ruta_tarifa_km=None`, `km_ruta=0.0`) no cambia, pero ahora el fallo se registra con `current_app.logger.error` incluyendo `viaje_id` y la excepción.
 
 ## Páginas probadas
-- `/admin/viajes` (modal Nuevo viaje, tramos, ciclo de error/corrección)
-- `/admin/camioneros` (ciclo de error/corrección)
-- `/admin/clientes` (ciclo de error/corrección)
-- `/admin/viajes/<id>/gestionar` (bloqueo de entrega/cobro, fecha retroactiva, historial)
-- `/admin` (dashboard, conteo de viajes en curso)
-- `/cliente/viaje/<id>` y `/cliente/viaje/<id>/factura` (descarga exitosa y caso de error visible)
+- `/login`
+- `/admin/camioneros` (modal de importación Excel)
+- `/admin/configuracion` (tab "Parámetros financieros")
 
-## Limpieza posterior
-Todos los viajes, clientes y usuarios de prueba creados durante esta verificación (ids 15–18, cliente "Cliente Test Conservar", camionero "Test Conservar Datos" y su vehículo, usuario `clientevacio@test.com`) fueron eliminados de `mercatoria.db` al finalizar. Los 4 viajes y camioneros/clientes preexistentes de sesiones anteriores no se tocaron.
+## Errores encontrados
+- **Múltiples 500 transitorios** durante la sesión, todos descartados como bugs de código tras investigar:
+  - Uno en `/login` con traceback completo (`sqlite3.OperationalError: unable to open database file`) — coincide con las desconexiones intermitentes del drive `E:` observadas en sesiones anteriores.
+  - Otro en `/admin/configuracion` en la primera carga — se resolvió solo al reintentar.
+  - En ambos casos, un segundo intento inmediato funcionó sin cambios de código.
+- **Hallazgo importante durante la verificación**: el puerto 5000 (usado por defecto para levantar el servidor de pruebas) ya estaba ocupado por un proceso Flask preexistente y no relacionado (`flask run --port 5000`, de otra sesión/trabajo del usuario), que seguía sirviendo código **anterior a esta sesión**. Esto causó resultados inconsistentes al probar el import de Excel (`importado=0` sin `fallidos`, pese a que el log de auditoría y la base de datos mostraban que la fila válida sí se insertaba) — el navegador estaba hablando con el proceso viejo, no con el servidor recién editado. Se resolvió levantando el servidor de verificación en el puerto 5099 en vez de tocar el proceso ajeno. No se modificó ni se detuvo ese proceso preexistente.
+
+## Screenshots tomados
+No se tomaron capturas `.png`; se usaron accessibility snapshots de Playwright MCP (suficientes para el alcance: banners de texto y clases CSS, verificados también por JS `document.querySelector`). Snapshots y logs en `.playwright-mcp/` con timestamps `2026-07-10T19-3x` a `19-4x`.
+
+## Correcciones aplicadas
+- `routes/admin.py`: `importar_excel` — sintaxis SQL portable + acumulación de errores por fila + log + query params `fallidos`.
+- `routes/finanzas.py`: `configuracion()` — acumulación de parámetros fallidos con etiquetas legibles + mensaje condicional + flag `hubo_errores`.
+- `services/finanzas_service.py`: `calcular_liquidacion()` — log en el `except` de la consulta de ruta, sin tocar el fallback.
+- 5 templates: banners de importación (éxito/advertencia) en 4 pantallas de catálogo + clase condicional y CSS `.alerta-warning` en `configuracion.html`.
+- `py_compile` sobre los 3 archivos Python editados: OK. Jinja `env.parse()` sobre los 5 templates editados: OK.
+
+## Verificación (Playwright + prueba dirigida)
+| # | Verificación | Resultado |
+|---|---|---|
+| 1 | Importar Excel a `camioneros` con 1 fila válida + 1 fila con `id` no numérico | ✅ `POST /admin/importar/camioneros → 302 → ?importado=1+registros&fallidos=1`; banners verde y ámbar visibles en pantalla; log del servidor: `ERROR in admin: Importación Excel a camioneros con 1 fila(s) fallida(s): fila 3: datatype mismatch` |
+| 2 | Guardar parámetros financieros con "abc" en comisión Mercatoria (inyectado vía JS para simular un envío no bloqueado por la validación nativa del `<input type=number>`) | ✅ Mensaje: "Se guardaron los parámetros, excepto: comisión Mercatoria (valor no válido)."; banner con clase `alerta-warning`; los otros 5 parámetros sí se guardaron (valores preservados tras recargar) |
+| 2b | Caso feliz: guardar todos los parámetros válidos | ✅ Mensaje "Configuración guardada correctamente." con clase `alerta-exito` (comportamiento sin cambios) |
+| 3 | Log en `calcular_liquidacion` cuando la consulta de ruta falla (sin vía de UI legítima para forzarlo — una ruta inexistente da `None`, no una excepción) | ✅ Prueba dirigida en Python con `unittest.mock.patch` sobre `CursorWrapper.execute`: `logger.error` se disparó con el mensaje `Error calculando tarifa/km de ruta para viaje 1: fallo simulado en consulta de ruta`; la función igual retornó un resultado válido con `tarifa_km_fuente="global"` (fallback intacto) |
+
+## Datos de prueba y limpieza
+- Contraseña de `admin` restablecida temporalmente para login vía Playwright; restaurada al hash original al finalizar.
+- 5 camioneros de prueba ("Test Playwright Valido", ids 6–10, creados por reintentos sucesivos del test de import) eliminados de `mercatoria.db`.
+- `mercatoria.db`, `__pycache__/*.pyc` y `mercatoria.db-journal` revertidos/eliminados antes de commitear (mismo cuidado que la sesión anterior, para no ensuciar el commit con ruido binario).
 
 ## Recomendaciones
-- Ninguna corrección quedó pendiente de los 6 puntos pedidos.
-- Vale la pena, en un futuro prompt aparte, revisar si conviene eliminar la ruta de login duplicada e inalcanzable en `routes/cliente.py` (`cliente.login()` POST), ya que fue la pista que confirmó por qué `session["nombre"]` nunca se seteaba en el flujo real.
+- El drive `E:` sigue mostrando desconexiones intermitentes de I/O (ya señalado en el reporte anterior). Sigue produciendo falsos positivos de error que hay que descartar investigando antes de asumir que son bugs de código.
+- Hay al menos un proceso Flask huérfano de otra sesión ocupando el puerto 5000 (`flask run --port 5000`, PID observado 38676) sirviendo código desactualizado. No se tocó por no ser de esta sesión, pero vale la pena que el usuario lo revise/cierre si ya no lo necesita, para evitar confusiones futuras al verificar cambios en el puerto por defecto.
+- Ninguna corrección quedó pendiente de los 3 puntos pedidos.

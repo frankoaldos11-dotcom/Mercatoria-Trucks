@@ -21,6 +21,7 @@ def configuracion():
         return redirect("/login")
 
     mensaje = None
+    hubo_errores = False
 
     if request.method == "POST":
         claves = [
@@ -31,12 +32,21 @@ def configuracion():
             "minimo_pago_usd",
             "comision_mercatoria_porcentaje",
         ]
+        etiquetas = {
+            "tarifa_km": "tarifa por km",
+            "margen_combustible_divisor": "divisor combustible",
+            "multiplicador_pago_camionero": "multiplicador precio cliente",
+            "minimo_km_garantizado": "km mínimo garantizado",
+            "minimo_pago_usd": "pago mínimo al camionero",
+            "comision_mercatoria_porcentaje": "comisión Mercatoria",
+        }
         parametros = {}
+        errores_parametros = []
         for clave in claves:
             try:
                 parametros[clave] = float(request.form[clave])
             except (KeyError, ValueError):
-                pass
+                errores_parametros.append(etiquetas[clave])
         guardar_configuracion(parametros)
 
         claves_texto = ["mail_username", "mail_password"]
@@ -52,7 +62,13 @@ def configuracion():
         con.commit()
         con.close()
 
-        mensaje = "Configuración guardada correctamente."
+        if errores_parametros:
+            hubo_errores = True
+            mensaje = "Se guardaron los parámetros, excepto: " + ", ".join(
+                f"{nombre} (valor no válido)" for nombre in errores_parametros
+            ) + "."
+        else:
+            mensaje = "Configuración guardada correctamente."
 
     config = get_configuracion()
 
@@ -71,6 +87,7 @@ def configuracion():
         config=config,
         config_texto=config_texto,
         mensaje=mensaje,
+        hubo_errores=hubo_errores,
         tipos_vehiculo=tipos_vehiculo,
         rutas=rutas,
     )

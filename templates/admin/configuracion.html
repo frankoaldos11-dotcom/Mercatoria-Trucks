@@ -10,7 +10,7 @@
 </div>
 
 {% if mensaje %}
-<div class="alerta-exito">{{ mensaje }}</div>
+<div class="{{ 'alerta-warning' if hubo_errores else 'alerta-exito' }}">{{ mensaje }}</div>
 {% endif %}
 
 <!-- Tab navigation -->
@@ -367,6 +367,16 @@
     background: #e6f7ee;
     border: 1px solid #2ecc71;
     color: #1a7a45;
+    padding: 14px 20px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    font-weight: 600;
+}
+
+.alerta-warning {
+    background: #fff8e6;
+    border: 1px solid #f59e0b;
+    color: #92400e;
     padding: 14px 20px;
     border-radius: 10px;
     margin-bottom: 24px;

@@ -53,8 +53,9 @@ def calcular_liquidacion(viaje_id):
                 ruta_tarifa_km = float(ruta["tarifa_km"])
             if ruta and ruta["km_oficiales"]:
                 km_ruta = float(ruta["km_oficiales"])
-        except Exception:
-            pass
+        except Exception as e:
+            from flask import current_app
+            current_app.logger.error(f"Error calculando tarifa/km de ruta para viaje {viaje_id}: {e}")
 
     con.close()
 

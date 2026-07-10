@@ -2819,26 +2819,36 @@ def importar_excel(tabla):
     conexion = conectar()
     cursor = conexion.cursor()
     importados = 0
+    errores = []
 
-    for fila in ws.iter_rows(min_row=2, values_only=True):
+    for idx, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
         valores = list(fila[: len(columnas)])
         if not any(v is not None for v in valores):
             continue
         try:
             cursor.execute(
-                f"INSERT OR IGNORE INTO {cfg['tabla']} ({cols_str}) VALUES ({placeholders})",
+                f"INSERT INTO {cfg['tabla']} ({cols_str}) VALUES ({placeholders}) "
+                "ON CONFLICT (id) DO NOTHING",
                 valores,
             )
             importados += cursor.rowcount
-        except Exception:
-            pass
+        except Exception as e:
+            errores.append((idx, str(e)))
 
     conexion.commit()
     conexion.close()
 
-    registrar_auditoria(f"Importó Excel a {tabla} ({importados} registros)", "Datos", tabla)
+    if errores:
+        from flask import current_app
+        detalle_errores = "; ".join(f"fila {idx}: {msg}" for idx, msg in errores)
+        current_app.logger.error(f"Importación Excel a {tabla} con {len(errores)} fila(s) fallida(s): {detalle_errores}")
 
-    return redirect(f"{cfg['redirect']}?importado={importados}+registros")
+    registrar_auditoria(f"Importó Excel a {tabla} ({importados} registros, {len(errores)} fallidas)", "Datos", tabla)
+
+    redirect_url = f"{cfg['redirect']}?importado={importados}+registros"
+    if errores:
+        redirect_url += f"&fallidos={len(errores)}"
+    return redirect(redirect_url)
 
 
 # ── Auditoría ──────────────────────────────────────────────────────────────────

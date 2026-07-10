@@ -2,6 +2,17 @@
 
 {% block contenido %}
 
+{% if request.args.get('importado') %}
+<div style="background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
+    <i class="bi bi-check-circle-fill"></i> Se importaron {{ request.args.get('importado') }} correctamente.
+</div>
+{% endif %}
+{% if request.args.get('fallidos') %}
+<div style="background:#fff8e6;border:1px solid #f59e0b;color:#92400e;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ request.args.get('fallidos') }} fila(s) no se importaron por errores de datos — ver log del servidor.
+</div>
+{% endif %}
+
 <div class="page-header">
     <div>
         <span class="eyebrow">Motor Comercial</span>
