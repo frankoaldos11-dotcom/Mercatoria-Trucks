@@ -1,0 +1,50 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Sistema</span>
+        <h1>Mi cuenta</h1>
+        <p>Cambiá tu propia contraseña de acceso.</p>
+    </div>
+</div>
+
+{% if mensaje %}
+<div class="alerta-exito">{{ mensaje }}</div>
+{% endif %}
+
+{% if error %}
+<div class="alerta-error">{{ error }}</div>
+{% endif %}
+
+<section class="panel" style="max-width: 480px;">
+    <div class="panel-header">
+        <div>
+            <h2>Cambiar mi contraseña</h2>
+            <p>Necesitás confirmar tu contraseña actual para poder cambiarla.</p>
+        </div>
+    </div>
+    <div style="padding: 24px;">
+        <form method="POST" action="/admin/mi-cuenta" class="form-crud-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-crud-field" style="grid-column:1/-1;">
+                <label>Contraseña actual *</label>
+                <input type="password" name="actual" class="input-crud" required autocomplete="current-password">
+            </div>
+            <div class="form-crud-field">
+                <label>Nueva contraseña *</label>
+                <input type="password" name="nueva" class="input-crud" required minlength="4" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
+            </div>
+            <div class="form-crud-field">
+                <label>Confirmar nueva contraseña *</label>
+                <input type="password" name="confirmar" class="input-crud" required minlength="4" autocomplete="new-password">
+            </div>
+            <div class="form-crud-field form-crud-submit">
+                <button type="submit" class="btn-crud-primary">Guardar contraseña</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+{% endblock %}

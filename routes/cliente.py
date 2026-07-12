@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, request, session, redirect, url_fo
 from flask_mail import Message
 from database import conectar, crear_checklist_viaje
 from extensions import bcrypt, mail
+from routes.admin import registrar_auditoria
 from services.tramos_service import (
     ContinuidadError, crear_tramos_viaje, obtener_tramos_viaje, validar_continuidad,
 )
@@ -504,6 +505,7 @@ def perfil():
             cur.execute("UPDATE usuarios SET password = ? WHERE usuario = ?",
                         (nuevo_hash, session["usuario"]))
             con.commit()
+            registrar_auditoria("Cambió su propia contraseña", "Usuarios", "usuario", session.get("user_id"))
 
         cur.execute("""
             SELECT nombre, apellidos, telefono, empresa, usuario, password

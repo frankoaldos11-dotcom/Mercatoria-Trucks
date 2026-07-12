@@ -2724,6 +2724,44 @@ def reset_password_usuario(id):
     return redirect("/admin/usuarios?ok=Contraseña+actualizada")
 
 
+@admin_bp.route("/mi-cuenta", methods=["GET", "POST"])
+def mi_cuenta():
+    if not requiere_admin():
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute(f"SELECT id, password FROM usuarios WHERE usuario = {ph()}", (session["usuario"],))
+    fila = cursor.fetchone()
+
+    if request.method == "POST":
+        actual = request.form.get("actual", "").strip()
+        nueva = request.form.get("nueva", "").strip()
+        confirmar = request.form.get("confirmar", "").strip()
+
+        if not fila or not bcrypt.check_password_hash(fila["password"], actual):
+            conexion.close()
+            return render_template("admin/mi_cuenta.html", error="La contraseña actual es incorrecta")
+
+        if nueva != confirmar:
+            conexion.close()
+            return render_template("admin/mi_cuenta.html", error="Las contraseñas nuevas no coinciden")
+
+        if len(nueva) < 4:
+            conexion.close()
+            return render_template("admin/mi_cuenta.html", error="La nueva contraseña debe tener al menos 4 caracteres")
+
+        nuevo_hash = bcrypt.generate_password_hash(nueva).decode("utf-8")
+        cursor.execute(f"UPDATE usuarios SET password = {ph()} WHERE usuario = {ph()}", (nuevo_hash, session["usuario"]))
+        conexion.commit()
+        conexion.close()
+        registrar_auditoria("Cambió su propia contraseña", "Usuarios", "usuario", fila["id"])
+        return render_template("admin/mi_cuenta.html", mensaje="Contraseña actualizada correctamente")
+
+    conexion.close()
+    return render_template("admin/mi_cuenta.html")
+
+
 # ── Exportar / Importar Excel ──────────────────────────────────────────────────
 
 _EXCEL_CONFIG = {
