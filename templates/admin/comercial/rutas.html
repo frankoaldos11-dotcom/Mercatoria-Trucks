@@ -8,7 +8,7 @@
 </div>
 {% endif %}
 {% if request.args.get('fallidos') %}
-<div style="background:#fff8e6;border:1px solid #f59e0b;color:#92400e;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
+<div style="background:#fff8e6;border:1px solid var(--warning);color:#92400e;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
     <i class="bi bi-exclamation-triangle-fill"></i> {{ request.args.get('fallidos') }} fila(s) no se importaron por errores de datos — ver log del servidor.
 </div>
 {% endif %}
@@ -122,7 +122,7 @@ function autoTarifa() {
                         {% elif r.zona == "Centro" %}
                             <span style="background:#EFF6FF;color:#2563EB;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;">Centro</span>
                         {% elif r.zona == "Oriente" %}
-                            <span style="background:#F0FDF4;color:#16A34A;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;">Oriente</span>
+                            <span style="background:#F0FDF4;color:var(--success);padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;">Oriente</span>
                         {% else %}
                             <span style="color:#9CA3AF;font-size:11px;">—</span>
                         {% endif %}
@@ -285,7 +285,7 @@ function autoTarifa() {
     justify-content: center;
 }
 .modal-box {
-    background: #fff;
+    background: var(--panel);
     border-radius: 14px;
     padding: 28px;
     width: 100%;
@@ -326,7 +326,7 @@ function autoTarifa() {
     border-radius: 8px;
     font-size: 14px;
     box-sizing: border-box;
-    background: #fff;
+    background: var(--panel);
 }
 .modal-form input:focus, .modal-form select:focus {
     outline: none;
@@ -354,7 +354,7 @@ function autoTarifa() {
     border: none;
     border-radius: 8px;
     background: #E86A2C;
-    color: #fff;
+    color: var(--panel);
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
@@ -410,7 +410,7 @@ function autoTarifa() {
     cursor: pointer;
     border: none;
 }
-.btn-save-sm  { background: #2ecc71; color: #fff; }
+.btn-save-sm  { background: #2ecc71; color: var(--panel); }
 .btn-cancel-sm { background: #eee; color: #555; }
 
 .btn-camioneros-toggle {
@@ -453,7 +453,7 @@ function autoTarifa() {
     align-items: center;
     gap: 6px;
     padding: 4px 10px;
-    background: #fff;
+    background: var(--panel);
     border: 1px solid #ddd;
     border-radius: 999px;
     font-size: 13px;
@@ -502,14 +502,14 @@ function autoTarifa() {
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 13px;
-    background: #fff;
+    background: var(--panel);
 }
 .input-cam-sel:focus { outline: none; border-color: #E86A2C; }
 
 .btn-add-cam {
     padding: 7px 16px;
     background: #E86A2C;
-    color: #fff;
+    color: var(--panel);
     border: none;
     border-radius: 8px;
     font-size: 13px;
