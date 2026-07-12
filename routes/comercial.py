@@ -152,7 +152,7 @@ def desasociar_camionero_ruta(ruta_id, camionero_id):
 
 
 def _solo_admin():
-    return "usuario" in session and session.get("rol") in ["admin", "operador"]
+    return "usuario" in session and session.get("rol") == "admin"
 
 
 @comercial_bp.route("/admin/comercial/vehiculos")
