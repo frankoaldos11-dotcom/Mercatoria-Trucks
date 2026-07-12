@@ -4,7 +4,7 @@
 {% elif estado in ('Asignado',) %}
 <span class="badge rounded-pill bg-info text-dark">{{ estado }}</span>
 {% elif estado in ('Pendiente de pago', 'Confirmado') %}
-<span class="badge rounded-pill" style="background:#7C3AED;color:#fff;">{{ estado }}</span>
+<span class="badge rounded-pill" style="background:#7C3AED;color:var(--panel);">{{ estado }}</span>
 {% elif estado in ('Carga recogida', 'En ruta') %}
 <span class="badge rounded-pill bg-primary">{{ estado }}</span>
 {% elif estado == 'Entregado' %}
