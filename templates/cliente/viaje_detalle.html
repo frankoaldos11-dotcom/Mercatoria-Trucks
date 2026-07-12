@@ -138,7 +138,7 @@
 .tl-line-after {
     height: 3px;
     flex: 1;
-    background: #E5E7EB;
+    background: var(--border);
     align-self: center;
     width: 100%;
 }
@@ -148,7 +148,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #E5E7EB;
+    background: var(--border);
     border: 2px solid #D1D5DB;
     display: flex;
     align-items: center;
@@ -162,7 +162,7 @@
 .tl-step.done .tl-dot {
     background: #6B7280;
     border-color: #6B7280;
-    color: #fff;
+    color: var(--panel);
 }
 .tl-step.done .tl-line-after {
     background: #6B7280;
@@ -170,7 +170,7 @@
 .tl-step.active .tl-dot {
     background: #E86A2C;
     border-color: #E86A2C;
-    color: #fff;
+    color: var(--panel);
     box-shadow: 0 0 0 4px rgba(232,106,44,0.2);
 }
 .tl-label {
@@ -202,7 +202,7 @@
 .trm-line-after {
     height: 3px;
     flex: 1;
-    background: #E5E7EB;
+    background: var(--border);
     align-self: center;
     width: 100%;
 }
@@ -219,16 +219,16 @@
     font-weight: 700;
     flex-shrink: 0;
     z-index: 1;
-    background: #E5E7EB;
+    background: var(--border);
     color: #9CA3AF;
 }
 .trm-dot.trm-completado {
     background: #27AE60;
-    color: #fff;
+    color: var(--panel);
 }
 .trm-dot.trm-en_curso {
     background: #F39C12;
-    color: #fff;
+    color: var(--panel);
     box-shadow: 0 0 0 4px rgba(243,156,18,0.2);
 }
 .trm-label {
@@ -342,7 +342,7 @@
 
 {% if viaje.estado|lower == "solicitado" %}
 <div class="mt-card p-3 mb-3" style="border:1px solid #fee2e2;background:#fff5f5;">
-    <div class="section-title mb-2" style="color:#dc2626;">
+    <div class="section-title mb-2" style="color:var(--danger);">
         <i class="bi bi-x-circle me-1"></i> Cancelar solicitud
     </div>
     <p style="font-size:0.85rem;color:#6B7280;margin-bottom:12px;">
@@ -352,7 +352,7 @@
           onsubmit="return confirm('¿Seguro que deseas cancelar esta solicitud?')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit"
-                style="background:#dc2626;color:white;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                style="background:var(--danger);color:white;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
             <i class="bi bi-x-circle"></i> Cancelar solicitud
         </button>
     </form>

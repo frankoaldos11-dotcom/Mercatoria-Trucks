@@ -34,7 +34,7 @@
         <p style="margin:0;color:#888;font-size:13px;">{{ viaje.origen or '—' }} → {{ viaje.destino or '—' }}</p>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="padding:5px 14px;border-radius:999px;background:#E86A2C;color:#fff;font-weight:700;font-size:12px;text-transform:uppercase;">
+        <span style="padding:5px 14px;border-radius:999px;background:#E86A2C;color:var(--panel);font-weight:700;font-size:12px;text-transform:uppercase;">
             {{ viaje.estado }}
         </span>
     </div>
@@ -49,7 +49,7 @@
         <input type="hidden" name="camionero" value="{{ camionero_intentado }}">
         <input type="hidden" name="habilitar_rutas" value="1">
         <button type="submit"
-                style="font-size:12px;font-weight:700;padding:6px 12px;background:#fff;color:#c0392b;border:1px solid #e74c3c;border-radius:6px;cursor:pointer;white-space:nowrap;">
+                style="font-size:12px;font-weight:700;padding:6px 12px;background:var(--panel);color:#c0392b;border:1px solid #e74c3c;border-radius:6px;cursor:pointer;white-space:nowrap;">
             <i class="bi bi-unlock-fill"></i> Habilitar en estas rutas y asignar
         </button>
     </form>
@@ -144,9 +144,9 @@
         <div style="display:flex;align-items:flex-start;">
             <div style="text-align:center;min-width:130px;padding:0 6px;">
                 <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-weight:700;font-size:13px;
-                    {% if t.estado == 'completado' %}background:#27ae60;color:#fff;
-                    {% elif t.estado == 'en_curso' %}background:#f39c12;color:#fff;
-                    {% else %}background:#e5e7eb;color:#888;{% endif %}">
+                    {% if t.estado == 'completado' %}background:#27ae60;color:var(--panel);
+                    {% elif t.estado == 'en_curso' %}background:#f39c12;color:var(--panel);
+                    {% else %}background:var(--border);color:#888;{% endif %}">
                     {% if t.estado == 'completado' %}<i class="bi bi-check-lg"></i>{% else %}{{ loop.index }}{% endif %}
                 </div>
                 <div style="font-size:11px;font-weight:700;color:#374151;">{{ t.origen }} → {{ t.destino }}</div>
@@ -161,7 +161,7 @@
                 {% endif %}
             </div>
             {% if not loop.last %}
-            <div style="width:28px;height:2px;background:#e5e7eb;margin:14px 0 0;"></div>
+            <div style="width:28px;height:2px;background:var(--border);margin:14px 0 0;"></div>
             {% endif %}
         </div>
         {% endfor %}
@@ -208,7 +208,7 @@
     </div>
 </div>
 {% elif (viaje.estado or '')|lower == 'cerrado' %}
-<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
     <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
     <div><strong style="color:#9CA3AF;">Transportista sin asignar</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
 </div>
@@ -237,7 +237,7 @@
     <span class="step-done-info"> · {% if liquidacion and liquidacion.litros_combustible > 0 %}{{ liquidacion.litros_combustible }} L{% else %}${{ "%.2f"|format(viaje.combustible|float) }}{% endif %}</span></div>
 </div>
 {% elif (viaje.estado or '')|lower == 'cerrado' %}
-<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
     <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
     <div><strong style="color:#9CA3AF;">Combustible no confirmado</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
 </div>
@@ -295,7 +295,7 @@
     </div>
 </div>
 {% elif (viaje.estado or '')|lower == 'cerrado' %}
-<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
     <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
     <div><strong style="color:#9CA3AF;">Fechas no registradas</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
 </div>
@@ -324,7 +324,7 @@
     <div><strong>Documentación enviada</strong></div>
 </div>
 {% elif (viaje.estado or '')|lower == 'cerrado' %}
-<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
     <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
     <div><strong style="color:#9CA3AF;">Documentación no enviada</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
 </div>
@@ -335,7 +335,7 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         {% if orden_carga_ok %}
         <a href="/admin/viaje/{{ viaje.id }}/pdf" target="_blank"
-           style="padding:7px 14px;background:#fff;border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#555;text-decoration:none;">
+           style="padding:7px 14px;background:var(--panel);border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#555;text-decoration:none;">
             <i class="bi bi-file-earmark-text"></i> Ver Orden de Carga
         </a>
         {% endif %}
@@ -358,7 +358,7 @@
     <div><strong>Entrega confirmada</strong><span class="step-done-info"> · Estado: Entregado</span></div>
 </div>
 {% elif (viaje.estado or '')|lower == 'cerrado' %}
-<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
     <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
     <div><strong style="color:#9CA3AF;">Entrega no confirmada</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
 </div>
@@ -417,7 +417,7 @@
     </div>
 </div>
 {% elif (viaje.estado or '')|lower == 'cerrado' %}
-<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
     <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
     <div><strong style="color:#9CA3AF;">Pago al transportista</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
 </div>
@@ -448,13 +448,13 @@
             <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Referencia / comentario</label>
             <input type="text" name="observacion" class="step-input" style="margin:0;" placeholder="Opcional">
         </div>
-        <button type="submit" class="step-btn" style="background:#16a34a;">
+        <button type="submit" class="step-btn" style="background:var(--success);">
             <i class="bi bi-check2-circle"></i> Registrar pago
         </button>
     </form>
 </div>
 {% else %}
-<div class="step-done" style="background:#f9fafb;border-color:#e5e7eb;">
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
     <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
     <div><strong style="color:#9CA3AF;">Pago al transportista</strong><span class="step-done-info" style="color:#9CA3AF;"> · Pendiente de entrega</span></div>
 </div>
@@ -522,7 +522,7 @@
         <div style="padding:14px;">
             {% if _epc == 'Pagado' %}
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px;background:#dcfce7;border-radius:8px;">
-                <i class="bi bi-check-circle-fill" style="color:#16a34a;"></i>
+                <i class="bi bi-check-circle-fill" style="color:var(--success);"></i>
                 <span style="font-size:13px;font-weight:700;color:#065f46;">Pago registrado</span>
                 {% if viaje.fecha_pago_camionero %}<span style="font-size:12px;color:#6b7280;">{{ viaje.fecha_pago_camionero | fmt_fecha }}</span>{% endif %}
             </div>
@@ -533,11 +533,11 @@
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero" style="display:flex;gap:8px;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" name="accion" value="pagado"
-                        style="flex:1;padding:10px;background:#16a34a;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                        style="flex:1;padding:10px;background:var(--success);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
                     <i class="bi bi-check2-circle"></i> Marcar como pagado
                 </button>
                 <button type="submit" name="accion" value="revertir"
-                        style="flex:1;padding:10px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;"
+                        style="flex:1;padding:10px;background:var(--panel);color:#6b7280;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;"
                         onclick="return confirm('¿Marcar como pendiente de pago?')">
                     <i class="bi bi-x-circle"></i> Pendiente de pago
                 </button>
@@ -636,7 +636,7 @@
     <details class="detail-block" {% if incidencias %}open{% endif %}>
         <summary class="detail-summary"><i class="bi bi-exclamation-triangle"></i> Incidencias ({{ incidencias|length }})</summary>
         <div style="padding:14px;">
-            <div id="inc-form-wrap" style="display:none;background:#f9fafb;border:1px solid #E5E7EB;border-radius:10px;padding:14px;margin-bottom:14px;">
+            <div id="inc-form-wrap" style="display:none;background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;">
                 <form method="POST" action="/admin/viaje/{{ viaje.id }}/incidencia/nueva">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div style="display:grid;grid-template-columns:160px 1fr;gap:10px;margin-bottom:10px;align-items:end;">
@@ -703,7 +703,7 @@
             <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
                 <div style="width:10px;height:10px;border-radius:50%;background:#E86A2C;margin-top:3px;"></div>
                 {% if not loop.last %}
-                <div style="flex:1;width:1px;background:#e5e7eb;margin-top:4px;min-height:18px;"></div>
+                <div style="flex:1;width:1px;background:var(--border);margin-top:4px;min-height:18px;"></div>
                 {% endif %}
             </div>
             <div style="flex:1;padding-bottom:{% if not loop.last %}4px{% else %}0{% endif %};">
@@ -724,7 +724,7 @@
 <div class="card" style="padding:16px;margin-top:10px;">
     {% if viaje.fecha_cobro %}
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:{% if viaje.comentario_cobro %}8px{% else %}0{% endif %};">
-        <span style="background:#065f46;color:#fff;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;">
+        <span style="background:#065f46;color:var(--panel);padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;">
             <i class="bi bi-check-circle-fill"></i> Cobrado
         </span>
         <span style="font-size:13px;color:#555;">
@@ -741,7 +741,7 @@
           onsubmit="return confirm('¿Confirmas que este viaje está completamente finalizado? Esta acción no se puede deshacer.')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit"
-                style="width:100%;padding:16px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                style="width:100%;padding:16px;background:var(--success);color:var(--panel);border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
             <i class="bi bi-check-circle-fill" style="font-size:1.3rem;"></i> Viaje finalizado
         </button>
     </form>
@@ -829,10 +829,10 @@
 
 {# ── CERRAR OPERACIÓN — ÚLTIMO BLOQUE ─────────────────────── #}
 {% if (viaje.estado or '')|lower == 'cerrado' %}
-<div id="operacion" class="card" style="border:2px solid #16a34a;background:#f0fdf4;padding:20px;margin-top:16px;">
+<div id="operacion" class="card" style="border:2px solid var(--success);background:#f0fdf4;padding:20px;margin-top:16px;">
     <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:12px;">
-            <i class="bi bi-lock-fill" style="color:#16a34a;font-size:1.8rem;"></i>
+            <i class="bi bi-lock-fill" style="color:var(--success);font-size:1.8rem;"></i>
             <div>
                 <strong style="font-size:16px;color:#065f46;display:block;">Viaje finalizado y cerrado</strong>
                 <span style="font-size:13px;color:#6b7280;">Este viaje quedó cerrado. Ningún campo puede editarse.</span>
@@ -844,7 +844,7 @@
               onsubmit="return confirm('¿Reabrir este viaje? Volverá a ser editable (cobro, pago al transportista, estado, fechas) y la acción quedará registrada en el historial.')">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit"
-                    style="padding:10px 18px;background:#fff;color:#b45309;border:1.5px solid #f59e0b;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                    style="padding:10px 18px;background:var(--panel);color:#b45309;border:1.5px solid var(--warning);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
                 <i class="bi bi-unlock-fill"></i> Reabrir viaje
             </button>
         </form>
@@ -852,9 +852,9 @@
     </div>
 </div>
 {% elif done_all and session.get('rol') == 'admin' %}
-<div id="operacion" class="card" style="border:2px solid #16a34a;background:#f0fdf4;padding:20px;margin-top:16px;">
+<div id="operacion" class="card" style="border:2px solid var(--success);background:#f0fdf4;padding:20px;margin-top:16px;">
     <div style="display:flex;align-items:center;gap:12px;">
-        <i class="bi bi-check-circle-fill" style="color:#16a34a;font-size:1.8rem;"></i>
+        <i class="bi bi-check-circle-fill" style="color:var(--success);font-size:1.8rem;"></i>
         <div>
             <strong style="font-size:16px;color:#065f46;display:block;">Operación completada</strong>
             <span style="font-size:13px;color:#6b7280;">Todos los pasos completados y el pago al transportista fue registrado.</span>
@@ -958,7 +958,7 @@ function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
     width: 26px; height: 26px;
     border-radius: 50%;
     background: #E86A2C;
-    color: #fff;
+    color: var(--panel);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -976,11 +976,11 @@ function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
     box-sizing: border-box;
     margin-bottom: 0;
 }
-.step-input:focus { outline: none; border-color: #E86A2C; background: #fff; }
+.step-input:focus { outline: none; border-color: #E86A2C; background: var(--panel); }
 .step-btn {
     padding: 8px 16px;
     background: #E86A2C;
-    color: #fff;
+    color: var(--panel);
     border: none;
     border-radius: 8px;
     font-size: 13px;
@@ -992,9 +992,9 @@ function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
 
 /* ── Detail accordion ────────────────────────────────────── */
 .detail-block {
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: #fff;
+    background: var(--panel);
     overflow: hidden;
 }
 .detail-block[open] { box-shadow: 0 2px 8px rgba(0,0,0,.06); }
@@ -1024,14 +1024,14 @@ details[open] .detail-summary::after { transform: rotate(180deg); }
     width: 100%;
     padding: 9px 14px;
     background: #E86A2C;
-    color: #fff;
+    color: var(--panel);
     border: none;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
 }
-.btn-op-link:hover { opacity: .88; color: #fff; }
+.btn-op-link:hover { opacity: .88; color: var(--panel); }
 .btn-op-link[disabled] { cursor: not-allowed; }
 
 /* ── Liquidación ─────────────────────────────────────────── */
@@ -1057,7 +1057,7 @@ details[open] .detail-summary::after { transform: rotate(180deg); }
 .pago-estado-badge.pago-estado-pendiente { background:#FEE2E2; color:#991B1B; }
 
 /* ── Incidencias ─────────────────────────────────────────── */
-.inc-row { background:#f9fafb; border:1px solid #E5E7EB; border-radius:10px; padding:12px 14px; }
+.inc-row { background:#f9fafb; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
 .inc-resuelta { opacity:.5; }
 .inc-cat-badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:#F3F4F6; color:#6B7280; }
 .inc-cat-badge.inc-cat-retraso      { background:#FEE2E2; color:#991B1B; }
@@ -1073,7 +1073,7 @@ details[open] .detail-summary::after { transform: rotate(180deg); }
 .inc-estado-badge.inc-estado-abierta        { background:#FEE2E2; color:#991B1B; }
 .inc-estado-badge.inc-estado-en_seguimiento { background:#FEF3C7; color:#92400E; }
 .inc-estado-badge.inc-estado-resuelta       { background:#DCFCE7; color:#166534; }
-.btn-inc-estado { font-size:11px; font-weight:600; border:1px solid #D1D5DB; background:#fff; color:#374151; padding:3px 10px; border-radius:6px; cursor:pointer; }
+.btn-inc-estado { font-size:11px; font-weight:600; border:1px solid #D1D5DB; background:var(--panel); color:#374151; padding:3px 10px; border-radius:6px; cursor:pointer; }
 .btn-inc-estado:hover { background:#f3f4f6; }
 
 /* ── Responsive ──────────────────────────────────────────── */
