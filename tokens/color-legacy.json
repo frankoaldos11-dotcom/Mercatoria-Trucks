@@ -1,0 +1,14 @@
+{
+  "bg": { "$type": "color", "$value": "{fondo}" },
+  "panel-soft": { "$type": "color", "$value": "{panel-suave}" },
+  "text": { "$type": "color", "$value": "{texto}" },
+  "muted": { "$type": "color", "$value": "{atenuado}" },
+  "primary": { "$type": "color", "$value": "{principal}" },
+  "primary-dark": { "$type": "color", "$value": "{principal-oscuro}" },
+  "border": { "$type": "color", "$value": "{borde}" },
+  "danger": { "$type": "color", "$value": "{peligro}" },
+  "success": { "$type": "color", "$value": "{exito}" },
+  "warning": { "$type": "color", "$value": "{aviso}" },
+  "sidebar": { "$type": "color", "$value": "{barra-lateral}" },
+  "sidebar-soft": { "$type": "color", "$value": "{barra-lateral-suave}" }
+}

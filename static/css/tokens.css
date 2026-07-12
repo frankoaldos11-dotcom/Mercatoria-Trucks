@@ -4,7 +4,6 @@
 
 :root {
   --bg: #f4f6fb;
-  --panel: #ffffff;
   --panel-soft: #f8fafc;
   --text: #172033;
   --muted: #64748b;
@@ -14,9 +13,22 @@
   --danger: #dc2626;
   --success: #16a34a;
   --warning: #f59e0b;
-  --info: #0891b2;
   --sidebar: #0f172a;
   --sidebar-soft: #102a56;
+  --fondo: #f4f6fb;
+  --panel: #ffffff;
+  --panel-suave: #f8fafc;
+  --texto: #172033;
+  --atenuado: #64748b;
+  --principal: #155eef;
+  --principal-oscuro: #0f3ea8;
+  --borde: #e5e7eb;
+  --peligro: #dc2626;
+  --exito: #16a34a;
+  --aviso: #f59e0b;
+  --info: #0891b2;
+  --barra-lateral: #0f172a;
+  --barra-lateral-suave: #102a56;
   --shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
   --radius: 18px;
   --radio-sm: 6px;
