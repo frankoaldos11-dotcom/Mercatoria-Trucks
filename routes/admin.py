@@ -1144,7 +1144,7 @@ def descargar_carta_porte(id):
 
 @admin_bp.route("/viaje/<int:id>/liquidacion")
 def descargar_liquidacion(id):
-    if not requiere_admin():
+    if session.get("rol") != "admin":
         return redirect("/login")
     try:
         from services.pdf_service import generar_pdf_liquidacion_camionero
@@ -2139,7 +2139,7 @@ def editar_cliente(id):
 
 @admin_bp.route("/clientes/<int:id>/eliminar", methods=["POST"])
 def eliminar_cliente(id):
-    if not requiere_admin():
+    if session.get("rol") != "admin":
         return redirect("/login")
 
     conexion = conectar()
@@ -2298,7 +2298,7 @@ def sugerencias_vehiculos():
 
 @admin_bp.route("/vehiculos/<int:id>/eliminar", methods=["POST"])
 def eliminar_vehiculo(id):
-    if not requiere_admin():
+    if session.get("rol") != "admin":
         return redirect("/login")
 
     conexion = conectar()
