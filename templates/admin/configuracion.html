@@ -236,7 +236,7 @@
             <label style="display:block;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Cap. toneladas</label>
             <input type="number" name="capacidad_ton" class="config-input" style="width:110px;font-size:14px;" step="0.1" placeholder="Ej: 20">
         </div>
-        <button type="submit" style="background:#E86A2C;color:#fff;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Añadir tipo</button>
+        <button type="submit" style="background:#E86A2C;color:var(--panel);border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Añadir tipo</button>
     </form>
 
     {% if tipos_vehiculo %}
@@ -311,7 +311,7 @@
                         <input type="number" name="km_oficiales" step="0.1" min="0"
                                value="{{ r.km_oficiales or '' }}"
                                style="width:90px;padding:4px 8px;border:1px solid #E86A2C;border-radius:6px;font-size:13px;">
-                        <button type="submit" style="background:#2ecc71;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer;">✓</button>
+                        <button type="submit" style="background:#2ecc71;color:var(--panel);border:none;border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer;">✓</button>
                         <button type="button" onclick="cancelKm({{ r.id }})" style="background:#eee;border:none;border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer;color:#555;">✕</button>
                     </form>
                 </td>
@@ -375,7 +375,7 @@
 
 .alerta-warning {
     background: #fff8e6;
-    border: 1px solid #f59e0b;
+    border: 1px solid var(--warning);
     color: #92400e;
     padding: 14px 20px;
     border-radius: 10px;

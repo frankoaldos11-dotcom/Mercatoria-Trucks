@@ -248,7 +248,7 @@
 
     <!-- Modal cobro rápido desde reportes -->
     <div id="modal-cobro-rep" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:16px;padding:28px;width:380px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+        <div style="background:var(--panel);border-radius:16px;padding:28px;width:380px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                 <h3 style="margin:0;font-size:16px;">Registrar cobro</h3>
                 <button onclick="cerrarModalCobro()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
@@ -279,7 +279,7 @@
                         <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Comentario</label>
                         <input type="text" name="comentario_cobro" class="filtro-input" style="width:100%;" placeholder="Opcional">
                     </div>
-                    <button type="submit" style="background:#065f46;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;width:100%;">
+                    <button type="submit" style="background:#065f46;color:var(--panel);border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;width:100%;">
                         <i class="bi bi-check2-circle"></i> Confirmar cobro
                     </button>
                 </div>
@@ -313,7 +313,7 @@
     align-items: center;
     gap: 6px;
     background: #1a1a2e;
-    color: #fff;
+    color: var(--panel);
     padding: 10px 20px;
     border-radius: 8px;
     font-weight: 600;
@@ -322,7 +322,7 @@
     white-space: nowrap;
     transition: background .2s;
 }
-.btn-exportar:hover { background: #0d0d1a; color: #fff; }
+.btn-exportar:hover { background: #0d0d1a; color: var(--panel); }
 
 /* ── Filtro ──────────────────────────────────────────────────────────────── */
 .filtro-fechas {
@@ -346,7 +346,7 @@
 .filtro-input:focus { outline: none; border-color: #E86A2C; }
 .btn-filtrar {
     background: #E86A2C;
-    color: #fff;
+    color: var(--panel);
     border: none;
     padding: 10px 24px;
     border-radius: 8px;
@@ -365,7 +365,7 @@
     margin-bottom: 24px;
 }
 .kpi-card {
-    background: #fff;
+    background: var(--panel);
     border-radius: 12px;
     padding: 20px;
     display: flex;
@@ -405,7 +405,7 @@
     margin-bottom: 24px;
     align-items: start;
 }
-.card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); border: 1px solid #f0f0f0; }
+.card { background: var(--panel); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); border: 1px solid #f0f0f0; }
 .chart-card { padding: 24px; }
 .card-titulo { margin: 0 0 16px; font-size: 16px; font-weight: 700; color: #1a1a1a; }
 .card-sub { font-size: 13px; font-weight: 400; color: #888; }
