@@ -13,7 +13,7 @@
 </div>
 {% endif %}
 {% if request.args.get('fallidos') %}
-<div style="background:#fff8e6;border:1px solid #f59e0b;color:#92400e;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
+<div style="background:#fff8e6;border:1px solid var(--warning);color:#92400e;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
     <i class="bi bi-exclamation-triangle-fill"></i> {{ request.args.get('fallidos') }} fila(s) no se importaron por errores de datos — ver log del servidor.
 </div>
 {% endif %}
@@ -226,7 +226,7 @@
 .input-crud:focus {
     outline: none;
     border-color: #E86A2C;
-    background: #fff;
+    background: var(--panel);
 }
 
 .btn-crud-primary {
@@ -303,7 +303,7 @@
     top: calc(100% + 2px);
     left: 0;
     right: 0;
-    background: #fff;
+    background: var(--panel);
     border: 1px solid #ddd;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0,0,0,.1);

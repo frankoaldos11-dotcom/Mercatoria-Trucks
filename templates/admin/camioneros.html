@@ -13,7 +13,7 @@
 </div>
 {% endif %}
 {% if request.args.get('fallidos') %}
-<div style="background:#fff8e6;border:1px solid #f59e0b;color:#92400e;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
+<div style="background:#fff8e6;border:1px solid var(--warning);color:#92400e;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
     <i class="bi bi-exclamation-triangle-fill"></i> {{ request.args.get('fallidos') }} fila(s) no se importaron por errores de datos — ver log del servidor.
 </div>
 {% endif %}
@@ -86,10 +86,10 @@
                 </select>
             </div>
             <div class="form-crud-field" style="grid-column:1/-1;">
-                <label style="color:#E86A2C;">Vehículo <span style="color:#DC2626;">*</span></label>
+                <label style="color:#E86A2C;">Vehículo <span style="color:var(--danger);">*</span></label>
             </div>
             <div class="form-crud-field">
-                <label>Matrícula <span style="color:#DC2626;">*</span></label>
+                <label>Matrícula <span style="color:var(--danger);">*</span></label>
                 <input type="text" name="matricula" id="campo-matricula" class="input-crud" placeholder="Matrícula" required value="{{ form_data.get('matricula', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field">
@@ -271,7 +271,7 @@
     transition: background .15s;
 }
 .pag-btn:hover { background: #ebebeb; }
-.pag-active { background: #E86A2C !important; color: #fff !important; border-color: #E86A2C !important; }
+.pag-active { background: #E86A2C !important; color: var(--panel) !important; border-color: #E86A2C !important; }
 
 .form-crud-grid {
     display: grid;
@@ -303,7 +303,7 @@
 .input-crud:focus {
     outline: none;
     border-color: #E86A2C;
-    background: #fff;
+    background: var(--panel);
 }
 
 .form-crud-submit {
