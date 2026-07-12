@@ -12,3 +12,4 @@ mercatoria.db
 *.png
 *.log
 test_report.md
+node_modules/

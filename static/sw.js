@@ -1,9 +1,8 @@
-const CACHE_NAME = "mercatoria-v1";
+const CACHE_NAME = "mercatoria-v2";
 
 const STATIC_ASSETS = [
   "/",
   "/static/css/admin.css",
-  "/static/css/layout.css",
   "/static/style.css",
   "/static/icons/icon-192.png",
   "/static/icons/icon-512.png",

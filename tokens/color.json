@@ -1,0 +1,16 @@
+{
+  "bg": { "$type": "color", "$value": "#f4f6fb" },
+  "panel": { "$type": "color", "$value": "#ffffff" },
+  "panel-soft": { "$type": "color", "$value": "#f8fafc" },
+  "text": { "$type": "color", "$value": "#172033" },
+  "muted": { "$type": "color", "$value": "#64748b" },
+  "primary": { "$type": "color", "$value": "#155eef" },
+  "primary-dark": { "$type": "color", "$value": "#0f3ea8" },
+  "border": { "$type": "color", "$value": "#e5e7eb" },
+  "danger": { "$type": "color", "$value": "#dc2626" },
+  "success": { "$type": "color", "$value": "#16a34a" },
+  "warning": { "$type": "color", "$value": "#f59e0b" },
+  "info": { "$type": "color", "$value": "#0891b2" },
+  "sidebar": { "$type": "color", "$value": "#0f172a" },
+  "sidebar-soft": { "$type": "color", "$value": "#102a56" }
+}

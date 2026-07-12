@@ -1,0 +1,12 @@
+{
+  "name": "mercatoria-trucks-tokens",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Design tokens build pipeline (Style Dictionary) for Mercatoria Truck static assets.",
+  "scripts": {
+    "tokens:build": "style-dictionary build --config sd.config.json"
+  },
+  "devDependencies": {
+    "style-dictionary": "^5.5.0"
+  }
+}
