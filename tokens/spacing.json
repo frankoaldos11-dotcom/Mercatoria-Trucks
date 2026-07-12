@@ -1,0 +1,8 @@
+{
+  "espacio-xs": { "$type": "string", "$value": "4px" },
+  "espacio-sm": { "$type": "string", "$value": "8px" },
+  "espacio-md": { "$type": "string", "$value": "12px" },
+  "espacio-lg": { "$type": "string", "$value": "16px" },
+  "espacio-xl": { "$type": "string", "$value": "20px" },
+  "espacio-2xl": { "$type": "string", "$value": "24px" }
+}

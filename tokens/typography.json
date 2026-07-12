@@ -1,0 +1,18 @@
+{
+  "fuente-staff": { "$type": "string", "$value": "Inter, \"Segoe UI\", Arial, sans-serif" },
+  "fuente-cliente": { "$type": "string", "$value": "'Segoe UI', system-ui, sans-serif" },
+  "fuente-landing": { "$type": "string", "$value": "'Montserrat', sans-serif" },
+  "fuente-base": { "$type": "string", "$value": "'Segoe UI', system-ui, sans-serif" },
+
+  "texto-xs": { "$type": "string", "$value": "11px" },
+  "texto-sm": { "$type": "string", "$value": "12px" },
+  "texto-md": { "$type": "string", "$value": "13px" },
+  "texto-lg": { "$type": "string", "$value": "14px" },
+  "texto-xl": { "$type": "string", "$value": "16px" },
+  "texto-2xl": { "$type": "string", "$value": "20px" },
+
+  "peso-regular": { "$type": "string", "$value": "400" },
+  "peso-semibold": { "$type": "string", "$value": "600" },
+  "peso-bold": { "$type": "string", "$value": "700" },
+  "peso-extrabold": { "$type": "string", "$value": "800" }
+}

@@ -1,0 +1,94 @@
+# Design tokens — Mercatoria Truck
+
+Fuente de verdad de los design tokens del sitio. Esta carpeta es autocontenida:
+un diseñador puede editar solo los `.json` de acá y regenerar el CSS sin tocar
+lógica de la app ni templates.
+
+## Qué hay en cada archivo
+
+| Archivo | Contiene | Convención de nombres |
+|---|---|---|
+| `color.json` | 14 colores (fondo, panel, texto, semánticos danger/success/warning/info, sidebar) | Inglés, plano (`bg`, `panel`, `text`, `muted`, `danger`...) — es el vocabulario original, tomado tal cual del `:root` que ya vivía en `admin.css`. No se traduce ni se retoca. |
+| `effects.json` | `shadow` y `radius` originales (intactos, en uso real vía `var(--shadow)`/`var(--radius)`) + escalas nuevas `radio-*` (4 pasos) y `sombra-*` (3 pasos) | Español + talla (`radio-sm/md/lg/pill`, `sombra-sm/md/lg`) |
+| `typography.json` | Font-family por superficie, escala de tamaños, escala de pesos | Español + talla (`fuente-*`, `texto-*`, `peso-*`) |
+| `spacing.json` | Escala de espaciado (padding/margin/gap) | Español + talla (`espacio-*`) |
+
+Todos los valores son los que la app usa **hoy**, verificados con grep sobre
+`templates/` y `static/css/admin.css` — no son valores de diseño nuevos ni
+aspiracionales. El detalle completo del inventario (qué valor, cuántas veces
+se usa, dónde) está en `plan_tokens.md` (raíz del repo, no comiteado — vive
+localmente hasta que se apruebe borrarlo).
+
+## Cómo regenerar `static/css/tokens.css`
+
+```bash
+npm install        # solo la primera vez, o si cambió package.json
+npx style-dictionary build --config sd.config.json
+# o, equivalente:
+npm run tokens:build
+```
+
+Esto corre **en local**. Render no ejecuta Node — sigue sirviendo
+`static/css/tokens.css` como archivo estático generado y comiteado. Después
+de regenerar, revisar el diff (`git diff static/css/tokens.css`) antes de
+commitear, para confirmar que solo cambió lo que se esperaba tocar.
+
+**No editar `static/css/tokens.css` a mano.** Es el output del build — cualquier
+edición manual se pierde en el próximo `style-dictionary build`.
+
+**No tocar `admin.css` ni ningún template desde esta carpeta.** `tokens/`
+solo define el catálogo de variables disponibles; que un archivo empiece a
+usar `var(--espacio-md)` en vez de `12px` hardcodeado es una tanda de
+aplicación aparte, con su propio plan y verificación visual — no algo que se
+haga al mismo tiempo que se amplía el catálogo.
+
+## Vocabulario de nombres (compartido con Mercatoria Fuel)
+
+Este vocabulario lo define Truck y lo hereda Fuel. La idea es que ambas apps
+usen los mismos **nombres de escalón** aunque sus valores concretos no
+coincidan exactamente — por eso ningún nombre lleva el valor literal
+incrustado (nunca `--espacio-8`, siempre `--espacio-sm`). Así cada app puede
+tener su propio número bajo el mismo nombre.
+
+| Categoría | Prefijo | Escalones | Ejemplo |
+|---|---|---|---|
+| Color de fondo/panel/texto/borde | `bg`, `panel`, `text`, `muted`, `border` (inglés, ya existente) | — (plano, sin escalón todavía) | `--bg`, `--text` |
+| Color semántico | `danger` / `success` / `warning` / `info` (inglés, ya existente) | — | `--danger` |
+| Familia tipográfica | `fuente-*` | `staff` / `cliente` / `landing` / `base` (superficie, no talla) | `--fuente-staff` |
+| Tamaño de texto | `texto-*` | `xs` `sm` `md` `lg` `xl` `2xl` | `--texto-md` |
+| Peso de fuente | `peso-*` | `regular` `semibold` `bold` `extrabold` | `--peso-bold` |
+| Espaciado | `espacio-*` | `xs` `sm` `md` `lg` `xl` `2xl` | `--espacio-md` |
+| Radio de borde | `radio-*` | `sm` `md` `lg` `pill` | `--radio-md` |
+| Sombra | `sombra-*` | `sm` `md` `lg` | `--sombra-md` |
+
+### Pendiente de diseño (documentado, no implementado): neutros por superficie
+
+Truck hoy tiene un solo set de neutros (`--bg`, `--text`, `--muted`,
+`--border`) porque solo existía la superficie staff/admin cuando se creó
+`color.json`. Fuel sí necesita valores de neutro **distintos** entre su
+superficie de staff y su superficie de cliente. El patrón de nombres
+acordado para cuando se haga esa tanda (en Truck o directamente en Fuel) es:
+
+```
+--{rol}-staff   /   --{rol}-cliente
+```
+
+sobre los nombres de rol que ya existen en `color.json` — por ejemplo
+`--bg-staff` / `--bg-cliente`, `--text-staff` / `--text-cliente`,
+`--muted-staff` / `--muted-cliente`, `--border-staff` / `--border-cliente`.
+No se implementa ahora: los 14 tokens de color de `color.json` siguen planos
+y sin sufijo de superficie hasta que se apruebe esa tanda explícitamente
+(implica fusionar/revisar valores casi-duplicados, no es "cero cambio
+visual" garantizado como sí lo es esta ampliación de catálogo).
+
+## Qué NO cubre esta ampliación
+
+- No se tokenizó la totalidad de los valores en uso (hay ~26 espaciados y
+  ~40 tamaños de fuente distintos en el sitio hoy; solo se nombraron los
+  dominantes de cada escala). Los valores fuera de la escala siguen
+  hardcodeados hasta que se decida si entran o no en una escala futura.
+- No se tokenizaron los anillos de foco de marca (`rgba(232,106,44,*)`) ni
+  los overlays neutros menos frecuentes — son candidatos a su propio
+  `sombra-focus` o mixin, pendiente de una pasada aparte.
+- Ningún template ni `admin.css` consume todavía estos tokens nuevos. Esa
+  sustitución es la siguiente tanda posible, no parte de esta.
