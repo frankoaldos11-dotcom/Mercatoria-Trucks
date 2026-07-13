@@ -125,6 +125,80 @@ ejemplo `--fondo-staff` / `--fondo-cliente`, `--texto-staff` /
 esa tanda explícitamente (implica fusionar/revisar valores casi-duplicados,
 no es "cero cambio visual" garantizado como sí lo es este renombrado).
 
+## Paleta de Adrián (Figma, DTCG) aplicada — `mercatoria-design-tokens.json`
+
+Adrián (diseño) entregó `tokens/mercatoria-design-tokens.json` (formato DTCG,
+namespace `mercatoria.*`) con la propuesta de rediseño real de color, radios
+y sombra. A diferencia de las tandas anteriores, acá **el cambio visual es
+intencional**: se tradujeron sus valores al vocabulario en español ya
+existente (sin adoptar su estructura de nombres), actualizando `color.json` y
+`effects.json` — ver el archivo original comiteado como referencia de origen.
+
+Regla aplicada: todo token del proyecto que Adrián no cubre **conserva su
+valor actual** (no se inventó ni aproximó nada).
+
+### Cambios de color aplicados
+
+`fondo`, `texto`, `principal`, `borde`, `peligro`, `exito`, `aviso`,
+`barra-lateral` — actualizados a los valores de Adrián. Tokens nuevos creados
+por tener uso real confirmado con grep: `fondo-naranja-suave` (`#fff3e8`,
+ya usado como `#fff3ec` en 8 templates), `texto-sobre-aviso` (`#7a5800`, ya
+literal en `dashboard.html`/`gestionar_viaje.html`), `texto-sobre-oscuro`
+(`#ffffff`, el texto real del sidebar en `admin.css`).
+
+**Huecos que quedaron sin cambio a propósito** (Adrián no los cubre):
+`panel-suave`, `atenuado`, `principal-oscuro`, `info`, `barra-lateral-suave`.
+Dos consecuencias visuales directas de estos huecos, ya conocidas y
+aceptadas al aprobar el plan:
+- `peligro` quedó idéntico a `principal` (`#f16a30`) — Adrián no define
+  ningún rojo en su sistema.
+- `principal-oscuro` (hover) sigue azul mientras `principal` es naranja.
+- El degradé del sidebar (`--sidebar` → `--sidebar-soft`) pasa de
+  navy→navy-oscuro a gris→navy, un salto de tono en vez de un degradé suave.
+
+### Radios y sombra
+
+`radio-lg` pasó de 10px a 12px; se agregaron `radio-xl` (16px) y `radio-2xl`
+(20px) por tener uso real confirmado (16px y 20px ya aparecían hardcodeados
+en templates). `shadow`/`sombra-lg` (el único par con efecto visual real hoy,
+vía `.panel` en `admin.css`) se actualizó a la sombra sutil de Adrián
+(`0px 4px 12px rgba(0,0,0,.03)`). Huecos sin cambio: `radius` (18px),
+`radio-sm`, `radio-md`, `radio-pill`, `sombra-sm`, `sombra-md`.
+
+### Tokens de Adrián evaluados y no aplicados
+
+Estos valores de su JSON no tienen ningún uso real hoy en el código (cero
+apariciones vía grep) — documentados acá en vez de crearse como tokens
+nuevos sin consumidor:
+
+| Token de Adrián | Valor | Por qué no se aplicó |
+|---|---|---|
+| `color.background.icon-circle` | `#f7fafc` | Los círculos de íconos KPI (`admin.css:172-189`) usan un fondo tenue *distinto por categoría* (`.kpi-icon.primary/success/warning/info/neutral`), no un fondo único compartido — aplicarlo implicaría rediseñar esos 5 selectores, más que traducir un valor. |
+| `color.text.body` | `#000000` | No existe hoy un rol "texto de cuerpo" distinto de `texto` (headings) que reemplazar. |
+| `color.text.on-neutral` | `#e8e8e3` | El texto secundario del sidebar hoy es `rgba(255,255,255,.82)` (translúcido), no un gris sólido — no hay match real. |
+| `color.text.muted` | `#1a202c` | Cero apariciones en el código. **Ojo:** el nombre es un falso amigo — no corresponde a nuestro `atenuado` (texto secundario general, `#64748b`); el de Adrián es un casi-negro específico de un botón puntual. No auto-mapear por el nombre. |
+
+### Tipografía — referencia para una tanda futura, no aplicada
+
+`typography.fontFamily.primary = "Inter"` ya coincide con `fuente-staff`
+(`Inter, "Segoe UI", Arial, sans-serif`) — sin cambio. El resto de su catálogo
+de tipografía son combos compuestos (familia+peso+tamaño) sin equivalente 1:1
+en la escala plana `texto-*`/`peso-*` actual, y algunos valores no existen
+todavía en la escala (28px, peso 500 "medium"). Referencia para cuando se
+haga esa tanda:
+
+| Token de Adrián | Familia | Peso | Tamaño |
+|---|---|---|---|
+| `heading.h1` | Inter | 700 (bold) | 28px |
+| `heading.h2` | Inter | 700 (bold) | 22px |
+| `heading.h3` | Inter | 600 (semibold) | 18px |
+| `body.base` | Inter | 400 (regular) | 14px |
+| `body.medium` | Inter | 500 (medium — no existe en `peso-*` hoy) | 14px |
+| `body.small` | Inter | 400 (regular) | 12px |
+| `label.badge` | Inter | 600 (semibold) | 11px |
+| `label.kpi` | Inter | 700 (bold) | 24px |
+| `label.eyebrow` | Inter | 600 (semibold) | 11px |
+
 ## Qué NO cubre esta ampliación
 
 - No se migraron los 202 `var(--nombre-viejo)` existentes en `admin.css` y

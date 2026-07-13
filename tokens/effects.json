@@ -1,13 +1,15 @@
 {
-  "shadow": { "$type": "string", "$value": "0 14px 35px rgba(15, 23, 42, 0.08)" },
+  "shadow": { "$type": "string", "$value": "0px 4px 12px rgba(0, 0, 0, 0.03)" },
   "radius": { "$type": "string", "$value": "18px" },
 
   "radio-sm": { "$type": "string", "$value": "6px" },
   "radio-md": { "$type": "string", "$value": "8px" },
-  "radio-lg": { "$type": "string", "$value": "10px" },
+  "radio-lg": { "$type": "string", "$value": "12px" },
+  "radio-xl": { "$type": "string", "$value": "16px" },
+  "radio-2xl": { "$type": "string", "$value": "20px" },
   "radio-pill": { "$type": "string", "$value": "999px" },
 
   "sombra-sm": { "$type": "string", "$value": "0 1px 4px rgba(0, 0, 0, 0.07)" },
   "sombra-md": { "$type": "string", "$value": "0 4px 20px rgba(0, 0, 0, 0.1)" },
-  "sombra-lg": { "$type": "string", "$value": "0 14px 35px rgba(15, 23, 42, 0.08)" }
+  "sombra-lg": { "$type": "string", "$value": "0px 4px 12px rgba(0, 0, 0, 0.03)" }
 }

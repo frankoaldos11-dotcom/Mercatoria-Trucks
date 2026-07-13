@@ -1,0 +1,63 @@
+{
+  "mercatoria": {
+    "color": {
+      "brand": {
+        "primary": { "value": "#F16A30", "type": "color", "description": "Naranja Mercatoria — acento principal, botones, enlaces, estados activos" },
+        "secondary": { "value": "#FFB43B", "type": "color", "description": "Amarillo — advertencias, badges pendientes, acentos secundarios" },
+        "success": { "value": "#C6BC3C", "type": "color", "description": "Verde — estados de éxito, entregados, ingresos" },
+        "dark": { "value": "#4F4F56", "type": "color", "description": "Gris oscuro — títulos, texto principal, sidebar" },
+        "neutral": { "value": "#E8E8E3", "type": "color", "description": "Gris cálido — fondos secundarios, bordes, dividers" }
+      },
+      "background": {
+        "page": { "value": "#F5F4F1", "type": "color", "description": "Fondo general de la página" },
+        "card": { "value": "#FFFFFF", "type": "color", "description": "Fondo de tarjetas y paneles" },
+        "primary-light": { "value": "#FFF3E8", "type": "color", "description": "Fondo tenue naranja para banners informativos y círculos de iconos KPI" },
+        "icon-circle": { "value": "#F7FAFC", "type": "color", "description": "Fondo alternativo para círculos de iconos" }
+      },
+      "text": {
+        "primary": { "value": "#4F4F56", "type": "color", "description": "Texto principal, headings" },
+        "body": { "value": "#000000", "type": "color", "description": "Texto de cuerpo en tablas y contenido" },
+        "on-dark": { "value": "#FFFFFF", "type": "color", "description": "Texto sobre fondos oscuros (sidebar)" },
+        "on-neutral": { "value": "#E8E8E3", "type": "color", "description": "Texto secundario sobre sidebar oscuro" },
+        "warning": { "value": "#7A5800", "type": "color", "description": "Texto sobre fondos amarillos (contraste accesible)" },
+        "muted": { "value": "#1A202C", "type": "color", "description": "Texto de botones secundarios (rechazar)" }
+      },
+      "state": {
+        "active": { "value": "#F16A30", "type": "color", "description": "Item activo en sidebar, enlace activo" },
+        "warning": { "value": "#FFB43B", "type": "color", "description": "Badge Pendiente" },
+        "danger": { "value": "#F16A30", "type": "color", "description": "Badge Solicitado, botón Aprobar eliminación" },
+        "success": { "value": "#C6BC3C", "type": "color", "description": "Badge Entregado" }
+      }
+    },
+    "typography": {
+      "fontFamily": {
+        "primary": { "value": "Inter", "type": "fontFamily", "description": "Tipografía principal del dashboard" }
+      },
+      "heading": {
+        "h1": { "value": { "fontFamily": "Inter", "fontWeight": 700, "fontSize": 28 }, "type": "typography", "description": "Título principal (Dashboard)" },
+        "h2": { "value": { "fontFamily": "Inter", "fontWeight": 700, "fontSize": 16 }, "type": "typography", "description": "Títulos de sección y paneles" },
+        "h3": { "value": { "fontFamily": "Inter", "fontWeight": 600, "fontSize": 16 }, "type": "typography", "description": "Subtítulos" }
+      },
+      "body": {
+        "base": { "value": { "fontFamily": "Inter", "fontWeight": 400, "fontSize": 14 }, "type": "typography", "description": "Texto de cuerpo" },
+        "medium": { "value": { "fontFamily": "Inter", "fontWeight": 500, "fontSize": 14 }, "type": "typography", "description": "Texto de tablas y labels" },
+        "small": { "value": { "fontFamily": "Inter", "fontWeight": 500, "fontSize": 12 }, "type": "typography", "description": "Texto pequeño, headers de tabla" }
+      },
+      "label": {
+        "badge": { "value": { "fontFamily": "Inter", "fontWeight": 600, "fontSize": 12 }, "type": "typography", "description": "Badges de estado" },
+        "kpi": { "value": { "fontFamily": "Inter", "fontWeight": 800, "fontSize": 18 }, "type": "typography", "description": "Números grandes en KPI cards" },
+        "eyebrow": { "value": { "fontFamily": "Inter", "fontWeight": 500, "fontSize": 12 }, "type": "typography", "description": "Texto eyebrow sobre títulos" }
+      }
+    },
+    "borderRadius": {
+      "sm": { "value": "6px", "type": "borderRadius", "description": "Botones pequeños, badges" },
+      "md": { "value": "8px", "type": "borderRadius", "description": "Inputs, botones medianos" },
+      "lg": { "value": "12px", "type": "borderRadius", "description": "Tarjetas, paneles" },
+      "xl": { "value": "16px", "type": "borderRadius", "description": "Banners, alertas" },
+      "2xl": { "value": "20px", "type": "borderRadius", "description": "Sidebar, contenedores grandes" }
+    },
+    "shadow": {
+      "card": { "value": "0px 4px 12px rgba(0, 0, 0, 0.03)", "type": "boxShadow", "description": "Sombra sutil para tarjetas y paneles" }
+    }
+  }
+}
