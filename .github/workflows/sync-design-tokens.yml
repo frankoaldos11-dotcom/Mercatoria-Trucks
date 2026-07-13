@@ -22,9 +22,6 @@ jobs:
           ref: main
           token: ${{ secrets.DESIGN_SYNC_TOKEN }}
           path: _design-source
-          sparse-checkout: |
-            /mercatoria-design-tokens.json
-          sparse-checkout-cone-mode: false
 
       - name: Listar archivo traido (diagnostico)
         run: find _design-source -maxdepth 2 -type f
