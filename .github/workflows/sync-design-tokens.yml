@@ -19,11 +19,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: frankoaldos11-dotcom/mercatoria-design
+          ref: main
           token: ${{ secrets.DESIGN_SYNC_TOKEN }}
           path: _design-source
           sparse-checkout: |
-            mercatoria-design-tokens.json
+            /mercatoria-design-tokens.json
           sparse-checkout-cone-mode: false
+
+      - name: Listar archivo traido (diagnostico)
+        run: find _design-source -maxdepth 2 -type f
 
       - name: Copiar JSON al catalogo de tokens
         run: cp _design-source/mercatoria-design-tokens.json tokens/mercatoria-design-tokens.json
