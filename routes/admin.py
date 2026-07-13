@@ -224,6 +224,20 @@ def dashboard():
         except Exception:
             pass
 
+    cursor.execute("SELECT COUNT(*) AS total FROM incidencias WHERE estado = 'Abierta'")
+    incidencias_abiertas = cursor.fetchone()["total"]
+
+    cursor.execute("""
+        SELECT i.id, i.viaje_id, i.categoria, i.descripcion, i.fecha_hora,
+               v.origen, v.destino
+        FROM incidencias i
+        LEFT JOIN viajes v ON i.viaje_id = v.id
+        WHERE i.estado = 'Abierta'
+        ORDER BY i.fecha_hora DESC
+        LIMIT 10
+    """)
+    incidencias_abiertas_lista = cursor.fetchall()
+
     conexion.close()
 
     return render_template(
@@ -240,6 +254,8 @@ def dashboard():
         camionero_top=camionero_top,
         clientes_sin_nombre=clientes_sin_nombre,
         solicitudes_pendientes=solicitudes_pendientes,
+        incidencias_abiertas=incidencias_abiertas,
+        incidencias_abiertas_lista=incidencias_abiertas_lista,
     )
 
 
@@ -1351,13 +1367,15 @@ def pago_camionero(id):
     con = conectar()
     cur = con.cursor()
 
+    auditoria_msg = None
+
     if accion == "pagado" and session.get("rol") == "admin":
         cur.execute(
             f"UPDATE viajes SET estado_pago_camionero='Pagado', tipo_pago_camionero={ph()}, "
             f"observacion_pago={ph()}, fecha_pago_camionero=CURRENT_TIMESTAMP WHERE id={ph()}",
             (tipo_pago, observacion, id)
         )
-        registrar_auditoria("Marcó pago camionero como Pagado", "Viajes", "viaje", id)
+        auditoria_msg = "Marcó pago camionero como Pagado"
 
     elif accion == "parcial" and session.get("rol") == "admin":
         cur.execute(
@@ -1365,7 +1383,7 @@ def pago_camionero(id):
             f"observacion_pago={ph()}, monto_pagado={ph()} WHERE id={ph()}",
             (tipo_pago, observacion, monto, id)
         )
-        registrar_auditoria("Marcó pago camionero como Parcial", "Viajes", "viaje", id)
+        auditoria_msg = "Marcó pago camionero como Parcial"
 
     elif accion == "revertir" and session.get("rol") == "admin":
         cur.execute(
@@ -1375,7 +1393,34 @@ def pago_camionero(id):
 
     con.commit()
     con.close()
-    return redirect(f"/admin/viaje/{id}#operacion")
+
+    if auditoria_msg:
+        registrar_auditoria(auditoria_msg, "Viajes", "viaje", id)
+
+    return redirect("/admin/pagos-pendientes")
+
+
+@admin_bp.route("/pagos-pendientes")
+def pagos_pendientes():
+    if session.get("rol") != "admin":
+        return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute(f"""
+        SELECT v.id, v.origen, v.destino, v.camionero_nombre,
+               COALESCE(v.pago_camionero, v.camionero, 0) AS monto_calculado,
+               v.estado_pago_camionero, v.monto_pagado, v.observacion_pago, v.tipo_pago_camionero
+        FROM viajes v
+        WHERE LOWER(v.estado) IN ('entregado', 'cerrado')
+          AND (v.estado_pago_camionero IS NULL OR v.estado_pago_camionero != 'Pagado')
+          AND v.deleted_at IS NULL
+        ORDER BY v.id DESC
+    """)
+    pendientes = cursor.fetchall()
+    conexion.close()
+
+    return render_template("admin/pagos_pendientes.html", pendientes=pendientes)
 
 
 @admin_bp.route("/viaje/<int:id>/marcar-cobrado", methods=["POST"])

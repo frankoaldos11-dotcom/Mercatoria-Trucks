@@ -117,6 +117,7 @@
             <div class="info-val">{% if liquidacion and liquidacion.litros_combustible > 0 %}<span style="font-weight:700;">{{ liquidacion.litros_combustible }} L</span>{% else %}<span style="color:#aaa;">—</span>{% endif %}</div>
         </div>
 
+        {% if session.get('rol') == 'admin' %}
         <div>
             <div class="info-label">Pago al transportista</div>
             <div class="info-val">{% if liquidacion and liquidacion.pago_camionero > 0 %}<span style="color:#E86A2C;font-weight:800;">${{ "%.2f"|format(liquidacion.pago_camionero) }}</span>{% else %}<span style="color:#aaa;">—</span>{% endif %}</div>
@@ -126,6 +127,7 @@
             <div class="info-label">Precio cliente</div>
             <div class="info-val">{% if _precio_confirmado %}<span style="color:#27ae60;font-weight:800;">${{ _pns.precio_val }}</span>{% else %}<span style="color:#e74c3c;font-size:12px;">Pendiente</span>{% endif %}</div>
         </div>
+        {% endif %}
 
     </div>
 </div>
@@ -422,36 +424,15 @@
     <div><strong style="color:#9CA3AF;">Pago al transportista</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
 </div>
 {% elif done6 %}
-<div class="card step-active">
-    <div class="step-title-row"><span class="step-num">6</span> Pago al transportista</div>
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero" style="margin-top:10px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="accion" value="pagado">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">
-            <div>
-                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Monto (USD)</label>
-                <input type="number" name="monto_parcial" step="0.01" min="0" class="step-input"
-                       value="{{ '%.2f'|format(liquidacion.pago_camionero) if liquidacion and liquidacion.pago_camionero > 0 else '' }}"
-                       style="width:130px;margin:0;" placeholder="0.00">
-            </div>
-            <div>
-                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Método de pago</label>
-                <select name="tipo_pago" class="step-input" style="width:200px;margin:0;">
-                    <option value="">— Seleccionar —</option>
-                    {% for m in ['Efectivo', 'Transferencia', 'Tropipay', 'Compensación combustible', 'Otro'] %}
-                    <option value="{{ m }}">{{ m }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div style="margin-bottom:10px;">
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Referencia / comentario</label>
-            <input type="text" name="observacion" class="step-input" style="margin:0;" placeholder="Opcional">
-        </div>
-        <button type="submit" class="step-btn" style="background:var(--success);">
-            <i class="bi bi-check2-circle"></i> Registrar pago
-        </button>
-    </form>
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div>
+        <strong style="color:#9CA3AF;">Pago al transportista</strong>
+        <span class="step-done-info" style="color:#9CA3AF;"> · Pendiente de registrar</span>
+        {% if session.get('rol') == 'admin' %}
+        <span class="step-done-info"> · <a href="/admin/pagos-pendientes">Gestionar en Pagos Pendientes →</a></span>
+        {% endif %}
+    </div>
 </div>
 {% else %}
 <div class="step-done" style="background:#f9fafb;border-color:var(--border);">
@@ -502,10 +483,10 @@
             {% endif %}
             <div class="economia-grid">
                 <div class="economia-item"><span>Km liquidables</span><strong>{{ liquidacion.km_liquidable|int }} km</strong></div>
+                {% if session.get('rol') == 'admin' %}
                 <div class="economia-item"><span>Precio cliente</span><strong>${{ "%.2f"|format(liquidacion.precio_cliente) }}</strong></div>
                 <div class="economia-item"><span>Combustible</span><strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong></div>
                 <div class="economia-item"><span>Pago transportista</span><strong>${{ "%.2f"|format(liquidacion.pago_camionero) }}</strong></div>
-                {% if session.get('rol') == 'admin' %}
                 <div class="economia-item"><span>Comisión Mercatoria ({{ liquidacion.config.comision_mercatoria_porcentaje|int }}%)</span><strong>${{ "%.2f"|format(liquidacion.comision_mercatoria) }}</strong></div>
                 <div class="economia-item beneficio"><span>Utilidad Mercatoria</span><strong>${{ "%.2f"|format(liquidacion.utilidad_mercatoria) }}</strong></div>
                 {% endif %}
@@ -562,7 +543,9 @@
             {% endif %}
 
             <a href="/admin/viaje/{{ viaje.id }}/carta-porte" class="btn-op-link" style="background:#2563EB;">Carta de Porte</a>
+            {% if session.get('rol') == 'admin' %}
             <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-op-link">Liquidación Camionero</a>
+            {% endif %}
 
             {% if session.get('rol') == 'admin' %}
             <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"

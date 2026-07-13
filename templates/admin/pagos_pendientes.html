@@ -1,0 +1,86 @@
+{% extends "admin/base_admin.html" %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Administración</span>
+        <h1>Pagos Pendientes</h1>
+        <p>Viajes entregados o cerrados con pago al transportista pendiente.</p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Pagos pendientes a transportistas</h2>
+            <p>Registrá el pago cuando corresponda — se marca como pagado y sale de esta lista.</p>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Transportista</th>
+                    <th>Ruta</th>
+                    <th>Monto a pagar</th>
+                    <th>Abonado</th>
+                    <th>Pendiente</th>
+                    <th>Registrar pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in pendientes %}
+                {% set monto = v.monto_calculado|float %}
+                {% set abonado = v.monto_pagado|float if v.monto_pagado else 0 %}
+                <tr>
+                    <td>#{{ v.id }}</td>
+                    <td>{{ v.camionero_nombre or '—' }}</td>
+                    <td>{{ v.origen or '—' }} → {{ v.destino or '—' }}</td>
+                    <td><strong>${{ "%.2f"|format(monto) }}</strong></td>
+                    <td>{% if abonado > 0 %}${{ "%.2f"|format(abonado) }}{% else %}—{% endif %}</td>
+                    <td><strong>${{ "%.2f"|format(monto - abonado) }}</strong></td>
+                    <td>
+                        <form method="POST" action="/admin/viaje/{{ v.id }}/pago-camionero"
+                              style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;min-width:320px;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="accion" value="pagado">
+                            <div>
+                                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:2px;">Monto</label>
+                                <input type="number" name="monto_parcial" step="0.01" min="0"
+                                       value="{{ '%.2f'|format(monto) }}"
+                                       style="width:100px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                            </div>
+                            <div>
+                                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:2px;">Método</label>
+                                <select name="tipo_pago" style="padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                                    <option value="">—</option>
+                                    {% for m in ['Efectivo', 'Transferencia', 'Tropipay', 'Compensación combustible', 'Otro'] %}
+                                    <option value="{{ m }}">{{ m }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:2px;">Referencia</label>
+                                <input type="text" name="observacion" placeholder="Opcional"
+                                       style="width:140px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                            </div>
+                            <button type="submit" style="padding:7px 14px;background:var(--success);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                                Registrar pago
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="empty-state">No hay pagos pendientes.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% endblock %}

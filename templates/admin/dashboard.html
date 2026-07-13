@@ -72,6 +72,18 @@
     </div>
     </a>
 
+    <a href="/admin/incidencias?estado=Abierta" style="text-decoration:none;color:inherit;display:block;">
+    <div class="kpi-card">
+        <div class="kpi-icon warning">
+            <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div>
+            <span>Incidencias abiertas</span>
+            <strong>{{ incidencias_abiertas }}</strong>
+        </div>
+    </div>
+    </a>
+
     {% if session.get('rol') == 'admin' %}
     <a href="/admin/reportes" style="text-decoration:none;color:inherit;display:block;">
     <div class="kpi-card">
@@ -210,6 +222,45 @@
                 {% else %}
                 <tr>
                     <td colspan="6" class="empty-state">No hay solicitudes pendientes.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel" style="margin-top:16px;">
+    <div class="panel-header">
+        <div>
+            <h2><i class="bi bi-exclamation-triangle" style="color:#f57f17;margin-right:6px;"></i>Incidencias abiertas</h2>
+            <p>Incidencias registradas en viajes que siguen sin resolver.</p>
+        </div>
+        <a href="/admin/incidencias?estado=Abierta" style="font-size:13px;color:#E86A2C;font-weight:600;text-decoration:none;">Ver todas →</a>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Viaje</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in incidencias_abiertas_lista %}
+                <tr style="cursor:pointer;" onclick="window.location='/admin/viaje/{{ i.viaje_id }}'">
+                    <td>#{{ i.id }}</td>
+                    <td><a href="/admin/viaje/{{ i.viaje_id }}">#{{ i.viaje_id }} — {{ i.origen or '—' }} → {{ i.destino or '—' }}</a></td>
+                    <td>{{ i.categoria }}</td>
+                    <td style="max-width:280px;">{{ i.descripcion or '—' }}</td>
+                    <td style="color:#888;font-size:12px;white-space:nowrap;">{{ i.fecha_hora | fmt_fecha if i.fecha_hora else '—' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="empty-state">No hay incidencias abiertas.</td>
                 </tr>
                 {% endfor %}
             </tbody>
