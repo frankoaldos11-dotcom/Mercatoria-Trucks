@@ -206,9 +206,18 @@ def dashboard():
         """)
         row = cursor.fetchone()
         camionero_top = row["camionero_nombre"] if row else "—"
+
+        cursor.execute("""
+            SELECT COUNT(*) AS total FROM viajes
+            WHERE LOWER(estado) IN ('entregado', 'cerrado')
+              AND (estado_pago_camionero IS NULL OR estado_pago_camionero != 'Pagado')
+              AND deleted_at IS NULL
+        """)
+        viajes_sin_pagar = cursor.fetchone()["total"]
     else:
         ingresos_mes = None
         camionero_top = None
+        viajes_sin_pagar = None
 
     # Solicitudes de eliminación pendientes (solo admin las ve)
     solicitudes_pendientes = []
@@ -256,6 +265,7 @@ def dashboard():
         solicitudes_pendientes=solicitudes_pendientes,
         incidencias_abiertas=incidencias_abiertas,
         incidencias_abiertas_lista=incidencias_abiertas_lista,
+        viajes_sin_pagar=viajes_sin_pagar,
     )
 
 
@@ -1409,7 +1419,6 @@ def pagos_pendientes():
     cursor = conexion.cursor()
     cursor.execute(f"""
         SELECT v.id, v.origen, v.destino, v.camionero_nombre,
-               COALESCE(v.pago_camionero, v.camionero, 0) AS monto_calculado,
                v.estado_pago_camionero, v.monto_pagado, v.observacion_pago, v.tipo_pago_camionero
         FROM viajes v
         WHERE LOWER(v.estado) IN ('entregado', 'cerrado')
@@ -1417,8 +1426,24 @@ def pagos_pendientes():
           AND v.deleted_at IS NULL
         ORDER BY v.id DESC
     """)
-    pendientes = cursor.fetchall()
+    filas = cursor.fetchall()
     conexion.close()
+
+    pendientes = []
+    for v in filas:
+        liquidacion = calcular_liquidacion(v["id"])
+        monto_calculado = liquidacion["pago_camionero"] if liquidacion else 0
+        pendientes.append({
+            "id": v["id"],
+            "origen": v["origen"],
+            "destino": v["destino"],
+            "camionero_nombre": v["camionero_nombre"],
+            "monto_calculado": monto_calculado,
+            "estado_pago_camionero": v["estado_pago_camionero"],
+            "monto_pagado": v["monto_pagado"],
+            "observacion_pago": v["observacion_pago"],
+            "tipo_pago_camionero": v["tipo_pago_camionero"],
+        })
 
     return render_template("admin/pagos_pendientes.html", pendientes=pendientes)
 
@@ -1627,45 +1652,51 @@ def camionero_economico(id):
         return redirect("/admin/camioneros")
 
     cur.execute(f"""
-        SELECT
-            COALESCE(SUM(CASE WHEN LOWER(estado) != 'cancelado'
-                         THEN COALESCE(pago_camionero, camionero, 0) ELSE 0 END), 0) AS total_generado,
-            COALESCE(SUM(CASE
-                WHEN estado_pago_camionero = 'Pagado'  AND LOWER(estado) != 'cancelado'
-                     THEN COALESCE(pago_camionero, camionero, 0)
-                WHEN estado_pago_camionero = 'Parcial' AND LOWER(estado) != 'cancelado'
-                     THEN COALESCE(monto_pagado, 0)
-                ELSE 0 END), 0) AS total_pagado
-        FROM viajes WHERE camionero_id = {ph()}
-    """, (id,))
-    resumen = cur.fetchone()
-    total_generado = float(resumen["total_generado"]) if resumen else 0.0
-    total_pagado   = float(resumen["total_pagado"])   if resumen else 0.0
-    pendiente      = total_generado - total_pagado
-
-    cur.execute(f"""
-        SELECT id, fecha_creacion, origen, destino,
-               COALESCE(pago_camionero, camionero, 0) AS monto_calculado,
-               tipo_pago_camionero, estado_pago_camionero, monto_pagado, observacion_pago, estado
+        SELECT id, fecha_creacion, origen, destino, estado,
+               tipo_pago_camionero, estado_pago_camionero, monto_pagado,
+               observacion_pago, fecha_pago_camionero
         FROM viajes
-        WHERE camionero_id = {ph()}
-          AND LOWER(estado) != 'cancelado'
-          AND (estado_pago_camionero IS NULL OR estado_pago_camionero != 'Pagado')
+        WHERE camionero_id = {ph()} AND LOWER(estado) != 'cancelado'
         ORDER BY id DESC
     """, (id,))
-    pendientes = cur.fetchall()
-
-    cur.execute(f"""
-        SELECT id, fecha_creacion, origen, destino,
-               COALESCE(pago_camionero, camionero, 0) AS monto_calculado,
-               tipo_pago_camionero, monto_pagado, fecha_pago_camionero, observacion_pago, estado
-        FROM viajes
-        WHERE camionero_id = {ph()} AND estado_pago_camionero = 'Pagado'
-        ORDER BY id DESC LIMIT 10
-    """, (id,))
-    pagados = cur.fetchall()
-
+    viajes_camionero = cur.fetchall()
     con.close()
+
+    total_generado = 0.0
+    total_pagado = 0.0
+    pendientes = []
+    pagados = []
+
+    for v in viajes_camionero:
+        liquidacion = calcular_liquidacion(v["id"])
+        monto_calculado = liquidacion["pago_camionero"] if liquidacion else 0
+        total_generado += monto_calculado
+
+        estado_pago = v["estado_pago_camionero"]
+        fila = {
+            "id": v["id"],
+            "fecha_creacion": v["fecha_creacion"],
+            "origen": v["origen"],
+            "destino": v["destino"],
+            "estado": v["estado"],
+            "monto_calculado": monto_calculado,
+            "tipo_pago_camionero": v["tipo_pago_camionero"],
+            "estado_pago_camionero": estado_pago,
+            "monto_pagado": v["monto_pagado"],
+            "observacion_pago": v["observacion_pago"],
+            "fecha_pago_camionero": v["fecha_pago_camionero"],
+        }
+
+        if estado_pago == "Pagado":
+            total_pagado += monto_calculado
+            pagados.append(fila)
+        else:
+            if estado_pago == "Parcial":
+                total_pagado += float(v["monto_pagado"] or 0)
+            pendientes.append(fila)
+
+    pagados = pagados[:10]
+    pendiente = total_generado - total_pagado
 
     return render_template(
         "admin/camionero_economico.html",
