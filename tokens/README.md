@@ -199,6 +199,51 @@ haga esa tanda:
 | `label.kpi` | Inter | 700 (bold) | 24px |
 | `label.eyebrow` | Inter | 600 (semibold) | 11px |
 
+## Circuito automático desde `mercatoria-design`
+
+Desde `.github/workflows/sync-design-tokens.yml` existe una GitHub Action
+que automatiza la traducción que antes se hacía a mano (commit `11b96aa`).
+
+**Qué la dispara:**
+- Manualmente, desde la pestaña **Actions** → "Sync design tokens" →
+  **Run workflow** (`workflow_dispatch`).
+- Automáticamente vía `repository_dispatch` de tipo `tokens-actualizados`,
+  que en el futuro va a enviar el repo `mercatoria-design` cuando Adrián
+  empuje un JSON nuevo (esa mitad — la que dispara desde el otro repo — se
+  monta en otra tanda aparte; esta Action ya está lista para recibirla).
+
+**Qué hace, paso a paso:**
+1. Trae `mercatoria-design-tokens.json` desde la raíz del repo privado
+   `github.com/frankoaldos11-dotcom/mercatoria-design` (branch `main`),
+   usando el secreto `DESIGN_SYNC_TOKEN` para el checkout cruzado.
+2. Corre `tokens/scripts/sync-adrian-tokens.mjs`, que aplica la **misma
+   tabla de mapeo** usada a mano la primera vez (Adrián → vocabulario
+   español), preservando huecos con su valor actual — nunca inventa
+   nombres nuevos.
+3. Regenera `static/css/tokens.css` con Style Dictionary.
+4. Si algo cambió, comitea y pushea a `main` con el `GITHUB_TOKEN` del
+   propio workflow (no necesita el PAT para esto). Render redespliega solo
+   al ver el push nuevo, igual que con cualquier commit manual.
+
+**Qué pasa con tokens nuevos que Adrián agregue:** el script solo
+re-aplica valores a tokens que ya tienen un mapeo conocido (la tabla vive
+en `tokens/scripts/sync-adrian-tokens.mjs`, no acá, para no mantener dos
+copias que se desincronicen). Si Adrián agrega una clave que el script no
+reconoce, **no crea un token solo** — la deja fuera, la anota en
+`tokens/adrian-sync-report.md` (se comitea junto con los tokens si hubo
+cambios) y la marca como `::warning::` en el log del run. Decidir si esa
+clave nueva merece un token español pasa por el mismo proceso manual de
+siempre: grep contra el código para confirmar uso real (ver la sección de
+arriba, "Tokens de Adrián evaluados y no aplicados") y, recién ahí, agregar
+una fila nueva a la tabla de mapeo del script.
+
+**Secreto necesario:** `DESIGN_SYNC_TOKEN`, un fine-grained PAT con acceso
+de solo lectura (`Contents: Read-only`) únicamente al repo
+`mercatoria-design`, configurado en
+`Mercatoria-Trucks → Settings → Secrets and variables → Actions`. No le da
+ningún permiso sobre `Mercatoria-Trucks` — el commit de vuelta usa el
+`GITHUB_TOKEN` automático del workflow.
+
 ## Qué NO cubre esta ampliación
 
 - No se migraron los 202 `var(--nombre-viejo)` existentes en `admin.css` y
