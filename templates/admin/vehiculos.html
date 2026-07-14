@@ -47,7 +47,7 @@
         <option value="{{ e }}" {% if filtro_estado_v == e %}selected{% endif %}>{{ e }}</option>
         {% endfor %}
     </select>
-    <button type="submit" style="padding:8px 16px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
+    <button type="submit" style="padding:8px 16px;background:var(--principal);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
     {% if buscar_v or filtro_estado_v %}
     <a href="/admin/vehiculos" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
     {% endif %}
@@ -180,7 +180,7 @@
 }
 
 .btn-nuevo-vehiculo {
-    background: #E86A2C;
+    background: var(--principal);
     color: white;
     padding: 10px 20px;
     border: none;
@@ -225,12 +225,12 @@
 
 .input-crud:focus {
     outline: none;
-    border-color: #E86A2C;
+    border-color: var(--principal);
     background: var(--panel);
 }
 
 .btn-crud-primary {
-    background: #E86A2C;
+    background: var(--principal);
     color: white;
     padding: 10px 20px;
     border: none;
@@ -326,7 +326,7 @@
 }
 .ac-item:hover, .ac-item.ac-active {
     background: #fff3ec;
-    color: #E86A2C;
+    color: var(--activo);
 }
 </style>
 <script>

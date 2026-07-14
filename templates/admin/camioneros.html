@@ -86,7 +86,7 @@
                 </select>
             </div>
             <div class="form-crud-field" style="grid-column:1/-1;">
-                <label style="color:#E86A2C;">Vehículo <span style="color:var(--danger);">*</span></label>
+                <label style="color:var(--principal);">Vehículo <span style="color:var(--danger);">*</span></label>
             </div>
             <div class="form-crud-field">
                 <label>Matrícula <span style="color:var(--danger);">*</span></label>
@@ -140,7 +140,7 @@
         <option value="{{ t.nombre }}" {% if filtro_tipo == t.nombre %}selected{% endif %}>{{ t.nombre }}</option>
         {% endfor %}
     </select>
-    <button type="submit" style="padding:8px 16px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
+    <button type="submit" style="padding:8px 16px;background:var(--principal);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
     {% if buscar or filtro_estado or filtro_tipo %}
     <a href="/admin/camioneros" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
     {% endif %}
@@ -271,7 +271,7 @@
     transition: background .15s;
 }
 .pag-btn:hover { background: #ebebeb; }
-.pag-active { background: #E86A2C !important; color: var(--panel) !important; border-color: #E86A2C !important; }
+.pag-active { background: var(--activo) !important; color: var(--panel) !important; border-color: var(--activo) !important; }
 
 .form-crud-grid {
     display: grid;
@@ -302,7 +302,7 @@
 
 .input-crud:focus {
     outline: none;
-    border-color: #E86A2C;
+    border-color: var(--principal);
     background: var(--panel);
 }
 
@@ -313,7 +313,7 @@
 
 .btn-crud-primary {
     width: 100%;
-    background: #E86A2C;
+    background: var(--principal);
     color: white;
     padding: 10px 18px;
     border: none;
