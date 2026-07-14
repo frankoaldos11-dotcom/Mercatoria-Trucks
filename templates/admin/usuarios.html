@@ -45,7 +45,7 @@
             </div>
             <div class="form-crud-field">
                 <label>Contraseña *</label>
-                <input type="password" name="password" class="input-crud" required placeholder="Mínimo 6 caracteres">
+                <input type="password" name="password" class="input-crud" required minlength="6" placeholder="Mínimo 6 caracteres">
             </div>
             <div class="form-crud-field">
                 <label>Rol *</label>
@@ -205,7 +205,7 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="text" name="nueva_password" placeholder="Nueva contraseña"
                                    style="padding:3px 7px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:120px;"
-                                   required minlength="4">
+                                   required minlength="6">
                             <button type="submit"
                                     style="padding:4px 10px;background:#7c3aed;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">
                                 🔑 Resetear

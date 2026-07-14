@@ -2689,6 +2689,9 @@ def crear_usuario():
     if not usuario or not password or rol not in ("admin", "operador", "cliente"):
         return redirect("/admin/usuarios?error=Datos+inv%C3%A1lidos")
 
+    if len(password) < 6:
+        return redirect("/admin/usuarios?error=La+contraseña+debe+tener+al+menos+6+caracteres")
+
     if rol == "cliente" and not cliente_id_str:
         return redirect("/admin/usuarios?error=Selecciona+el+cliente+a+vincular")
 
@@ -2797,8 +2800,8 @@ def reset_password_usuario(id):
     if session.get("rol") != "admin":
         return redirect("/admin/usuarios")
     nueva = request.form.get("nueva_password", "").strip()
-    if len(nueva) < 4:
-        return redirect("/admin/usuarios?error=La+contraseña+debe+tener+al+menos+4+caracteres")
+    if len(nueva) < 6:
+        return redirect("/admin/usuarios?error=La+contraseña+debe+tener+al+menos+6+caracteres")
     from extensions import bcrypt as _bcrypt
     nuevo_hash = _bcrypt.generate_password_hash(nueva).decode("utf-8")
     conexion = conectar()
@@ -2833,9 +2836,9 @@ def mi_cuenta():
             conexion.close()
             return render_template("admin/mi_cuenta.html", error="Las contraseñas nuevas no coinciden")
 
-        if len(nueva) < 4:
+        if len(nueva) < 6:
             conexion.close()
-            return render_template("admin/mi_cuenta.html", error="La nueva contraseña debe tener al menos 4 caracteres")
+            return render_template("admin/mi_cuenta.html", error="La nueva contraseña debe tener al menos 6 caracteres")
 
         nuevo_hash = bcrypt.generate_password_hash(nueva).decode("utf-8")
         cursor.execute(f"UPDATE usuarios SET password = {ph()} WHERE usuario = {ph()}", (nuevo_hash, session["usuario"]))
