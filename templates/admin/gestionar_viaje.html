@@ -236,7 +236,7 @@
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
     <div><strong>Combustible confirmado</strong>
-    <span class="step-done-info"> · {% if liquidacion and liquidacion.litros_combustible > 0 %}{{ liquidacion.litros_combustible }} L{% else %}${{ "%.2f"|format(viaje.combustible|float) }}{% endif %}</span></div>
+    <span class="step-done-info"> · {% if liquidacion and liquidacion.litros_combustible > 0 %}Combustible (L): {{ liquidacion.litros_combustible }} L{% else %}Combustible ($): ${{ "%.2f"|format(viaje.combustible|float) }}{% endif %}</span></div>
 </div>
 {% elif (viaje.estado or '')|lower == 'cerrado' %}
 <div class="step-done" style="background:#f9fafb;border-color:var(--border);">
@@ -249,8 +249,9 @@
     {% if liquidacion and liquidacion.litros_combustible > 0 %}
     <p style="font-size:12px;color:#888;margin:8px 0 4px;">Estimado: <strong>{{ liquidacion.litros_combustible }} litros</strong></p>
     {% endif %}
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-combustible" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-combustible" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <span style="font-size:12px;color:#888;">Combustible ($):</span>
         <input type="text" name="combustible" class="step-input"
                value="{{ '%.2f'|format(liquidacion.combustible) if liquidacion and liquidacion.combustible > 0 else '' }}"
                placeholder="0.00" inputmode="decimal" style="width:120px;">

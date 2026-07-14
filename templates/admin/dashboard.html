@@ -113,11 +113,21 @@
             <i class="bi bi-cash-stack"></i>
         </div>
         <div>
-            <span>Viajes sin Pagar</span>
+            <span>Viajes sin Pagar (transportista)</span>
             <strong>{{ viajes_sin_pagar }}</strong>
         </div>
     </div>
     </a>
+
+    <div class="kpi-card" style="cursor:default;">
+        <div class="kpi-icon warning">
+            <i class="bi bi-receipt"></i>
+        </div>
+        <div>
+            <span>Viajes sin Cobrar (cliente)</span>
+            <strong>{{ viajes_sin_cobrar }}</strong>
+        </div>
+    </div>
     {% endif %}
 
 </div>

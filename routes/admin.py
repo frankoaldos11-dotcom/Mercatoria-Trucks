@@ -214,10 +214,19 @@ def dashboard():
               AND deleted_at IS NULL
         """)
         viajes_sin_pagar = cursor.fetchone()["total"]
+
+        cursor.execute("""
+            SELECT COUNT(*) AS total FROM viajes
+            WHERE LOWER(estado) IN ('entregado', 'cerrado')
+              AND fecha_cobro IS NULL
+              AND deleted_at IS NULL
+        """)
+        viajes_sin_cobrar = cursor.fetchone()["total"]
     else:
         ingresos_mes = None
         camionero_top = None
         viajes_sin_pagar = None
+        viajes_sin_cobrar = None
 
     # Solicitudes de eliminación pendientes (solo admin las ve)
     solicitudes_pendientes = []
@@ -266,6 +275,7 @@ def dashboard():
         incidencias_abiertas=incidencias_abiertas,
         incidencias_abiertas_lista=incidencias_abiertas_lista,
         viajes_sin_pagar=viajes_sin_pagar,
+        viajes_sin_cobrar=viajes_sin_cobrar,
     )
 
 
