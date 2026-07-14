@@ -57,7 +57,7 @@
                 {% for inc in incidencias %}
                 <tr class="{{ 'tr-resuelta' if inc.estado == 'Resuelta' else '' }}" id="inc-row-{{ inc.id }}">
                     <td>
-                        <a href="/admin/viaje/{{ inc.viaje_id }}" style="color:#E86A2C;font-weight:700;text-decoration:none;">
+                        <a href="/admin/viaje/{{ inc.viaje_id }}" style="color:var(--principal);font-weight:700;text-decoration:none;">
                             #{{ inc.viaje_id }}
                         </a>
                     </td>
@@ -141,7 +141,7 @@ function cambiarEstado(viajeId, incId, nuevoEstado, csrf, btn) {
     width: 100%;
     box-sizing: border-box;
 }
-.step-input:focus { outline: none; border-color: #E86A2C; }
+.step-input:focus { outline: none; border-color: var(--principal); }
 
 .inc-cat-badge {
     display: inline-block;
