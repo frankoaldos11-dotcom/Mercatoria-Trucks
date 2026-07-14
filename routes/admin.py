@@ -1363,9 +1363,15 @@ def convertir_cotizacion(id):
 
 @admin_bp.route("/viaje/<int:id>/pago-camionero", methods=["POST"])
 def pago_camionero(id):
+    es_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
     if not requiere_admin():
+        if es_ajax:
+            return jsonify({"ok": False, "error": "No autorizado"}), 403
         return redirect("/login")
     if _viaje_cerrado(id):
+        if es_ajax:
+            return jsonify({"ok": False, "error": "El viaje está cerrado y no admite cambios"}), 400
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     accion     = request.form.get("accion", "").strip()
@@ -1411,6 +1417,9 @@ def pago_camionero(id):
     con.commit()
     con.close()
 
+    if es_ajax:
+        return jsonify({"ok": True})
+
     return redirect("/admin/pagos-pendientes")
 
 
@@ -1452,11 +1461,52 @@ def pagos_pendientes():
     return render_template("admin/pagos_pendientes.html", pendientes=pendientes)
 
 
-@admin_bp.route("/viaje/<int:id>/marcar-cobrado", methods=["POST"])
-def marcar_cobrado(id):
+@admin_bp.route("/viajes-sin-cobrar")
+def viajes_sin_cobrar():
     if session.get("rol") != "admin":
         return redirect("/login")
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute(f"""
+        SELECT v.id, v.origen, v.destino, v.cliente,
+               v.precio_final, v.precio, v.monto_cobrado, v.forma_cobro
+        FROM viajes v
+        WHERE LOWER(v.estado) IN ('entregado', 'cerrado')
+          AND v.fecha_cobro IS NULL
+          AND v.deleted_at IS NULL
+        ORDER BY v.id DESC
+    """)
+    filas = cursor.fetchall()
+    conexion.close()
+
+    sin_cobrar = []
+    for v in filas:
+        monto_a_cobrar = float(v["precio_final"] or v["precio"] or 0)
+        sin_cobrar.append({
+            "id": v["id"],
+            "origen": v["origen"],
+            "destino": v["destino"],
+            "cliente": v["cliente"],
+            "monto_a_cobrar": monto_a_cobrar,
+            "monto_cobrado": v["monto_cobrado"],
+            "forma_cobro": v["forma_cobro"],
+        })
+
+    return render_template("admin/viajes_sin_cobrar.html", sin_cobrar=sin_cobrar)
+
+
+@admin_bp.route("/viaje/<int:id>/marcar-cobrado", methods=["POST"])
+def marcar_cobrado(id):
+    es_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+    if session.get("rol") != "admin":
+        if es_ajax:
+            return jsonify({"ok": False, "error": "No autorizado"}), 403
+        return redirect("/login")
     if _viaje_cerrado(id):
+        if es_ajax:
+            return jsonify({"ok": False, "error": "El viaje está cerrado y no admite cambios"}), 400
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
 
     forma_cobro = request.form.get("forma_cobro", "").strip()
@@ -1475,6 +1525,8 @@ def marcar_cobrado(id):
     viaje = cur.fetchone()
     if not viaje or not viaje["camionero_id"]:
         con.close()
+        if es_ajax:
+            return jsonify({"ok": False, "error": "No puedes registrar el cobro sin un transportista asignado"}), 400
         return redirect(f"/admin/viajes/{id}/gestionar?error=No+puedes+registrar+el+cobro+sin+un+transportista+asignado")
 
     cur.execute(
@@ -1495,6 +1547,9 @@ def marcar_cobrado(id):
 
     con.commit()
     con.close()
+
+    if es_ajax:
+        return jsonify({"ok": True})
 
     referer = request.form.get("_referer", "")
     if referer and "reportes" in referer:

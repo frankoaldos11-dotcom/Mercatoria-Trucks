@@ -5,16 +5,16 @@
 <div class="page-header">
     <div>
         <span class="eyebrow">Administración</span>
-        <h1>Pagos Pendientes</h1>
-        <p>Viajes entregados o cerrados con pago al transportista pendiente.</p>
+        <h1>Viajes sin Cobrar</h1>
+        <p>Viajes entregados o cerrados con cobro al cliente pendiente.</p>
     </div>
 </div>
 
 <section class="panel">
     <div class="panel-header">
         <div>
-            <h2>Pagos pendientes a transportistas</h2>
-            <p>Registrá el pago cuando corresponda — se marca como pagado y sale de esta lista.</p>
+            <h2>Cobros pendientes de clientes</h2>
+            <p>Registrá el cobro cuando corresponda — se marca como cobrado y sale de esta lista.</p>
         </div>
     </div>
 
@@ -23,61 +23,60 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Transportista</th>
+                    <th>Cliente</th>
                     <th>Ruta</th>
-                    <th>Monto a pagar</th>
-                    <th>Abonado</th>
-                    <th>Pendiente</th>
-                    <th>Registrar pago</th>
+                    <th>Monto a cobrar</th>
+                    <th>Registrar cobro</th>
                 </tr>
             </thead>
-            <tbody id="tabla-pagos-pendientes">
-                {% for v in pendientes %}
-                {% set monto = v.monto_calculado|float %}
-                {% set abonado = v.monto_pagado|float if v.monto_pagado else 0 %}
+            <tbody id="tabla-sin-cobrar">
+                {% for v in sin_cobrar %}
+                {% set monto = v.monto_a_cobrar|float %}
                 <tr id="fila-viaje-{{ v.id }}">
                     <td>#{{ v.id }}</td>
-                    <td>{{ v.camionero_nombre or '—' }}</td>
+                    <td>{{ v.cliente or '—' }}</td>
                     <td>{{ v.origen or '—' }} → {{ v.destino or '—' }}</td>
                     <td><strong>${{ "%.2f"|format(monto) }}</strong></td>
-                    <td>{% if abonado > 0 %}${{ "%.2f"|format(abonado) }}{% else %}—{% endif %}</td>
-                    <td><strong>${{ "%.2f"|format(monto - abonado) }}</strong></td>
                     <td>
-                        <form method="POST" action="/admin/viaje/{{ v.id }}/pago-camionero"
-                              class="form-registrar-pago" data-viaje-id="{{ v.id }}"
-                              style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;min-width:320px;">
+                        <form method="POST" action="/admin/viaje/{{ v.id }}/marcar-cobrado"
+                              class="form-registrar-cobro" data-viaje-id="{{ v.id }}"
+                              style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;min-width:360px;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="accion" value="pagado">
                             <div>
                                 <label style="font-size:11px;font-weight:600;display:block;margin-bottom:2px;">Monto</label>
-                                <input type="number" name="monto_parcial" step="0.01" min="0"
+                                <input type="number" name="monto_cobrado" step="0.01" min="0"
                                        value="{{ '%.2f'|format(monto) }}"
                                        style="width:100px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
                             </div>
                             <div>
-                                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:2px;">Método</label>
-                                <select name="tipo_pago" style="padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:2px;">Forma</label>
+                                <select name="forma_cobro" style="padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
                                     <option value="">—</option>
-                                    {% for m in ['Efectivo', 'Transferencia', 'Tropipay', 'Compensación combustible', 'Otro'] %}
+                                    {% for m in ['Efectivo', 'Transferencia', 'Tropipay', 'Tarjeta', 'Otro'] %}
                                     <option value="{{ m }}">{{ m }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:2px;">Referencia</label>
-                                <input type="text" name="observacion" placeholder="Opcional"
-                                       style="width:140px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:2px;">Código</label>
+                                <input type="text" name="codigo_transaccion" placeholder="Opcional"
+                                       style="width:110px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+                            </div>
+                            <div>
+                                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:2px;">Comentario</label>
+                                <input type="text" name="comentario_cobro" placeholder="Opcional"
+                                       style="width:130px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
                             </div>
                             <button type="submit" style="padding:7px 14px;background:var(--success);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
-                                Registrar pago
+                                Registrar cobro
                             </button>
-                            <span class="form-pago-error" style="display:none;color:var(--danger);font-size:12px;width:100%;"></span>
+                            <span class="form-cobro-error" style="display:none;color:var(--danger);font-size:12px;width:100%;"></span>
                         </form>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="empty-state">No hay pagos pendientes.</td>
+                    <td colspan="5" class="empty-state">No hay cobros pendientes.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -86,10 +85,10 @@
 </section>
 
 <script>
-document.querySelectorAll('.form-registrar-pago').forEach(function (form) {
+document.querySelectorAll('.form-registrar-cobro').forEach(function (form) {
     form.addEventListener('submit', function (e) {
         e.preventDefault();
-        var errorEl = form.querySelector('.form-pago-error');
+        var errorEl = form.querySelector('.form-cobro-error');
         errorEl.style.display = 'none';
 
         fetch(form.action, {
@@ -102,17 +101,17 @@ document.querySelectorAll('.form-registrar-pago').forEach(function (form) {
             if (result.ok && result.data.ok) {
                 var fila = document.getElementById('fila-viaje-' + form.dataset.viajeId);
                 if (fila) fila.remove();
-                var tbody = document.getElementById('tabla-pagos-pendientes');
+                var tbody = document.getElementById('tabla-sin-cobrar');
                 if (tbody && !tbody.querySelector('tr')) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay pagos pendientes.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No hay cobros pendientes.</td></tr>';
                 }
             } else {
-                errorEl.textContent = result.data.error || 'No se pudo registrar el pago.';
+                errorEl.textContent = result.data.error || 'No se pudo registrar el cobro.';
                 errorEl.style.display = 'block';
             }
         })
         .catch(function () {
-            errorEl.textContent = 'Error de conexión al registrar el pago.';
+            errorEl.textContent = 'Error de conexión al registrar el cobro.';
             errorEl.style.display = 'block';
         });
     });
