@@ -1,4 +1,4 @@
-const CACHE_NAME = "mercatoria-v2";
+const CACHE_NAME = "mercatoria-v3";
 
 const STATIC_ASSETS = [
   "/",

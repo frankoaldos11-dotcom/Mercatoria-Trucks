@@ -506,7 +506,7 @@ body {
 .btn-excel-import:hover { background: #1D4ED8; }
 
 .nav-item-active {
-    background: #E86A2C !important;
+    background: var(--activo) !important;
     color: white !important;
 }
 
@@ -747,8 +747,8 @@ body {
 }
 .config-tab:hover { color: #444; }
 .config-tab.cfg-active {
-    color: #E86A2C;
-    border-bottom-color: #E86A2C;
+    color: var(--activo);
+    border-bottom-color: var(--activo);
 }
 .config-tab-content { display: none; }
 .config-tab-content.cfg-active { display: block; }
@@ -778,11 +778,11 @@ body {
 .acceso-card:hover {
     box-shadow: 0 6px 22px rgba(15,23,42,0.12);
     transform: translateY(-2px);
-    color: #E86A2C;
+    color: var(--principal);
 }
 .acceso-card i {
     font-size: 22px;
-    color: #E86A2C;
+    color: var(--principal);
     opacity: 0.85;
     flex-shrink: 0;
 }

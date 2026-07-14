@@ -19,7 +19,7 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/css/tokens.css">
+    <link rel="stylesheet" href="/static/css/tokens.css?v=1">
     <link rel="stylesheet" href="/static/css/admin.css?v=5">
     <style>
         .nav-badge {
@@ -32,7 +32,7 @@
             border-radius: 999px;
             font-size: 11px;
             font-weight: 700;
-            background: #E86A2C;
+            background: var(--principal);
             color: #fff;
             margin-left: auto;
             line-height: 1;
@@ -48,14 +48,14 @@
 <header class="mobile-topbar" id="mobile-topbar">
     <div class="mobile-topbar-brand">
         <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0;min-width:24px;" aria-hidden="true">
-            <rect x="2" y="2" width="10" height="4" rx="1" fill="#E86A2C"/>
-            <rect x="2" y="2" width="4" height="10" rx="1" fill="#E86A2C"/>
+            <rect x="2" y="2" width="10" height="4" rx="1" style="fill:var(--principal)"/>
+            <rect x="2" y="2" width="4" height="10" rx="1" style="fill:var(--principal)"/>
             <rect x="20" y="2" width="10" height="4" rx="1" fill="#F5A623"/>
             <rect x="26" y="2" width="4" height="10" rx="1" fill="#F5A623"/>
             <rect x="2" y="26" width="10" height="4" rx="1" fill="#F5A623"/>
             <rect x="2" y="20" width="4" height="10" rx="1" fill="#F5A623"/>
-            <rect x="20" y="26" width="10" height="4" rx="1" fill="#E86A2C"/>
-            <rect x="26" y="20" width="4" height="10" rx="1" fill="#E86A2C"/>
+            <rect x="20" y="26" width="10" height="4" rx="1" style="fill:var(--principal)"/>
+            <rect x="26" y="20" width="4" height="10" rx="1" style="fill:var(--principal)"/>
         </svg>
         <span style="color:#fff;font-weight:700;font-size:15px;white-space:nowrap;">Mercatoria</span>
     </div>
@@ -78,14 +78,14 @@
 
         <div class="brand">
             <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="10" height="4" rx="1" fill="#E86A2C"/>
-                <rect x="2" y="2" width="4" height="10" rx="1" fill="#E86A2C"/>
+                <rect x="2" y="2" width="10" height="4" rx="1" style="fill:var(--principal)"/>
+                <rect x="2" y="2" width="4" height="10" rx="1" style="fill:var(--principal)"/>
                 <rect x="20" y="2" width="10" height="4" rx="1" fill="#F5A623"/>
                 <rect x="26" y="2" width="4" height="10" rx="1" fill="#F5A623"/>
                 <rect x="2" y="26" width="10" height="4" rx="1" fill="#F5A623"/>
                 <rect x="2" y="20" width="4" height="10" rx="1" fill="#F5A623"/>
-                <rect x="20" y="26" width="10" height="4" rx="1" fill="#E86A2C"/>
-                <rect x="26" y="20" width="4" height="10" rx="1" fill="#E86A2C"/>
+                <rect x="20" y="26" width="10" height="4" rx="1" style="fill:var(--principal)"/>
+                <rect x="26" y="20" width="4" height="10" rx="1" style="fill:var(--principal)"/>
             </svg>
             <span class="brand-name">Mercatoria</span>
             <button type="button" onclick="window.location.reload()" aria-label="Refrescar"
