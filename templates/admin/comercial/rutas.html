@@ -118,7 +118,7 @@ function autoTarifa() {
                     <td>{{ r.destino }}</td>
                     <td>
                         {% if r.zona == "Occidente" %}
-                            <span style="background:#FFF3EC;color:#E86A2C;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;">Occidente</span>
+                            <span style="background:#FFF3EC;color:var(--principal);padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;">Occidente</span>
                         {% elif r.zona == "Centro" %}
                             <span style="background:#EFF6FF;color:#2563EB;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;">Centro</span>
                         {% elif r.zona == "Oriente" %}
@@ -273,7 +273,7 @@ function autoTarifa() {
     cursor: pointer;
     white-space: nowrap;
 }
-.btn-edit-ruta:hover { background: #eee; border-color: #E86A2C; color: #E86A2C; }
+.btn-edit-ruta:hover { background: #eee; border-color: var(--principal); color: var(--principal); }
 
 .modal-overlay {
     position: fixed;
@@ -330,7 +330,7 @@ function autoTarifa() {
 }
 .modal-form input:focus, .modal-form select:focus {
     outline: none;
-    border-color: #E86A2C;
+    border-color: var(--principal);
 }
 .modal-actions {
     display: flex;
@@ -353,7 +353,7 @@ function autoTarifa() {
     padding: 8px 18px;
     border: none;
     border-radius: 8px;
-    background: #E86A2C;
+    background: var(--principal);
     color: var(--panel);
     font-size: 13px;
     font-weight: 700;
@@ -397,7 +397,7 @@ function autoTarifa() {
 .input-tarifa {
     width: 80px;
     padding: 4px 8px;
-    border: 1px solid #E86A2C;
+    border: 1px solid var(--principal);
     border-radius: 6px;
     font-size: 13px;
 }
@@ -468,7 +468,7 @@ function autoTarifa() {
     flex-shrink: 0;
 }
 .cam-chip-dot.estado-disponible { background: #2ecc71; }
-.cam-chip-dot.estado-en-viaje   { background: #E86A2C; }
+.cam-chip-dot.estado-en-viaje   { background: var(--activo); }
 .cam-chip-dot.estado-ocupado    { background: #e67e22; }
 .cam-chip-dot.estado-inactivo   { background: #bbb; }
 
@@ -504,11 +504,11 @@ function autoTarifa() {
     font-size: 13px;
     background: var(--panel);
 }
-.input-cam-sel:focus { outline: none; border-color: #E86A2C; }
+.input-cam-sel:focus { outline: none; border-color: var(--principal); }
 
 .btn-add-cam {
     padding: 7px 16px;
-    background: #E86A2C;
+    background: var(--principal);
     color: var(--panel);
     border: none;
     border-radius: 8px;
