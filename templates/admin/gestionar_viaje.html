@@ -29,12 +29,12 @@
 {# ── HEADER ───────────────────────────────────────────────── #}
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
     <div>
-        <a href="/admin/viajes" style="font-size:12px;color:#E86A2C;text-decoration:none;font-weight:600;">← Volver a viajes</a>
+        <a href="/admin/viajes" style="font-size:12px;color:var(--principal);text-decoration:none;font-weight:600;">← Volver a viajes</a>
         <h1 style="margin:4px 0 2px;font-size:20px;">Viaje #{{ viaje.id }}</h1>
         <p style="margin:0;color:#888;font-size:13px;">{{ viaje.origen or '—' }} → {{ viaje.destino or '—' }}</p>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="padding:5px 14px;border-radius:999px;background:#E86A2C;color:var(--panel);font-weight:700;font-size:12px;text-transform:uppercase;">
+        <span style="padding:5px 14px;border-radius:999px;background:var(--activo);color:var(--panel);font-weight:700;font-size:12px;text-transform:uppercase;">
             {{ viaje.estado }}
         </span>
     </div>
@@ -120,7 +120,7 @@
         {% if session.get('rol') == 'admin' %}
         <div>
             <div class="info-label">Pago al transportista</div>
-            <div class="info-val">{% if liquidacion and liquidacion.pago_camionero > 0 %}<span style="color:#E86A2C;font-weight:800;">${{ "%.2f"|format(liquidacion.pago_camionero) }}</span>{% else %}<span style="color:#aaa;">—</span>{% endif %}</div>
+            <div class="info-val">{% if liquidacion and liquidacion.pago_camionero > 0 %}<span style="color:var(--principal);font-weight:800;">${{ "%.2f"|format(liquidacion.pago_camionero) }}</span>{% else %}<span style="color:#aaa;">—</span>{% endif %}</div>
         </div>
 
         <div>
@@ -156,7 +156,7 @@
                 {% if t.estado == 'en_curso' %}
                 <form method="POST" action="/admin/viaje/{{ viaje.id }}/tramo/{{ t.id }}/completar" style="margin-top:6px;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" style="font-size:11px;font-weight:700;padding:4px 10px;background:#fff3ec;color:#E86A2C;border:1px solid #E86A2C;border-radius:6px;cursor:pointer;">
+                    <button type="submit" style="font-size:11px;font-weight:700;padding:4px 10px;background:#fff3ec;color:var(--principal);border:1px solid var(--principal);border-radius:6px;cursor:pointer;">
                         Marcar completado
                     </button>
                 </form>
@@ -186,7 +186,7 @@
     </div>
     {% if (viaje.estado or '')|lower not in ['entregado', 'cerrado'] %}
     <button type="button" onclick="document.getElementById('step1-form').style.display='block';document.getElementById('step1-done').style.display='none';"
-            style="font-size:11px;font-weight:700;padding:4px 10px;background:#fff3ec;color:#E86A2C;border:1px solid #E86A2C;border-radius:6px;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+            style="font-size:11px;font-weight:700;padding:4px 10px;background:#fff3ec;color:var(--principal);border:1px solid var(--principal);border-radius:6px;cursor:pointer;white-space:nowrap;flex-shrink:0;">
         <i class="bi bi-arrow-repeat"></i> Cambiar
     </button>
     {% endif %}
@@ -594,16 +594,16 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <textarea name="texto" rows="2" placeholder="Añadir nota interna..."
                           style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;" required></textarea>
-                <button type="submit" style="padding:8px 14px;background:#E86A2C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                <button type="submit" style="padding:8px 14px;background:var(--principal);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
                     <i class="bi bi-plus-lg"></i>
                 </button>
             </form>
             {% if notas %}
             <div style="display:flex;flex-direction:column;gap:8px;">
                 {% for nota in notas %}
-                <div style="background:#f7f7f7;border-radius:8px;padding:10px 12px;border-left:3px solid #E86A2C;">
+                <div style="background:#f7f7f7;border-radius:8px;padding:10px 12px;border-left:3px solid var(--principal);">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <span style="font-size:11px;font-weight:700;color:#E86A2C;">{{ nota.usuario }}</span>
+                        <span style="font-size:11px;font-weight:700;color:var(--principal);">{{ nota.usuario }}</span>
                         <span style="font-size:11px;color:#999;">{{ nota.fecha | fmt_fecha }}</span>
                     </div>
                     <p style="margin:0;font-size:13px;white-space:pre-line;">{{ nota.texto }}</p>
@@ -679,13 +679,13 @@
 {% if historial %}
 <div class="card" style="padding:16px;margin-top:10px;">
     <h4 style="margin:0 0 16px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;">
-        <i class="bi bi-clock-history" style="color:#E86A2C;"></i> Historial del viaje
+        <i class="bi bi-clock-history" style="color:var(--principal);"></i> Historial del viaje
     </h4>
     <div style="display:flex;flex-direction:column;">
         {% for h in historial %}
         <div style="display:flex;gap:12px;{% if not loop.last %}padding-bottom:14px;{% endif %}">
             <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
-                <div style="width:10px;height:10px;border-radius:50%;background:#E86A2C;margin-top:3px;"></div>
+                <div style="width:10px;height:10px;border-radius:50%;background:var(--principal);margin-top:3px;"></div>
                 {% if not loop.last %}
                 <div style="flex:1;width:1px;background:var(--border);margin-top:4px;min-height:18px;"></div>
                 {% endif %}
@@ -766,7 +766,7 @@
     {% endif %}
     {% elif not done1 %}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-        <i class="bi bi-cash-coin" style="color:#E86A2C;font-size:1.2rem;"></i>
+        <i class="bi bi-cash-coin" style="color:var(--principal);font-size:1.2rem;"></i>
         <strong style="font-size:14px;">Registro de cobro al cliente</strong>
     </div>
     <p style="font-size:12px;color:#c0392b;margin:0;">
@@ -774,7 +774,7 @@
     </p>
     {% else %}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <i class="bi bi-cash-coin" style="color:#E86A2C;font-size:1.2rem;"></i>
+        <i class="bi bi-cash-coin" style="color:var(--principal);font-size:1.2rem;"></i>
         <strong style="font-size:14px;">Registro de cobro al cliente</strong>
     </div>
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/marcar-cobrado">
@@ -941,7 +941,7 @@ function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
 .step-num {
     width: 26px; height: 26px;
     border-radius: 50%;
-    background: #E86A2C;
+    background: var(--activo);
     color: var(--panel);
     display: inline-flex;
     align-items: center;
@@ -960,10 +960,10 @@ function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
     box-sizing: border-box;
     margin-bottom: 0;
 }
-.step-input:focus { outline: none; border-color: #E86A2C; background: var(--panel); }
+.step-input:focus { outline: none; border-color: var(--principal); background: var(--panel); }
 .step-btn {
     padding: 8px 16px;
-    background: #E86A2C;
+    background: var(--principal);
     color: var(--panel);
     border: none;
     border-radius: 8px;
@@ -1007,7 +1007,7 @@ details[open] .detail-summary::after { transform: rotate(180deg); }
     box-sizing: border-box;
     width: 100%;
     padding: 9px 14px;
-    background: #E86A2C;
+    background: var(--principal);
     color: var(--panel);
     border: none;
     border-radius: 8px;
@@ -1023,7 +1023,7 @@ details[open] .detail-summary::after { transform: rotate(180deg); }
 .economia-item { background: #f7f7f7; border-radius: 10px; padding: 10px; }
 .economia-item span { display: block; color: #777; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; }
 .economia-item strong { font-size: 13px; }
-.beneficio { background: #fff3ec; border: 1px solid #E86A2C; }
+.beneficio { background: #fff3ec; border: 1px solid var(--principal); }
 .liq-aviso {
     background: #fff8e6; border: 1px solid #f5a623; color: #7a5800;
     border-radius: 8px; padding: 7px 10px; font-size: 12px; margin-bottom: 10px;

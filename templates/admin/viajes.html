@@ -68,11 +68,11 @@
                         {% endfor %}
                     </select>
                     <button type="button" id="mvBtnAgregarTramo" onclick="mvAgregarTramo()"
-                            style="background:#E86A2C;color:var(--panel);border:none;border-radius:8px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                            style="background:var(--principal);color:var(--panel);border:none;border-radius:8px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
                         <i class="bi bi-plus-lg"></i> Añadir tramo
                     </button>
                 </div>
-                <div id="mvRutaPendienteAviso" style="display:none;color:#E86A2C;font-size:11px;font-weight:600;margin-top:6px;">
+                <div id="mvRutaPendienteAviso" style="display:none;color:var(--principal);font-size:11px;font-weight:600;margin-top:6px;">
                     <i class="bi bi-arrow-up"></i> Pulsa "Añadir tramo" para confirmar esta ruta.
                 </div>
                 <div id="mvTramosList" style="margin-top:10px;display:flex;flex-direction:column;gap:6px;"></div>
@@ -163,12 +163,12 @@
     user-select: none;
 }
 input[type="radio"]:checked + .toggle-btn-mv {
-    border-color: #E86A2C;
+    border-color: var(--activo);
     background: #fff3ec;
     color: #c2410c;
 }
 .btn-crud-primary {
-    background: #E86A2C;
+    background: var(--principal);
     color: white;
     padding: 10px 18px;
     border: none;
@@ -205,9 +205,9 @@ function mvRenderTramos() {
     container.innerHTML = '';
     mvTramos.forEach(function(t, i) {
         var row = document.createElement('div');
-        row.style.cssText = "display:flex;align-items:center;gap:8px;background:#FFF3EC;border:1.5px solid #E86A2C;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#7C2D12;";
+        row.style.cssText = "display:flex;align-items:center;gap:8px;background:#FFF3EC;border:1.5px solid var(--principal);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#7C2D12;";
         row.innerHTML =
-            '<span style="flex:1;"><i class="bi bi-geo-alt-fill" style="color:#E86A2C;"></i> Tramo ' + (i + 1) + ': ' + t.origen + ' → ' + t.destino + '</span>' +
+            '<span style="flex:1;"><i class="bi bi-geo-alt-fill" style="color:var(--principal);"></i> Tramo ' + (i + 1) + ': ' + t.origen + ' → ' + t.destino + '</span>' +
             '<button type="button" onclick="mvMoverTramo(' + i + ', -1)" ' + (i === 0 ? 'disabled' : '') + ' style="background:none;border:none;cursor:pointer;color:#7C2D12;" title="Subir"><i class="bi bi-arrow-up"></i></button>' +
             '<button type="button" onclick="mvMoverTramo(' + i + ', 1)" ' + (i === mvTramos.length - 1 ? 'disabled' : '') + ' style="background:none;border:none;cursor:pointer;color:#7C2D12;" title="Bajar"><i class="bi bi-arrow-down"></i></button>' +
             '<button type="button" onclick="mvEliminarTramo(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--danger);" title="Eliminar"><i class="bi bi-trash"></i></button>';
@@ -476,11 +476,11 @@ if (mvTramos.length > 0) {
     color: #1d4ed8;
 }
 .pagination .page-item.active .page-link {
-    background: #E86A2C;
-    border-color: #E86A2C;
+    background: var(--activo);
+    border-color: var(--activo);
 }
 .pagination .page-link {
-    color: #E86A2C;
+    color: var(--principal);
 }
 .pagination .page-item.active .page-link {
     color: var(--panel);
