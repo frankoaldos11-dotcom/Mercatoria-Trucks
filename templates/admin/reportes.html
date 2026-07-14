@@ -343,9 +343,9 @@
     font-size: 14px;
     width: 170px;
 }
-.filtro-input:focus { outline: none; border-color: #E86A2C; }
+.filtro-input:focus { outline: none; border-color: var(--principal); }
 .btn-filtrar {
-    background: #E86A2C;
+    background: var(--principal);
     color: var(--panel);
     border: none;
     padding: 10px 24px;
@@ -395,7 +395,7 @@
 .kpi-valor { font-size: 20px; font-weight: 800; color: #1a1a1a; margin-top: 2px; }
 .kpi-negativo { color: #c0392b; }
 
-.kpi-utilidad-card { border-left: 3px solid #E86A2C; }
+.kpi-utilidad-card { border-left: 3px solid var(--principal); }
 
 /* ── Analytics grid ──────────────────────────────────────────────────────── */
 .analytics-grid {
@@ -424,7 +424,7 @@
     width: 36px;
     height: 36px;
     background: #fff4ed;
-    color: #E86A2C;
+    color: var(--principal);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -482,7 +482,7 @@
 .rep-tabla tbody tr:hover { background: #fafafa; }
 .col-num { text-align: right; font-variant-numeric: tabular-nums; }
 .col-ruta { font-size: 13px; color: #555; max-width: 220px; }
-.link-id { color: #E86A2C; font-weight: 700; text-decoration: none; }
+.link-id { color: var(--principal); font-weight: 700; text-decoration: none; }
 .link-id:hover { text-decoration: underline; }
 
 .num-positivo { color: #27ae60; font-weight: 700; }
@@ -590,6 +590,13 @@
 const labels = {{ chart_labels|safe }};
 const data   = {{ chart_data|safe }};
 
+// Canvas no resuelve var() directamente — se lee el token en runtime.
+const colorPrincipal = getComputedStyle(document.documentElement).getPropertyValue('--principal').trim() || '#E86A2C';
+const colorPrincipalRgb = colorPrincipal.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+const colorPrincipalFondo = colorPrincipalRgb
+    ? `rgba(${parseInt(colorPrincipalRgb[1], 16)}, ${parseInt(colorPrincipalRgb[2], 16)}, ${parseInt(colorPrincipalRgb[3], 16)}, 0.75)`
+    : 'rgba(243, 107, 33, 0.75)';
+
 const ctx = document.getElementById('grafico-ingresos').getContext('2d');
 new Chart(ctx, {
     type: 'bar',
@@ -598,8 +605,8 @@ new Chart(ctx, {
         datasets: [{
             label: 'Ingresos (USD)',
             data: data,
-            backgroundColor: 'rgba(243, 107, 33, 0.75)',
-            borderColor: '#E86A2C',
+            backgroundColor: colorPrincipalFondo,
+            borderColor: colorPrincipal,
             borderWidth: 1.5,
             borderRadius: 6,
         }]
