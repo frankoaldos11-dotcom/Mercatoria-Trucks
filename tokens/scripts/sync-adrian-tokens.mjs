@@ -32,6 +32,7 @@ const MAPEO_COLOR = [
   { origen: "color.background.primary-light", destino: ["fondo-naranja-suave"] },
   { origen: "color.text.warning", destino: ["texto-sobre-aviso"] },
   { origen: "color.text.on-dark", destino: ["texto-sobre-oscuro"] },
+  { origen: "color.state.active", destino: ["activo"] },
 ];
 
 const MAPEO_EFFECTS = [

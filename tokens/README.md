@@ -146,6 +146,22 @@ ya usado como `#fff3ec` en 8 templates), `texto-sobre-aviso` (`#7a5800`, ya
 literal en `dashboard.html`/`gestionar_viaje.html`), `texto-sobre-oscuro`
 (`#ffffff`, el texto real del sidebar en `admin.css`).
 
+Un cuarto token, `activo` (`#f16a30`, desde `color.state.active`), se sumó
+en una tanda de limpieza posterior tras confirmar con grep que el concepto
+"ítem/paso actualmente activo o seleccionado" tiene uso real y repetido:
+`.nav-item-active` en `static/css/admin.css` (17 links del sidebar en
+`base_admin.html`), `.pagination .page-item.active` en
+`templates/admin/viajes.html`, y `.tl-step.active` en
+`templates/cliente/viaje_detalle.html` — los tres hardcodeados hoy a
+`#E86A2C` (el naranja de marca anterior a la paleta de Adrián, sin ninguna
+relación con el catálogo de tokens). El valor de Adrián para este rol
+coincide con `principal`/`peligro` (`#f16a30`) — se creó igual como token
+propio porque nombra un **rol** distinto ("esto es el color de lo
+activo/seleccionado"), no solo repite un valor; una futura tanda de
+aplicación es la que reemplazaría esos hardcodeos por `var(--activo)`.
+`templates/base_cliente.html` usa el mismo concepto pero con su propia
+variable local `--mt-orange` (fuera del catálogo de `tokens/`, no se tocó).
+
 **Huecos que quedaron sin cambio a propósito** (Adrián no los cubre):
 `panel-suave`, `atenuado`, `principal-oscuro`, `info`, `barra-lateral-suave`.
 Dos consecuencias visuales directas de estos huecos, ya conocidas y

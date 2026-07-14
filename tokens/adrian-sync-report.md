@@ -16,6 +16,7 @@ Ninguno — el JSON de Adrian no trajo valores distintos a los ya aplicados.
 - `fondo-naranja-suave` (color.background.primary-light): sin cambio de valor
 - `texto-sobre-aviso` (color.text.warning): sin cambio de valor
 - `texto-sobre-oscuro` (color.text.on-dark): sin cambio de valor
+- `activo` (color.state.active): sin cambio de valor
 - `radio-sm` (borderRadius.sm): sin cambio de valor
 - `radio-md` (borderRadius.md): sin cambio de valor
 - `radio-lg` (borderRadius.lg): sin cambio de valor
@@ -25,4 +26,4 @@ Ninguno — el JSON de Adrian no trajo valores distintos a los ya aplicados.
 - `sombra-lg` (shadow.card): sin cambio de valor
 
 ## Claves nuevas de Adrian sin aplicar (requieren revision manual)
-- `color.state.active` — no tiene token espanol asociado todavia. No se crea automaticamente: hay que confirmar con grep si tiene uso real en el codigo antes de nombrarlo (ver tokens/README.md, seccion "Tokens de Adrian evaluados y no aplicados").
+Ninguna — todas las claves de color/radio/sombra de Adrian ya tienen mapeo conocido.

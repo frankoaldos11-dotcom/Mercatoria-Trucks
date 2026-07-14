@@ -16,5 +16,6 @@
 
   "fondo-naranja-suave": { "$type": "color", "$value": "#fff3e8" },
   "texto-sobre-aviso": { "$type": "color", "$value": "#7a5800" },
-  "texto-sobre-oscuro": { "$type": "color", "$value": "#ffffff" }
+  "texto-sobre-oscuro": { "$type": "color", "$value": "#ffffff" },
+  "activo": { "$type": "color", "$value": "#f16a30" }
 }
