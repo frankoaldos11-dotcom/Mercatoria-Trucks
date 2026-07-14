@@ -1,4 +1,4 @@
-# Reporte de sync de tokens de diseno — 2026-07-13
+# Reporte de sync de tokens de diseno — 2026-07-14
 
 ## Tokens actualizados
 Ninguno — el JSON de Adrian no trajo valores distintos a los ya aplicados.
