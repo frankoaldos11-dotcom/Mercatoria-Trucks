@@ -19,7 +19,7 @@
         </div>
         <div style="font-size:1.2rem;font-weight:700;color:#1F2937;margin-top:2px;">
             {{ viaje.origen }}
-            <span style="color:#E86A2C;margin:0 8px;">→</span>
+            <span style="color:var(--principal);margin:0 8px;">→</span>
             {{ viaje.destino }}
         </div>
         {% if viaje.ruta_nombre %}
@@ -62,7 +62,7 @@
             <div class="tl-line-after"></div>
             <span class="tl-label">{{ label }}</span>
             {% if estado_paso == 'active' and estados_intermedios.get(viaje.estado) == idx %}
-            <span style="font-size:0.62rem;color:#E86A2C;font-weight:700;margin-top:2px;white-space:nowrap;">{{ viaje.estado }}</span>
+            <span style="font-size:0.62rem;color:var(--activo);font-weight:700;margin-top:2px;white-space:nowrap;">{{ viaje.estado }}</span>
             {% endif %}
         </div>
         {% endfor %}
@@ -107,11 +107,11 @@
         <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9CA3AF;">
             Precio confirmado
         </div>
-        <div style="font-size:1.5rem;font-weight:800;color:#E86A2C;margin-top:2px;">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--principal);margin-top:2px;">
             USD ${{ "%.2f"|format(viaje.precio_confirmado|float) }}
         </div>
     </div>
-    <i class="bi bi-check-circle-fill" style="font-size:2rem;color:#E86A2C;opacity:0.3;"></i>
+    <i class="bi bi-check-circle-fill" style="font-size:2rem;color:var(--principal);opacity:0.3;"></i>
 </div>
 {% else %}
 <div class="mt-card p-3 mb-3">
@@ -168,10 +168,10 @@
     background: #6B7280;
 }
 .tl-step.active .tl-dot {
-    background: #E86A2C;
-    border-color: #E86A2C;
+    background: var(--activo);
+    border-color: var(--activo);
     color: var(--panel);
-    box-shadow: 0 0 0 4px rgba(232,106,44,0.2);
+    box-shadow: 0 0 0 4px rgba(241,106,48,0.2);
 }
 .tl-label {
     font-size: 0.68rem;
@@ -182,7 +182,7 @@
     white-space: nowrap;
 }
 .tl-step.done .tl-label { color: #6B7280; font-weight: 600; }
-.tl-step.active .tl-label { color: #E86A2C; font-weight: 700; }
+.tl-step.active .tl-label { color: var(--activo); font-weight: 700; }
 
 .trm-wrap {
     display: flex;
@@ -253,7 +253,7 @@
     <div class="col-md-6">
         <div class="mt-card p-3 h-100">
             <div class="section-title">
-                <i class="bi bi-calendar3 me-1" style="color:#E86A2C;"></i> Fechas
+                <i class="bi bi-calendar3 me-1" style="color:var(--principal);"></i> Fechas
             </div>
             <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
                 <tr>
@@ -287,7 +287,7 @@
     <div class="col-md-6">
         <div class="mt-card p-3 h-100">
             <div class="section-title">
-                <i class="bi bi-person-badge me-1" style="color:#E86A2C;"></i> Transporte
+                <i class="bi bi-person-badge me-1" style="color:var(--principal);"></i> Transporte
             </div>
             <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
                 <tr>
@@ -363,7 +363,7 @@
 {% if viaje.observaciones %}
 <div class="mt-card p-3">
     <div class="section-title mb-2">
-        <i class="bi bi-chat-text me-1" style="color:#E86A2C;"></i> Detalles de la carga
+        <i class="bi bi-chat-text me-1" style="color:var(--principal);"></i> Detalles de la carga
     </div>
     <p style="font-size:0.875rem;color:#374151;margin:0;white-space:pre-line;">{{ viaje.observaciones }}</p>
 </div>

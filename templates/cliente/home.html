@@ -42,7 +42,7 @@
         <a href="/cliente/viajes?estado=activos" class="stat-link" style="text-decoration:none;color:inherit;display:block;transition:transform 0.15s;cursor:pointer;">
             <div class="stat-card d-flex align-items-center gap-3">
                 <div class="stat-icon" style="background:#FFF3EC;">
-                    <i class="bi bi-truck text-warning" style="color:#E86A2C !important;"></i>
+                    <i class="bi bi-truck text-warning" style="color:var(--principal) !important;"></i>
                 </div>
                 <div>
                     <div class="stat-value">{{ activos }}</div>
@@ -86,7 +86,7 @@
         <span style="font-size:0.85rem;font-weight:700;color:#374151;">
             <i class="bi bi-clock-history me-1 text-muted"></i> Últimos viajes
         </span>
-        <a href="/cliente/viajes" style="font-size:0.8rem;color:#E86A2C;text-decoration:none;font-weight:600;">
+        <a href="/cliente/viajes" style="font-size:0.8rem;color:var(--principal);text-decoration:none;font-weight:600;">
             Ver todos <i class="bi bi-arrow-right"></i>
         </a>
     </div>
@@ -109,7 +109,7 @@
                     <td><span style="color:#9CA3AF;font-size:0.8rem;">#{{ v.id }}</span></td>
                     <td>
                         <span class="fw-semibold">{{ v.origen }}</span>
-                        <i class="bi bi-arrow-right" style="color:#E86A2C;font-size:0.75rem;margin:0 4px;"></i>
+                        <i class="bi bi-arrow-right" style="color:var(--principal);font-size:0.75rem;margin:0 4px;"></i>
                         <span class="fw-semibold">{{ v.destino }}</span>
                     </td>
                     <td>{{ badge_estado(v.estado) }}</td>
@@ -118,7 +118,7 @@
                     </td>
                     <td>
                         <a href="/cliente/viaje/{{ v.id }}"
-                           style="font-size:0.8rem;color:#E86A2C;text-decoration:none;">
+                           style="font-size:0.8rem;color:var(--principal);text-decoration:none;">
                             Ver <i class="bi bi-chevron-right"></i>
                         </a>
                     </td>
@@ -131,7 +131,7 @@
     <div class="empty-state">
         <i class="bi bi-inbox"></i>
         <p>No tienes viajes aún.<br>
-           <a href="/cliente/solicitar" style="color:#E86A2C;font-weight:600;">Crea tu primera solicitud</a>
+           <a href="/cliente/solicitar" style="color:var(--principal);font-weight:600;">Crea tu primera solicitud</a>
         </p>
     </div>
     {% endif %}
