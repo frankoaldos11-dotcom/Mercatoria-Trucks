@@ -504,8 +504,8 @@ def perfil():
             nuevo_hash = bcrypt.generate_password_hash(nueva).decode("utf-8")
             cur.execute("UPDATE usuarios SET password = ? WHERE usuario = ?",
                         (nuevo_hash, session["usuario"]))
+            registrar_auditoria(cur, "Cambió su propia contraseña", "Usuarios", "usuario", session.get("user_id"))
             con.commit()
-            registrar_auditoria("Cambió su propia contraseña", "Usuarios", "usuario", session.get("user_id"))
 
         cur.execute("""
             SELECT nombre, apellidos, telefono, empresa, usuario, password

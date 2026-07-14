@@ -27,23 +27,18 @@ from utils.constants import CAMIONERO_ESTADOS, VEHICULO_ESTADOS
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
-def registrar_auditoria(accion, categoria, entidad=None, entidad_id=None, detalle=None):
-    try:
-        conexion = conectar()
-        cursor = conexion.cursor()
-        cursor.execute(f"""
-            INSERT INTO auditoria (usuario, rol, accion, categoria, entidad, entidad_id, detalle)
-            VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
-        """, (
-            session.get("usuario", "sistema"),
-            session.get("rol", ""),
-            accion, categoria, entidad, entidad_id, detalle
-        ))
-        conexion.commit()
-        conexion.close()
-    except Exception as e:
-        from flask import current_app
-        current_app.logger.error(f"AUDITORIA ERROR: {e}")
+def registrar_auditoria(cursor, accion, categoria, entidad=None, entidad_id=None, detalle=None):
+    """Inserta una fila de auditoria usando el cursor de la transaccion del llamador.
+    No hace commit ni maneja conexion — eso es responsabilidad de quien llama,
+    para que la accion y su auditoria se guarden (o fallen) juntas."""
+    cursor.execute(f"""
+        INSERT INTO auditoria (usuario, rol, accion, categoria, entidad, entidad_id, detalle)
+        VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
+    """, (
+        session.get("usuario", "sistema"),
+        session.get("rol", ""),
+        accion, categoria, entidad, entidad_id, detalle
+    ))
 
 
 def _viaje_cerrado(viaje_id):
@@ -376,10 +371,10 @@ def nuevo_viaje_admin():
     crear_checklist_viaje(cur, viaje_id)
     if len(ruta_ids_int) > 1:
         crear_tramos_viaje(cur, viaje_id, ruta_ids_int)
+    registrar_auditoria(cur, "creó viaje", "viajes", "viaje", viaje_id)
     con.commit()
     con.close()
 
-    registrar_auditoria("creó viaje", "viajes", "viaje", viaje_id)
     return redirect(f"/admin/viajes/{viaje_id}/gestionar")
 
 
@@ -735,9 +730,9 @@ def completar_tramo_admin(id, tramo_id):
     ok = completar_tramo(cur, id, tramo_id)
     if ok:
         _registrar_historial(cur, id, "Tramo completado", f"Tramo ID: {tramo_id}")
+        registrar_auditoria(cur, "completó tramo", "Viajes", "viaje", id, f"Tramo ID: {tramo_id}")
         con.commit()
         con.close()
-        registrar_auditoria("completó tramo", "Viajes", "viaje", id, f"Tramo ID: {tramo_id}")
     else:
         con.close()
         return redirect(f"/admin/viajes/{id}/gestionar?error=Ese+tramo+no+se+puede+completar+todav%C3%ADa")
@@ -871,13 +866,10 @@ def asignar_camionero(id):
             WHERE id = {ph()}
         """, (camionero_id, fila["nombre"], id))
 
-    conexion.commit()
-
     nombre_camionero = fila['nombre'] if fila else "desconocido"
-
+    registrar_auditoria(cursor, f"Asignó camionero {nombre_camionero}", "Viajes", "viaje", id, f"Camionero ID: {camionero_id}")
+    conexion.commit()
     conexion.close()
-
-    registrar_auditoria(f"Asignó camionero {nombre_camionero}", "Viajes", "viaje", id, f"Camionero ID: {camionero_id}")
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -959,6 +951,10 @@ def cambiar_estado(id):
         _registrar_historial(cursor, id, f"Estado cambiado a {estado}",
                              f"Estado anterior: {estado_anterior}" if estado_anterior else "")
 
+    registrar_auditoria(
+        cursor, f"Cambió estado a {estado}", "Viajes", "viaje", id,
+        f"Estado anterior: {estado_anterior}"
+    )
     conexion.commit()
     conexion.close()
 
@@ -971,11 +967,6 @@ def cambiar_estado(id):
                 notificar_cliente_estado(id, estado, email_cliente)
         t = threading.Thread(target=_notificar, daemon=True)
         t.start()
-
-    registrar_auditoria(
-        f"Cambió estado a {estado}", "Viajes", "viaje", id,
-        f"Estado anterior: {estado_anterior}"
-    )
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -1074,14 +1065,14 @@ def asignar_camionero_vehiculo(id):
             f"El viaje quedó sin vehículo asignado tras reasignar a {nombre_cam} (sin vehículo activo)"
         )
 
-    conexion.commit()
-    conexion.close()
-
     registrar_auditoria(
+        cursor,
         f"Asignó camionero {nombre_cam} y vehículo {nombre_veh}",
         "Viajes", "viaje", id,
         f"Camionero y vehículo asignados juntos"
     )
+    conexion.commit()
+    conexion.close()
 
     return redirect(f"/admin/viajes/{id}/gestionar")
 
@@ -1161,7 +1152,10 @@ def descargar_carta_porte(id):
     try:
         from services.pdf_service import generar_pdf_carta_porte
         pdf_bytes = generar_pdf_carta_porte(id)
-        registrar_auditoria("Descargó Carta de Porte", "Viajes", "viaje", id)
+        _con_aud = conectar()
+        registrar_auditoria(_con_aud.cursor(), "Descargó Carta de Porte", "Viajes", "viaje", id)
+        _con_aud.commit()
+        _con_aud.close()
         return send_file(
             io.BytesIO(pdf_bytes),
             mimetype="application/pdf",
@@ -1241,9 +1235,9 @@ def guardar_combustible(id):
     con = conectar()
     cur = con.cursor()
     cur.execute(f"UPDATE viajes SET combustible = {ph()} WHERE id = {ph()}", (combustible, id))
+    registrar_auditoria(cur, f"Guardó combustible ${combustible:.2f}", "Viajes", "viaje", id)
     con.commit()
     con.close()
-    registrar_auditoria(f"Guardó combustible ${combustible:.2f}", "Viajes", "viaje", id)
     return redirect(f"/admin/viaje/{id}")
 
 
@@ -1313,9 +1307,9 @@ def eliminar_viaje_admin(id):
         UPDATE viajes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = {ph()}
         WHERE id = {ph()}
     """, (session.get("usuario"), id))
+    registrar_auditoria(cursor, "eliminó (papelera)", "viajes", "viaje", id)
     conexion.commit()
     conexion.close()
-    registrar_auditoria("eliminó (papelera)", "viajes", "viaje", id)
     return redirect("/admin/viajes")
 
 
@@ -1411,11 +1405,11 @@ def pago_camionero(id):
             (id,)
         )
 
+    if auditoria_msg:
+        registrar_auditoria(cur, auditoria_msg, "Viajes", "viaje", id)
+
     con.commit()
     con.close()
-
-    if auditoria_msg:
-        registrar_auditoria(auditoria_msg, "Viajes", "viaje", id)
 
     return redirect("/admin/pagos-pendientes")
 
@@ -1497,10 +1491,10 @@ def marcar_cobrado(id):
         detalle += f" · Código: {codigo_transaccion}"
     _registrar_historial(cur, id, "Cobro registrado", detalle)
 
+    registrar_auditoria(cur, "Registró cobro del viaje", "Viajes", "viaje", id, detalle)
+
     con.commit()
     con.close()
-
-    registrar_auditoria("Registró cobro del viaje", "Viajes", "viaje", id, detalle)
 
     referer = request.form.get("_referer", "")
     if referer and "reportes" in referer:
@@ -1525,10 +1519,9 @@ def finalizar_viaje(id):
 
     cur.execute(f"UPDATE viajes SET estado = 'Cerrado' WHERE id = {ph()}", (id,))
     _registrar_historial(cur, id, "Viaje finalizado", "Estado cambiado a Cerrado")
+    registrar_auditoria(cur, "Finalizó el viaje", "Viajes", "viaje", id)
     con.commit()
     con.close()
-
-    registrar_auditoria("Finalizó el viaje", "Viajes", "viaje", id)
 
     return redirect(f"/admin/viaje/{id}")
 
@@ -1544,10 +1537,9 @@ def reabrir_viaje(id):
     cur = con.cursor()
     cur.execute(f"UPDATE viajes SET estado = 'Entregado', reabierto_en = CURRENT_TIMESTAMP WHERE id = {ph()}", (id,))
     _registrar_historial(cur, id, "Viaje reabierto", "Estado cambiado de Cerrado a Entregado")
+    registrar_auditoria(cur, "Reabrió el viaje", "Viajes", "viaje", id)
     con.commit()
     con.close()
-
-    registrar_auditoria("Reabrió el viaje", "Viajes", "viaje", id)
 
     return redirect(f"/admin/viaje/{id}")
 
@@ -1608,12 +1600,10 @@ def corregir_cobro(id):
 
     if cambios:
         _registrar_historial(cur, id, "Cobro corregido", "; ".join(cambios))
+        registrar_auditoria(cur, "Corrigió el cobro del viaje", "Viajes", "viaje", id, "; ".join(cambios))
 
     con.commit()
     con.close()
-
-    if cambios:
-        registrar_auditoria("Corrigió el cobro del viaje", "Viajes", "viaje", id, "; ".join(cambios))
 
     return redirect(f"/admin/viaje/{id}")
 
@@ -2018,9 +2008,9 @@ def eliminar_camionero(id):
             UPDATE camioneros SET deleted_at = CURRENT_TIMESTAMP, deleted_by = {ph()}
             WHERE id = {ph()}
         """, (session.get("usuario"), id))
+        registrar_auditoria(cursor, "eliminó (papelera)", "camioneros", "camionero", id)
         conexion.commit()
         conexion.close()
-        registrar_auditoria("eliminó (papelera)", "camioneros", "camionero", id)
         return redirect("/admin/camioneros")
     else:
         # Operario: crea solicitud de aprobación
@@ -2151,12 +2141,12 @@ def crear_cliente_rapido():
         conexion.close()
         return jsonify({"error": error}), 400
 
-    conexion.commit()
-    conexion.close()
-
     nombre = request.form.get("nombre", "").strip()
     email = request.form.get("email", "").strip()
-    registrar_auditoria(f"Creó cliente {nombre} (rápido, desde alta de usuario)", "Clientes", "cliente", cliente_id)
+    registrar_auditoria(cursor, f"Creó cliente {nombre} (rápido, desde alta de usuario)", "Clientes", "cliente", cliente_id)
+
+    conexion.commit()
+    conexion.close()
 
     return jsonify({"ok": True, "id": cliente_id, "nombre": nombre, "email": email})
 
@@ -2234,9 +2224,9 @@ def eliminar_cliente(id):
         UPDATE clientes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = {ph()}
         WHERE id = {ph()}
     """, (session.get("usuario"), id))
+    registrar_auditoria(cursor, "eliminó (papelera)", "clientes", "cliente", id)
     conexion.commit()
     conexion.close()
-    registrar_auditoria("eliminó (papelera)", "clientes", "cliente", id)
     return redirect("/admin/clientes")
 
 
@@ -2733,13 +2723,13 @@ def crear_usuario():
             conexion.close()
             return redirect("/admin/usuarios?error=Ese+cliente+ya+fue+vinculado+por+otro+usuario%2C+intenta+de+nuevo")
 
-    conexion.commit()
-    conexion.close()
-
     detalle = f"Creó usuario {usuario} con rol {rol}"
     if cliente_id is not None:
         detalle += f", vinculado a cliente #{cliente_id}"
-    registrar_auditoria(detalle, "Usuarios", "usuario", nuevo_usuario_id)
+    registrar_auditoria(cursor, detalle, "Usuarios", "usuario", nuevo_usuario_id)
+
+    conexion.commit()
+    conexion.close()
 
     return redirect("/admin/usuarios")
 
@@ -2762,10 +2752,9 @@ def cambiar_rol_usuario(id):
         return redirect("/admin/usuarios?error=No+puedes+cambiar+tu+propio+rol")
 
     cursor.execute(f"UPDATE usuarios SET rol = {ph()} WHERE id = {ph()}", (rol, id))
+    registrar_auditoria(cursor, f"Cambió rol de usuario #{id} a {rol}", "Usuarios", "usuario", id)
     conexion.commit()
     conexion.close()
-
-    registrar_auditoria(f"Cambió rol de usuario #{id} a {rol}", "Usuarios", "usuario", id)
 
     return redirect("/admin/usuarios")
 
@@ -2787,10 +2776,9 @@ def toggle_usuario(id):
         f"UPDATE usuarios SET activo = CASE WHEN activo = 1 THEN 0 ELSE 1 END WHERE id = {ph()}",
         (id,)
     )
+    registrar_auditoria(cursor, f"Cambió estado de usuario #{id}", "Usuarios", "usuario", id)
     conexion.commit()
     conexion.close()
-
-    registrar_auditoria(f"Cambió estado de usuario #{id}", "Usuarios", "usuario", id)
 
     return redirect("/admin/usuarios")
 
@@ -2807,9 +2795,9 @@ def reset_password_usuario(id):
     conexion = conectar()
     cursor = conexion.cursor()
     cursor.execute(f"UPDATE usuarios SET password = {ph()} WHERE id = {ph()}", (nuevo_hash, id))
+    registrar_auditoria(cursor, f"Reseteó contraseña de usuario #{id}", "Usuarios", "usuario", id)
     conexion.commit()
     conexion.close()
-    registrar_auditoria(f"Reseteó contraseña de usuario #{id}", "Usuarios", "usuario", id)
     return redirect("/admin/usuarios?ok=Contraseña+actualizada")
 
 
@@ -2842,9 +2830,9 @@ def mi_cuenta():
 
         nuevo_hash = bcrypt.generate_password_hash(nueva).decode("utf-8")
         cursor.execute(f"UPDATE usuarios SET password = {ph()} WHERE usuario = {ph()}", (nuevo_hash, session["usuario"]))
+        registrar_auditoria(cursor, "Cambió su propia contraseña", "Usuarios", "usuario", fila["id"])
         conexion.commit()
         conexion.close()
-        registrar_auditoria("Cambió su propia contraseña", "Usuarios", "usuario", fila["id"])
         return render_template("admin/mi_cuenta.html", mensaje="Contraseña actualizada correctamente")
 
     conexion.close()
@@ -2894,7 +2882,6 @@ def exportar_excel(tabla):
     cols = ", ".join(cfg["columnas"])
     cursor.execute(f"SELECT {cols} FROM {cfg['tabla']}")
     filas = cursor.fetchall()
-    conexion.close()
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -2914,7 +2901,9 @@ def exportar_excel(tabla):
     wb.save(buf)
     buf.seek(0)
 
-    registrar_auditoria(f"Exportó Excel de {tabla}", "Datos", tabla)
+    registrar_auditoria(cursor, f"Exportó Excel de {tabla}", "Datos", tabla)
+    conexion.commit()
+    conexion.close()
 
     return send_file(
         buf,
@@ -2963,15 +2952,15 @@ def importar_excel(tabla):
         except Exception as e:
             errores.append((idx, str(e)))
 
-    conexion.commit()
-    conexion.close()
-
     if errores:
         from flask import current_app
         detalle_errores = "; ".join(f"fila {idx}: {msg}" for idx, msg in errores)
         current_app.logger.error(f"Importación Excel a {tabla} con {len(errores)} fila(s) fallida(s): {detalle_errores}")
 
-    registrar_auditoria(f"Importó Excel a {tabla} ({importados} registros, {len(errores)} fallidas)", "Datos", tabla)
+    registrar_auditoria(cursor, f"Importó Excel a {tabla} ({importados} registros, {len(errores)} fallidas)", "Datos", tabla)
+
+    conexion.commit()
+    conexion.close()
 
     redirect_url = f"{cfg['redirect']}?importado={importados}+registros"
     if errores:
@@ -3172,13 +3161,14 @@ def lote_precios():
         """, (precio_nuevo, precio_nuevo))
 
     n = cursor.rowcount
-    conexion.commit()
-    conexion.close()
-
     registrar_auditoria(
+        cursor,
         f"Precio masivo ${precio_nuevo} aplicado a {n} viajes. Motivo: {motivo}",
         "Viajes", "viajes"
     )
+    conexion.commit()
+    conexion.close()
+
     from urllib.parse import quote_plus as qp
     return redirect(f"/admin/lote?resultado={qp(str(n) + ' viajes actualizados con precio $' + str(precio_nuevo))}")
 
@@ -3202,13 +3192,14 @@ def lote_estados():
         (estado_destino, estado_origen)
     )
     n = cursor.rowcount
-    conexion.commit()
-    conexion.close()
-
     registrar_auditoria(
+        cursor,
         f"Cambio masivo de estado: {estado_origen} → {estado_destino} ({n} viajes). Motivo: {motivo}",
         "Viajes", "viajes"
     )
+    conexion.commit()
+    conexion.close()
+
     from urllib.parse import quote_plus as qp
     return redirect(f"/admin/lote?resultado={qp(str(n) + ' viajes cambiados a ' + estado_destino)}")
 
@@ -3257,13 +3248,14 @@ def lote_seleccionados():
         return redirect("/admin/lote?resultado=Error:+acción+desconocida")
 
     n = cursor.rowcount
-    conexion.commit()
-    conexion.close()
-
     registrar_auditoria(
+        cursor,
         f"Acción manual por lote sobre {n} viajes: {detalle}. Motivo: {motivo}",
         "Viajes", "viajes"
     )
+    conexion.commit()
+    conexion.close()
+
     from urllib.parse import quote_plus as qp
     return redirect(f"/admin/lote?resultado={qp(str(n) + ' viajes actualizados (' + detalle + ')')}")
 
@@ -3381,11 +3373,15 @@ def mensajes_enviar():
 
     threading.Thread(target=enviar_todos, daemon=True).start()
 
+    _con_aud = conectar()
     registrar_auditoria(
+        _con_aud.cursor(),
         f"Envió mensaje masivo a {len(emails)} clientes: {asunto}",
         "Clientes", "clientes", None,
         f"Filtro: {destinatarios}"
     )
+    _con_aud.commit()
+    _con_aud.close()
 
     return redirect(f"/admin/mensajes?enviado={len(emails)}")
 
@@ -3449,9 +3445,9 @@ def restaurar_registro(entidad, id):
     conexion = conectar()
     cursor = conexion.cursor()
     cursor.execute(f"UPDATE {tabla} SET deleted_at = NULL, deleted_by = NULL WHERE id = {ph()}", (id,))
+    registrar_auditoria(cursor, "restauró de papelera", tabla, entidad, id)
     conexion.commit()
     conexion.close()
-    registrar_auditoria("restauró de papelera", tabla, entidad, id)
     return redirect("/admin/papelera")
 
 
@@ -3478,9 +3474,9 @@ def aprobar_eliminacion(id):
             SET estado = 'Aprobada', revisado_por = {ph()}, fecha_revision = CURRENT_TIMESTAMP
             WHERE id = {ph()}
         """, (session.get("usuario"), id))
-        conexion.commit()
-        registrar_auditoria("aprobó eliminación", sol["entidad"] + "s", sol["entidad"], sol["entidad_id"],
+        registrar_auditoria(cursor, "aprobó eliminación", sol["entidad"] + "s", sol["entidad"], sol["entidad_id"],
                             f"Solicitado por {sol['solicitado_por']}")
+        conexion.commit()
     conexion.close()
     return redirect("/admin")
 
