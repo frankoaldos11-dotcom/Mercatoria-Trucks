@@ -162,6 +162,19 @@ aplicación es la que reemplazaría esos hardcodeos por `var(--activo)`.
 `templates/base_cliente.html` usa el mismo concepto pero con su propia
 variable local `--mt-orange` (fuera del catálogo de `tokens/`, no se tocó).
 
+Un quinto token, `error-real` (`#dc2626`), se agregó durante la migración
+completa de colores hardcodeados a tokens (ver commit correspondiente).
+Los banners de error de `login.html` y `base_cliente.html` (`.mt-alert-error`)
+usaban el rojo real `#DC2626` — distinto de `peligro`, que hoy vale
+`#f16a30` (el mismo naranja que `principal`, porque la paleta de Adrián no
+define ningún rojo propio). Migrar esos 2 banners a `var(--peligro)`
+habría cambiado el color visible (rojo → naranja), violando la regla de
+"sin cambio visual" de esa migración. Se creó `error-real` como token
+separado, fijado en el rojo que ya tenían esos banners, para lograr las
+dos cosas a la vez: cero hex hardcodeado y cero cambio de color. Si algún
+día `peligro` recupera un rojo propio (distinto de `principal`), vale la
+pena revisar si `error-real` sigue siendo necesario o puede fusionarse.
+
 **Huecos que quedaron sin cambio a propósito** (Adrián no los cubre):
 `panel-suave`, `atenuado`, `principal-oscuro`, `info`, `barra-lateral-suave`.
 Dos consecuencias visuales directas de estos huecos, ya conocidas y

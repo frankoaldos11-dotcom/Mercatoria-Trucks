@@ -29,7 +29,7 @@
             width: 100%;
             max-width: 400px;
         }
-        .brand { color: #E86A2C; font-weight: 700; font-size: 1.4rem; text-align: center; }
+        .brand { color: var(--principal); font-weight: 700; font-size: 1.4rem; text-align: center; }
         .brand small { display: block; font-size: 0.8rem; color: #6B7280; font-weight: 400; margin-top: 2px; }
         .form-label { font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 4px; }
         .form-control {
@@ -40,12 +40,12 @@
             width: 100%;
         }
         .form-control:focus {
-            border-color: #E86A2C;
+            border-color: var(--principal);
             box-shadow: 0 0 0 3px rgba(232,106,44,0.15);
             outline: none;
         }
         .btn-login {
-            background: #E86A2C;
+            background: var(--principal);
             color: var(--panel);
             border: none;
             border-radius: 8px;
@@ -69,7 +69,7 @@
         }
         .alert-error-custom {
             background: #FEF2F2;
-            border-left: 4px solid #DC2626;
+            border-left: 4px solid var(--error-real);
             color: #991B1B;
             border-radius: 8px;
             padding: 0.75rem 1rem;
@@ -78,7 +78,7 @@
         }
         .link-registro { font-size: 0.75rem; color: #9CA3AF; text-align: center; margin-top: 1.5rem; }
         .link-registro a { color: #6B7280; text-decoration: none; }
-        .link-registro a:hover { color: #E86A2C; }
+        .link-registro a:hover { color: var(--principal); }
         .mb-3 { margin-bottom: 1rem; }
         .mb-4 { margin-bottom: 1.5rem; }
         .mb-4-brand { margin-bottom: 2rem; }
