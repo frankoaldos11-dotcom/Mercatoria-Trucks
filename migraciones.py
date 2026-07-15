@@ -257,5 +257,34 @@ def ejecutar_migraciones():
             "CREATE INDEX IF NOT EXISTS idx_auditoria_fecha ON auditoria(fecha)"
         )
 
+    # Costo de combustible real: zonas de precio + divisor de consumo por tipo de vehículo
+    if not tabla_existe(cursor, "zonas_combustible"):
+        cursor.execute("""
+        CREATE TABLE zonas_combustible (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL UNIQUE,
+            precio_litro REAL NOT NULL,
+            activo INTEGER DEFAULT 1
+        )
+        """)
+    # Placeholder: precios iniciales a definir por el área financiera.
+    for _zona, _precio in [("Occidente", 2.6), ("Oriente", 3.15)]:
+        cursor.execute(
+            "INSERT OR IGNORE INTO zonas_combustible (nombre, precio_litro) VALUES (?, ?)",
+            (_zona, _precio)
+        )
+
+    # Placeholder: mismo divisor global de siempre (2.0) para no cambiar el
+    # comportamiento hasta que el área financiera defina el divisor real por tipo.
+    agregar_columna(cursor, "tipos_vehiculo", "divisor_consumo", "REAL DEFAULT 2.0")
+    cursor.execute("UPDATE tipos_vehiculo SET divisor_consumo = 2.0 WHERE divisor_consumo IS NULL")
+
+    # Placeholder: fallback cuando una zona no tiene precio configurado — 0.0 a
+    # propósito, para que sea visiblemente sospechoso en vez de un número inventado.
+    cursor.execute(
+        "INSERT OR IGNORE INTO configuracion (clave, valor, descripcion) VALUES (?, ?, ?)",
+        ("precio_litro_default", 0.0, "Precio/litro de reserva cuando la zona de la ruta no tiene precio configurado")
+    )
+
     conexion.commit()
     conexion.close()

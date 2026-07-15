@@ -73,7 +73,7 @@ def obtener_tramos_viaje(viaje_id):
     cur = con.cursor()
     cur.execute(f"""
         SELECT vt.id, vt.viaje_id, vt.ruta_id, vt.orden, vt.estado, vt.fecha_llegada,
-               r.nombre AS ruta_nombre, r.origen, r.destino, r.km_oficiales, r.tarifa_km
+               r.nombre AS ruta_nombre, r.origen, r.destino, r.km_oficiales, r.tarifa_km, r.zona
         FROM viaje_tramos vt
         JOIN rutas r ON r.id = vt.ruta_id
         WHERE vt.viaje_id = {ph()}
@@ -84,9 +84,16 @@ def obtener_tramos_viaje(viaje_id):
     return [dict(row) for row in rows]
 
 
-def calcular_totales_tramos(viaje_id):
+def calcular_totales_tramos(viaje_id, divisor_consumo=None, obtener_precio_litro_fn=None):
     """km total y precio cliente sumados a partir de los tramos de un viaje.
-    Devuelve None si el viaje no tiene tramos (comportamiento simple)."""
+    Devuelve None si el viaje no tiene tramos (comportamiento simple).
+
+    Si se pasan divisor_consumo y obtener_precio_litro_fn, además suma litros
+    y costo de combustible tramo por tramo, cada uno con la zona de SU PROPIA
+    ruta — un viaje multi-tramo puede cruzar zonas distintas, así que no tiene
+    sentido aplicar una sola zona a todo el viaje. obtener_precio_litro_fn se
+    recibe por parámetro (en vez de importarse directo) para evitar un import
+    circular con finanzas_service.py, que es quien llama a esta función."""
     tramos = obtener_tramos_viaje(viaje_id)
     if not tramos:
         return None
@@ -94,7 +101,26 @@ def calcular_totales_tramos(viaje_id):
     precio_cliente_total = sum(
         float(t["km_oficiales"] or 0) * float(t["tarifa_km"] or 0) for t in tramos
     )
-    return {"km_total": km_total, "precio_cliente_total": precio_cliente_total}
+    resultado = {"km_total": km_total, "precio_cliente_total": precio_cliente_total}
+
+    if divisor_consumo and obtener_precio_litro_fn:
+        litros_total = 0.0
+        combustible_total = 0.0
+        fuentes = set()
+        for t in tramos:
+            km_tramo = float(t["km_oficiales"] or 0)
+            litros_tramo = km_tramo / divisor_consumo
+            precio_litro, fuente = obtener_precio_litro_fn(t.get("zona"))
+            litros_total += litros_tramo
+            combustible_total += litros_tramo * precio_litro
+            fuentes.add(fuente)
+        resultado["litros_total"] = litros_total
+        resultado["combustible_total"] = combustible_total
+        # Si algún tramo usó fallback, el total se marca como fallback también
+        # (no silenciosamente "zona" cuando en realidad es una mezcla).
+        resultado["precio_litro_fuente"] = "zona" if fuentes == {"zona"} else "default_global"
+
+    return resultado
 
 
 def completar_tramo(cursor, viaje_id, tramo_id):

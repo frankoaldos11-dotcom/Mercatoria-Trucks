@@ -113,8 +113,13 @@
         </div>
 
         <div>
-            <div class="info-label">Combustible (estim.)</div>
-            <div class="info-val">{% if liquidacion and liquidacion.litros_combustible > 0 %}<span style="font-weight:700;">{{ liquidacion.litros_combustible }}</span>{% else %}<span style="color:#aaa;">—</span>{% endif %}</div>
+            <div class="info-label">Combustible</div>
+            <div class="info-val">
+                {% if liquidacion and liquidacion.litros_combustible > 0 %}
+                <span style="font-weight:700;">{{ liquidacion.litros_combustible }} L</span>
+                <span style="font-size:11px;color:#888;"> · ${{ "%.2f"|format(liquidacion.combustible) }}</span>
+                {% else %}<span style="color:#aaa;">—</span>{% endif %}
+            </div>
         </div>
 
         {% if session.get('rol') == 'admin' %}
@@ -236,7 +241,7 @@
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
     <div><strong>Combustible confirmado</strong>
-    <span class="step-done-info"> · {% if liquidacion and liquidacion.litros_combustible > 0 %}Combustible (estim.): {{ liquidacion.litros_combustible }}{% else %}Combustible ($): ${{ "%.2f"|format(viaje.combustible|float) }}{% endif %}</span></div>
+    <span class="step-done-info"> · {% if liquidacion and liquidacion.litros_combustible > 0 %}{{ liquidacion.litros_combustible }} L · ${{ "%.2f"|format(liquidacion.combustible) }}{% else %}${{ "%.2f"|format(viaje.combustible|float) }}{% endif %}</span></div>
 </div>
 {% elif (viaje.estado or '')|lower == 'cerrado' %}
 <div class="step-done" style="background:#f9fafb;border-color:var(--border);">
@@ -247,7 +252,10 @@
 <div class="card step-active">
     <div class="step-title-row"><span class="step-num">2</span> Confirmar combustible asignado</div>
     {% if liquidacion and liquidacion.litros_combustible > 0 %}
-    <p style="font-size:12px;color:#888;margin:8px 0 4px;">Combustible (estim.): <strong>{{ liquidacion.litros_combustible }}</strong></p>
+    <p style="font-size:12px;color:#888;margin:8px 0 4px;">Estimado: <strong>{{ liquidacion.litros_combustible }} L</strong> · <strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong></p>
+    {% if liquidacion.precio_litro_fuente in ('default_global', 'sin_dato') or liquidacion.divisor_fuente == 'default_global' %}
+    <p style="font-size:11px;color:var(--texto-sobre-aviso);margin:0 0 4px;"><i class="bi bi-exclamation-triangle"></i> Calculado con valores de reserva (zona o tipo de vehículo sin configurar) — no es un dato real de esa ruta/vehículo.</p>
+    {% endif %}
     {% endif %}
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-combustible" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -482,11 +490,20 @@
                 Se aplica el mínimo de {{ liquidacion.km_liquidable|int }} km para esta liquidación porque la ruta tiene menos km registrados.
             </div>
             {% endif %}
+            {% if liquidacion.precio_litro_fuente in ('default_global', 'sin_dato') or liquidacion.divisor_fuente == 'default_global' %}
+            {% set _razones = [] %}
+            {% if liquidacion.precio_litro_fuente in ('default_global', 'sin_dato') %}{% set _ = _razones.append('la ruta no tiene zona con precio configurado') %}{% endif %}
+            {% if liquidacion.divisor_fuente == 'default_global' %}{% set _ = _razones.append('el viaje no tiene tipo de vehículo con divisor propio') %}{% endif %}
+            <div class="liq-aviso">
+                <i class="bi bi-exclamation-triangle"></i>
+                Combustible calculado con valores de reserva — {{ _razones|join(' y ') }}.
+            </div>
+            {% endif %}
             <div class="economia-grid">
                 <div class="economia-item"><span>Km liquidables</span><strong>{{ liquidacion.km_liquidable|int }} km</strong></div>
                 {% if session.get('rol') == 'admin' %}
                 <div class="economia-item"><span>Precio cliente</span><strong>${{ "%.2f"|format(liquidacion.precio_cliente) }}</strong></div>
-                <div class="economia-item"><span>Combustible</span><strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong></div>
+                <div class="economia-item"><span>Combustible</span><strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong><span style="display:block;font-size:10px;color:#999;text-transform:none;margin-top:2px;">{{ liquidacion.litros_combustible }} L</span></div>
                 <div class="economia-item"><span>Pago transportista</span><strong>${{ "%.2f"|format(liquidacion.pago_camionero) }}</strong></div>
                 <div class="economia-item"><span>Comisión Mercatoria ({{ liquidacion.config.comision_mercatoria_porcentaje|int }}%)</span><strong>${{ "%.2f"|format(liquidacion.comision_mercatoria) }}</strong></div>
                 <div class="economia-item beneficio"><span>Utilidad Mercatoria</span><strong>${{ "%.2f"|format(liquidacion.utilidad_mercatoria) }}</strong></div>
