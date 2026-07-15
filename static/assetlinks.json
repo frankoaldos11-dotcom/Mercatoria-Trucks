@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "online.mercatoria.trucks.twa",
+        "sha256_cert_fingerprints": ["78:4C:A2:6C:59:8C:D2:26:9F:F7:5F:1D:B9:1F:DF:71:5A:F9:E2:65:7B:26:47:8C:06:E9:29:F7:A8:B2:E7:72"]
+      }
+    }]

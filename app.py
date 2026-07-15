@@ -207,6 +207,13 @@ def service_worker():
     return response
 
 
+@app.route("/.well-known/assetlinks.json")
+def asset_links():
+    response = app.send_static_file("assetlinks.json")
+    response.headers["Content-Type"] = "application/json"
+    return response
+
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
