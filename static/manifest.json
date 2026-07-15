@@ -2,11 +2,11 @@
   "name": "Mercatoria Truck",
   "short_name": "M. Truck",
   "description": "Panel de gestión logística de Mercatoria Truck",
-  "start_url": "/",
+  "start_url": "/login",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#E86A2C",
+  "background_color": "#f5f4f1",
+  "theme_color": "#f16a30",
   "lang": "es",
   "icons": [
     {
