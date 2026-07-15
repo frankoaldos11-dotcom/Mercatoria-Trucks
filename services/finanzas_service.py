@@ -91,14 +91,19 @@ def calcular_liquidacion(viaje_id):
 
     combustible = pago_camionero / margen_divisor if margen_divisor else 0
 
-    # Precio cliente: usar el registrado en el viaje, o sumar tramos, o estimar con multiplicador
-    precio_cliente = float(
-        viaje["precio_final"] or viaje["precio"] or 0
-    ) if _col_exists(viaje, "precio_final") else 0
-    if precio_cliente == 0 and totales_tramos:
-        precio_cliente = totales_tramos["precio_cliente_total"]
-    if precio_cliente == 0:
-        precio_cliente = pago_camionero * multiplicador_camionero
+    # Precio cliente: preferir el cobro real (monto_cobrado) si ya se registró;
+    # si no, caer al precio teórico / tramos / estimado, como hasta ahora
+    monto_cobrado = viaje["monto_cobrado"] if _col_exists(viaje, "monto_cobrado") else None
+    if monto_cobrado is not None:
+        precio_cliente = float(monto_cobrado)
+    else:
+        precio_cliente = float(
+            viaje["precio_final"] or viaje["precio"] or 0
+        ) if _col_exists(viaje, "precio_final") else 0
+        if precio_cliente == 0 and totales_tramos:
+            precio_cliente = totales_tramos["precio_cliente_total"]
+        if precio_cliente == 0:
+            precio_cliente = pago_camionero * multiplicador_camionero
 
     comision_mercatoria = precio_cliente * comision_pct / 100
     utilidad_mercatoria = comision_mercatoria
