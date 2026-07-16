@@ -198,20 +198,6 @@ def _ejecutar(conn):
         )
     """, "CREATE TABLE IF NOT EXISTS tipos_vehiculo")
 
-    print("\n[ catalogo_tipo_transporte ]")
-    run(conn, cur, """
-        CREATE TABLE IF NOT EXISTS catalogo_tipo_transporte (
-            id SERIAL PRIMARY KEY,
-            nombre TEXT NOT NULL UNIQUE,
-            activo INTEGER DEFAULT 1
-        )
-    """, "CREATE TABLE IF NOT EXISTS catalogo_tipo_transporte")
-    for _t in ["Rastra", "Plancha", "Furgón", "Camión cerrado",
-               "Camión refrigerado", "Portacontenedor", "Camioneta", "Otro"]:
-        run(conn, cur,
-            f"INSERT INTO catalogo_tipo_transporte (nombre) VALUES ('{_t}') ON CONFLICT (nombre) DO NOTHING",
-            f"seed: {_t}")
-
     print("\n[ camionero_ruta ]")
     run(conn, cur, """
         CREATE TABLE IF NOT EXISTS camionero_ruta (

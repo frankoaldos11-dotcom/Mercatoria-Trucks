@@ -25,12 +25,6 @@
         <p>Registro operativo de transportistas disponibles para asignaciones.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-        {% if session.get('rol') == 'admin' %}
-        <a href="/admin/catalogos/tipo-transporte"
-           style="padding:8px 14px;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">
-            <i class="bi bi-tags"></i> Tipos de transporte
-        </a>
-        {% endif %}
         <a href="/admin/exportar/camioneros" class="btn-excel-export">⬇ Exportar Excel</a>
         <button class="btn-excel-import" data-bs-toggle="modal" data-bs-target="#modalImportarCamioneros">
             <i class="bi bi-upload"></i> Importar Excel

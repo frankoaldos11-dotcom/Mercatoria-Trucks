@@ -87,6 +87,20 @@ def _registrar_historial(cursor, viaje_id, accion, detalle=""):
     )
 
 
+def _resolver_tipo_vehiculo_id(cursor, tipo_texto):
+    """Resuelve el id de tipos_vehiculo a partir del texto libre vehiculos.tipo,
+    para que los formularios de vehículo escriban el FK real además del texto
+    (que se mantiene por compatibilidad con el filtro de /admin/camioneros)."""
+    if not tipo_texto:
+        return None
+    cursor.execute(
+        f"SELECT id FROM tipos_vehiculo WHERE LOWER(nombre) = LOWER({ph()}) AND activo = 1",
+        (tipo_texto,)
+    )
+    row = cursor.fetchone()
+    return row["id"] if row else None
+
+
 def notificar_cliente_estado(viaje_id, nuevo_estado, email_cliente):
     if not email_cliente or "@" not in email_cliente:
         return
@@ -1765,60 +1779,6 @@ def camionero_economico(id):
     )
 
 
-@admin_bp.route("/catalogos/tipo-transporte", methods=["GET", "POST"])
-def catalogo_tipo_transporte_admin():
-    if not requiere_admin():
-        return redirect("/login")
-    if session.get("rol") != "admin":
-        return redirect("/admin")
-
-    con = conectar()
-    cur = con.cursor()
-    error = None
-
-    if request.method == "POST":
-        accion = request.form.get("accion", "")
-        if accion == "nuevo":
-            nombre = request.form.get("nombre", "").strip()
-            if not nombre:
-                error = "El nombre es obligatorio."
-            else:
-                try:
-                    cur.execute(
-                        f"INSERT INTO catalogo_tipo_transporte (nombre) VALUES ({ph()})", (nombre,)
-                    )
-                    con.commit()
-                except Exception:
-                    con.rollback()
-                    error = f"'{nombre}' ya existe en el catálogo."
-        elif accion == "toggle":
-            tipo_id = request.form.get("tipo_id", "")
-            if tipo_id:
-                cur.execute(
-                    f"SELECT activo FROM catalogo_tipo_transporte WHERE id = {ph()}", (tipo_id,)
-                )
-                row = cur.fetchone()
-                if row:
-                    cur.execute(
-                        f"UPDATE catalogo_tipo_transporte SET activo = {ph()} WHERE id = {ph()}",
-                        (0 if row["activo"] else 1, tipo_id)
-                    )
-                    con.commit()
-        if not error:
-            con.close()
-            return redirect("/admin/catalogos/tipo-transporte")
-
-    cur.execute("SELECT id, nombre, activo FROM catalogo_tipo_transporte ORDER BY nombre")
-    tipos = cur.fetchall()
-    con.close()
-
-    return render_template(
-        "admin/catalogo_tipo_transporte.html",
-        tipos=tipos,
-        error=error,
-    )
-
-
 # ── Camioneros CRUD ──────────────────────────────────────────────────────────
 
 @admin_bp.route("/camioneros", methods=["GET", "POST"])
@@ -1864,12 +1824,13 @@ def admin_camioneros():
             nuevo_id = cursor.lastrowid
 
             if matricula:
+                tipo_vehiculo_id = _resolver_tipo_vehiculo_id(cursor, tipo)
                 cursor.execute(f"""
                     INSERT INTO vehiculos
-                        (camionero_id, matricula, marca, modelo, tipo, capacidad,
+                        (camionero_id, matricula, marca, modelo, tipo, tipo_vehiculo_id, capacidad,
                          chapa_remolque, estado, activo)
-                    VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, 'Disponible', 1)
-                """, (nuevo_id, matricula, marca, modelo, tipo, capacidad, chapa_remolque))
+                    VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, 'Disponible', 1)
+                """, (nuevo_id, matricula, marca, modelo, tipo, tipo_vehiculo_id, capacidad, chapa_remolque))
 
             conexion.commit()
             conexion.close()
@@ -1987,12 +1948,13 @@ def editar_camionero(id):
         veh_row = cursor.fetchone()
 
         if veh_row:
+            tipo_vehiculo_id = _resolver_tipo_vehiculo_id(cursor, tipo)
             cursor.execute(f"""
                 UPDATE vehiculos
                 SET matricula = {ph()}, marca = {ph()}, modelo = {ph()}, tipo = {ph()},
-                    capacidad = {ph()}, chapa_remolque = {ph()}
+                    tipo_vehiculo_id = {ph()}, capacidad = {ph()}, chapa_remolque = {ph()}
                 WHERE id = {ph()}
-            """, (matricula, marca, modelo, tipo, capacidad, chapa_remolque, veh_row["id"]))
+            """, (matricula, marca, modelo, tipo, tipo_vehiculo_id, capacidad, chapa_remolque, veh_row["id"]))
         elif matricula:
             cursor.execute(
                 f"SELECT id FROM vehiculos WHERE matricula = {ph()}", (matricula,)
@@ -2000,12 +1962,13 @@ def editar_camionero(id):
             if cursor.fetchone():
                 error = f"La matrícula '{matricula}' ya está registrada."
             else:
+                tipo_vehiculo_id = _resolver_tipo_vehiculo_id(cursor, tipo)
                 cursor.execute(f"""
                     INSERT INTO vehiculos
-                        (camionero_id, matricula, marca, modelo, tipo, capacidad,
+                        (camionero_id, matricula, marca, modelo, tipo, tipo_vehiculo_id, capacidad,
                          chapa_remolque, estado, activo)
-                    VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, 'Disponible', 1)
-                """, (id, matricula, marca, modelo, tipo, capacidad, chapa_remolque))
+                    VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, 'Disponible', 1)
+                """, (id, matricula, marca, modelo, tipo, tipo_vehiculo_id, capacidad, chapa_remolque))
 
         if not error:
             conexion.commit()
@@ -2304,10 +2267,11 @@ def admin_vehiculos():
         camionero_id = request.form.get("camionero_id") or None
         estado = request.form.get("estado", "Disponible").strip()
 
+        tipo_vehiculo_id = _resolver_tipo_vehiculo_id(cursor, tipo)
         cursor.execute(f"""
-            INSERT INTO vehiculos (matricula, tipo, marca, modelo, capacidad, camionero_id, estado)
-            VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
-        """, (matricula, tipo, marca, modelo, capacidad, camionero_id, estado))
+            INSERT INTO vehiculos (matricula, tipo, tipo_vehiculo_id, marca, modelo, capacidad, camionero_id, estado)
+            VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})
+        """, (matricula, tipo, tipo_vehiculo_id, marca, modelo, capacidad, camionero_id, estado))
         conexion.commit()
         conexion.close()
         return redirect("/admin/vehiculos?ok=1")
@@ -2339,12 +2303,16 @@ def admin_vehiculos():
     cursor.execute("SELECT id, nombre FROM camioneros WHERE activo = 1 ORDER BY nombre")
     camioneros = cursor.fetchall()
 
+    cursor.execute("SELECT id, nombre FROM tipos_vehiculo WHERE activo = 1 ORDER BY nombre")
+    tipos_vehiculo = cursor.fetchall()
+
     conexion.close()
 
     return render_template(
         "admin/vehiculos.html",
         lista=lista,
         camioneros=camioneros,
+        tipos_vehiculo=tipos_vehiculo,
         estados=VEHICULO_ESTADOS,
         buscar_v=buscar_v,
         filtro_estado_v=filtro_estado_v,
@@ -2369,18 +2337,19 @@ def editar_vehiculo(id):
         camionero_id = request.form.get("camionero_id") or None
         estado = request.form.get("estado", "Disponible").strip()
 
+        tipo_vehiculo_id = _resolver_tipo_vehiculo_id(cursor, tipo)
         cursor.execute(f"""
             UPDATE vehiculos
-            SET matricula = {ph()}, tipo = {ph()}, marca = {ph()}, modelo = {ph()},
+            SET matricula = {ph()}, tipo = {ph()}, tipo_vehiculo_id = {ph()}, marca = {ph()}, modelo = {ph()},
                 capacidad = {ph()}, camionero_id = {ph()}, estado = {ph()}
             WHERE id = {ph()}
-        """, (matricula, tipo, marca, modelo, capacidad, camionero_id, estado, id))
+        """, (matricula, tipo, tipo_vehiculo_id, marca, modelo, capacidad, camionero_id, estado, id))
         conexion.commit()
         conexion.close()
         return redirect("/admin/vehiculos")
 
     cursor.execute(f"""
-        SELECT id, matricula, tipo, marca, modelo, capacidad, camionero_id, estado
+        SELECT id, matricula, tipo, tipo_vehiculo_id, marca, modelo, capacidad, camionero_id, estado
         FROM vehiculos
         WHERE id = {ph()} AND activo = 1
     """, (id,))
@@ -2388,6 +2357,9 @@ def editar_vehiculo(id):
 
     cursor.execute("SELECT id, nombre FROM camioneros WHERE activo = 1 ORDER BY nombre")
     camioneros = cursor.fetchall()
+
+    cursor.execute("SELECT id, nombre FROM tipos_vehiculo WHERE activo = 1 ORDER BY nombre")
+    tipos_vehiculo = cursor.fetchall()
 
     conexion.close()
 
@@ -2397,6 +2369,7 @@ def editar_vehiculo(id):
     return render_template(
         "admin/editar_vehiculo.html",
         vehiculo=vehiculo,
+        tipos_vehiculo=tipos_vehiculo,
         camioneros=camioneros,
         estados=VEHICULO_ESTADOS
     )

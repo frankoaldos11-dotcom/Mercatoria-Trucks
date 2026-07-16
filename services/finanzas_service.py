@@ -74,12 +74,17 @@ def obtener_precio_litro(zona):
     return 0.0, "sin_dato"
 
 
-def obtener_divisor_consumo(tipo_vehiculo_id):
+def obtener_divisor_consumo(tipo_vehiculo_id, vehiculo_id=None):
     """Punto único de verdad para el divisor de consumo (km por litro) de un
     tipo de vehículo. Devuelve (divisor: float, fuente: str) — fuente es
-    "tipo_vehiculo" si el viaje tiene un tipo con divisor propio configurado,
-    o "default_global" si se usó el fallback (viaje sin tipo asignado, o tipo
-    sin divisor propio)."""
+    "tipo_vehiculo" si se resolvió un tipo con divisor propio configurado
+    (directo del viaje, o vía el vehículo asignado), o "default_global" si
+    se usó el fallback global.
+
+    Prioridad: 1) viaje.tipo_vehiculo_id (viajes convertidos desde cotización
+    ya lo traen), 2) el tipo del vehículo asignado al viaje (vehiculo_id ->
+    vehiculos.tipo_vehiculo_id -> tipos_vehiculo), 3) el divisor global de
+    reserva."""
     if tipo_vehiculo_id:
         con = conectar()
         cur = con.cursor()
@@ -92,11 +97,22 @@ def obtener_divisor_consumo(tipo_vehiculo_id):
         if row and row["divisor_consumo"]:
             return float(row["divisor_consumo"]), "tipo_vehiculo"
 
-    # Fallback: margen_combustible_divisor — antes era EL divisor único global,
-    # ahora es solo la reserva para cuando el viaje no tiene tipo de vehículo
-    # asignado o su tipo no tiene divisor propio (hoy el caso más común, ver
-    # plan de esta tarea — viajes.tipo_vehiculo_id no se está poblando todavía
-    # en la creación/asignación de viajes).
+    if vehiculo_id:
+        con = conectar()
+        cur = con.cursor()
+        cur.execute(f"""
+            SELECT tv.divisor_consumo
+            FROM vehiculos v
+            JOIN tipos_vehiculo tv ON tv.id = v.tipo_vehiculo_id
+            WHERE v.id = {ph()} AND tv.activo = 1
+        """, (vehiculo_id,))
+        row = cur.fetchone()
+        con.close()
+        if row and row["divisor_consumo"]:
+            return float(row["divisor_consumo"]), "tipo_vehiculo"
+
+    # Fallback: margen_combustible_divisor — reserva para cuando ni el viaje
+    # ni el vehículo asignado tienen un tipo de vehículo con divisor propio.
     cfg = get_configuracion()
     return float(cfg.get("margen_combustible_divisor", 2.0)), "default_global"
 
@@ -141,7 +157,8 @@ def calcular_liquidacion(viaje_id):
     comision_pct              = cfg.get("comision_mercatoria_porcentaje", 20.0)
 
     tipo_vehiculo_id = viaje["tipo_vehiculo_id"] if _col_exists(viaje, "tipo_vehiculo_id") else None
-    divisor_consumo, divisor_fuente = obtener_divisor_consumo(tipo_vehiculo_id)
+    vehiculo_id = viaje["vehiculo_id"] if _col_exists(viaje, "vehiculo_id") else None
+    divisor_consumo, divisor_fuente = obtener_divisor_consumo(tipo_vehiculo_id, vehiculo_id)
 
     # Viaje multi-tramo: km total y precio cliente se calculan sumando cada tramo;
     # litros/combustible también, cada tramo con su propia zona (ver tramos_service.py)

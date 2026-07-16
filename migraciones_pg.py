@@ -128,20 +128,6 @@ def ejecutar_migraciones_pg():
         """)
 
         cur.execute("""
-        CREATE TABLE IF NOT EXISTS catalogo_tipo_transporte (
-            id SERIAL PRIMARY KEY,
-            nombre TEXT NOT NULL UNIQUE,
-            activo INTEGER DEFAULT 1
-        )
-        """)
-        for _t in ["Rastra", "Plancha", "Furgón", "Camión cerrado",
-                   "Camión refrigerado", "Portacontenedor", "Camioneta", "Otro"]:
-            cur.execute(
-                "INSERT INTO catalogo_tipo_transporte (nombre) VALUES (%s) ON CONFLICT (nombre) DO NOTHING",
-                (_t,)
-            )
-
-        cur.execute("""
         CREATE TABLE IF NOT EXISTS tarifas (
             id SERIAL PRIMARY KEY,
             ruta_id INTEGER NOT NULL,
@@ -449,25 +435,6 @@ def ejecutar_migraciones_pg():
             estado TEXT DEFAULT 'Abierta'
         )
         """)
-        conn.commit()
-    except Exception:
-        conn.rollback()
-
-    try:
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS catalogo_tipo_transporte (
-            id SERIAL PRIMARY KEY,
-            nombre TEXT NOT NULL UNIQUE,
-            activo INTEGER DEFAULT 1
-        )
-        """)
-        conn.commit()
-        for _t in ["Rastra", "Plancha", "Furgón", "Camión cerrado",
-                   "Camión refrigerado", "Portacontenedor", "Camioneta", "Otro"]:
-            cur.execute(
-                "INSERT INTO catalogo_tipo_transporte (nombre) VALUES (%s) ON CONFLICT (nombre) DO NOTHING",
-                (_t,)
-            )
         conn.commit()
     except Exception:
         conn.rollback()

@@ -171,20 +171,6 @@ def ejecutar_migraciones():
         )
         """)
 
-    if not tabla_existe(cursor, "catalogo_tipo_transporte"):
-        cursor.execute("""
-        CREATE TABLE catalogo_tipo_transporte (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL UNIQUE,
-            activo INTEGER DEFAULT 1
-        )
-        """)
-        for _t in ["Rastra", "Plancha", "Furgón", "Camión cerrado",
-                   "Camión refrigerado", "Portacontenedor", "Camioneta", "Otro"]:
-            cursor.execute(
-                "INSERT OR IGNORE INTO catalogo_tipo_transporte (nombre) VALUES (?)", (_t,)
-            )
-
     if not tabla_existe(cursor, "reset_tokens"):
         cursor.execute("""
         CREATE TABLE reset_tokens (
@@ -285,6 +271,20 @@ def ejecutar_migraciones():
         "INSERT OR IGNORE INTO configuracion (clave, valor, descripcion) VALUES (?, ?, ?)",
         ("precio_litro_default", 0.0, "Precio/litro de reserva cuando la zona de la ruta no tiene precio configurado")
     )
+
+    # Cadena vehículo -> tipo: tipo_vehiculo_id pasa a ser la fuente de verdad
+    # (antes solo se escribía el texto libre vehiculos.tipo). Backfill único e
+    # idempotente: solo toca filas sin FK todavía, nunca pisa una ya resuelta.
+    cursor.execute("""
+        UPDATE vehiculos SET tipo_vehiculo_id = (
+            SELECT id FROM tipos_vehiculo WHERE LOWER(tipos_vehiculo.nombre) = LOWER(vehiculos.tipo)
+        ) WHERE tipo_vehiculo_id IS NULL AND tipo IS NOT NULL
+    """)
+
+    # catalogo_tipo_transporte era un duplicado desconectado de tipos_vehiculo
+    # (mismo set de valores semilla, sin FK desde viajes/vehiculos/cotizaciones/
+    # tarifas) — eliminado por completo, incluida la tabla.
+    cursor.execute("DROP TABLE IF EXISTS catalogo_tipo_transporte")
 
     conexion.commit()
     conexion.close()

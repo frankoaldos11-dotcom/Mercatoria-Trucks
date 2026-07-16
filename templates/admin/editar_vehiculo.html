@@ -27,7 +27,14 @@
             </div>
             <div class="form-crud-field">
                 <label>Tipo</label>
-                <input type="text" name="tipo" class="input-crud" value="{{ vehiculo.tipo or '' }}" placeholder="Ej: Plataforma, Toldo">
+                <select name="tipo" class="input-crud">
+                    <option value="">— Sin especificar —</option>
+                    {% for t in tipos_vehiculo %}
+                    <option value="{{ t.nombre }}" {% if vehiculo and vehiculo.tipo == t.nombre %}selected{% endif %}>
+                        {{ t.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-crud-field">
                 <label>Marca</label>
