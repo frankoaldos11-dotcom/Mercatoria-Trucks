@@ -16,7 +16,7 @@ from flask_mail import Message
 from services.comercial_service import (
     asignar_camionero_a_ruta, convertir_cotizacion_en_viaje, get_rutas_por_camionero,
 )
-from services.finanzas_service import calcular_liquidacion
+from services.finanzas_service import calcular_liquidacion, obtener_precio_litro
 from services.pdf_service import generar_factura_cliente, generar_pdf_orden_carga
 from services.tramos_service import (
     ContinuidadError, completar_tramo, crear_tramos_viaje,
@@ -157,7 +157,8 @@ def dashboard():
             COUNT(CASE WHEN LOWER(estado) NOT IN ('entregado','cerrado','cancelado') THEN 1 END) AS en_curso,
             COUNT(CASE WHEN LOWER(estado) = 'entregado'                 THEN 1 END) AS entregados,
             COUNT(CASE WHEN LOWER(estado) = 'asignado'                  THEN 1 END) AS asignados,
-            COUNT(CASE WHEN LOWER(estado) = 'cancelado'                 THEN 1 END) AS cancelados
+            COUNT(CASE WHEN LOWER(estado) = 'cancelado'                 THEN 1 END) AS cancelados,
+            COUNT(CASE WHEN LOWER(estado) IN ('en ruta','en_ruta')      THEN 1 END) AS en_ruta
         FROM viajes
     """)
     _est = cursor.fetchone()
@@ -166,6 +167,7 @@ def dashboard():
     entregados = _est["entregados"]
     asignados  = _est["asignados"]
     cancelados = _est["cancelados"]
+    en_ruta    = _est["en_ruta"]
 
     cursor.execute("SELECT COUNT(*) AS total FROM camioneros")
     camioneros = cursor.fetchone()["total"]
@@ -274,6 +276,7 @@ def dashboard():
         entregados=entregados,
         asignados=asignados,
         cancelados=cancelados,
+        en_ruta=en_ruta,
         camioneros=camioneros,
         clientes=clientes,
         lista=lista,
@@ -606,10 +609,8 @@ def gestionar_viaje(id):
     estados_validos = _transiciones.get(estado_norm, ["Asignado", "En ruta", "Entregado", "Cancelado"])
 
     orden_faltantes = []
-    if not viaje["cliente"]:
-        orden_faltantes.append("cliente")
     if not viaje["camionero_nombre"] and not viaje["camionero_id"]:
-        orden_faltantes.append("camionero")
+        orden_faltantes.append("transportista")
     if not viaje["vehiculo_id"]:
         orden_faltantes.append("vehículo")
     if not viaje["origen"]:
@@ -678,9 +679,9 @@ def gestionar_viaje(id):
     if _flt(viaje, "combustible", "combustible_estimado") > 0:
         auto_completados.add("Combustible calculado")
     if _flt(viaje, "pago_camionero", "camionero") > 0:
-        auto_completados.add("Pago camionero calculado")
+        auto_completados.add("Pago transportista calculado")
     if viaje["camionero_id"]:
-        auto_completados.add("Camionero asignado")
+        auto_completados.add("Transportista asignado")
     if viaje["vehiculo_id"]:
         auto_completados.add("Vehículo confirmado")
     if _e in {"carga recogida", "en ruta", "en_ruta", "entregado"}:
@@ -689,7 +690,7 @@ def gestionar_viaje(id):
         auto_completados.add("Descarga realizada")
     try:
         if (viaje["estado_pago_camionero"] or "") == "Pagado":
-            auto_completados.add("Pago camionero confirmado")
+            auto_completados.add("Pago transportista confirmado")
     except (KeyError, IndexError):
         pass
 
@@ -881,7 +882,7 @@ def asignar_camionero(id):
         """, (camionero_id, fila["nombre"], id))
 
     nombre_camionero = fila['nombre'] if fila else "desconocido"
-    registrar_auditoria(cursor, f"Asignó camionero {nombre_camionero}", "Viajes", "viaje", id, f"Camionero ID: {camionero_id}")
+    registrar_auditoria(cursor, f"Asignó transportista {nombre_camionero}", "Viajes", "viaje", id, f"Transportista ID: {camionero_id}")
     conexion.commit()
     conexion.close()
 
@@ -909,7 +910,7 @@ def cambiar_estado(id):
     if estado == "Asignado":
         if not viaje or not viaje["camionero_id"] or not viaje["vehiculo_id"]:
             conexion.close()
-            return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+Asignado+debes+asignar+un+camionero+y+un+veh%C3%ADculo")
+            return redirect(f"/admin/viajes/{id}/gestionar?error=Para+pasar+a+Asignado+debes+asignar+un+transportista+y+un+veh%C3%ADculo")
 
     if estado == "Entregado":
         if not viaje or not viaje["camionero_id"]:
@@ -995,7 +996,7 @@ def asignar_camionero_vehiculo(id):
     camionero_id = request.form.get("camionero", "").strip()
 
     if not camionero_id:
-        return redirect(f"/admin/viajes/{id}/gestionar?error=Selecciona+un+camionero")
+        return redirect(f"/admin/viajes/{id}/gestionar?error=Selecciona+un+transportista")
 
     conexion = conectar()
     cursor = conexion.cursor()
@@ -1072,7 +1073,7 @@ def asignar_camionero_vehiculo(id):
     nombre_cam = camionero["nombre"] if camionero else "desconocido"
     nombre_veh = f"{vehiculo['marca']} {vehiculo['modelo']} ({vehiculo['matricula']})" if vehiculo else "desconocido"
 
-    _registrar_historial(cursor, id, f"Camionero asignado: {nombre_cam}", f"Vehículo: {nombre_veh}")
+    _registrar_historial(cursor, id, f"Transportista asignado: {nombre_cam}", f"Vehículo: {nombre_veh}")
     if vehiculo_desasignado:
         _registrar_historial(
             cursor, id, "Vehículo desasignado",
@@ -1081,9 +1082,9 @@ def asignar_camionero_vehiculo(id):
 
     registrar_auditoria(
         cursor,
-        f"Asignó camionero {nombre_cam} y vehículo {nombre_veh}",
+        f"Asignó transportista {nombre_cam} y vehículo {nombre_veh}",
         "Viajes", "viaje", id,
-        f"Camionero y vehículo asignados juntos"
+        f"Transportista y vehículo asignados juntos"
     )
     conexion.commit()
     conexion.close()
@@ -1106,14 +1107,10 @@ def descargar_pdf_orden_carga(id):
             c.licencia  AS camionero_licencia,
             veh.matricula AS vehiculo_matricula,
             veh.marca     AS vehiculo_marca,
-            veh.modelo    AS vehiculo_modelo,
-            cl.empresa    AS cliente_empresa,
-            cl.telefono   AS cliente_telefono,
-            cl.email      AS cliente_email
+            veh.modelo    AS vehiculo_modelo
         FROM viajes v
         LEFT JOIN camioneros c   ON v.camionero_id = c.id
         LEFT JOIN vehiculos  veh ON v.vehiculo_id  = veh.id
-        LEFT JOIN clientes   cl  ON v.cliente_id   = cl.id
         WHERE v.id = {ph()}
     """, (id,))
 
@@ -1124,12 +1121,11 @@ def descargar_pdf_orden_carga(id):
         return redirect("/admin/viajes")
 
     viaje = dict(fila)
+    viaje["pago_camionero"] = calcular_liquidacion(id).get("pago_camionero")
 
     faltantes_oc = []
-    if not viaje.get("cliente"):
-        faltantes_oc.append("cliente")
     if not viaje.get("camionero_nombre") and not viaje.get("camionero_id"):
-        faltantes_oc.append("camionero")
+        faltantes_oc.append("transportista")
     if not viaje.get("vehiculo_id"):
         faltantes_oc.append("vehículo")
     if not viaje.get("origen"):
@@ -1239,17 +1235,38 @@ def guardar_combustible(id):
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
-    val = request.form.get("combustible", "").strip()
-    try:
-        combustible = float(val)
-        if combustible < 0:
-            raise ValueError
-    except (ValueError, TypeError):
-        return redirect(f"/admin/viaje/{id}?error=Valor+de+combustible+inv%C3%A1lido")
+
     con = conectar()
     cur = con.cursor()
-    cur.execute(f"UPDATE viajes SET combustible = {ph()} WHERE id = {ph()}", (combustible, id))
-    registrar_auditoria(cur, f"Guardó combustible ${combustible:.2f}", "Viajes", "viaje", id)
+
+    cur.execute(f"SELECT camionero_id, ruta_id FROM viajes WHERE id = {ph()}", (id,))
+    viaje_check = cur.fetchone()
+    if not viaje_check or not viaje_check["camionero_id"]:
+        con.close()
+        return redirect(f"/admin/viaje/{id}?error=Asigna+un+transportista+antes+de+confirmar+combustible")
+
+    val = request.form.get("litros", "").strip()
+    try:
+        litros = float(val)
+        if litros < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        con.close()
+        return redirect(f"/admin/viaje/{id}?error=Valor+de+litros+inv%C3%A1lido")
+
+    zona = None
+    if viaje_check["ruta_id"]:
+        cur.execute(f"SELECT zona FROM rutas WHERE id = {ph()}", (viaje_check["ruta_id"],))
+        ruta_row = cur.fetchone()
+        zona = ruta_row["zona"] if ruta_row else None
+    precio_litro, _fuente = obtener_precio_litro(zona)
+    combustible = litros * precio_litro
+
+    cur.execute(
+        f"UPDATE viajes SET litros_combustible = {ph()}, combustible = {ph()} WHERE id = {ph()}",
+        (litros, combustible, id)
+    )
+    registrar_auditoria(cur, f"Guardó combustible: {litros:.1f} L (${combustible:.2f})", "Viajes", "viaje", id)
     con.commit()
     con.close()
     return redirect(f"/admin/viaje/{id}")
@@ -1269,6 +1286,25 @@ def guardar_fechas(id):
         cur.execute(f"UPDATE viajes SET fecha_recogida = {ph()} WHERE id = {ph()}", (fecha_recogida, id))
     if fecha_entrega:
         cur.execute(f"UPDATE viajes SET fecha_entrega = {ph()} WHERE id = {ph()}", (fecha_entrega, id))
+    con.commit()
+    con.close()
+    return redirect(f"/admin/viaje/{id}")
+
+
+@admin_bp.route("/viaje/<int:id>/guardar-tipo-carga", methods=["POST"])
+def guardar_tipo_carga(id):
+    if not requiere_admin():
+        return redirect("/login")
+    if _viaje_cerrado(id):
+        return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
+    tipo_carga = request.form.get("tipo_carga", "").strip()
+    opciones_validas = ['Seca', 'Refrigerada', 'Congelada', 'Desagrupada', 'Frágil', 'Peligrosa', 'Otra']
+    if tipo_carga not in opciones_validas:
+        return redirect(f"/admin/viaje/{id}?error=Tipo+de+carga+inv%C3%A1lido")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute(f"UPDATE viajes SET tipo_carga = {ph()} WHERE id = {ph()}", (tipo_carga, id))
+    registrar_auditoria(cur, f"Cambió tipo de carga a: {tipo_carga}", "Viajes", "viaje", id)
     con.commit()
     con.close()
     return redirect(f"/admin/viaje/{id}")
@@ -1375,7 +1411,7 @@ def convertir_cotizacion(id):
     return redirect(f"/admin/viajes/{viaje_id}/gestionar")
 
 
-@admin_bp.route("/viaje/<int:id>/pago-camionero", methods=["POST"])
+@admin_bp.route("/viaje/<int:id>/pago-transportista", methods=["POST"])
 def pago_camionero(id):
     es_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
@@ -1409,7 +1445,7 @@ def pago_camionero(id):
             f"observacion_pago={ph()}, fecha_pago_camionero=CURRENT_TIMESTAMP WHERE id={ph()}",
             (tipo_pago, observacion, id)
         )
-        auditoria_msg = "Marcó pago camionero como Pagado"
+        auditoria_msg = "Marcó pago transportista como Pagado"
 
     elif accion == "parcial" and session.get("rol") == "admin":
         cur.execute(
@@ -1417,7 +1453,7 @@ def pago_camionero(id):
             f"observacion_pago={ph()}, monto_pagado={ph()} WHERE id={ph()}",
             (tipo_pago, observacion, monto, id)
         )
-        auditoria_msg = "Marcó pago camionero como Parcial"
+        auditoria_msg = "Marcó pago transportista como Parcial"
 
     elif accion == "revertir" and session.get("rol") == "admin":
         cur.execute(
@@ -1705,6 +1741,11 @@ def verificar_viaje(id):
 
 
 @admin_bp.route("/camioneros/<int:id>/economico")
+def camionero_economico_legacy_redirect(id):
+    return redirect(f"/admin/transportistas/{id}/economico", code=301)
+
+
+@admin_bp.route("/transportistas/<int:id>/economico")
 def camionero_economico(id):
     if not requiere_admin():
         return redirect("/login")
@@ -1718,7 +1759,7 @@ def camionero_economico(id):
     camionero = cur.fetchone()
     if not camionero:
         con.close()
-        return redirect("/admin/camioneros")
+        return redirect("/admin/transportistas")
 
     cur.execute(f"""
         SELECT id, fecha_creacion, origen, destino, estado,
@@ -1768,7 +1809,7 @@ def camionero_economico(id):
     pendiente = total_generado - total_pagado
 
     return render_template(
-        "admin/camionero_economico.html",
+        "admin/transportista_economico.html",
         camionero=camionero,
         total_generado=total_generado,
         total_pagado=total_pagado,
@@ -1779,9 +1820,16 @@ def camionero_economico(id):
     )
 
 
-# ── Camioneros CRUD ──────────────────────────────────────────────────────────
+# ── Transportistas CRUD ────────────────────────────────────────────────────
 
-@admin_bp.route("/camioneros", methods=["GET", "POST"])
+@admin_bp.route("/camioneros", methods=["GET"])
+def admin_camioneros_legacy_redirect():
+    qs = request.query_string.decode()
+    destino = "/admin/transportistas" + (f"?{qs}" if qs else "")
+    return redirect(destino, code=301)
+
+
+@admin_bp.route("/transportistas", methods=["GET", "POST"])
 def admin_camioneros():
     if not requiere_admin():
         return redirect("/login")
@@ -1834,7 +1882,7 @@ def admin_camioneros():
 
             conexion.commit()
             conexion.close()
-            return redirect("/admin/camioneros?ok=1")
+            return redirect("/admin/transportistas?ok=1")
 
     buscar           = request.args.get("buscar", "").strip()
     filtro_estado    = request.args.get("estado", "").strip()
@@ -1893,7 +1941,7 @@ def admin_camioneros():
     rutas_por_camionero = {c["id"]: get_rutas_por_camionero(c["id"]) for c in lista}
 
     return render_template(
-        "admin/camioneros.html",
+        "admin/transportistas.html",
         lista=lista,
         estados=CAMIONERO_ESTADOS,
         rutas_por_camionero=rutas_por_camionero,
@@ -1909,7 +1957,12 @@ def admin_camioneros():
     )
 
 
-@admin_bp.route("/camioneros/<int:id>/editar", methods=["GET", "POST"])
+@admin_bp.route("/camioneros/<int:id>/editar", methods=["GET"])
+def editar_camionero_legacy_redirect(id):
+    return redirect(f"/admin/transportistas/{id}/editar", code=301)
+
+
+@admin_bp.route("/transportistas/<int:id>/editar", methods=["GET", "POST"])
 def editar_camionero(id):
     if not requiere_admin():
         return redirect("/login")
@@ -1973,7 +2026,7 @@ def editar_camionero(id):
         if not error:
             conexion.commit()
             conexion.close()
-            return redirect("/admin/camioneros")
+            return redirect("/admin/transportistas")
 
     cursor.execute(
         f"""SELECT id, nombre, telefono, licencia, carnet_identidad,
@@ -1985,7 +2038,7 @@ def editar_camionero(id):
 
     if not camionero:
         conexion.close()
-        return redirect("/admin/camioneros")
+        return redirect("/admin/transportistas")
 
     cursor.execute(
         f"""SELECT id, matricula, marca, modelo, tipo, capacidad, chapa_remolque
@@ -2001,7 +2054,7 @@ def editar_camionero(id):
     conexion.close()
 
     return render_template(
-        "admin/editar_camionero.html",
+        "admin/editar_transportista.html",
         camionero=camionero,
         vehiculo=vehiculo,
         estados=CAMIONERO_ESTADOS,
@@ -2010,7 +2063,7 @@ def editar_camionero(id):
     )
 
 
-@admin_bp.route("/camioneros/<int:id>/eliminar", methods=["POST"])
+@admin_bp.route("/transportistas/<int:id>/eliminar", methods=["POST"])
 def eliminar_camionero(id):
     if not requiere_admin():
         return redirect("/login")
@@ -2026,10 +2079,10 @@ def eliminar_camionero(id):
             UPDATE camioneros SET deleted_at = CURRENT_TIMESTAMP, deleted_by = {ph()}
             WHERE id = {ph()}
         """, (session.get("usuario"), id))
-        registrar_auditoria(cursor, "eliminó (papelera)", "camioneros", "camionero", id)
+        registrar_auditoria(cursor, "eliminó (papelera)", "transportistas", "transportista", id)
         conexion.commit()
         conexion.close()
-        return redirect("/admin/camioneros")
+        return redirect("/admin/transportistas")
     else:
         # Operario: crea solicitud de aprobación
         cursor.execute(f"SELECT nombre FROM camioneros WHERE id = {ph()}", (id,))
@@ -2039,10 +2092,10 @@ def eliminar_camionero(id):
             INSERT INTO solicitudes_eliminacion
                 (entidad, entidad_id, nombre_entidad, solicitado_por)
             VALUES ({ph()}, {ph()}, {ph()}, {ph()})
-        """, ("camionero", id, nombre_entidad, session.get("usuario")))
+        """, ("transportista", id, nombre_entidad, session.get("usuario")))
         conexion.commit()
         conexion.close()
-        return redirect("/admin/camioneros?access_error=Solicitud+de+eliminaci%C3%B3n+enviada+al+administrador")
+        return redirect("/admin/transportistas?access_error=Solicitud+de+eliminaci%C3%B3n+enviada+al+administrador")
 
 
 # ── Clientes CRUD ────────────────────────────────────────────────────────────
@@ -2613,7 +2666,7 @@ def exportar_reportes_csv():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["ID", "Cliente", "Ruta", "Estado",
-                     "Precio Cliente (USD)", "Pago Camionero (USD)",
+                     "Precio Cliente (USD)", "Pago Transportista (USD)",
                      "Combustible (USD)", "Utilidad (USD)"])
     for f in filas:
         writer.writerow([
@@ -2878,7 +2931,12 @@ _EXCEL_CONFIG = {
     "camioneros": {
         "columnas": ["id", "nombre", "telefono", "licencia", "estado"],
         "tabla": "camioneros",
-        "redirect": "/admin/camioneros",
+        "redirect": "/admin/transportistas",
+    },
+    "transportistas": {
+        "columnas": ["id", "nombre", "telefono", "licencia", "estado"],
+        "tabla": "camioneros",
+        "redirect": "/admin/transportistas",
     },
     "clientes": {
         "columnas": ["id", "nombre", "contacto", "telefono", "email", "empresa"],
@@ -3464,8 +3522,9 @@ def restaurar_registro(entidad, id):
     if session.get("rol") != "admin":
         return redirect("/admin?access_error=Acceso+restringido+a+administradores")
 
-    tablas = {"camionero": "camioneros", "cliente": "clientes", "viaje": "viajes",
-              "camioneros": "camioneros", "clientes": "clientes", "viajes": "viajes"}
+    tablas = {"transportista": "camioneros", "cliente": "clientes", "viaje": "viajes",
+              "transportistas": "camioneros", "clientes": "clientes", "viajes": "viajes",
+              "camionero": "camioneros", "camioneros": "camioneros"}
     tabla = tablas.get(entidad)
     if not tabla:
         return redirect("/admin/papelera")
@@ -3490,7 +3549,8 @@ def aprobar_eliminacion(id):
     cursor.execute(f"SELECT * FROM solicitudes_eliminacion WHERE id = {ph()}", (id,))
     sol = cursor.fetchone()
     if sol and sol["estado"] == "Pendiente":
-        tablas = {"camionero": "camioneros", "cliente": "clientes", "viaje": "viajes"}
+        tablas = {"transportista": "camioneros", "cliente": "clientes", "viaje": "viajes",
+                  "camionero": "camioneros"}
         tabla = tablas.get(sol["entidad"])
         if tabla:
             cursor.execute(f"""

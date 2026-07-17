@@ -3,11 +3,11 @@
 
 <div class="page-header">
     <div>
-        <a href="/admin/camioneros" class="btn-volver">← Camioneros</a>
+        <a href="/admin/transportistas" class="btn-volver">← Transportistas</a>
         <h1><i class="bi bi-cash-coin" style="color:var(--principal);margin-right:8px;"></i>{{ camionero.nombre }}</h1>
         <p class="subtitulo">Estado económico · seguimiento de pagos</p>
     </div>
-    <a href="/admin/camioneros/{{ camionero.id }}/editar" class="btn-accion-edit" style="white-space:nowrap;">
+    <a href="/admin/transportistas/{{ camionero.id }}/editar" class="btn-accion-edit" style="white-space:nowrap;">
         <i class="bi bi-pencil"></i> Editar perfil
     </a>
 </div>
@@ -36,7 +36,7 @@
     <div class="panel-header">
         <div>
             <h2>Pagos pendientes / parciales</h2>
-            <p>Viajes con pago al camionero aún no completado.</p>
+            <p>Viajes con pago al transportista aún no completado.</p>
         </div>
     </div>
     <div class="table-wrapper">

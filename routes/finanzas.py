@@ -39,7 +39,7 @@ def configuracion():
             "margen_combustible_divisor": "divisor combustible (reserva sin tipo de vehículo)",
             "multiplicador_pago_camionero": "multiplicador precio cliente",
             "minimo_km_garantizado": "km mínimo garantizado",
-            "minimo_pago_usd": "pago mínimo al camionero",
+            "minimo_pago_usd": "pago mínimo al transportista",
             "comision_mercatoria_porcentaje": "comisión Mercatoria",
             "precio_litro_default": "precio/litro de reserva (zona sin precio)",
         }

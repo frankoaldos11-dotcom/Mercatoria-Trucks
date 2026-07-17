@@ -42,7 +42,7 @@ self.addEventListener("fetch", (event) => {
   const BYPASS_PREFIXES = [
     "/admin/viaje",
     "/admin/viajes",
-    "/admin/camioneros",
+    "/admin/transportistas",
     "/admin/clientes",
     "/admin/comercial",
     "/admin/reportes",

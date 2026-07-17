@@ -133,7 +133,7 @@ def editar_ruta(ruta_id):
     return redirect("/admin/comercial/rutas")
 
 
-@comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/camioneros/asignar", methods=["POST"])
+@comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/transportistas/asignar", methods=["POST"])
 def asignar_camionero_ruta(ruta_id):
     if not requiere_admin():
         return redirect("/login")
@@ -143,7 +143,7 @@ def asignar_camionero_ruta(ruta_id):
     return redirect("/admin/comercial/rutas")
 
 
-@comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/camioneros/<int:camionero_id>/desasociar", methods=["POST"])
+@comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/transportistas/<int:camionero_id>/desasociar", methods=["POST"])
 def desasociar_camionero_ruta(ruta_id, camionero_id):
     if not requiere_admin():
         return redirect("/login")
@@ -307,7 +307,7 @@ def plantilla_cotizaciones():
     ws = wb.active
     ws.title = "Cotizaciones"
 
-    headers = ["cliente", "ruta_id", "tipo_vehiculo_id", "precio_cliente", "pago_camionero", "observaciones"]
+    headers = ["cliente", "ruta_id", "tipo_vehiculo_id", "precio_cliente", "pago_transportista", "observaciones"]
     fill = PatternFill(start_color="E86A2C", end_color="E86A2C", fill_type="solid")
     font = Font(color="FFFFFF", bold=True)
 

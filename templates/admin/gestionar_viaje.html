@@ -24,6 +24,7 @@
 {% set done5 = _doc_item.get('completado', false) %}
 {% set done6 = (viaje.estado or '')|lower == 'entregado' %}
 {% set done7 = (viaje.estado_pago_camionero or '') == 'Pagado' %}
+{% set done_en_ruta = (viaje.estado or '')|lower in ['en ruta', 'en_ruta', 'carga recogida', 'entregado'] %}
 {% set done_all = done1 and done2 and done3 and done4 and done5 and done6 and done7 %}
 
 {# ── HEADER ───────────────────────────────────────────────── #}
@@ -179,96 +180,7 @@
 {# ── STEPS ────────────────────────────────────────────────── #}
 <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
 
-{# STEP 1 — Asignar transportista #}
-{% if done1 %}
-<div class="step-done" id="step1-done" style="justify-content:space-between;">
-    <div style="display:flex;align-items:center;gap:10px;flex:1;">
-        <i class="bi bi-check-circle-fill step-check"></i>
-        <div>
-            <strong>Transportista asignado</strong>
-            <span class="step-done-info"> · {{ viaje.camionero_nombre }}{% if viaje.vehiculo_placa %} — {{ viaje.vehiculo_placa }}{% endif %}</span>
-        </div>
-    </div>
-    {% if (viaje.estado or '')|lower not in ['entregado', 'cerrado'] %}
-    <button type="button" onclick="document.getElementById('step1-form').style.display='block';document.getElementById('step1-done').style.display='none';"
-            style="font-size:11px;font-weight:700;padding:4px 10px;background:#fff3ec;color:var(--principal);border:1px solid var(--principal);border-radius:6px;cursor:pointer;white-space:nowrap;flex-shrink:0;">
-        <i class="bi bi-arrow-repeat"></i> Cambiar
-    </button>
-    {% endif %}
-</div>
-<div id="step1-form" style="display:none;">
-    <div class="card step-active">
-        <div class="step-title-row"><span class="step-num">1</span> Cambiar transportista</div>
-        <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo" id="form-asignar-transportista"
-              style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <select name="camionero" class="step-input" required style="flex:1;min-width:200px;">
-                <option value="">— Seleccionar transportista —</option>
-                {% for c in camioneros %}
-                <option value="{{ c.id }}" {{ 'selected' if c.id == viaje.camionero_id else '' }}>{{ c.nombre }}{% if c.vehiculo_matricula %} ({{ c.vehiculo_matricula }}){% endif %}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="step-btn">Asignar</button>
-            <button type="button" onclick="document.getElementById('step1-form').style.display='none';document.getElementById('step1-done').style.display='flex';"
-                    style="padding:8px 14px;background:#f0f0f0;color:#555;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Cancelar</button>
-        </form>
-    </div>
-</div>
-{% elif (viaje.estado or '')|lower == 'cerrado' %}
-<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
-    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
-    <div><strong style="color:#9CA3AF;">Transportista sin asignar</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
-</div>
-{% else %}
-<div class="card step-active">
-    <div class="step-title-row"><span class="step-num">1</span> Asignar transportista y vehículo</div>
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo" id="form-asignar-transportista"
-          style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <select name="camionero" class="step-input" required style="flex:1;min-width:200px;">
-            <option value="">— Seleccionar transportista —</option>
-            {% for c in camioneros %}
-            <option value="{{ c.id }}">{{ c.nombre }}{% if c.vehiculo_matricula %} ({{ c.vehiculo_matricula }}){% endif %}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="step-btn">Asignar</button>
-    </form>
-</div>
-{% endif %}
-
-{# STEP 2 — Confirmar combustible (litros) #}
-{% if done2 %}
-<div class="step-done">
-    <i class="bi bi-check-circle-fill step-check"></i>
-    <div><strong>Combustible confirmado</strong>
-    <span class="step-done-info"> · {% if liquidacion and liquidacion.litros_combustible > 0 %}{{ liquidacion.litros_combustible }} L · ${{ "%.2f"|format(liquidacion.combustible) }}{% else %}${{ "%.2f"|format(viaje.combustible|float) }}{% endif %}</span></div>
-</div>
-{% elif (viaje.estado or '')|lower == 'cerrado' %}
-<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
-    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
-    <div><strong style="color:#9CA3AF;">Combustible no confirmado</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
-</div>
-{% else %}
-<div class="card step-active">
-    <div class="step-title-row"><span class="step-num">2</span> Confirmar combustible asignado</div>
-    {% if liquidacion and liquidacion.litros_combustible > 0 %}
-    <p style="font-size:12px;color:#888;margin:8px 0 4px;">Estimado: <strong>{{ liquidacion.litros_combustible }} L</strong> · <strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong></p>
-    {% if liquidacion.precio_litro_fuente in ('default_global', 'sin_dato') or liquidacion.divisor_fuente == 'default_global' %}
-    <p style="font-size:11px;color:var(--texto-sobre-aviso);margin:0 0 4px;"><i class="bi bi-exclamation-triangle"></i> Calculado con valores de reserva (zona o tipo de vehículo sin configurar) — no es un dato real de esa ruta/vehículo.</p>
-    {% endif %}
-    {% endif %}
-    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-combustible" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <span style="font-size:12px;color:#888;">Combustible ($):</span>
-        <input type="text" name="combustible" class="step-input"
-               value="{{ '%.2f'|format(liquidacion.combustible) if liquidacion and liquidacion.combustible > 0 else '' }}"
-               placeholder="0.00" inputmode="decimal" style="width:120px;">
-        <button type="submit" class="step-btn">Confirmar</button>
-    </form>
-</div>
-{% endif %}
-
-{# STEP 3 — Fechas de recogida y descarga (guardadas juntas) #}
+{# STEP 1 — Fechas de recogida y descarga (guardadas juntas) #}
 {% set done34 = done3 and done4 %}
 {% if done34 %}
 <div class="step-done" id="step34-done" style="justify-content:space-between;">
@@ -288,7 +200,7 @@
 </div>
 <div id="step34-form" style="display:none;">
     <div class="card step-active">
-        <div class="step-title-row"><span class="step-num">3</span> Fechas de recogida y descarga (editar)</div>
+        <div class="step-title-row"><span class="step-num">1</span> Fechas de recogida y descarga (editar)</div>
         <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
@@ -312,7 +224,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">3</span> Fechas de recogida y descarga</div>
+    <div class="step-title-row"><span class="step-num">1</span> Fechas de recogida y descarga</div>
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-fechas" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div>
@@ -328,7 +240,7 @@
 </div>
 {% endif %}
 
-{# STEP 4 — Enviar documentación #}
+{# STEP 2 — Enviar documentación #}
 {% if done5 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -341,7 +253,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">4</span> Enviar documentación al transportista</div>
+    <div class="step-title-row"><span class="step-num">2</span> Enviar documentación al transportista</div>
     <p style="font-size:12px;color:#888;margin:8px 0 10px;">Orden de carga, contrato, instrucciones de ruta.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         {% if orden_carga_ok %}
@@ -362,7 +274,136 @@
 </div>
 {% endif %}
 
-{# STEP 5 — Confirmar entrega #}
+{# STEP 3 — Asignar transportista #}
+{% if done1 %}
+<div class="step-done" id="step1-done" style="justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;flex:1;">
+        <i class="bi bi-check-circle-fill step-check"></i>
+        <div>
+            <strong>Transportista asignado</strong>
+            <span class="step-done-info"> · {{ viaje.camionero_nombre }}{% if viaje.vehiculo_placa %} — {{ viaje.vehiculo_placa }}{% endif %}</span>
+        </div>
+    </div>
+    {% if (viaje.estado or '')|lower not in ['entregado', 'cerrado'] %}
+    <button type="button" onclick="document.getElementById('step1-form').style.display='block';document.getElementById('step1-done').style.display='none';"
+            style="font-size:11px;font-weight:700;padding:4px 10px;background:#fff3ec;color:var(--principal);border:1px solid var(--principal);border-radius:6px;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+        <i class="bi bi-arrow-repeat"></i> Cambiar
+    </button>
+    {% endif %}
+</div>
+<div id="step1-form" style="display:none;">
+    <div class="card step-active">
+        <div class="step-title-row"><span class="step-num">3</span> Cambiar transportista</div>
+        <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo" id="form-asignar-transportista"
+              style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="camionero" class="step-input" required style="flex:1;min-width:200px;">
+                <option value="">— Seleccionar transportista —</option>
+                {% for c in camioneros %}
+                <option value="{{ c.id }}" {{ 'selected' if c.id == viaje.camionero_id else '' }}>{{ c.nombre }}{% if c.vehiculo_matricula %} ({{ c.vehiculo_matricula }}){% endif %}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="step-btn">Asignar</button>
+            <button type="button" onclick="document.getElementById('step1-form').style.display='none';document.getElementById('step1-done').style.display='flex';"
+                    style="padding:8px 14px;background:#f0f0f0;color:#555;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Cancelar</button>
+        </form>
+    </div>
+</div>
+{% elif (viaje.estado or '')|lower == 'cerrado' %}
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">Transportista sin asignar</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">3</span> Asignar transportista y vehículo</div>
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/asignar-todo" id="form-asignar-transportista"
+          style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select name="camionero" class="step-input" required style="flex:1;min-width:200px;">
+            <option value="">— Seleccionar transportista —</option>
+            {% for c in camioneros %}
+            <option value="{{ c.id }}">{{ c.nombre }}{% if c.vehiculo_matricula %} ({{ c.vehiculo_matricula }}){% endif %}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="step-btn">Asignar</button>
+    </form>
+</div>
+{% endif %}
+
+{# STEP 4 — Confirmar combustible (litros) #}
+{% if done2 %}
+<div class="step-done">
+    <i class="bi bi-check-circle-fill step-check"></i>
+    <div><strong>Combustible confirmado</strong>
+    <span class="step-done-info"> · {% if viaje.litros_combustible %}{{ '%.1f'|format(viaje.litros_combustible|float) }} L · ${{ "%.2f"|format(viaje.combustible|float) }}{% else %}${{ "%.2f"|format(viaje.combustible|float) }}{% endif %}</span></div>
+</div>
+{% elif (viaje.estado or '')|lower == 'cerrado' %}
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">Combustible no confirmado</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
+</div>
+{% elif not done1 %}
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">Combustible no confirmado</strong><span class="step-done-info" style="color:#9CA3AF;"> · Asigna un transportista primero</span></div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">4</span> Confirmar combustible asignado</div>
+    {% if liquidacion and liquidacion.litros_combustible > 0 %}
+    <p style="font-size:12px;color:#888;margin:8px 0 4px;">Estimado: <strong>{{ liquidacion.litros_combustible }} L</strong> · <strong>${{ "%.2f"|format(liquidacion.combustible) }}</strong></p>
+    {% if liquidacion.precio_litro_fuente in ('default_global', 'sin_dato') or liquidacion.divisor_fuente == 'default_global' %}
+    <p style="font-size:11px;color:var(--texto-sobre-aviso);margin:0 0 4px;"><i class="bi bi-exclamation-triangle"></i> Calculado con valores de reserva (zona o tipo de vehículo sin configurar) — no es un dato real de esa ruta/vehículo.</p>
+    {% endif %}
+    {% endif %}
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-combustible" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <span style="font-size:12px;color:#888;">Litros:</span>
+        <input type="text" name="litros" class="step-input"
+               value="{{ '%.1f'|format(liquidacion.litros_combustible) if liquidacion and liquidacion.litros_combustible > 0 else '' }}"
+               placeholder="0.0" inputmode="decimal" style="width:100px;">
+        <span style="font-size:11px;color:#aaa;">El costo en dólares se calcula solo con el precio de la zona.</span>
+        <button type="submit" class="step-btn">Confirmar</button>
+    </form>
+</div>
+{% endif %}
+
+{# STEP 5 — En ruta #}
+{% if done_en_ruta %}
+<div class="step-done">
+    <i class="bi bi-check-circle-fill step-check"></i>
+    <div><strong>En ruta</strong><span class="step-done-info"> · El viaje salió y va en camino</span></div>
+</div>
+{% elif (viaje.estado or '')|lower == 'cerrado' %}
+<div class="step-done" style="background:#f9fafb;border-color:var(--border);">
+    <i class="bi bi-clock step-check" style="color:#9CA3AF;"></i>
+    <div><strong style="color:#9CA3AF;">En ruta</strong><span class="step-done-info" style="color:#9CA3AF;"> · Viaje cerrado</span></div>
+</div>
+{% else %}
+<div class="card step-active">
+    <div class="step-title-row"><span class="step-num">5</span> Marcar en ruta</div>
+    {% if not done2 %}
+    <p style="font-size:12px;color:#c0392b;margin:8px 0 10px;">
+        <i class="bi bi-exclamation-triangle-fill"></i> Confirma el combustible antes de marcar el viaje en ruta.
+    </p>
+    <button type="button" class="step-btn" disabled style="opacity:.5;cursor:not-allowed;">
+        <i class="bi bi-truck"></i> Marcar en ruta
+    </button>
+    {% else %}
+    <p style="font-size:12px;color:#888;margin:8px 0 10px;">El viaje salió y va en camino a destino.</p>
+    <form method="POST" action="/admin/viaje/{{ viaje.id }}/estado">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="estado" value="En ruta">
+        <button type="submit" class="step-btn">
+            <i class="bi bi-truck"></i> Marcar en ruta
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+
+{# STEP 6 — Confirmar entrega #}
 {% if done6 %}
 <div class="step-done">
     <i class="bi bi-check-circle-fill step-check"></i>
@@ -375,7 +416,7 @@
 </div>
 {% else %}
 <div class="card step-active">
-    <div class="step-title-row"><span class="step-num">5</span> Confirmar entrega</div>
+    <div class="step-title-row"><span class="step-num">6</span> Confirmar entrega</div>
     {% if not done1 %}
     <p style="font-size:12px;color:#c0392b;margin:8px 0 10px;">
         <i class="bi bi-exclamation-triangle-fill"></i> Asigna un transportista antes de confirmar la entrega.
@@ -477,6 +518,26 @@
     </details>
     {% endif %}
 
+    {# Tipo de carga #}
+    {% if (viaje.estado or '')|lower != 'cerrado' %}
+    <details class="detail-block">
+        <summary class="detail-summary"><i class="bi bi-box-seam"></i> Tipo de carga <span style="margin-left:8px;color:#888;font-weight:400;">{{ viaje.tipo_carga or 'Sin definir' }}</span></summary>
+        <div style="padding:14px;">
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-tipo-carga">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    {% for tc in ['Seca','Refrigerada','Congelada','Desagrupada','Frágil','Peligrosa','Otra'] %}
+                    <input type="radio" name="tipo_carga" id="gv_tc_{{ loop.index }}" value="{{ tc }}" style="display:none;" required
+                           {{ 'checked' if viaje.tipo_carga == tc else '' }}>
+                    <label for="gv_tc_{{ loop.index }}" class="toggle-btn-mv">{{ tc }}</label>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="step-btn" style="margin-top:12px;">Guardar tipo de carga</button>
+            </form>
+        </div>
+    </details>
+    {% endif %}
+
     {# Liquidación financiera #}
     {% if liquidacion %}
     <details class="detail-block">
@@ -529,7 +590,7 @@
             {% if (viaje.estado or '')|lower == 'cerrado' %}
             <p style="margin:0;font-size:12px;color:#9CA3AF;">Viaje cerrado — no admite cambios.</p>
             {% else %}
-            <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-camionero" style="display:flex;gap:8px;">
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/pago-transportista" style="display:flex;gap:8px;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" name="accion" value="pagado"
                         style="flex:1;padding:10px;background:var(--success);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
@@ -562,7 +623,7 @@
 
             <a href="/admin/viaje/{{ viaje.id }}/carta-porte" class="btn-op-link" style="background:#2563EB;">Carta de Porte</a>
             {% if session.get('rol') == 'admin' %}
-            <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-op-link">Liquidación Camionero</a>
+            <a href="/admin/viaje/{{ viaje.id }}/liquidacion" class="btn-op-link">Liquidación Transportista</a>
             {% endif %}
 
             {% if session.get('rol') == 'admin' %}
@@ -1015,6 +1076,25 @@ function cambiarEstadoInc(viajeId, incId, nuevoEstado, btn) {
 .detail-summary::after { content: '▼'; margin-left: auto; font-size: 10px; color: #9CA3AF; transition: transform .2s; }
 details[open] .detail-summary::after { transform: rotate(180deg); }
 .detail-summary:hover { background: #f9fafb; }
+
+.toggle-btn-mv {
+    display: inline-block;
+    padding: 7px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    background: #f9fafb;
+    color: #374151;
+    transition: border-color .15s, background .15s;
+    user-select: none;
+}
+input[type="radio"]:checked + .toggle-btn-mv {
+    border-color: var(--activo);
+    background: #fff3ec;
+    color: #c2410c;
+}
 
 /* ── Operation buttons ───────────────────────────────────── */
 .btn-op-link {

@@ -106,7 +106,7 @@ function autoTarifa() {
                     <th>Zona</th>
                     <th>Km oficiales</th>
                     <th>Tarifa/km</th>
-                    <th>Camioneros</th>
+                    <th>Transportistas</th>
                     {% if session.get('rol') == 'admin' %}<th></th>{% endif %}
                 </tr>
             </thead>
@@ -156,7 +156,7 @@ function autoTarifa() {
                                 class="btn-camioneros-toggle"
                                 onclick="toggleCamioneros({{ r.id }})">
                             {% set n = camioneros_por_ruta[r.id]|length %}
-                            {{ n }} {{ "camionero" if n == 1 else "camioneros" }}
+                            {{ n }} {{ "transportista" if n == 1 else "transportistas" }}
                             <span class="chevron" id="chev-{{ r.id }}">▸</span>
                         </button>
                     </td>
@@ -187,7 +187,7 @@ function autoTarifa() {
                                     {{ c.nombre }}
                                     {% if session.get('rol') in ['admin', 'operador'] %}
                                     <form method="POST"
-                                          action="/admin/comercial/rutas/{{ r.id }}/camioneros/{{ c.id }}/desasociar"
+                                          action="/admin/comercial/rutas/{{ r.id }}/transportistas/{{ c.id }}/desasociar"
                                           style="display:inline;"
                                           onsubmit="return confirm('¿Desasociar {{ c.nombre }} de esta ruta?')">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -196,17 +196,17 @@ function autoTarifa() {
                                     {% endif %}
                                 </span>
                                 {% else %}
-                                <span class="cam-vacio">Sin camioneros asignados a esta ruta</span>
+                                <span class="cam-vacio">Sin transportistas asignados a esta ruta</span>
                                 {% endfor %}
                             </div>
 
                             {% if session.get('rol') in ['admin', 'operador'] %}
                             <form method="POST"
-                                  action="/admin/comercial/rutas/{{ r.id }}/camioneros/asignar"
+                                  action="/admin/comercial/rutas/{{ r.id }}/transportistas/asignar"
                                   class="form-add-cam">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <select name="camionero_id" class="input-cam-sel" required>
-                                    <option value="">Añadir camionero a esta ruta...</option>
+                                    <option value="">Añadir transportista a esta ruta...</option>
                                     {% for c in todos_camioneros %}
                                     {% if c.id not in ids_asignados_por_ruta[r.id] %}
                                     <option value="{{ c.id }}">{{ c.nombre }}</option>

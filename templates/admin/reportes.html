@@ -55,7 +55,7 @@
     <div class="kpi-card">
         <div class="kpi-icon kpi-camionero"><i class="bi bi-person-vcard"></i></div>
         <div class="kpi-body">
-            <span class="kpi-label">Pago camioneros</span>
+            <span class="kpi-label">Pago transportistas</span>
             <span class="kpi-valor">${{ "%.2f"|format(totales.pago_camionero) }}</span>
         </div>
     </div>
@@ -119,7 +119,7 @@
         <div class="kpi-extra-fila">
             <div class="kpi-extra-ico"><i class="bi bi-truck"></i></div>
             <div>
-                <div class="kpi-extra-label">Camionero más activo (período)</div>
+                <div class="kpi-extra-label">Transportista más activo (período)</div>
                 {% if camionero_top %}
                 <div class="kpi-extra-valor">{{ camionero_top.camionero_nombre }}</div>
                 <div class="kpi-extra-sub">{{ camionero_top.total_viajes }} viaje{{ 's' if camionero_top.total_viajes != 1 else '' }}</div>

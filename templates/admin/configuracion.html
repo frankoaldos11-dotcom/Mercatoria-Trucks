@@ -89,7 +89,7 @@
         <div class="config-grupo">
             <label class="config-label">
                 Multiplicador precio cliente
-                <span class="config-hint">precio_cliente = pago_camionero × multiplicador (cuando no hay precio registrado)</span>
+                <span class="config-hint">precio_cliente = pago_transportista × multiplicador (cuando no hay precio registrado)</span>
             </label>
             <input
                 type="number"
@@ -120,7 +120,7 @@
 
         <div class="config-grupo">
             <label class="config-label">
-                Pago mínimo al camionero (USD)
+                Pago mínimo al transportista (USD)
                 <span class="config-hint">Garantía mínima independientemente de los km</span>
             </label>
             <input
@@ -209,7 +209,7 @@
             <strong id="prev-km-liq">—</strong>
         </div>
         <div class="preview-fila">
-            <span>Pago camionero</span>
+            <span>Pago transportista</span>
             <strong id="prev-pago">—</strong>
         </div>
         <div class="preview-fila">
@@ -237,7 +237,7 @@
 <div id="tab-tipos" class="config-tab-content">
 <div class="card config-form" style="max-width:780px;">
     <h3 style="margin:0 0 6px;font-size:16px;">Tipos de vehículo</h3>
-    <p style="margin:0 0 20px;font-size:13px;color:#888;">Catálogo usado en el formulario de camioneros y en cotizaciones.</p>
+    <p style="margin:0 0 20px;font-size:13px;color:#888;">Catálogo usado en el formulario de transportistas y en cotizaciones.</p>
 
     {% if request.args.get('ok_tipo') %}
     <div style="background:#e6f7ee;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:13px;font-weight:600;">

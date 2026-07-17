@@ -165,24 +165,6 @@ def generar_pdf_orden_carga(viaje: dict) -> bytes:
     elems.append(cabecera)
     elems.append(HRFlowable(width="100%", thickness=2, color=NARANJA, spaceAfter=10))
 
-    # ── Datos del cliente ─────────────────────────────────────────────────────
-    elems.append(_seccion("DATOS DEL CLIENTE", es["seccion"]))
-    elems.append(Spacer(1, 8))
-    t = Table(
-        [
-            [Paragraph("CLIENTE", es["label"]), Paragraph("EMPRESA", es["label"]), Paragraph("TELÉFONO", es["label"])],
-            [
-                Paragraph(str(viaje.get("cliente") or "—"), es["valor"]),
-                Paragraph(str(viaje.get("cliente_empresa") or "—"), es["valor"]),
-                Paragraph(str(viaje.get("cliente_telefono") or "—"), es["valor"]),
-            ],
-        ],
-        colWidths=[6 * cm, 6 * cm, 5 * cm],
-    )
-    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2)]))
-    elems.append(t)
-    elems.append(Spacer(1, 12))
-
     # ── Trayecto ──────────────────────────────────────────────────────────────
     elems.append(_seccion("TRAYECTO", es["seccion"]))
     elems.append(Spacer(1, 8))
@@ -226,6 +208,25 @@ def generar_pdf_orden_carga(viaje: dict) -> bytes:
             ],
         ],
         colWidths=[5 * cm, 4 * cm, 4.5 * cm, 3.5 * cm],
+    )
+    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    elems.append(t)
+    elems.append(Spacer(1, 12))
+
+    # ── Datos de pago ─────────────────────────────────────────────────────────
+    pago_camionero = viaje.get("pago_camionero")
+    litros_combustible = viaje.get("litros_combustible")
+    elems.append(_seccion("DATOS DE PAGO", es["seccion"]))
+    elems.append(Spacer(1, 8))
+    t = Table(
+        [
+            [Paragraph("PAGO AL TRANSPORTISTA", es["label"]), Paragraph("COMBUSTIBLE CONFIRMADO", es["label"])],
+            [
+                Paragraph(f"${pago_camionero:.2f}" if pago_camionero is not None else "—", es["valor"]),
+                Paragraph(f"{litros_combustible:.1f} L" if litros_combustible else "Pendiente de confirmar", es["valor"]),
+            ],
+        ],
+        colWidths=[8.5 * cm, 8.5 * cm],
     )
     t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
     elems.append(t)
@@ -328,7 +329,7 @@ def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
         raise ValueError(f"Viaje #{viaje_id} no encontrado.")
     v = dict(row)
     if not v.get("camionero_id"):
-        raise ValueError("El viaje no tiene camionero asignado.")
+        raise ValueError("El viaje no tiene transportista asignado.")
 
     liq = calcular_liquidacion(viaje_id)
 
@@ -349,7 +350,7 @@ def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
 
     right_col = Table(
         [
-            [Paragraph("LIQUIDACION DE CAMIONERO", es["titulo"])],
+            [Paragraph("LIQUIDACION DE TRANSPORTISTA", es["titulo"])],
             [Paragraph(f"LIQ-{liq_num:04d}", es["numero"])],
             [Paragraph(f"Fecha de emision: {fecha_emision}", es["fecha"])],
         ],
@@ -372,8 +373,8 @@ def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
     elems.append(cabecera)
     elems.append(HRFlowable(width="100%", thickness=2, color=NARANJA, spaceAfter=10))
 
-    # ── Datos del camionero ───────────────────────────────────────────────────
-    elems.append(_seccion("DATOS DEL CAMIONERO", es["seccion"]))
+    # ── Datos del transportista ────────────────────────────────────────────────
+    elems.append(_seccion("DATOS DEL TRANSPORTISTA", es["seccion"]))
     elems.append(Spacer(1, 8))
     t = Table(
         [
@@ -430,7 +431,7 @@ def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
 
     tabla_data = [
         [Paragraph("CONCEPTO", th), Paragraph("MONTO (USD)", th)],
-        [Paragraph("Pago base camionero", td), Paragraph(f"${pago_base:,.2f}", td_r)],
+        [Paragraph("Pago base transportista", td), Paragraph(f"${pago_base:,.2f}", td_r)],
         [Paragraph("Combustible descontado", td), Paragraph(f"-${combustible:,.2f}", td_neg)],
         [Paragraph("TOTAL NETO A COBRAR", td), Paragraph(f"${total_neto:,.2f}", td_total)],
     ]
@@ -476,7 +477,7 @@ def generar_pdf_liquidacion_camionero(viaje_id: int) -> bytes:
         [
             [linea, linea],
             [
-                Paragraph(str(v.get("cam_nombre") or "Camionero"), es["firma_label"]),
+                Paragraph(str(v.get("cam_nombre") or "Transportista"), es["firma_label"]),
                 Paragraph("Mercatoria Truck", es["firma_label"]),
             ],
         ],
@@ -540,7 +541,7 @@ def generar_pdf_carta_porte(viaje_id: int) -> bytes:
         raise ValueError(f"Viaje #{viaje_id} no encontrado.")
     v = dict(row)
     if not v.get("camionero_id"):
-        raise ValueError("El viaje no tiene camionero asignado.")
+        raise ValueError("El viaje no tiene transportista asignado.")
     if not v.get("vehiculo_id"):
         raise ValueError("El viaje no tiene vehículo asignado.")
 

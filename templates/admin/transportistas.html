@@ -21,11 +21,11 @@
 <div class="page-header">
     <div>
         <span class="eyebrow">Recursos</span>
-        <h1>Camioneros</h1>
+        <h1>Transportistas</h1>
         <p>Registro operativo de transportistas disponibles para asignaciones.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-        <a href="/admin/exportar/camioneros" class="btn-excel-export">⬇ Exportar Excel</a>
+        <a href="/admin/exportar/transportistas" class="btn-excel-export">⬇ Exportar Excel</a>
         <button class="btn-excel-import" data-bs-toggle="modal" data-bs-target="#modalImportarCamioneros">
             <i class="bi bi-upload"></i> Importar Excel
         </button>
@@ -35,7 +35,7 @@
 <section class="panel" style="margin-bottom: 24px;">
     <div class="panel-header">
         <div>
-            <h2>Nuevo camionero</h2>
+            <h2>Nuevo transportista</h2>
             <p>Registra un transportista en el sistema.</p>
         </div>
     </div>
@@ -45,7 +45,7 @@
             {{ error }}
         </div>
         {% endif %}
-        <form method="POST" action="/admin/camioneros" class="form-crud-grid">
+        <form method="POST" action="/admin/transportistas" class="form-crud-grid">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-crud-field">
                 <label>Nombre *</label>
@@ -112,13 +112,13 @@
                 <input type="text" name="chapa_remolque" class="input-crud" placeholder="Matrícula del remolque" value="{{ form_data.get('chapa_remolque', '') if form_data else '' }}">
             </div>
             <div class="form-crud-field form-crud-submit">
-                <button type="submit" class="btn-crud-primary">Registrar camionero</button>
+                <button type="submit" class="btn-crud-primary">Registrar transportista</button>
             </div>
         </form>
     </div>
 </section>
 
-<form method="GET" action="/admin/camioneros" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+<form method="GET" action="/admin/transportistas" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
     <input type="text" name="buscar" value="{{ buscar or '' }}"
            placeholder="Buscar por nombre, teléfono o licencia..."
            style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;min-width:220px;">
@@ -136,14 +136,14 @@
     </select>
     <button type="submit" style="padding:8px 16px;background:var(--principal);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Filtrar</button>
     {% if buscar or filtro_estado or filtro_tipo %}
-    <a href="/admin/camioneros" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
+    <a href="/admin/transportistas" style="padding:8px 12px;font-size:13px;color:#888;text-decoration:none;">✕ Limpiar</a>
     {% endif %}
 </form>
 
 <section class="panel">
     <div class="panel-header">
         <div>
-            <h2>Camioneros registrados</h2>
+            <h2>Transportistas registrados</h2>
             <p>Base de transportistas vinculados a Mercatoria Truck.</p>
         </div>
     </div>
@@ -205,12 +205,12 @@
                         {% endif %}
                     </td>
                     <td class="td-acciones">
-                        <a href="/admin/camioneros/{{ c.id }}/editar" class="btn-accion-edit">Editar</a>
-                        <a href="/admin/camioneros/{{ c.id }}/economico" class="btn-accion-edit"
+                        <a href="/admin/transportistas/{{ c.id }}/editar" class="btn-accion-edit">Editar</a>
+                        <a href="/admin/transportistas/{{ c.id }}/economico" class="btn-accion-edit"
                            style="background:#ecfdf5;color:#065f46;" title="Estado económico">
                             <i class="bi bi-cash-coin"></i>
                         </a>
-                        <form method="POST" action="/admin/camioneros/{{ c.id }}/eliminar"
+                        <form method="POST" action="/admin/transportistas/{{ c.id }}/eliminar"
                               style="display:inline"
                               onsubmit="return confirm('¿Confirmar eliminación?')">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -220,7 +220,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="8" class="empty-state">No hay camioneros registrados.</td>
+                    <td colspan="8" class="empty-state">No hay transportistas registrados.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -229,7 +229,7 @@
 
     {% if total_paginas > 1 %}
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-top:1px solid #f0f0f0;flex-wrap:wrap;gap:8px;">
-        <span style="font-size:13px;color:#888;">{{ total }} camionero{{ 's' if total != 1 }} · página {{ pagina_actual }} de {{ total_paginas }}</span>
+        <span style="font-size:13px;color:#888;">{{ total }} transportista{{ 's' if total != 1 }} · página {{ pagina_actual }} de {{ total_paginas }}</span>
         <div style="display:flex;gap:4px;">
             {% if pagina_actual > 1 %}
             <a href="?{{ request.query_string.decode().replace('pagina=' ~ pagina_actual, '') }}&pagina={{ pagina_actual - 1 }}" class="pag-btn">‹ Anterior</a>
@@ -382,15 +382,15 @@
 }
 </style>
 
-<!-- Modal Importar Camioneros -->
+<!-- Modal Importar Transportistas -->
 <div class="modal fade" id="modalImportarCamioneros" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-crud">
             <div class="modal-header modal-crud-header">
-                <h5 class="modal-title">Importar camioneros desde Excel</h5>
+                <h5 class="modal-title">Importar transportistas desde Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="/admin/importar/camioneros" enctype="multipart/form-data">
+            <form method="POST" action="/admin/importar/transportistas" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body p-4">
                     <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">

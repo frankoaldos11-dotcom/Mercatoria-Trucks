@@ -286,5 +286,10 @@ def ejecutar_migraciones():
     # tarifas) — eliminado por completo, incluida la tabla.
     cursor.execute("DROP TABLE IF EXISTS catalogo_tipo_transporte")
 
+    # Litros de combustible confirmados: persistidos aparte de viajes.combustible
+    # ($), para que la confirmación pida litros y la Orden de Carga muestre el
+    # saldo real confirmado en vez de una estimación en vivo.
+    agregar_columna(cursor, "viajes", "litros_combustible", "REAL")
+
     conexion.commit()
     conexion.close()

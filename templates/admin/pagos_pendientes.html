@@ -43,7 +43,7 @@
                     <td>{% if abonado > 0 %}${{ "%.2f"|format(abonado) }}{% else %}—{% endif %}</td>
                     <td><strong>${{ "%.2f"|format(monto - abonado) }}</strong></td>
                     <td>
-                        <form method="POST" action="/admin/viaje/{{ v.id }}/pago-camionero"
+                        <form method="POST" action="/admin/viaje/{{ v.id }}/pago-transportista"
                               class="form-registrar-pago" data-viaje-id="{{ v.id }}"
                               style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;min-width:320px;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

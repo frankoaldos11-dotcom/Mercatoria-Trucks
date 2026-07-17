@@ -5,10 +5,10 @@
 <div class="page-header">
     <div>
         <span class="eyebrow">Recursos</span>
-        <h1>Editar Camionero #{{ camionero.id }}</h1>
+        <h1>Editar Transportista #{{ camionero.id }}</h1>
         <p>Actualiza los datos del transportista.</p>
     </div>
-    <a href="/admin/camioneros" class="btn-volver">← Volver</a>
+    <a href="/admin/transportistas" class="btn-volver">← Volver</a>
 </div>
 
 <section class="panel">
@@ -18,7 +18,7 @@
             {{ error }}
         </div>
         {% endif %}
-        <form method="POST" action="/admin/camioneros/{{ camionero.id }}/editar">
+        <form method="POST" action="/admin/transportistas/{{ camionero.id }}/editar">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="edit-row">
@@ -130,7 +130,7 @@
 
             <div class="edit-actions">
                 <button type="submit" class="btn-crud-primary">Guardar cambios</button>
-                <a href="/admin/camioneros" class="btn-crud-secondary">Cancelar</a>
+                <a href="/admin/transportistas" class="btn-crud-secondary">Cancelar</a>
             </div>
 
         </form>

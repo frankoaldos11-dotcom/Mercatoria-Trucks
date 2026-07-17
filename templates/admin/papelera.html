@@ -66,7 +66,7 @@
 <section class="panel" style="margin-bottom:20px;">
     <div class="panel-header">
         <div>
-            <h2>Camioneros eliminados</h2>
+            <h2>Transportistas eliminados</h2>
             <p>{{ camioneros_eliminados|length }} registro(s) en papelera.</p>
         </div>
     </div>
@@ -91,7 +91,7 @@
                     <td style="color:#888;font-size:12px;">{{ c.deleted_by or "—" }}</td>
                     <td style="color:#888;font-size:12px;">{{ c.deleted_at | fmt_fecha if c.deleted_at else "—" }}</td>
                     <td>
-                        <form method="POST" action="/admin/papelera/camioneros/{{ c.id }}/restaurar">
+                        <form method="POST" action="/admin/papelera/transportistas/{{ c.id }}/restaurar">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn-restaurar">
                                 <i class="bi bi-arrow-counterclockwise"></i> Restaurar
