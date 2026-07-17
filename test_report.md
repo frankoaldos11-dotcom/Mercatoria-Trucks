@@ -1,40 +1,33 @@
-# Reporte de Pruebas — 2026-07-17
+# Reporte de Pruebas — 2026-07-17 (Exportar/Importar Rutas)
 
 ## Contexto
-Cinco cambios de revisión en producción: elimina "camionero" de toda superficie visible (queda como "transportista"), combustible se confirma en litros (no dólares), tipo de carga editable en el detalle del viaje, reordena el flujo del viaje con un paso nuevo "En ruta", y la Orden de Carga quita datos del cliente y añade pago al transportista + litros confirmados.
+Rutas ya tenía botones de Exportar/Importar apuntando al mecanismo genérico compartido con camioneros/vehículos (columnas incompletas, dedup por `id`, sin validación ni resumen). Se reemplazó el backend detrás de esos botones por uno dedicado a rutas: export con las 6 columnas reales (origen, destino, km oficiales, tarifa por km, zona, activa), import con dedup por origen+destino (nunca pisa), validación de filas, aviso de zona no reconocida sin inventarla, y resumen detallado en la UI.
 
-## Páginas probadas (local, `127.0.0.1:5000`, con Claude in Chrome / MCP)
-- `/login`, `/admin/` (dashboard)
-- `/admin/transportistas` (y las 4 URLs viejas con "camionero" que deben redirigir)
-- `/admin/viajes`
-- `/admin/viaje/<id>` (gestionar viaje — flujo completo de pasos)
-- `/admin/viaje/<id>/pdf` (Orden de Carga)
+## Páginas probadas (local, `127.0.0.1:5001` — ver nota de puerto abajo)
+- `/login`, `/admin/comercial/rutas`
+- `/admin/exportar/rutas`, `POST /admin/comercial/rutas/importar`
 
 ## Pruebas realizadas
-1. Redirects 301: `/camioneros`→`/transportistas`, `/admin/camioneros`→`/admin/transportistas`, `/admin/camioneros/<id>/editar`→`/admin/transportistas/<id>/editar`, `/admin/camioneros/<id>/economico`→`/admin/transportistas/<id>/economico`. Confirmados con `curl -I`.
-2. Flujo completo de un viaje de prueba (viaje existente #4, mutado y luego revertido): paso 4 "Confirmar combustible" acepta litros (50.0 L), calcula el costo en dólares solo con el precio de zona ($130.00), y persiste ambos valores (`litros_combustible`, `combustible`). Paso 5 "Marcar en ruta" aparece deshabilitado con aviso hasta confirmar combustible, y una vez confirmado permite la transición — confirmado que el estado del viaje pasa a "En ruta" y queda registrado en el historial.
-3. Guard de backend: POST directo a `/admin/viaje/<id>/guardar-combustible` sobre un viaje sin transportista asignado (viaje de prueba creado y borrado ad-hoc) devuelve error "Asigna un transportista antes de confirmar combustible" sin persistir nada — confirma que la dependencia transportista→combustible se aplica en el servidor, no solo en la UI.
-4. Dashboard: recuadro nuevo "En ruta" aparece con el conteo correcto (0 → 1 tras la transición de prueba).
-5. Tipo de carga: el control de 7 opciones (Seca/Refrigerada/Congelada/Desagrupada/Frágil/Peligrosa/Otra) — el mismo control que "Nueva solicitud de viaje" — se guarda correctamente desde el detalle del viaje vía `POST /admin/viaje/<id>/guardar-tipo-carga`.
-6. Orden de Carga (PDF descargado y verificado con `pypdf`): sección "DATOS DEL CLIENTE" ausente por completo; sección nueva "DATOS DE PAGO" muestra "Pago al transportista" y "Combustible confirmado" (con "Pendiente de confirmar" cuando aún no hay litros persistidos, sin inventar un dato).
-7. Barrido final case-insensitive de "camionero" sobre `templates/`, `routes/`, `services/`, `static/` — 0 apariciones visibles al usuario; todo lo que queda son nombres internos (columnas de BD, variables Jinja, atributos `name=`, clases CSS, funciones JS).
-8. `python -m py_compile` sobre todos los `.py` tocados — sin errores. Todas las plantillas del proyecto parseadas vía `app.jinja_env.get_template()` — sin errores.
+1. Export vía UI: descargado y verificado con `openpyxl` — columnas exactas `ORIGEN, DESTINO, KM_OFICIALES, TARIFA_KM, ZONA, ACTIVA`, datos correctos, `activa` formateado "Sí"/"No".
+2. Import con un Excel de 4 filas: una ruta nueva con zona válida (creada), una duplicada por origen+destino exacto de una existente (omitida, ruta original sin modificar — confirmado en BD), una con km no numérico (omitida, no llegó a insertarse), una con zona inexistente en `zonas_combustible` (creada igual, con aviso explícito en el resumen y confirmado que `zonas_combustible` no ganó ninguna fila nueva). Auditoría registrada: "Importó rutas desde Excel: 2 creadas, 1 duplicadas, 1 inválidas".
+3. Resumen en la UI (banner tras redirect) lista correctamente creadas/duplicadas/inválidas por "origen → destino" y el motivo de cada inválida, más el aviso aparte de zona no reconocida.
+4. Acceso operador: cuenta de prueba con rol `operador` — no ve ninguno de los dos botones en la plantilla; `GET /admin/exportar/rutas` redirige a `/admin/`; `POST /admin/comercial/rutas/importar` (con CSRF válido) redirige con `access_error=Sin+permisos+para+importar+rutas`.
+5. `python -m py_compile` sobre los 2 `.py` tocados — sin errores. Template parseado vía `app.jinja_env.get_template()` — sin errores.
 
 ## Errores encontrados
-- Ninguno funcional en el código de la app. Durante la verificación, un `Start-Process` mío con directorio de trabajo mal resuelto lanzó por error el servidor del proyecto hermano `mercatoria-fuel` en el puerto 5000 (nunca se editó ningún archivo ahí — solo se ejecutó su servidor por accidente). Detectado, confirmado con `git status` en `mercatoria-fuel` (limpio), y corregido relanzando con `-WorkingDirectory` explícito.
+- Ninguno funcional en el código nuevo. Incidente de entorno: el puerto 5000 de esta máquina está ocupado por un proceso ajeno no identificado (que Aldo confirmó viene arrastrando hace varias sesiones y va a diagnosticar él mismo por separado) — la verificación de esta tanda se corrió contra el puerto 5001 en su lugar, lanzando la app con un launcher que evita el bloque `if __name__ == "__main__"` (hardcodea el 5000) sin tocar `app.py`.
+- El Chrome MCP no permite adjuntar archivos locales directamente a un `<input type="file">` (restricción de la herramienta, no del código); el import se verificó end-to-end vía POST autenticado (cookies + CSRF reales) desde un script Python, ejercitando el endpoint real igual que lo haría un navegador.
 
 ## Screenshots tomados
-- Login y dashboard tras iniciar sesión como admin.
-- `/admin/transportistas` (listado, sin "camionero" visible).
-- `/admin/viaje/4` con los 6 pasos reordenados y el paso "En ruta" nuevo.
+- Login y `/admin/comercial/rutas` mostrando el nuevo texto de columnas esperadas y las rutas existentes.
 
 ## Correcciones aplicadas
-Ver plan aprobado (`transient-shimmying-truffle.md`): `migrations_v15.py` (nuevo) + `migraciones.py` + `app.py` (columna `litros_combustible`), `routes/admin.py` (`guardar_combustible` reescrito con guard, `guardar_tipo_carga` nuevo, dashboard KPI, 4 rutas con redirect 301 + 5 rutas sin redirect renombradas, mensajes de error y auditoría "camionero"→"transportista"), `routes/camioneros.py` y `routes/comercial.py` (rutas renombradas), `routes/finanzas.py` (etiqueta de error), `services/pdf_service.py` (Orden de Carga sin cliente + sección de pago, Liquidación Transportista renombrada), `templates/admin/gestionar_viaje.html` (reorden completo de pasos + paso En ruta + tipo de carga editable), `templates/admin/dashboard.html` (KPI En ruta), 15 templates con texto "camionero"→"transportista", 3 templates renombrados (`camioneros.html`→`transportistas.html`, etc.), `static/sw.js` (URL de precache actualizada).
+`routes/admin.py` (`_EXCEL_CONFIG["rutas"]["columnas"]` corregido + formateo Sí/No para columnas `activa`/`activo` en `exportar_excel`), `routes/comercial.py` (nuevo endpoint `importar_rutas_excel`, `rutas()` ahora pasa `resumen_import` desde `session`), `templates/admin/comercial/rutas.html` (form de importar apunta al nuevo endpoint, texto de columnas esperadas, banner de resumen detallado).
 
 ## Datos de prueba y limpieza
-- Viaje #4 (preexistente, dev-only): se confirmó combustible (50 L), se cambió tipo de carga a "Frágil" y se marcó "En ruta" durante la verificación — revertido a su estado original (`Asignado`, `piezas de carro`, litros/combustible/fecha_recogida a NULL) al finalizar.
-- Viaje de prueba #38 (creado ad-hoc para probar el guard de combustible sin transportista): eliminado junto con sus filas de `historial_viaje` y `auditoria`.
-- Servidor Flask detenido correctamente tras la verificación. `Get-Process python` confirma que no queda proceso vivo.
+- Cuenta `_test_operador_rutas` (rol operador): creada y eliminada.
+- Rutas de prueba (Cienfuegos→Trinidad, Pinar del Rio→Vinales, Guantanamo→Baracoa): creadas durante la verificación del import y eliminadas al finalizar. Las 3 rutas originales (La Habana→Santiago/Holguin/Matanzas) quedaron intactas, sin pisar.
+- Servidor Flask (puerto 5001) detenido correctamente tras confirmación explícita del usuario. `Get-Process python` confirma que no queda proceso propio vivo (el PID ajeno del puerto 5000, fuera del alcance de esta sesión, no se tocó).
 
 ## Recomendaciones
-- Ninguna pendiente de esta tanda. Los ítems marcados en el plan como "a confirmar con Aldo" (nombres de archivo de template, alias de Excel, línea de firma "Cliente / Receptor") se resolvieron según lo propuesto por defecto sin objeción.
+- El endpoint genérico `/admin/importar/rutas` (el viejo, por `id`) queda sin ningún botón que lo apunte pero no se eliminó ni se bloqueó explícitamente — decisión documentada en el plan aprobado, pendiente de confirmación de Aldo si prefiere que se bloquee.

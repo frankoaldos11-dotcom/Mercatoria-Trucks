@@ -3,8 +3,9 @@ import io
 import openpyxl
 from openpyxl.styles import PatternFill, Font
 
-from routes.admin import requiere_admin
+from routes.admin import requiere_admin, registrar_auditoria
 from database import conectar
+from db_config import ph
 from services.finanzas_service import get_configuracion
 
 from services.comercial_service import (
@@ -65,6 +66,7 @@ def rutas():
         {r["origen"] for r in all_rutas if r["origen"]} |
         {r["destino"] for r in all_rutas if r["destino"]}
     )
+    resumen_import = session.pop("rutas_importadas_resumen", None)
     return render_template(
         "admin/comercial/rutas.html",
         rutas=all_rutas,
@@ -73,6 +75,7 @@ def rutas():
         ids_asignados_por_ruta=ids_asignados_por_ruta,
         tarifa_km_global=tarifa_km_global,
         origenes_destinos=origenes_destinos,
+        resumen_import=resumen_import,
     )
 
 
@@ -131,6 +134,116 @@ def editar_ruta(ruta_id):
     con.commit()
     con.close()
     return redirect("/admin/comercial/rutas")
+
+
+@comercial_bp.route("/admin/comercial/rutas/importar", methods=["POST"])
+def importar_rutas_excel():
+    if not requiere_admin():
+        return redirect("/login")
+    if session.get("rol") != "admin":
+        return redirect("/admin/comercial/rutas?access_error=Sin+permisos+para+importar+rutas")
+
+    archivo = request.files.get("archivo")
+    if not archivo:
+        return redirect("/admin/comercial/rutas?error=No+se+recibió+archivo")
+
+    try:
+        wb = openpyxl.load_workbook(archivo, read_only=True, data_only=True)
+    except Exception:
+        return redirect("/admin/comercial/rutas?error=Archivo+Excel+inválido")
+    ws = wb.active
+
+    con = conectar()
+    cur = con.cursor()
+
+    cur.execute("SELECT origen, destino FROM rutas")
+    existentes = {
+        (r["origen"].strip().lower(), r["destino"].strip().lower())
+        for r in cur.fetchall() if r["origen"] and r["destino"]
+    }
+
+    cur.execute("SELECT nombre FROM zonas_combustible")
+    zonas_validas = {r["nombre"].strip().lower() for r in cur.fetchall() if r["nombre"]}
+
+    creadas = []
+    duplicadas = []
+    invalidas = []
+    zona_no_reconocida = []
+
+    for idx, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+        if not fila or not any(v is not None and str(v).strip() != "" for v in fila):
+            continue
+
+        valores = list(fila) + [None] * (6 - len(fila))
+        origen_raw, destino_raw, km_raw, tarifa_raw, zona_raw, activa_raw = valores[:6]
+
+        origen = str(origen_raw).strip() if origen_raw is not None else ""
+        destino = str(destino_raw).strip() if destino_raw is not None else ""
+        zona = str(zona_raw).strip() if zona_raw not in (None, "") else None
+
+        if not origen or not destino:
+            invalidas.append((idx, origen or "—", destino or "—", "falta origen o destino"))
+            continue
+
+        km_val = None
+        if km_raw not in (None, ""):
+            try:
+                km_val = float(km_raw)
+            except (ValueError, TypeError):
+                invalidas.append((idx, origen, destino, "km oficiales no es numérico"))
+                continue
+
+        tarifa_val = None
+        if tarifa_raw not in (None, ""):
+            try:
+                tarifa_val = float(tarifa_raw)
+            except (ValueError, TypeError):
+                invalidas.append((idx, origen, destino, "tarifa por km no es numérica"))
+                continue
+
+        clave = (origen.lower(), destino.lower())
+        if clave in existentes:
+            duplicadas.append((origen, destino))
+            continue
+
+        activa_val = 1
+        if activa_raw is not None and str(activa_raw).strip() != "":
+            activa_val = 0 if str(activa_raw).strip().lower() in ("no", "0", "false", "inactiva") else 1
+
+        try:
+            cur.execute(
+                f"INSERT INTO rutas (origen, destino, km_oficiales, tarifa_km, zona, activa) "
+                f"VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()}, {ph()})",
+                (origen, destino, km_val, tarifa_val, zona, activa_val)
+            )
+            con.commit()
+        except Exception as e:
+            con.rollback()
+            invalidas.append((idx, origen, destino, f"error al guardar: {e}"))
+            continue
+
+        existentes.add(clave)
+        creadas.append((origen, destino))
+
+        if zona and zona.lower() not in zonas_validas:
+            zona_no_reconocida.append((origen, destino, zona))
+
+    registrar_auditoria(
+        cur,
+        f"Importó rutas desde Excel: {len(creadas)} creadas, {len(duplicadas)} duplicadas, {len(invalidas)} inválidas",
+        "Datos", "rutas"
+    )
+    con.commit()
+    con.close()
+
+    session["rutas_importadas_resumen"] = {
+        "creadas": creadas,
+        "duplicadas": duplicadas,
+        "invalidas": invalidas,
+        "zona_no_reconocida": zona_no_reconocida,
+    }
+
+    return redirect("/admin/comercial/rutas?importado_rutas=1")
 
 
 @comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/transportistas/asignar", methods=["POST"])

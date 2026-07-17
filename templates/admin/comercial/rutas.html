@@ -2,14 +2,28 @@
 
 {% block contenido %}
 
-{% if request.args.get('importado') %}
-<div style="background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
-    <i class="bi bi-check-circle-fill"></i> Se importaron {{ request.args.get('importado') }} correctamente.
+{% if request.args.get('error') %}
+<div style="background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
+    <i class="bi bi-x-circle-fill"></i> {{ request.args.get('error') }}
 </div>
 {% endif %}
-{% if request.args.get('fallidos') %}
-<div style="background:#fff8e6;border:1px solid var(--warning);color:#92400e;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;">
-    <i class="bi bi-exclamation-triangle-fill"></i> {{ request.args.get('fallidos') }} fila(s) no se importaron por errores de datos — ver log del servidor.
+{% if request.args.get('importado_rutas') and resumen_import %}
+<div style="background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:13px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px;">
+        <i class="bi bi-check-circle-fill"></i> Importación de rutas: {{ resumen_import.creadas|length }} creada{{ 's' if resumen_import.creadas|length != 1 }}
+    </div>
+    {% if resumen_import.creadas %}
+    <div style="margin-bottom:6px;">Creadas: {% for o, d in resumen_import.creadas %}{{ o }} → {{ d }}{{ ", " if not loop.last }}{% endfor %}</div>
+    {% endif %}
+    {% if resumen_import.duplicadas %}
+    <div style="margin-bottom:6px;color:#92400e;">Omitidas por ya existir ({{ resumen_import.duplicadas|length }}): {% for o, d in resumen_import.duplicadas %}{{ o }} → {{ d }}{{ ", " if not loop.last }}{% endfor %}</div>
+    {% endif %}
+    {% if resumen_import.invalidas %}
+    <div style="margin-bottom:6px;color:#c0392b;">Omitidas por dato inválido ({{ resumen_import.invalidas|length }}): {% for idx, o, d, motivo in resumen_import.invalidas %}fila {{ idx }} ({{ o }} → {{ d }}): {{ motivo }}{{ ", " if not loop.last }}{% endfor %}</div>
+    {% endif %}
+    {% if resumen_import.zona_no_reconocida %}
+    <div style="color:#92400e;"><i class="bi bi-exclamation-triangle"></i> Zona no reconocida en zonas_combustible (se importó igual, caerá al fallback de combustible hasta asignarle una zona válida): {% for o, d, z in resumen_import.zona_no_reconocida %}{{ o }} → {{ d }} ("{{ z }}"){{ ", " if not loop.last }}{% endfor %}</div>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -24,7 +38,7 @@
         <a href="/admin/exportar/rutas" class="btn-excel-export">⬇ Exportar Excel</a>
         {% endif %}
         {% if session.get('rol') == 'admin' %}
-        <form method="POST" action="/admin/importar/rutas" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;">
+        <form method="POST" action="/admin/comercial/rutas/importar" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;" title="Columnas esperadas, en orden: origen, destino, km oficiales, tarifa por km, zona, activa">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" name="archivo" accept=".xlsx" required style="font-size:12px;">
             <button type="submit" class="btn-excel-import">⬆ Importar</button>
@@ -32,6 +46,11 @@
         {% endif %}
     </div>
 </div>
+{% if session.get('rol') == 'admin' %}
+<p style="font-size:12px;color:#888;margin:-10px 0 16px;">
+    El Excel a importar debe tener las mismas columnas que produce "Exportar Excel", en orden: <strong>origen, destino, km oficiales, tarifa por km, zona, activa</strong>. La primera fila debe ser el encabezado. Rutas con el mismo origen y destino que una ya existente se omiten (nunca se pisan).
+</p>
+{% endif %}
 
 {% if session.get('rol') in ['admin', 'operador'] %}
 <section class="panel">

@@ -2924,7 +2924,7 @@ def mi_cuenta():
 
 _EXCEL_CONFIG = {
     "rutas": {
-        "columnas": ["id", "nombre", "origen", "destino", "zona", "km_oficiales"],
+        "columnas": ["origen", "destino", "km_oficiales", "tarifa_km", "zona", "activa"],
         "tabla": "rutas",
         "redirect": "/admin/comercial/rutas",
     },
@@ -2981,6 +2981,9 @@ def exportar_excel(tabla):
 
     for row_idx, fila in enumerate(filas, start=2):
         for col_idx, valor in enumerate(fila, start=1):
+            col_name = cfg["columnas"][col_idx - 1]
+            if col_name in ("activa", "activo") and valor is not None:
+                valor = "Sí" if valor else "No"
             ws.cell(row=row_idx, column=col_idx, value=valor)
 
     buf = io.BytesIO()
