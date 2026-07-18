@@ -182,37 +182,6 @@ def generar_pdf_orden_carga(viaje: dict) -> bytes:
     elems.append(t)
     elems.append(Spacer(1, 12))
 
-    # ── Vehículo y conductor ──────────────────────────────────────────────────
-    matricula = (
-        viaje.get("vehiculo_placa")
-        or viaje.get("vehiculo_matricula")
-        or "—"
-    )
-    marca_modelo = " ".join(filter(None, [viaje.get("vehiculo_marca"), viaje.get("vehiculo_modelo")])) or "—"
-
-    elems.append(_seccion("VEHÍCULO Y CONDUCTOR", es["seccion"]))
-    elems.append(Spacer(1, 8))
-    t = Table(
-        [
-            [
-                Paragraph("CONDUCTOR", es["label"]),
-                Paragraph("TELÉFONO", es["label"]),
-                Paragraph("VEHÍCULO", es["label"]),
-                Paragraph("MATRÍCULA", es["label"]),
-            ],
-            [
-                Paragraph(str(viaje.get("camionero_nombre") or "—"), es["valor"]),
-                Paragraph(str(viaje.get("camionero_telefono") or "—"), es["valor"]),
-                Paragraph(marca_modelo, es["valor"]),
-                Paragraph(str(matricula), es["valor"]),
-            ],
-        ],
-        colWidths=[5 * cm, 4 * cm, 4.5 * cm, 3.5 * cm],
-    )
-    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
-    elems.append(t)
-    elems.append(Spacer(1, 12))
-
     # ── Datos de pago ─────────────────────────────────────────────────────────
     pago_camionero = viaje.get("pago_camionero")
     litros_combustible = viaje.get("litros_combustible")

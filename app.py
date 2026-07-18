@@ -201,6 +201,8 @@ if USE_POSTGRES:
         aplicar_migraciones_v14()
         from migrations_v15 import aplicar_migraciones_v15
         aplicar_migraciones_v15()
+        from migrations_v16 import aplicar_migraciones_v16
+        aplicar_migraciones_v16()
 else:
     crear_base_datos(bcrypt)
     from migraciones import ejecutar_migraciones

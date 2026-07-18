@@ -366,12 +366,20 @@ if (mvTramos.length > 0) {
             <tbody>
                 {% for v in lista %}
                 <tr>
-                    <td>
+                    <td style="white-space:nowrap;">
                         <a href="/admin/viaje/{{ v.id }}"
                            class="btn-icon-action"
                            title="Gestionar viaje #{{ v.id }}">
                             <i class="bi bi-sliders"></i>
                         </a>
+                        <form method="POST" action="/admin/viaje/{{ v.id }}/eliminar" style="display:inline;"
+                              onsubmit="return confirm({{ (('¿ELIMINAR viaje #' ~ v.id ~ '? Esta acción no se puede deshacer.') if session.get('rol') == 'admin' else ('¿Solicitar la eliminación del viaje #' ~ v.id ~ '? Queda pendiente hasta que el administrador la confirme.')) | tojson }});">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-icon-danger"
+                                    title="{{ 'Eliminar viaje' if session.get('rol') == 'admin' else 'Solicitar eliminación' }}">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </form>
                     </td>
                     <td>#{{ v.id }}</td>
                     <td>
@@ -474,6 +482,25 @@ if (mvTramos.length > 0) {
 .btn-icon-action:hover {
     background: #dbeafe;
     color: #1d4ed8;
+}
+.btn-icon-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--error-real);
+    border: 1px solid var(--error-real);
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    margin-left: 4px;
+}
+.btn-icon-danger:hover {
+    background: var(--error-real);
+    color: var(--panel);
 }
 .pagination .page-item.active .page-link {
     background: var(--activo);

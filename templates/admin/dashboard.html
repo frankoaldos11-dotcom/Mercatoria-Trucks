@@ -171,6 +171,7 @@
                 <tr>
                     <th>Entidad</th>
                     <th>Nombre</th>
+                    <th>Motivo</th>
                     <th>Solicitado por</th>
                     <th>Fecha</th>
                     <th>Acción</th>
@@ -181,6 +182,7 @@
                 <tr>
                     <td><span style="text-transform:capitalize;font-weight:600;">{{ s.entidad }}</span></td>
                     <td>{{ s.nombre_entidad }}</td>
+                    <td style="color:#888;font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ s.motivo or '' }}">{{ s.motivo or "—" }}</td>
                     <td style="color:#888;font-size:12px;">{{ s.solicitado_por }}</td>
                     <td style="color:#888;font-size:12px;">{{ s.fecha_solicitud | fmt_fecha if s.fecha_solicitud else "—" }}</td>
                     <td style="white-space:nowrap;">

@@ -640,8 +640,19 @@
                   onsubmit="return confirm('¿ELIMINAR viaje #{{ viaje.id }}? Esta acción no se puede deshacer.');"
                   style="margin-top:6px;border-top:1px solid #eee;padding-top:10px;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" style="width:100%;background:#fde8e8;color:#c0392b;border:1px solid #e74c3c;padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+                <button type="submit" style="width:100%;background:var(--panel);color:var(--error-real);border:1px solid var(--error-real);padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
                     <i class="bi bi-trash3"></i> Eliminar viaje
+                </button>
+            </form>
+            {% elif session.get('rol') == 'operador' %}
+            <form method="POST" action="/admin/viaje/{{ viaje.id }}/eliminar"
+                  onsubmit="return confirm('¿Solicitar la eliminación del viaje #{{ viaje.id }}? No se borra ahora — queda pendiente hasta que el administrador la confirme.');"
+                  style="margin-top:6px;border-top:1px solid #eee;padding-top:10px;display:flex;flex-direction:column;gap:6px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <textarea name="motivo" placeholder="Motivo (opcional)" rows="2"
+                          style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical;"></textarea>
+                <button type="submit" style="width:100%;background:var(--panel);color:var(--error-real);border:1px solid var(--error-real);padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+                    <i class="bi bi-trash3"></i> Solicitar eliminación
                 </button>
             </form>
             {% endif %}

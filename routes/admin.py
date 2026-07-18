@@ -244,7 +244,7 @@ def dashboard():
     if session.get("rol") == "admin":
         try:
             cursor.execute("""
-                SELECT id, entidad, entidad_id, nombre_entidad, solicitado_por, fecha_solicitud
+                SELECT id, entidad, entidad_id, nombre_entidad, solicitado_por, fecha_solicitud, motivo
                 FROM solicitudes_eliminacion
                 WHERE estado = 'Pendiente'
                 ORDER BY fecha_solicitud DESC
@@ -415,7 +415,7 @@ def _contexto_lista_viajes(cursor):
     pagina = max(1, int(request.args.get("pagina", 1) or 1))
     por_pagina = 20
 
-    condiciones = []
+    condiciones = ["v.deleted_at IS NULL"]
     params = []
 
     if filtro:
@@ -609,10 +609,6 @@ def gestionar_viaje(id):
     estados_validos = _transiciones.get(estado_norm, ["Asignado", "En ruta", "Entregado", "Cancelado"])
 
     orden_faltantes = []
-    if not viaje["camionero_nombre"] and not viaje["camionero_id"]:
-        orden_faltantes.append("transportista")
-    if not viaje["vehiculo_id"]:
-        orden_faltantes.append("vehículo")
     if not viaje["origen"]:
         orden_faltantes.append("origen")
     if not viaje["destino"]:
@@ -1124,10 +1120,6 @@ def descargar_pdf_orden_carga(id):
     viaje["pago_camionero"] = calcular_liquidacion(id).get("pago_camionero")
 
     faltantes_oc = []
-    if not viaje.get("camionero_nombre") and not viaje.get("camionero_id"):
-        faltantes_oc.append("transportista")
-    if not viaje.get("vehiculo_id"):
-        faltantes_oc.append("vehículo")
     if not viaje.get("origen"):
         faltantes_oc.append("origen")
     if not viaje.get("destino"):
@@ -1349,18 +1341,39 @@ def lista_incidencias():
 
 @admin_bp.route("/viaje/<int:id>/eliminar", methods=["POST"])
 def eliminar_viaje_admin(id):
-    if session.get("rol") != "admin":
-        return redirect("/admin/viajes")
+    if not requiere_admin():
+        return redirect("/login")
+
     conexion = conectar()
     cursor = conexion.cursor()
+    destino = request.referrer or "/admin/viajes"
+
+    if session.get("rol") == "admin":
+        cursor.execute(f"""
+            UPDATE viajes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = {ph()}
+            WHERE id = {ph()}
+        """, (session.get("usuario"), id))
+        registrar_auditoria(cursor, "eliminó (papelera)", "viajes", "viaje", id)
+        conexion.commit()
+        conexion.close()
+        return redirect(destino)
+
+    # Operario ("PM"): crea solicitud de aprobación, no borra directo.
+    motivo = request.form.get("motivo", "").strip()
+    cursor.execute(f"SELECT origen, destino FROM viajes WHERE id = {ph()}", (id,))
+    row = cursor.fetchone()
+    nombre_entidad = f"Viaje #{id}: {row['origen']} → {row['destino']}" if row else f"Viaje #{id}"
     cursor.execute(f"""
-        UPDATE viajes SET deleted_at = CURRENT_TIMESTAMP, deleted_by = {ph()}
-        WHERE id = {ph()}
-    """, (session.get("usuario"), id))
-    registrar_auditoria(cursor, "eliminó (papelera)", "viajes", "viaje", id)
+        INSERT INTO solicitudes_eliminacion
+            (entidad, entidad_id, nombre_entidad, solicitado_por, motivo)
+        VALUES ({ph()}, {ph()}, {ph()}, {ph()}, {ph()})
+    """, ("viaje", id, nombre_entidad, session.get("usuario"), motivo or None))
+    registrar_auditoria(cursor, f"Solicitó eliminación de viaje #{id}", "Viajes", "viaje", id, motivo or None)
     conexion.commit()
     conexion.close()
-    return redirect("/admin/viajes")
+
+    sep = "&" if "?" in destino else "?"
+    return redirect(f"{destino}{sep}access_error=Solicitud+de+eliminaci%C3%B3n+enviada+al+administrador")
 
 
 @admin_bp.route("/viaje/<int:id>/prioridad", methods=["POST"])

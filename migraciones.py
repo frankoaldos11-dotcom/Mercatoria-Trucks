@@ -291,5 +291,10 @@ def ejecutar_migraciones():
     # saldo real confirmado en vez de una estimación en vivo.
     agregar_columna(cursor, "viajes", "litros_combustible", "REAL")
 
+    # Motivo de la solicitud de eliminación (lo escribe el operador/PM al
+    # solicitar borrar un viaje). Nullable — las solicitudes de transportistas
+    # ya existentes quedan con motivo = NULL, sin romper nada.
+    agregar_columna(cursor, "solicitudes_eliminacion", "motivo", "TEXT")
+
     conexion.commit()
     conexion.close()
