@@ -75,11 +75,11 @@
         <input id="ruta-destino" name="destino" placeholder="Destino" required
                list="dl-origenes-destinos"
                onblur="calcularKmSiCompleto()">
-        <select name="zona" class="input">
-            <option value="">— Zona —</option>
-            <option value="Occidente">Occidente</option>
-            <option value="Centro">Centro</option>
-            <option value="Oriente">Oriente</option>
+        <select name="zona" class="input" required>
+            <option value="" disabled selected>— Zona —</option>
+            {% for z in zonas_combustible %}
+            <option value="{{ z }}">{{ z }}</option>
+            {% endfor %}
         </select>
         <div style="display:flex;gap:6px;align-items:center;">
             <input id="ruta-km" name="km" type="number" step="0.1" placeholder="Km oficiales" required
@@ -263,11 +263,11 @@ function autoTarifa() {
             <label>Destino</label>
             <input type="text" id="edit-destino" name="destino" required placeholder="Destino">
             <label>Zona</label>
-            <select id="edit-zona" name="zona" class="input">
-                <option value="">— Sin zona —</option>
-                <option value="Occidente">Occidente</option>
-                <option value="Centro">Centro</option>
-                <option value="Oriente">Oriente</option>
+            <select id="edit-zona" name="zona" class="input" required>
+                <option value="" disabled>— Zona —</option>
+                {% for z in zonas_combustible %}
+                <option value="{{ z }}">{{ z }}</option>
+                {% endfor %}
             </select>
             <label>Km oficiales</label>
             <input type="number" id="edit-km" name="km_oficiales" step="0.1" min="0" placeholder="Km oficiales">

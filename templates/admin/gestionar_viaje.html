@@ -261,6 +261,15 @@
            style="padding:7px 14px;background:var(--panel);border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#555;text-decoration:none;">
             <i class="bi bi-file-earmark-text"></i> Ver Orden de Carga
         </a>
+        <a href="/admin/viaje/{{ viaje.id }}/carta-porte" target="_blank"
+           style="padding:7px 14px;background:var(--panel);border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#555;text-decoration:none;">
+            <i class="bi bi-file-earmark-text"></i> Ver Carta de Porte
+        </a>
+        {% else %}
+        <button type="button" disabled title="{{ orden_carga_tooltip }}"
+                style="padding:7px 14px;background:#f9fafb;border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#9CA3AF;opacity:.7;cursor:not-allowed;">
+            <i class="bi bi-file-earmark-text"></i> Orden de Carga / Carta de Porte
+        </button>
         {% endif %}
         {% if _doc_item %}
         <input type="hidden" id="cl-csrf-doc" value="{{ csrf_token() }}">
@@ -360,7 +369,7 @@
     <form method="POST" action="/admin/viaje/{{ viaje.id }}/guardar-combustible" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <span style="font-size:12px;color:#888;">Litros:</span>
-        <input type="text" name="litros" class="step-input"
+        <input type="text" name="litros" class="step-input" required
                value="{{ '%.1f'|format(liquidacion.litros_combustible) if liquidacion and liquidacion.litros_combustible > 0 else '' }}"
                placeholder="0.0" inputmode="decimal" style="width:100px;">
         <span style="font-size:11px;color:#aaa;">El costo en dólares se calcula solo con el precio de la zona.</span>

@@ -53,6 +53,11 @@ def get_viaje_id_por_cotizacion(cotizacion_id):
 def rutas():
     if not requiere_admin():
         return redirect("/login")
+    con = conectar()
+    cur = con.cursor()
+    cur.execute("SELECT nombre FROM zonas_combustible WHERE activo = 1 ORDER BY nombre")
+    zonas_combustible = [z["nombre"] for z in cur.fetchall()]
+    con.close()
     all_rutas = get_all_rutas()
     todos_camioneros = get_all_camioneros_activos()
     camioneros_por_ruta = {r["id"]: get_camioneros_por_ruta(r["id"]) for r in all_rutas}
@@ -76,6 +81,7 @@ def rutas():
         tarifa_km_global=tarifa_km_global,
         origenes_destinos=origenes_destinos,
         resumen_import=resumen_import,
+        zonas_combustible=zonas_combustible,
     )
 
 
@@ -86,9 +92,12 @@ def nueva_ruta():
 
     origen = request.form["origen"].strip()
     destino = request.form["destino"].strip()
-    zona = request.form.get("zona", "")
+    zona = request.form.get("zona", "").strip()
     km = request.form["km"]
     tarifa_km = request.form.get("tarifa_km", "").strip()
+
+    if not zona:
+        return redirect("/admin/comercial/rutas?access_error=La+zona+es+obligatoria+para+crear+una+ruta")
 
     if ruta_existe(origen, destino):
         return redirect("/admin/comercial/rutas?access_error=Esta+ruta+ya+existe.+Si+necesitas+modificarla,+búscala+en+el+listado+y+edítala.")
@@ -125,11 +134,15 @@ def editar_ruta(ruta_id):
     destino = request.form["destino"].strip()
     zona = request.form.get("zona", "").strip()
     km_oficiales = request.form.get("km_oficiales", "").strip()
+
+    if not zona:
+        return redirect("/admin/comercial/rutas?access_error=La+zona+es+obligatoria+para+editar+una+ruta")
+
     con = conectar()
     cur = con.cursor()
     cur.execute(
-        "UPDATE rutas SET origen=?, destino=?, zona=?, km_oficiales=? WHERE id=?",
-        (origen, destino, zona or None, km_oficiales or None, ruta_id)
+        f"UPDATE rutas SET origen={ph()}, destino={ph()}, zona={ph()}, km_oficiales={ph()} WHERE id={ph()}",
+        (origen, destino, zona, km_oficiales or None, ruta_id)
     )
     con.commit()
     con.close()

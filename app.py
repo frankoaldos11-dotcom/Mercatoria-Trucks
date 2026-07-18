@@ -1,10 +1,11 @@
 import os
 import time
 from datetime import timedelta
+from urllib.parse import quote_plus
 from flask import Flask, render_template, request, redirect, session, g
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, CSRFError
 
 from extensions import bcrypt, mail
 from database import conectar, crear_base_datos
@@ -162,7 +163,8 @@ def login():
 
     registrado = request.args.get("registrado")
     reset = request.args.get("reset")
-    return render_template("login.html", registrado=registrado, reset=reset)
+    error = request.args.get("error")
+    return render_template("login.html", registrado=registrado, reset=reset, error=error)
 
 
 @app.route("/logout")
@@ -218,6 +220,16 @@ def asset_links():
     response = app.send_static_file("assetlinks.json")
     response.headers["Content-Type"] = "application/json"
     return response
+
+
+@app.errorhandler(CSRFError)
+def csrf_error(e):
+    mensaje = quote_plus("Tu sesión en esta página venció. Intenta de nuevo.")
+    if session.get("usuario"):
+        ref = request.referrer or "/admin"
+        sep = "&" if "?" in ref else "?"
+        return redirect(f"{ref}{sep}error={mensaje}")
+    return redirect(f"/login?error={mensaje}")
 
 
 @app.errorhandler(404)
