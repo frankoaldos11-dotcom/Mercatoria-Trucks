@@ -3,7 +3,7 @@ import io
 import openpyxl
 from openpyxl.styles import PatternFill, Font
 
-from routes.admin import requiere_admin, registrar_auditoria
+from routes.admin import requiere_personal, registrar_auditoria
 from database import conectar
 from db_config import ph
 from services.finanzas_service import get_configuracion
@@ -51,7 +51,7 @@ def get_viaje_id_por_cotizacion(cotizacion_id):
 
 @comercial_bp.route("/admin/comercial/rutas")
 def rutas():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     con = conectar()
     cur = con.cursor()
@@ -87,7 +87,7 @@ def rutas():
 
 @comercial_bp.route("/admin/comercial/rutas/nueva", methods=["POST"])
 def nueva_ruta():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     origen = request.form["origen"].strip()
@@ -117,7 +117,7 @@ def nueva_ruta():
 
 @comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/tarifa", methods=["POST"])
 def actualizar_tarifa_ruta(ruta_id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if session.get("rol") != "admin":
         return redirect("/admin/comercial/rutas?access_error=No+tienes+permisos+para+modificar+tarifas")
@@ -128,7 +128,7 @@ def actualizar_tarifa_ruta(ruta_id):
 
 @comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/editar", methods=["POST"])
 def editar_ruta(ruta_id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     origen = request.form["origen"].strip()
     destino = request.form["destino"].strip()
@@ -151,7 +151,7 @@ def editar_ruta(ruta_id):
 
 @comercial_bp.route("/admin/comercial/rutas/importar", methods=["POST"])
 def importar_rutas_excel():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if session.get("rol") != "admin":
         return redirect("/admin/comercial/rutas?access_error=Sin+permisos+para+importar+rutas")
@@ -261,7 +261,7 @@ def importar_rutas_excel():
 
 @comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/transportistas/asignar", methods=["POST"])
 def asignar_camionero_ruta(ruta_id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     camionero_id = request.form.get("camionero_id")
     if camionero_id:
@@ -271,7 +271,7 @@ def asignar_camionero_ruta(ruta_id):
 
 @comercial_bp.route("/admin/comercial/rutas/<int:ruta_id>/transportistas/<int:camionero_id>/desasociar", methods=["POST"])
 def desasociar_camionero_ruta(ruta_id, camionero_id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     desasociar_camionero_de_ruta(ruta_id, camionero_id)
     return redirect("/admin/comercial/rutas")
@@ -283,7 +283,7 @@ def _solo_admin():
 
 @comercial_bp.route("/admin/comercial/vehiculos")
 def tipos_vehiculo():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if not _solo_admin():
         return redirect("/admin?access_error=Sin+permisos+para+acceder+a+Tipos+de+vehículo")
@@ -296,7 +296,7 @@ def tipos_vehiculo():
 
 @comercial_bp.route("/admin/comercial/vehiculos/nuevo", methods=["POST"])
 def nuevo_tipo_vehiculo():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if not _solo_admin():
         return redirect("/admin?access_error=Sin+permisos")
@@ -312,7 +312,7 @@ def nuevo_tipo_vehiculo():
 
 @comercial_bp.route("/admin/comercial/tarifas")
 def tarifas():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if not _solo_admin():
         return redirect("/admin?access_error=Sin+permisos+para+acceder+a+Tarifas")
@@ -327,7 +327,7 @@ def tarifas():
 
 @comercial_bp.route("/admin/comercial/tarifas/nueva", methods=["POST"])
 def nueva_tarifa():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if not _solo_admin():
         return redirect("/admin?access_error=Sin+permisos")
@@ -347,7 +347,7 @@ def nueva_tarifa():
 
 @comercial_bp.route("/admin/comercial/cotizar")
 def cotizar_view():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     from routes.clientes import get_all_clientes
@@ -370,7 +370,7 @@ def cotizar_view():
 
 @comercial_bp.route("/admin/comercial/cotizar/calcular", methods=["POST"])
 def calcular_cotizacion():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     ruta_id = request.form["ruta_id"]
@@ -386,7 +386,7 @@ def calcular_cotizacion():
 
 @comercial_bp.route("/admin/comercial/cotizar/guardar", methods=["POST"])
 def guardar_cotizacion_view():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     ruta_id = request.form["ruta_id"]
@@ -413,7 +413,7 @@ def guardar_cotizacion_view():
 
 @comercial_bp.route("/admin/comercial/cotizaciones")
 def cotizaciones():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if session.get("rol") != "admin":
         return redirect("/admin?access_error=Cotizaciones+solo+disponible+para+administradores")
@@ -426,7 +426,7 @@ def cotizaciones():
 
 @comercial_bp.route("/admin/comercial/cotizaciones/plantilla")
 def plantilla_cotizaciones():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     wb = openpyxl.Workbook()
@@ -458,7 +458,7 @@ def plantilla_cotizaciones():
 
 @comercial_bp.route("/admin/comercial/cotizaciones/importar", methods=["POST"])
 def importar_cotizaciones():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     archivo = request.files.get("archivo")
@@ -519,7 +519,7 @@ def importar_cotizaciones():
 
 @comercial_bp.route("/admin/comercial/cotizacion/<int:id>")
 def ver_cotizacion(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     cotizacion = get_cotizacion_detalle(id)
@@ -538,7 +538,7 @@ def ver_cotizacion(id):
 
 @comercial_bp.route("/admin/comercial/cotizacion/<int:id>/convertir", methods=["POST"])
 def convertir_cotizacion(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     viaje_id = convertir_cotizacion_en_viaje(id)

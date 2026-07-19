@@ -139,13 +139,13 @@ def notificar_cliente_estado(viaje_id, nuevo_estado, email_cliente):
         current_app.logger.error(f"Error enviando email estado viaje {viaje_id}: {e}")
 
 
-def requiere_admin():
+def requiere_personal():
     return "usuario" in session and session.get("rol") in ["admin", "operador"]
 
 
 @admin_bp.route("/")
 def dashboard():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -293,7 +293,7 @@ def dashboard():
 
 @admin_bp.route("/viajes/nuevo", methods=["POST"])
 def nuevo_viaje_admin():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     ruta_ids = [r.strip() for r in request.form.getlist("ruta_id") if r.strip()]
@@ -397,7 +397,7 @@ def nuevo_viaje_admin():
 
 @admin_bp.route("/api/origenes-destinos")
 def api_origenes_destinos():
-    if not requiere_admin():
+    if not requiere_personal():
         return jsonify([])
     con = conectar()
     cur = con.cursor()
@@ -482,7 +482,7 @@ def _contexto_lista_viajes(cursor):
 
 @admin_bp.route("/viajes")
 def viajes():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -513,7 +513,7 @@ def _parsear_observaciones(obs):
 @admin_bp.route("/viaje/<int:id>")
 @admin_bp.route("/viajes/<int:id>/gestionar")
 def gestionar_viaje(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -731,7 +731,7 @@ def gestionar_viaje(id):
 
 @admin_bp.route("/viaje/<int:id>/tramo/<int:tramo_id>/completar", methods=["POST"])
 def completar_tramo_admin(id, tramo_id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
@@ -753,7 +753,7 @@ def completar_tramo_admin(id, tramo_id):
 
 @admin_bp.route("/viaje/<int:viaje_id>/checklist/<int:item_id>/toggle", methods=["POST"])
 def toggle_checklist(viaje_id, item_id):
-    if not requiere_admin():
+    if not requiere_personal():
         return jsonify({"error": "no auth"}), 401
 
     con = conectar()
@@ -789,7 +789,7 @@ def toggle_checklist(viaje_id, item_id):
 
 @admin_bp.route("/viaje/<int:id>/incidencia/nueva", methods=["POST"])
 def nueva_incidencia(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     categoria = request.form.get("categoria", "Otro").strip()
     descripcion = request.form.get("descripcion", "").strip()
@@ -811,7 +811,7 @@ def nueva_incidencia(id):
 
 @admin_bp.route("/viaje/<int:id>/incidencia/<int:inc_id>/estado", methods=["POST"])
 def cambiar_estado_incidencia(id, inc_id):
-    if not requiere_admin():
+    if not requiere_personal():
         return jsonify({"error": "no auth"}), 401
     nuevo_estado = request.form.get("estado", "").strip()
     if nuevo_estado not in INCIDENCIAS_ESTADOS:
@@ -829,7 +829,7 @@ def cambiar_estado_incidencia(id, inc_id):
 
 @admin_bp.route("/viaje/<int:id>/asignar", methods=["POST"])
 def asignar_camionero(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
@@ -887,7 +887,7 @@ def asignar_camionero(id):
 
 @admin_bp.route("/viaje/<int:id>/estado", methods=["POST"])
 def cambiar_estado(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
@@ -984,7 +984,7 @@ def cambiar_estado(id):
 
 @admin_bp.route("/viaje/<int:id>/asignar-todo", methods=["POST"])
 def asignar_camionero_vehiculo(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
@@ -1090,7 +1090,7 @@ def asignar_camionero_vehiculo(id):
 
 @admin_bp.route("/viaje/<int:id>/pdf")
 def descargar_pdf_orden_carga(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -1149,7 +1149,7 @@ def descargar_pdf_orden_carga(id):
 
 @admin_bp.route("/viaje/<int:id>/carta-porte")
 def descargar_carta_porte(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     try:
         from services.pdf_service import generar_pdf_carta_porte
@@ -1199,7 +1199,7 @@ def descargar_liquidacion(id):
 
 @admin_bp.route("/viaje/<int:id>/factura")
 def descargar_factura_cliente(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     try:
@@ -1223,7 +1223,7 @@ def descargar_factura_cliente(id):
 
 @admin_bp.route("/viaje/<int:id>/guardar-combustible", methods=["POST"])
 def guardar_combustible(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
@@ -1266,7 +1266,7 @@ def guardar_combustible(id):
 
 @admin_bp.route("/viaje/<int:id>/guardar-fechas", methods=["POST"])
 def guardar_fechas(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
@@ -1285,7 +1285,7 @@ def guardar_fechas(id):
 
 @admin_bp.route("/viaje/<int:id>/guardar-tipo-carga", methods=["POST"])
 def guardar_tipo_carga(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
@@ -1304,7 +1304,7 @@ def guardar_tipo_carga(id):
 
 @admin_bp.route("/incidencias")
 def lista_incidencias():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     filtro_estado = request.args.get("estado", "").strip()
     filtro_cat = request.args.get("categoria", "").strip()
@@ -1341,7 +1341,7 @@ def lista_incidencias():
 
 @admin_bp.route("/viaje/<int:id>/eliminar", methods=["POST"])
 def eliminar_viaje_admin(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -1378,7 +1378,7 @@ def eliminar_viaje_admin(id):
 
 @admin_bp.route("/viaje/<int:id>/prioridad", methods=["POST"])
 def actualizar_prioridad_viaje(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}?error=El+viaje+está+cerrado+y+no+admite+cambios")
@@ -1395,7 +1395,7 @@ def actualizar_prioridad_viaje(id):
 
 @admin_bp.route("/viaje/<int:id>/nota", methods=["POST"])
 def agregar_nota_viaje(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
     texto = request.form.get("texto", "").strip()
     if texto:
@@ -1413,7 +1413,7 @@ def agregar_nota_viaje(id):
 @admin_bp.route("/cotizacion/<int:id>/convertir")
 @admin_bp.route("/cotizaciones/<int:id>/convertir")
 def convertir_cotizacion(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     viaje_id = convertir_cotizacion_en_viaje(id)
@@ -1428,7 +1428,7 @@ def convertir_cotizacion(id):
 def pago_camionero(id):
     es_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
-    if not requiere_admin():
+    if not requiere_personal():
         if es_ajax:
             return jsonify({"ok": False, "error": "No autorizado"}), 403
         return redirect("/login")
@@ -1760,7 +1760,7 @@ def camionero_economico_legacy_redirect(id):
 
 @admin_bp.route("/transportistas/<int:id>/economico")
 def camionero_economico(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     con = conectar()
@@ -1844,7 +1844,7 @@ def admin_camioneros_legacy_redirect():
 
 @admin_bp.route("/transportistas", methods=["GET", "POST"])
 def admin_camioneros():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -1977,7 +1977,7 @@ def editar_camionero_legacy_redirect(id):
 
 @admin_bp.route("/transportistas/<int:id>/editar", methods=["GET", "POST"])
 def editar_camionero(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -2078,7 +2078,7 @@ def editar_camionero(id):
 
 @admin_bp.route("/transportistas/<int:id>/eliminar", methods=["POST"])
 def eliminar_camionero(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -2150,7 +2150,7 @@ def _validar_y_crear_cliente(cursor, form):
 
 @admin_bp.route("/clientes", methods=["GET", "POST"])
 def admin_clientes():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -2214,7 +2214,7 @@ def admin_clientes():
 
 @admin_bp.route("/clientes/crear-rapido", methods=["POST"])
 def crear_cliente_rapido():
-    if not requiere_admin():
+    if not requiere_personal():
         return jsonify({"error": "No autorizado"}), 401
 
     conexion = conectar()
@@ -2237,7 +2237,7 @@ def crear_cliente_rapido():
 
 @admin_bp.route("/clientes/<int:id>/editar", methods=["GET", "POST"])
 def editar_cliente(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -2318,7 +2318,7 @@ def eliminar_cliente(id):
 
 @admin_bp.route("/vehiculos", methods=["GET", "POST"])
 def admin_vehiculos():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -2388,7 +2388,7 @@ def admin_vehiculos():
 
 @admin_bp.route("/vehiculos/<int:id>/editar", methods=["GET", "POST"])
 def editar_vehiculo(id):
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
@@ -2443,7 +2443,7 @@ def editar_vehiculo(id):
 
 @admin_bp.route("/vehiculos/sugerencias")
 def sugerencias_vehiculos():
-    if not requiere_admin():
+    if not requiere_personal():
         return jsonify([]), 403
 
     campo = request.args.get("campo", "")
@@ -2897,7 +2897,7 @@ def reset_password_usuario(id):
 
 @admin_bp.route("/mi-cuenta", methods=["GET", "POST"])
 def mi_cuenta():
-    if not requiere_admin():
+    if not requiere_personal():
         return redirect("/login")
 
     conexion = conectar()
