@@ -3,17 +3,9 @@ from flask import Blueprint, render_template, request, redirect, session
 from database import conectar
 from db_config import ph
 from services.finanzas_service import get_configuracion, guardar_configuracion
-from routes.admin import registrar_auditoria
+from routes.admin import registrar_auditoria, solo_admin
 
 finanzas_bp = Blueprint("finanzas", __name__, url_prefix="/admin")
-
-
-def solo_admin():
-    return "usuario" in session and session.get("rol") == "admin"
-
-
-def _requiere_admin_o_operador():
-    return "usuario" in session and session.get("rol") in ["admin", "operador"]
 
 
 @finanzas_bp.route("/configuracion", methods=["GET", "POST"])

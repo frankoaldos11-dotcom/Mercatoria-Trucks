@@ -1,30 +1,28 @@
-# Reporte de Pruebas — 2026-07-19 (Rename requiere_admin → requiere_personal)
+# Reporte de Pruebas — 2026-07-19 (Consolidar guards solo-admin + borrar código muerto)
 
 ## Contexto
-`requiere_admin()` no restringía a admin — dejaba pasar admin y operador. El nombre mentía sobre el comportamiento. Se investigó el mapa completo de guards del sistema y se confirmó que no había ningún hueco de permisos escondido: cada pantalla que usa `requiere_admin()` está legítimamente destinada a admin y operador, y las pantallas realmente admin-only (Pagos Pendientes, Configuración, Usuarios, Auditoría, Papelera) ya usan mecanismos separados (`solo_admin()`, `_solo_admin()`, chequeos en línea) no tocados por este cambio. Rename mecánico puro: `requiere_admin()` → `requiere_personal()`, mismo comportamiento.
+La misma condición "¿es admin?" estaba implementada por quintuplicado: `solo_admin()` en `finanzas.py`, `_solo_admin()` en `comercial.py`, 30 chequeos en línea en `admin.py`, 3 en `comercial.py`, y 2 con redacción distinta en Reportes. Se consolidó todo en una sola `solo_admin()` en `routes/admin.py` (junto a `requiere_personal()`), importada desde `finanzas.py` y `comercial.py`. Se borró además `_requiere_admin_o_operador()` (código muerto sin callers). Cero cambios de comportamiento: cada condición reemplazada es la misma expresión booleana, solo centralizada. Los chequeos a nivel de template (`{% if session.get('rol') == 'admin' %}` en `gestionar_viaje.html` y `dashboard.html`) y 8 sitios de lógica de negocio en `admin.py` (branches admin/operador en `dashboard`, `eliminar_viaje_admin`, `eliminar_camionero`, `pago_camionero`, dato `es_admin` en `transportista_economico`) quedaron fuera de alcance a propósito — no son guards de rechazo.
 
 ## Páginas probadas (local, `127.0.0.1:5001` — el 5000 sigue ocupado por el proceso ajeno que Aldo diagnostica aparte)
-- `/admin/`, `/admin/viajes`, `/admin/transportistas`, `/admin/comercial/rutas`, `/admin/clientes`, `/admin/incidencias`, `/admin/vehiculos`, `/admin/pagos-pendientes`, `/admin/configuracion`
-
-## Investigación previa a la implementación
-- Mapeados los 6 mecanismos de guard existentes en el código (ninguno es decorador; no hay Flask-Login). Confirmados 35 call sites de `requiere_admin()` en `routes/admin.py` + 19 en `routes/comercial.py` (importada), todos legítimamente admin+operador.
-- Confirmado que `_requiere_admin_o_operador()` (`routes/finanzas.py:15`) es código muerto, nunca llamado — no se toca, solo se señala como hallazgo aparte por el nombre confundible.
+- GET: `/admin/`, `/admin/viajes`, `/admin/transportistas`, `/admin/comercial/rutas`, `/admin/clientes`, `/admin/incidencias`, `/admin/vehiculos`, `/admin/pagos-pendientes`, `/admin/viajes-sin-cobrar`, `/admin/configuracion`, `/admin/usuarios`, `/admin/reportes`, `/admin/auditoria`, `/admin/papelera`, `/admin/comercial/vehiculos`, `/admin/comercial/tarifas`.
+- POST: `/admin/solicitudes-eliminacion/<id>/aprobar`, `/admin/solicitudes-eliminacion/<id>/rechazar`, `/admin/usuarios/crear`.
 
 ## Pruebas realizadas
-1. `python -m py_compile routes/admin.py routes/comercial.py` — sin errores.
-2. `grep -rn "requiere_admin\b" routes/` tras el rename — cero coincidencias (rename completo, sin sitios olvidados).
-3. **Como operador** (cuenta de prueba `_test_operador_rename`): las 9 rutas devolvieron el mismo patrón de antes del rename — `200` en Dashboard, Viajes, Transportistas, Rutas, Clientes, Incidencias, Vehículos; redirección (bloqueo) en Pagos Pendientes y Configuración.
-4. **Como admin**: las 9 rutas devolvieron `200` — acceso total, sin cambios.
+1. `python -m py_compile` sobre `routes/admin.py`, `routes/comercial.py`, `routes/finanzas.py` — sin errores.
+2. `grep -rn "_solo_admin\|_requiere_admin_o_operador" routes/` — cero resultados (código muerto y duplicados eliminados por completo).
+3. Conteo de sitios reemplazados verificado contra el plan: `admin.py` 33 (`1 def + 32 not solo_admin()`), `comercial.py` 7, `finanzas.py` 8 — coincide exactamente con el inventario del plan.
+4. **Como operador** (cuenta de prueba `_test_operador_consolidar`): las 7 pantallas `requiere_personal()` devolvieron `200` (igual que antes); las 9 pantallas `solo_admin()` devolvieron redirección (bloqueo) — incluyendo los 3 endpoints POST (`aprobar`, `rechazar`, `crear_usuario`) probados con token CSRF válido para aislar específicamente el guard de rol.
+5. **Como admin**: las 16 pantallas devolvieron `200` — acceso total, sin cambios.
 
 ## Errores encontrados
 Ninguno.
 
 ## Correcciones aplicadas
-`routes/admin.py` (definición renombrada línea 142 + 35 call sites), `routes/comercial.py` (import actualizado línea 6 + 19 call sites). Ningún otro archivo referenciaba `requiere_admin`.
+`routes/admin.py` (agregada `solo_admin()`, 32 chequeos en línea reemplazados), `routes/comercial.py` (borrada `_solo_admin()`, import actualizado, 7 call sites reemplazados), `routes/finanzas.py` (borradas `solo_admin()` local y `_requiere_admin_o_operador()`, import actualizado), `docs/01_CLAUDE_RULES.md` (dos menciones desactualizadas a `requiere_admin()` corregidas a `requiere_personal()`/`solo_admin()`).
 
 ## Datos de prueba y limpieza
-- Cuenta `_test_operador_rename` (id 42, rol operador): creada y eliminada.
-- Servidor Flask (puerto 5001) detenido (PIDs 204320 y 197208). `Get-Process python` solo muestra el proceso ajeno del puerto 5000 (PID 190952), sin tocar.
+- Cuenta `_test_operador_consolidar` (id 43, rol operador): creada y eliminada.
+- Servidor Flask (puerto 5001) detenido (PIDs 23480 y 200756). `Get-Process python` solo muestra el proceso ajeno del puerto 5000 (PID 190952), sin tocar.
 
 ## Recomendaciones
-- `_requiere_admin_o_operador()` en `routes/finanzas.py` sigue siendo código muerto con un nombre confundible con `requiere_personal()`/`requiere_admin()`. Considerar eliminarlo en una tarea aparte.
+- Unificar también los 3 chequeos de template (`gestionar_viaje.html`, `dashboard.html`) vía un booleano `es_admin` en el `context_processor` global existente — evaluado en el plan, descartado por bajo beneficio real (son expresiones de una línea, no funciones duplicadas). Queda como propuesta para una tarea aparte si se decide perseguir.

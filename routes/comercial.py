@@ -3,7 +3,7 @@ import io
 import openpyxl
 from openpyxl.styles import PatternFill, Font
 
-from routes.admin import requiere_personal, registrar_auditoria
+from routes.admin import requiere_personal, registrar_auditoria, solo_admin
 from database import conectar
 from db_config import ph
 from services.finanzas_service import get_configuracion
@@ -119,7 +119,7 @@ def nueva_ruta():
 def actualizar_tarifa_ruta(ruta_id):
     if not requiere_personal():
         return redirect("/login")
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin/comercial/rutas?access_error=No+tienes+permisos+para+modificar+tarifas")
     tarifa_km = request.form.get("tarifa_km", "").strip()
     actualizar_tarifa_km_ruta(ruta_id, tarifa_km if tarifa_km else None)
@@ -153,7 +153,7 @@ def editar_ruta(ruta_id):
 def importar_rutas_excel():
     if not requiere_personal():
         return redirect("/login")
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin/comercial/rutas?access_error=Sin+permisos+para+importar+rutas")
 
     archivo = request.files.get("archivo")
@@ -277,15 +277,11 @@ def desasociar_camionero_ruta(ruta_id, camionero_id):
     return redirect("/admin/comercial/rutas")
 
 
-def _solo_admin():
-    return "usuario" in session and session.get("rol") == "admin"
-
-
 @comercial_bp.route("/admin/comercial/vehiculos")
 def tipos_vehiculo():
     if not requiere_personal():
         return redirect("/login")
-    if not _solo_admin():
+    if not solo_admin():
         return redirect("/admin?access_error=Sin+permisos+para+acceder+a+Tipos+de+vehículo")
 
     return render_template(
@@ -298,7 +294,7 @@ def tipos_vehiculo():
 def nuevo_tipo_vehiculo():
     if not requiere_personal():
         return redirect("/login")
-    if not _solo_admin():
+    if not solo_admin():
         return redirect("/admin?access_error=Sin+permisos")
 
     nombre = request.form["nombre"]
@@ -314,7 +310,7 @@ def nuevo_tipo_vehiculo():
 def tarifas():
     if not requiere_personal():
         return redirect("/login")
-    if not _solo_admin():
+    if not solo_admin():
         return redirect("/admin?access_error=Sin+permisos+para+acceder+a+Tarifas")
 
     return render_template(
@@ -329,7 +325,7 @@ def tarifas():
 def nueva_tarifa():
     if not requiere_personal():
         return redirect("/login")
-    if not _solo_admin():
+    if not solo_admin():
         return redirect("/admin?access_error=Sin+permisos")
 
     crear_tarifa(
@@ -415,7 +411,7 @@ def guardar_cotizacion_view():
 def cotizaciones():
     if not requiere_personal():
         return redirect("/login")
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin?access_error=Cotizaciones+solo+disponible+para+administradores")
 
     return render_template(

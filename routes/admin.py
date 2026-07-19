@@ -143,6 +143,10 @@ def requiere_personal():
     return "usuario" in session and session.get("rol") in ["admin", "operador"]
 
 
+def solo_admin():
+    return "usuario" in session and session.get("rol") == "admin"
+
+
 @admin_bp.route("/")
 def dashboard():
     if not requiere_personal():
@@ -1176,7 +1180,7 @@ def descargar_carta_porte(id):
 
 @admin_bp.route("/viaje/<int:id>/liquidacion")
 def descargar_liquidacion(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
     try:
         from services.pdf_service import generar_pdf_liquidacion_camionero
@@ -1488,7 +1492,7 @@ def pago_camionero(id):
 
 @admin_bp.route("/pagos-pendientes")
 def pagos_pendientes():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
 
     conexion = conectar()
@@ -1526,7 +1530,7 @@ def pagos_pendientes():
 
 @admin_bp.route("/viajes-sin-cobrar")
 def viajes_sin_cobrar():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
 
     conexion = conectar()
@@ -1563,7 +1567,7 @@ def viajes_sin_cobrar():
 def marcar_cobrado(id):
     es_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
-    if session.get("rol") != "admin":
+    if not solo_admin():
         if es_ajax:
             return jsonify({"ok": False, "error": "No autorizado"}), 403
         return redirect("/login")
@@ -1622,7 +1626,7 @@ def marcar_cobrado(id):
 
 @admin_bp.route("/viaje/<int:id>/finalizar", methods=["POST"])
 def finalizar_viaje(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
     if _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}")
@@ -1646,7 +1650,7 @@ def finalizar_viaje(id):
 
 @admin_bp.route("/viaje/<int:id>/reabrir", methods=["POST"])
 def reabrir_viaje(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
     if not _viaje_cerrado(id):
         return redirect(f"/admin/viaje/{id}")
@@ -1664,7 +1668,7 @@ def reabrir_viaje(id):
 
 @admin_bp.route("/viaje/<int:id>/corregir-cobro", methods=["POST"])
 def corregir_cobro(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
 
     con = conectar()
@@ -1728,7 +1732,7 @@ def corregir_cobro(id):
 
 @admin_bp.route("/viaje/<int:id>/verificar", methods=["POST"])
 def verificar_viaje(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
     accion = request.form.get("accion", "verificar")
     con = conectar()
@@ -2299,7 +2303,7 @@ def editar_cliente(id):
 
 @admin_bp.route("/clientes/<int:id>/eliminar", methods=["POST"])
 def eliminar_cliente(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
 
     conexion = conectar()
@@ -2468,7 +2472,7 @@ def sugerencias_vehiculos():
 
 @admin_bp.route("/vehiculos/<int:id>/eliminar", methods=["POST"])
 def eliminar_vehiculo(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
 
     conexion = conectar()
@@ -2572,7 +2576,7 @@ def _calcular_financieros_periodo(fecha_desde, fecha_hasta,
 
 @admin_bp.route("/reportes")
 def reportes():
-    if not (session.get("usuario") and session.get("rol") == "admin"):
+    if not solo_admin():
         return redirect("/admin")
 
     hoy = date.today()
@@ -2667,7 +2671,7 @@ def reportes():
 
 @admin_bp.route("/reportes/exportar")
 def exportar_reportes_csv():
-    if not (session.get("usuario") and session.get("rol") == "admin"):
+    if not solo_admin():
         return redirect("/admin?access_error=Solo+administradores+pueden+ver+reportes")
 
     hoy = date.today()
@@ -2706,7 +2710,7 @@ def exportar_reportes_csv():
 
 @admin_bp.route("/usuarios", methods=["GET"])
 def lista_usuarios():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
 
     filtro_rol = request.args.get("rol", "").strip().lower()
@@ -2762,7 +2766,7 @@ def lista_usuarios():
 
 @admin_bp.route("/usuarios/crear", methods=["POST"])
 def crear_usuario():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     usuario = request.form.get("usuario", "").strip()
@@ -2830,7 +2834,7 @@ def crear_usuario():
 
 @admin_bp.route("/usuarios/<int:id>/rol", methods=["POST"])
 def cambiar_rol_usuario(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     rol = request.form.get("rol", "").strip()
@@ -2855,7 +2859,7 @@ def cambiar_rol_usuario(id):
 
 @admin_bp.route("/usuarios/<int:id>/toggle", methods=["POST"])
 def toggle_usuario(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     conexion = conectar()
@@ -2879,7 +2883,7 @@ def toggle_usuario(id):
 
 @admin_bp.route("/usuarios/<int:id>/reset-password", methods=["POST"])
 def reset_password_usuario(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin/usuarios")
     nueva = request.form.get("nueva_password", "").strip()
     if len(nueva) < 6:
@@ -2969,7 +2973,7 @@ _HEADER_FONT = Font(bold=True, color="FFFFFF")
 
 @admin_bp.route("/exportar/<string:tabla>", methods=["GET"])
 def exportar_excel(tabla):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     cfg = _EXCEL_CONFIG.get(tabla)
@@ -3017,7 +3021,7 @@ def exportar_excel(tabla):
 
 @admin_bp.route("/importar/<string:tabla>", methods=["POST"])
 def importar_excel(tabla):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     cfg = _EXCEL_CONFIG.get(tabla)
@@ -3074,7 +3078,7 @@ def importar_excel(tabla):
 
 @admin_bp.route("/auditoria", methods=["GET"])
 def ver_auditoria():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     categoria = request.args.get("categoria", "").strip()
@@ -3148,7 +3152,7 @@ _ESTADOS_VIAJE = [
 
 @admin_bp.route("/lote", methods=["GET"])
 def panel_lote():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     conexion = conectar()
@@ -3180,7 +3184,7 @@ def panel_lote():
 
 @admin_bp.route("/lote/preview", methods=["GET"])
 def lote_preview():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return jsonify({"count": 0})
 
     criterio = request.args.get("criterio", "")
@@ -3221,7 +3225,7 @@ def lote_preview():
 
 @admin_bp.route("/lote/precios", methods=["POST"])
 def lote_precios():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     criterio = request.form.get("criterio", "").strip()
@@ -3277,7 +3281,7 @@ def lote_precios():
 
 @admin_bp.route("/lote/estados", methods=["POST"])
 def lote_estados():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     estado_origen = request.form.get("estado_origen", "").strip()
@@ -3308,7 +3312,7 @@ def lote_estados():
 
 @admin_bp.route("/lote/viajes-seleccionados", methods=["POST"])
 def lote_seleccionados():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin")
 
     ids_raw = request.form.getlist("ids[]")
@@ -3417,7 +3421,7 @@ def _query_emails_clientes(filtro):
 
 @admin_bp.route("/mensajes")
 def mensajes():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
 
     conexion = conectar()
@@ -3438,7 +3442,7 @@ def mensajes():
 
 @admin_bp.route("/mensajes/preview")
 def mensajes_preview():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return jsonify({"count": 0, "emails": []})
 
     filtro = request.args.get("filtro", "todos")
@@ -3448,7 +3452,7 @@ def mensajes_preview():
 
 @admin_bp.route("/mensajes/enviar", methods=["POST"])
 def mensajes_enviar():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/login")
 
     asunto = request.form.get("asunto", "").strip()
@@ -3492,7 +3496,7 @@ def mensajes_enviar():
 
 @admin_bp.route("/papelera")
 def papelera():
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin?access_error=Acceso+restringido+a+administradores")
     conexion = conectar()
     cursor = conexion.cursor()
@@ -3535,7 +3539,7 @@ def papelera():
 
 @admin_bp.route("/papelera/<entidad>/<int:id>/restaurar", methods=["POST"])
 def restaurar_registro(entidad, id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin?access_error=Acceso+restringido+a+administradores")
 
     tablas = {"transportista": "camioneros", "cliente": "clientes", "viaje": "viajes",
@@ -3558,7 +3562,7 @@ def restaurar_registro(entidad, id):
 
 @admin_bp.route("/solicitudes-eliminacion/<int:id>/aprobar", methods=["POST"])
 def aprobar_eliminacion(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin?access_error=Acceso+restringido+a+administradores")
     conexion = conectar()
     cursor = conexion.cursor()
@@ -3587,7 +3591,7 @@ def aprobar_eliminacion(id):
 
 @admin_bp.route("/solicitudes-eliminacion/<int:id>/rechazar", methods=["POST"])
 def rechazar_eliminacion(id):
-    if session.get("rol") != "admin":
+    if not solo_admin():
         return redirect("/admin?access_error=Acceso+restringido+a+administradores")
     conexion = conectar()
     cursor = conexion.cursor()
