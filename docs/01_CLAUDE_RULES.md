@@ -1,6 +1,6 @@
 # 01 — Reglas técnicas obligatorias (Claude Code)
 
-> Versión MDS: 1.1 | Proyecto: Mercatoria Truck | Actualizado: 2026-07-05
+> Versión MDS: 1.2 | Proyecto: Mercatoria Truck | Actualizado: 2026-07-19
 
 Estas reglas son de obligado cumplimiento en cada sesión. No se debaten; se aplican.
 
@@ -41,15 +41,36 @@ Estas reglas son de obligado cumplimiento en cada sesión. No se debaten; se apl
 - `SKIP_MIGRATIONS` solo puede saltar las migraciones **incrementales** cuando el schema ya existe. El chequeo del flag va **después** de verificar si el schema existe, nunca antes — una base vacía siempre debe crearse, con el flag activo o sin él.
 - Toda nueva tabla va en `migraciones_pg.py` (producción) y `migraciones.py` (SQLite).
 - Las migraciones de sprint van en archivos versionados: `migrations_v11.py`, `migrations_v12.py`, etc.
-- No usar ORM. SQL directo con `psycopg2` (prod) o `sqlite3` (local).
-- Usar `RealDictCursor` en PostgreSQL para acceder a columnas por nombre.
+- No usar ORM. SQL directo con `psycopg2` (prod) o `sqlite3` (local). **Prohibido SQLAlchemy** — no hay ninguna dependencia de ORM en `requirements.txt` ni una sola importación en todo el repo; que siga así.
+- Todo acceso a base de datos pasa por `conectar()` (`database.py`). Prohibido abrir una conexión local dentro de una función de `routes/` — el wrapper decide SQLite vs. PostgreSQL según `USE_POSTGRES`, y una conexión abierta a mano se salta esa decisión.
+- Los placeholders SQL siempre usan `ph()` (`db_config.py`) — nunca `?` ni `%s` hardcodeado — porque `?` solo funciona en SQLite y `%s` solo en PostgreSQL; `ph()` es lo que hace que la misma query corra en los dos motores sin tocarla. Nota: `services/pdf_service.py` no importa el `ph()` compartido, define su propia copia local idéntica (mismo comportamiento, pero es una duplicación — si el criterio de `ph()` cambia alguna vez, hay que acordarse de tocar los dos lugares).
+- Usar `RealDictCursor` en PostgreSQL para acceder a columnas por nombre (`conectar()` ya lo hace vía el wrapper). Acceso a columnas de queries **por nombre** (`fila["campo"]` o `fila.campo` en Jinja), nunca por índice (`fila[0]`) — por nombre sobrevive si se reordenan o agregan columnas a la query; por índice se rompe en silencio. Excepción real encontrada: `routes/admin.py:2463` usa `row[0]` sobre una query de una sola columna — funciona porque `sqlite3.Row`/`RealDictCursor` soportan `__getitem__` por índice, pero es una inconsistencia frente al resto del código, no un patrón a copiar.
 - Cerrar siempre las conexiones explícitamente (`conexion.close()`).
-- Las funciones de registro (historial, auditoría) reciben el cursor de la transacción activa como parámetro — nunca abren conexión propia. Abrir una conexión nueva dentro de una transacción ya abierta choca por el lock de escritura en SQLite.
+- `registrar_auditoria(cursor, accion, categoria, ...)` recibe el **cursor de la transacción activa del endpoint que la llama** — nunca abre conexión propia. Esto se refactorizó deliberadamente así: abrir una conexión nueva dentro de una transacción ya abierta choca por el lock de escritura en SQLite, y además separa la auditoría de la acción que audita — si la acción falla después de registrar la auditoría en su propia conexión, queda un registro de algo que nunca pasó. Con el cursor compartido, auditoría y acción se guardan (o fallan) juntas en el mismo `commit()`.
 - Prohibido el patrón `try/except: pass` para silenciar errores, especialmente en auditoría/historial: una auditoría que falla en silencio es peor que no tenerla. Los fallos de registro deben ser visibles (log, excepción, lo que sea — nunca `pass`).
 
 ---
 
-## 4. Código Python / Flask
+## 4. Combustible — punto único de verdad
+
+- El precio del litro se obtiene **siempre** vía `obtener_precio_litro(zona)` (`services/finanzas_service.py`) — ninguna otra parte del código debe leer `zonas_combustible.precio_litro` directamente para calcular el costo de un viaje. Es el punto único de reemplazo el día que se integre con Fuel vía API: cuando eso pase, se cambia el cuerpo de esta función (y la política de fallback si la API falla) sin tocar nada de lo que la llama. Confirmado que hasta el cálculo multi-tramo (`services/tramos_service.py`) respeta esto — recibe la función como parámetro en vez de leer la tabla por su cuenta.
+- El divisor de consumo se obtiene **siempre** vía `obtener_divisor_consumo(tipo_vehiculo_id, vehiculo_id)` — mismo motivo, mismo patrón.
+- Excepción legítima a las dos reglas anteriores: las pantallas de configuración (`/admin/configuracion`, `routes/finanzas.py`) que crean/editan `zonas_combustible.precio_litro` y `tipos_vehiculo.divisor_consumo` sí leen/escriben esas tablas directo — son la fuente de esos datos, no un consumidor. La regla aplica a quien *calcula* un costo, no a quien *administra* el precio.
+- La zona de una ruta sale de un `<select>` poblado desde `zonas_combustible` (creación y edición de ruta, `routes/comercial.py` + `templates/admin/comercial/rutas.html`), nunca de una lista hardcodeada — antes había una lista fija de zonas en el HTML que incluía una zona ("Centro") que ni siquiera existía en la tabla; se corrigió para que el select y la tabla nunca puedan desincronizarse.
+- El divisor `2.0` sembrado por defecto en `tipos_vehiculo` es un **placeholder pendiente de datos reales del área financiera** — está comentado como tal en `migraciones.py` ("mismo divisor global de siempre... hasta que el área financiera defina el divisor real por tipo"). No tratarlo como un valor definitivo ni construir lógica que asuma que 2.0 es correcto para todos los tipos de vehículo.
+- El patrón de fallback de precio que sí existe en el código (y que no hay que confundir con lo anterior) es `COALESCE(NULLIF(precio_final, 0), NULLIF(precio_cliente, 0), NULLIF(precio, 0), 0)` — elige el primer precio no-cero de una cadena de columnas. **No es** un guard contra división por cero; ese guard, donde existe (precio por km en `services/comercial_service.py`), es un `if km else 0` en Python plano, no SQL.
+
+---
+
+## 5. Borrado de datos
+
+- El borrado de `viajes` es **lógico** (`deleted_at`/`deleted_by`), nunca físico — mismo patrón que `camioneros`/`clientes`/`vehiculos`. Todo listado o query de viajes debe filtrar `deleted_at IS NULL`; un viaje "eliminado" que sigue apareciendo en un listado porque a esa query le faltó el filtro es un bug de datos que parece un bug de UI.
+- La eliminación de un viaje por un operador ("PM") **no borra nada** — crea una fila pendiente en `solicitudes_eliminacion` (`entidad='viaje'`) y el Admin es quien la aprueba (borra lógicamente) o la rechaza (el viaje sigue exactamente igual) desde `/admin/` o `/admin/papelera`. Reutiliza el mismo flujo que ya existía para transportistas (`eliminar_camionero`) — no crear un segundo mecanismo de solicitud/aprobación paralelo si se agrega esto a otra entidad; sumarla a `solicitudes_eliminacion` y a los diccionarios `tablas = {...}` de `aprobar_eliminacion`/`rechazar_eliminacion`/`restaurar_registro`.
+- Solo Admin borra directo (`session.get('rol') == 'admin'`); Admin y operador pueden *solicitar* — `requiere_admin()` los admite a ambos para entrar al flujo, pero la rama de borrado inmediato está gateada aparte.
+
+---
+
+## 6. Código Python / Flask
 
 - Python 3.x. Sin dependencias no declaradas en `requirements.txt`.
 - Estructura de blueprints: cada módulo funcional es un Blueprint en `routes/`.
@@ -62,7 +83,17 @@ Estas reglas son de obligado cumplimiento en cada sesión. No se debaten; se apl
 
 ---
 
-## 5. Estructura de archivos
+## 7. Presentación / Jinja2
+
+- Fechas se muestran con el filtro `fmt_fecha` (registrado en `app.py`, usado en 10 templates) — no formatear fechas a mano en el template con `strftime` disperso; `fmt_fecha` ya maneja el caso de valor vacío (devuelve "—") y el caso de un string en vez de un objeto `datetime` (típico al venir de SQLite).
+- Acceso a campos de un objeto de BD en templates por **dot notation** (`viaje.campo`), no por corchetes (`viaje['campo']`) — es la convención 100% consistente en todo `templates/` (176 apariciones de la primera, cero de la segunda) y funciona igual contra `sqlite3.Row` y `RealDictCursor` porque Jinja prueba atributo y cae a `__getitem__`.
+- Todo servicio que genere PDFs (`services/pdf_service.py`) y haga sus propias queries usa `ph()` para los placeholders, igual que el resto del código — no asumir que por ser un PDF y no una request HTTP puede usar SQL con `?`/`%s` crudo.
+- Todo color en CSS/templates consume un token del sistema de diseño (`var(--principal)`, `var(--fondo)`, `var(--error-real)`, etc.), nunca un hex hardcodeado — el vocabulario de los tokens es en español (`principal`, `fondo`, `texto`, `peligro`, `activo`, `borde`...), con alias en inglés por compatibilidad hacia atrás que resuelven a los mismos valores. **`static/css/tokens.css` no se edita a mano** — es el output de un pipeline Style Dictionary (`sd.config.json` + fuentes en `tokens/*.json`), documentado explícitamente en `tokens/README.md`: cualquier edición manual se pierde en el próximo build. Los valores nuevos se agregan en los JSON fuente (o vía el GitHub Action que sincroniza desde Figma), nunca directo en el CSS generado.
+- El Service Worker (`static/sw.js`) cachea assets estáticos por URL completa, **incluyendo el query string**. Eso significa que `admin.css?v=5` y `admin.css?v=6` son entradas de caché distintas — bumpear el número de versión en el `href` del template ya invalida el caché de ese archivo específico, sin necesidad de tocar `CACHE_NAME` (que fuerza un re-fetch de *todos* los assets precacheados, no solo el que cambió). El riesgo real es al revés: si se edita `admin.css` o `tokens.css` y se olvida subir el `?v=N` en **todos** los templates que lo referencian, el Service Worker sigue sirviendo la versión vieja indefinidamente en cualquier dispositivo que ya lo tenga cacheado. `tokens.css?v=1` hoy está así en los 9 templates que lo cargan y nunca se bumpeó — la próxima vez que el pipeline de tokens genere un cambio real, hay que subir ese número en los 9 lugares a la vez.
+
+---
+
+## 8. Estructura de archivos
 
 ```
 app.py                  — Punto de entrada, configuración Flask, login/logout
@@ -86,7 +117,7 @@ requirements.txt        — Dependencias de producción
 
 ---
 
-## 6. Despliegue
+## 9. Despliegue
 
 - Hosting: **Render** (plan Free). Plataforma: Python/Gunicorn.
 - `Procfile`: `web: gunicorn app:app`
@@ -96,7 +127,7 @@ requirements.txt        — Dependencias de producción
 
 ---
 
-## 7. Estilo de código
+## 10. Estilo de código
 
 - Sin comentarios innecesarios. Solo comentar el *por qué* cuando no es obvio.
 - Sin docstrings multi-línea en funciones triviales.
@@ -107,7 +138,7 @@ requirements.txt        — Dependencias de producción
 
 ---
 
-## 8. Git
+## 11. Git
 
 - Commits semánticos: `feat:`, `fix:`, `perf:`, `security:`, `docs:`, `refactor:`.
 - No commitear: `.env`, `mercatoria.db`, `__pycache__/`, `*.pyc`, screenshots PNG.
@@ -116,7 +147,15 @@ requirements.txt        — Dependencias de producción
 
 ---
 
-## 9. Contexto del proyecto
+## 12. Trampas conocidas (léelas antes de asumir cómo funciona algo)
+
+- **`requiere_admin()` no restringe a admin.** Pese al nombre, permite `admin` **y** `operador` por igual (`routes/admin.py`) — es en realidad un "¿está logueado como staff?", no un gate de admin exclusivo. Si una ruta o botón debe ser admin-only de verdad, hace falta un segundo chequeo explícito `session.get('rol') == 'admin'` además de (o en vez de) `requiere_admin()`. No asumas que una pantalla protegida por `requiere_admin()` es invisible para operador.
+- **`tipos_vehiculo` y `viajes.tipo_transporte` son dos conceptos paralelos sin unificar.** `tipos_vehiculo` es una tabla real con FK (`tipo_vehiculo_id`), usada para tarifas, cotizaciones y el divisor de combustible. `viajes.tipo_transporte` es una columna de texto libre, alimentada por radios hardcodeados en el HTML — y ni siquiera comparten vocabulario: la semilla de `tipos_vehiculo` dice "Camión refrigerado"/"Camión cerrado", el radio de `cliente/solicitar.html` dice "Refrigerado"/"Cerrado"/"Abierto". Antes de tocar "tipo de vehículo" en cualquier pantalla, confirmar cuál de los dos conceptos es el que hay que cambiar — es fácil editar uno pensando que se está editando el otro.
+- **El Service Worker cachea por URL completa (con query string incluido).** Ver la regla de `?v=N` en la sección 7 — mencionado acá también porque el síntoma de olvidarlo (un dispositivo sirviendo CSS/tokens viejos que nadie puede reproducir en local) suele investigarse como si fuera un bug de caché del navegador o del CDN, cuando en realidad es el Service Worker sirviendo una entrada vieja porque el `?v=N` no cambió.
+
+---
+
+## 13. Contexto del proyecto
 
 - **Mercatoria Truck v1.1** — plataforma de gestión logística de transporte de carga.
 - Roles: `admin` (gestión total), `operador` (operaciones sin finanzas), `cliente` (portal propio).
